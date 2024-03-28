@@ -53,10 +53,20 @@ class AttemptAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('attempt', 'question', 'answer_option')
+    list_display = ('attempt', 'get_username', 'get_user_id', 'question', 'answer_option')
     search_fields = ('attempt__user__username', 'question__title', 'answer_option__text')
     list_filter = ('attempt__category', 'question__block')
     readonly_fields = ('attempt', 'question', 'answer_option')
+
+    def get_username(self, obj):
+        return obj.attempt.user.username
+    get_username.admin_order_field = 'attempt__user__username'  # Allows column order sorting
+    get_username.short_description = 'Username'  # Sets the column's header
+
+    def get_user_id(self, obj):
+        return obj.attempt.user.id
+    get_user_id.admin_order_field = 'attempt__user__id'  # Allows column order sorting
+    get_user_id.short_description = 'User ID'  # Sets the column's header
 
     def has_add_permission(self, request, obj=None):
         return False
