@@ -39,10 +39,10 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 @admin.register(Attempt)
 class AttemptAdmin(admin.ModelAdmin):
-    list_display = ('user', 'timestamp', 'category')
+    list_display = ('id', 'user', 'timestamp', 'category', 'score')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category')
     list_filter = ('timestamp', 'category')
-    readonly_fields = ('user', 'timestamp', 'category', 'questions')
+    readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -53,7 +53,7 @@ class AttemptAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('attempt_id', 'get_username', 'get_user_id', 'question', 'answer_option', 'answer_option_is_correct')
+    list_display = ('attempt_id', 'get_username', 'get_user_id', 'question_id', 'answer_option_id', 'answer_option_is_correct')
     search_fields = ('attempt__user__username', 'question__title', 'answer_option__text')
     list_filter = ('attempt__category', 'question__block')
     readonly_fields = ('attempt', 'question', 'answer_option')
