@@ -46,7 +46,7 @@ from users.views import (CustomUserViewSet, ForeignUserDocumentsViewSet,
                          UserProfessionalEducationViewSet, UserRegionViewSet,
                          UsersParentViewSet, UserStatementDocumentsViewSet,
                          apply_for_verification)
-from questions.views import QuestionsView, submit_answers
+from questions.views import QuestionsView, submit_answers, get_attempts_status
 
 app_name = 'api'
 
@@ -454,5 +454,6 @@ urlpatterns = [
     ),
     path('questions/', QuestionsView.as_view(), name='questions'),
     path('submit_answers/', submit_answers, name='submit-answers'),
+    path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
     path('', include(router.urls)),
 ] + user_nested_urls
