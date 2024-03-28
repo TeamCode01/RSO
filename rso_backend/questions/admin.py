@@ -60,13 +60,20 @@ class UserAnswerAdmin(admin.ModelAdmin):
 
     def get_username(self, obj):
         return obj.attempt.user.username
-    get_username.admin_order_field = 'attempt__user__username'  # Allows column order sorting
-    get_username.short_description = 'Username'  # Sets the column's header
+    get_username.admin_order_field = 'attempt__user__username'
+    get_username.short_description = 'Username'
+
+    def answer_option_is_correct(self, obj):
+        return obj.answer_option.is_correct
+
+    answer_option_is_correct.boolean = True
+    answer_option_is_correct.admin_order_field = 'answer_option__is_correct'
+    answer_option_is_correct.short_description = 'Is Correct'
 
     def get_user_id(self, obj):
         return obj.attempt.user.id
-    get_user_id.admin_order_field = 'attempt__user__id'  # Allows column order sorting
-    get_user_id.short_description = 'User ID'  # Sets the column's header
+    get_user_id.admin_order_field = 'attempt__user__id'
+    get_user_id.short_description = 'User ID'
 
     def has_add_permission(self, request, obj=None):
         return False
