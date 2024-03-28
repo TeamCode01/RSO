@@ -17,7 +17,7 @@ from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
 from api.permissions import (IsCommanderOrTrustedAnywhere,
-                             IsDetComOrRegComAndRegionMatches, IsStuffOrAuthor)
+                             PersonalDataPermission, IsStuffOrAuthor)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
 from rso_backend.settings import BASE_DIR, RSOUSERS_CACHE_TTL
@@ -127,8 +127,8 @@ class RSOUserViewSet(RetrieveUpdateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             permission_classes = (
-                permissions.IsAuthenticated, IsCommanderOrTrustedAnywhere,
-                IsDetComOrRegComAndRegionMatches,
+                permissions.IsAuthenticated,
+                PersonalDataPermission,
             )
         else:
             permission_classes = (
