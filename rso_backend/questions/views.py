@@ -10,7 +10,7 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from questions.models import Question, Attempt, UserAnswer
+from questions.models import Question, Attempt, UserAnswer, AnswerOption
 from questions.serializers import QuestionSerializer
 import random
 
@@ -104,7 +104,7 @@ class QuestionsView(APIView):
                     {"error": "Срок получения вопросов по "
                               "категории 'safety' истек."},
                     status=status.HTTP_400_BAD_REQUEST
-            )
+                )
             questions = self.get_block_questions(5, 15)
         else:
             return Response(
@@ -233,9 +233,6 @@ def submit_answers(request):
             {'error': 'Сначала нужны получить вопросы.'}, status=400
         )
 
-    score = 0
-    scores_per_answer = 6.66 if latest_attempt.category == 'safety' else 5
-
     with transaction.atomic():
         # Проверяем, есть ли уже ответы для этой попытки
         if UserAnswer.objects.filter(attempt=latest_attempt).exists():
@@ -243,6 +240,9 @@ def submit_answers(request):
                 {'error': 'Ответы по попытке уже были приняты.'},
                 status=400
             )
+
+        score = 0
+        scores_per_answer = 6.66 if latest_attempt.category == 'safety' else 5
 
         for answer in answers_data:
             question_id = answer.get('question_id')
@@ -252,13 +252,20 @@ def submit_answers(request):
             if not latest_attempt.questions.filter(id=question_id).exists():
                 return Response(
                     {'error': 'Вопрос не относится к последней попытке.'},
-                    status=400
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-            question = get_object_or_404(Question, id=question_id)
-            answer_option = get_object_or_404(
-                question.answer_options, id=answer_option_id
-            )
+            try:
+                question = Question.objects.get(id=question_id)
+                answer_option = question.answer_options.get(id=answer_option_id)
+            except (Question.DoesNotExist, AnswerOption.DoesNotExist):
+                return Response(
+                    {
+                        'error': f'Неверная пара id вопрос-ответ: '
+                                 f'question_id: {question_id}, answer_id: {answer_option_id}.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             UserAnswer.objects.create(
                 attempt=latest_attempt,
@@ -274,7 +281,7 @@ def submit_answers(request):
     return Response(
         {
             'message': f'Ответы успешно отправлены. '
-                    f'Получено баллов: {score}'
+                       f'Получено баллов: {score}'
         },
         status=status.HTTP_200_OK
     )
