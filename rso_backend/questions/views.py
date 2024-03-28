@@ -119,7 +119,7 @@ class QuestionsView(APIView):
         attempt.questions.set(questions)
         attempt.save()
 
-        serializer = QuestionSerializer(questions, many=True)
+        serializer = QuestionSerializer(questions, many=True, context={'request': request})
         return Response(serializer.data)
 
     def get_university_questions_mix(self):
