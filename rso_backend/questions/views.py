@@ -10,7 +10,7 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from questions.models import Question, Attempt, UserAnswer
+from questions.models import Question, Attempt, UserAnswer, AnswerOption
 from questions.serializers import QuestionSerializer
 import random
 
@@ -78,30 +78,34 @@ class QuestionsView(APIView):
         category = request.query_params.get('category', None)
 
         current_date = datetime.now().date()
-        university_deadline = datetime(2024, 4, 10)
-        safety_deadline = datetime(2024, 6, 15)
+        university_deadline = datetime(2024, 4, 10).date()
+        safety_deadline = datetime(2024, 6, 15).date()
 
         attempts_count = Attempt.objects.filter(
             user=user, category=category
         ).count()
-        if attempts_count >= 3:
+        if attempts_count > 3:
             return Response(
                 {"error": "Превышено макс. число попыток (3)"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if category == 'university' and current_date > university_deadline:
-            return Response(
-                {"error": "Срок получения вопросов по "
-                          "категории 'university' истек."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        elif category == 'safety' and current_date > safety_deadline:
-            return Response(
-                {"error": "Срок получения вопросов по "
-                          "категории 'safety' истек."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if category == 'university':
+            if current_date > university_deadline:
+                return Response(
+                    {"error": "Срок получения вопросов по "
+                              "категории 'university' истек."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            questions = self.get_university_questions_mix()
+        elif category == 'safety':
+            if current_date > safety_deadline:
+                return Response(
+                    {"error": "Срок получения вопросов по "
+                              "категории 'safety' истек."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            questions = self.get_block_questions(5, 15)
         else:
             return Response(
                 {
@@ -115,7 +119,7 @@ class QuestionsView(APIView):
         attempt.questions.set(questions)
         attempt.save()
 
-        serializer = QuestionSerializer(questions, many=True)
+        serializer = QuestionSerializer(questions, many=True, context={'request': request})
         return Response(serializer.data)
 
     def get_university_questions_mix(self):
@@ -185,7 +189,7 @@ def submit_answers(request):
     При успешной обработке ответов:
     ```
     {
-        "message": "Ответы успешно отправлены. Получено баллов: X"
+        "score": X
     }
     ```
     Где X - итоговое количество набранных баллов (целое число).
@@ -229,9 +233,6 @@ def submit_answers(request):
             {'error': 'Сначала нужны получить вопросы.'}, status=400
         )
 
-    score = 0
-    scores_per_answer = 6.66 if latest_attempt.category == 'safety' else 5
-
     with transaction.atomic():
         # Проверяем, есть ли уже ответы для этой попытки
         if UserAnswer.objects.filter(attempt=latest_attempt).exists():
@@ -240,24 +241,31 @@ def submit_answers(request):
                 status=400
             )
 
+        score = 0
+        scores_per_answer = 6.66 if latest_attempt.category == 'safety' else 5
+
         for answer in answers_data:
             question_id = answer.get('question_id')
             answer_option_id = answer.get('answer_option_id')
 
             # Проверяем, принадлежит ли вопрос к последней попытке
-            if not Question.objects.filter(
-                    id=question_id, attempt=latest_attempt
-            ).exists():
+            if not latest_attempt.questions.filter(id=question_id).exists():
                 return Response(
-                    {'error': 'Вопрос не относится '
-                                'к последней попытке.'},
-                    status=400
+                    {'error': 'Вопрос не относится к последней попытке.'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-            question = get_object_or_404(Question, id=question_id)
-            answer_option = get_object_or_404(
-                question.answer_options, id=answer_option_id
-            )
+            try:
+                question = Question.objects.get(id=question_id)
+                answer_option = question.answer_options.get(id=answer_option_id)
+            except (Question.DoesNotExist, AnswerOption.DoesNotExist):
+                return Response(
+                    {
+                        'error': f'Неверная пара id вопрос-ответ: '
+                                 f'question_id: {question_id}, answer_id: {answer_option_id}.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             UserAnswer.objects.create(
                 attempt=latest_attempt,
@@ -272,8 +280,7 @@ def submit_answers(request):
 
     return Response(
         {
-            'message': f'Ответы успешно отправлены. '
-                    f'Получено баллов: {score}'
+            'score': score
         },
         status=status.HTTP_200_OK
     )

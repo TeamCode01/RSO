@@ -24,7 +24,7 @@ class Question(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return f'id {self.id} - {self.title}'
 
     class Meta:
         verbose_name = 'Вопрос'
@@ -40,7 +40,7 @@ class AnswerOption(models.Model):
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text if self.text else 'Ответ картинкой'
+        return f'ID {self.id}, {self.text}' if self.text else f'ID {self.id}, Ответ картинкой'
 
     class Meta:
         verbose_name = 'Вариант ответа'
@@ -100,8 +100,8 @@ class UserAnswer(models.Model):
 
     def __str__(self):
         return (
-            f"{self.attempt.user.last_name} {self.attempt.user.first_name} - "
-            f"{self.question.title} - {self.answer_option.text}"
+            f"ID попытки: {self.attempt.id}. Ответ пользователя id {self.attempt.user.id} {self.attempt.user.last_name} {self.attempt.user.first_name} - "
+            f"на вопрос id {self.question.id} {self.question.title}, вариант ответа - id {self.answer_option.id}"
         )
 
     class Meta:
