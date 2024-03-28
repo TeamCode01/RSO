@@ -244,12 +244,9 @@ def submit_answers(request):
             answer_option_id = answer.get('answer_option_id')
 
             # Проверяем, принадлежит ли вопрос к последней попытке
-            if not Question.objects.filter(
-                    id=question_id, attempt=latest_attempt
-            ).exists():
+            if not latest_attempt.questions.filter(id=question_id).exists():
                 return Response(
-                    {'error': 'Вопрос не относится '
-                                'к последней попытке.'},
+                    {'error': 'Вопрос не относится к последней попытке.'},
                     status=400
                 )
 
