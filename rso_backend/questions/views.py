@@ -84,6 +84,11 @@ class QuestionsView(APIView):
         attempts_count = Attempt.objects.filter(
             user=user, category=category
         ).count()
+        if attempts_count > 3:
+            return Response(
+                {"error": "Превышено макс. число попыток (3)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if category == 'university':
             if current_date > university_deadline:
