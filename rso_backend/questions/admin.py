@@ -53,7 +53,7 @@ class AttemptAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('attempt_id', 'get_username', 'get_user_id', 'question', 'answer_option', 'answer_option__is_correct')
+    list_display = ('attempt_id', 'get_username', 'get_user_id', 'question', 'answer_option', 'answer_option_is_correct')
     search_fields = ('attempt__user__username', 'question__title', 'answer_option__text')
     list_filter = ('attempt__category', 'question__block')
     readonly_fields = ('attempt', 'question', 'answer_option')
