@@ -90,13 +90,13 @@ class QuestionsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if category == 'university' and current_date > university_deadline:
+        if category == 'university' and current_date < university_deadline:
             return Response(
                 {"error": "Срок получения вопросов по "
                           "категории 'university' истек."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        elif category == 'safety' and current_date > safety_deadline:
+        elif category == 'safety' and current_date < safety_deadline:
             return Response(
                 {"error": "Срок получения вопросов по "
                           "категории 'safety' истек."},
