@@ -302,3 +302,54 @@ def submit_answers(request):
         },
         status=status.HTTP_200_OK
     )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_attempts_status(request):
+    """
+    Получает статус попыток пользователя по конкретной категории тестирования.
+
+    Эндпоинт принимает GET-запрос и ожидает параметр 'category' в query параметрах запроса.
+    Category может быть либо 'university' и 'safety'. Функция возвращает JSON-ответ,
+    содержащий информацию о статусе попыток пользователя в указанной категории.
+
+    1. Проверяет, что пользователь аутентифицирован.
+    2. Валидирует значение 'category' из query параметров запроса.
+    3. Считает количество попыток пользователя в данной категории.
+    4. Если количество попыток меньше 3, возвращает сообщение о количестве оставшихся попыток.
+    5. Если попытки исчерпаны, определяет лучший результат среди всех попыток и возвращает его.
+
+    Ответы:
+    - HTTP 400 для неверно указанной категории с соответствующим сообщением.
+    - HTTP 200 с сообщением о недостатке попыток, если их менее трех.
+    - HTTP 200 с лучшим результатом, если попытки были сделаны.
+    """
+    user = request.user
+    category = request.query_params.get('category', None)
+    if category not in ('safety', 'university'):
+        return Response(
+            {
+                "error": "Неверная категория. "
+                         "Выберите university или safety."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    attempts_count = Attempt.objects.filter(
+        user=user, category=category
+    ).count()
+    if attempts_count < 3:
+        return Response(
+            {"left_attempts": 3-attempts_count},
+            status=status.HTTP_200_OK
+        )
+    best_score = Attempt.objects.filter(
+        user=user, category=category
+    ).order_by('-score').first().score
+    return Response(
+        {
+            'best_score': best_score
+        },
+        status=status.HTTP_200_OK
+    )
