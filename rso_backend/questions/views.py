@@ -78,8 +78,8 @@ class QuestionsView(APIView):
         category = request.query_params.get('category', None)
 
         current_date = datetime.now().date()
-        university_deadline = datetime(2024, 4, 10)
-        safety_deadline = datetime(2024, 6, 15)
+        university_deadline = datetime(2024, 4, 10).date()
+        safety_deadline = datetime(2024, 6, 15).date()
 
         attempts_count = Attempt.objects.filter(
             user=user, category=category
