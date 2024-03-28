@@ -26,7 +26,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(AnswerOption)
 class AnswerOptionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'text', 'question__id', 'is_correct', 'image_tag')
+    list_display = ('id', 'text', 'question_id', 'is_correct', 'image_tag')
     search_fields = ('text', 'question__title')
     list_filter = ('is_correct', 'question__block')
 
