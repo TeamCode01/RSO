@@ -161,7 +161,9 @@ def submit_answers(request):
 
     Принимаемые данные:
     Функция принимает POST-запрос с JSON телом, содержащим список ответов
-    пользователя. Каждый ответ представлен словарем с двумя ключами:
+    пользователя ("answers"). Также в ключе "category" указывается категория.
+
+     Каждый ответ представлен словарем с двумя ключами:
 
     question_id - идентификатор вопроса (целое число),
     answer_option_id - идентификатор выбранного варианта ответа (целое число).
@@ -178,7 +180,8 @@ def submit_answers(request):
               "answer_option_id": 5
             },
             ...
-        ]
+        ],
+      "category": "university"
     }
     ```
     Ответ функции:
@@ -223,10 +226,20 @@ def submit_answers(request):
     """
     user = request.user
     answers_data = request.data.get('answers', [])
+    category = request.data.get('category', None)
+
+    if category not in ('safety', 'university'):
+        return Response(
+            {
+                "error": "Неверная категория. "
+                         "Выберите university или safety."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     # Получаем последнюю попытку
     latest_attempt = Attempt.objects.filter(
-        user=user
+        user=user, category=category
     ).order_by('-timestamp').first()
     if not latest_attempt:
         return Response(
@@ -278,9 +291,14 @@ def submit_answers(request):
     latest_attempt.score = round(score)
     latest_attempt.save()
 
+    best_score = Attempt.objects.filter(
+        user=user, category=category
+    ).order_by('-score').first().score
+
     return Response(
         {
-            'score': score
+            'score': score,
+            'best_score': best_score
         },
         status=status.HTTP_200_OK
     )
