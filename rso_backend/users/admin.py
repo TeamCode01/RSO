@@ -8,6 +8,7 @@ from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
 from import_export.admin import ImportExportModelAdmin
 from rest_framework.authtoken.models import TokenProxy
 
+from headquarters.models import UserDetachmentPosition
 from users.forms import RSOUserForm
 from users.models import (RSOUser, UserDocuments, UserEducation, UserMedia,
                           UserMemberCertLogs, UserMembershipLogs, UserParent,
@@ -53,6 +54,18 @@ class UserStatementDocumentsInLine(admin.StackedInline):
 
 @admin.register(RSOUser)
 class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
+
+    def detachment_name(self, obj):
+        """
+        Return the name of the detachment the user belongs to.
+        """
+        try:
+            return obj.userdetachmentposition.headquarter.name
+        except UserDetachmentPosition.DoesNotExist:
+            return None
+
+    detachment_name.short_description = 'Отряд'
+
     resource_class = RSOUserResource
     add_fieldsets = (
         (None, {
@@ -91,8 +104,9 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         'membership_fee',
         'is_staff',
         'region',
+        'detachment_name',
         'date_joined',
-        'last_login'
+        'last_login',
     )
     search_fields = (
         'username',
