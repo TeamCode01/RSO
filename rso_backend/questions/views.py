@@ -189,7 +189,7 @@ def submit_answers(request):
     При успешной обработке ответов:
     ```
     {
-        "message": "Ответы успешно отправлены. Получено баллов: X"
+        "score": X
     }
     ```
     Где X - итоговое количество набранных баллов (целое число).
@@ -280,8 +280,7 @@ def submit_answers(request):
 
     return Response(
         {
-            'message': f'Ответы успешно отправлены. '
-                       f'Получено баллов: {score}'
+            'score': score
         },
         status=status.HTTP_200_OK
     )
