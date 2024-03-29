@@ -20,7 +20,8 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition)
+                                 UserRegionalHeadquarterPosition,
+                                 DistrictHeadquarter)
 from users.models import RSOUser
 
 
@@ -616,6 +617,51 @@ def get_detachment_commander_num(user) -> int | None:
     ):
         return None
     return detachment_commander_num
+
+
+def get_regional_hq_commander_num(user) -> int | None:
+    """Получение id регионального штаба, в котором юзер командир."""
+
+    try:
+        reghq_commander_num = RegionalHeadquarter.objects.get(
+            commander=user
+        ).id
+    except (
+        RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
+        RegionalHeadquarter.MultipleObjectsReturned
+    ):
+        return None
+    return reghq_commander_num
+
+
+def get_district_hq_commander_num(user) -> int | None:
+    """Получение id Окружного штаба, в котором юзер командир."""
+
+    try:
+        district_headquarter_commander_num = DistrictHeadquarter.objects.get(
+            commander=user
+        ).id
+    except (
+        DistrictHeadquarter.DoesNotExist, AttributeError, ValueError,
+        DistrictHeadquarter.MultipleObjectsReturned
+    ):
+        return None
+    return district_headquarter_commander_num
+
+
+def get_central_hq_commander_num(user) -> int | None:
+    """Получение id Центрального штаба, в котором юзер командир."""
+
+    try:
+        central_headquarter_commander_num = CentralHeadquarter.objects.get(
+            commander=user
+        ).id
+    except (
+        CentralHeadquarter.DoesNotExist, AttributeError, ValueError,
+        CentralHeadquarter.MultipleObjectsReturned
+    ):
+        return None
+    return central_headquarter_commander_num
 
 
 def get_regional_hq_commander_num(user) -> int | None:

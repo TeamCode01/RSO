@@ -82,9 +82,9 @@ class QuestionsView(APIView):
         safety_deadline = datetime(2024, 6, 15).date()
 
         attempts_count = Attempt.objects.filter(
-            user=user, category=category
+            user=user, category=category, is_valid=True
         ).count()
-        if attempts_count > 3:
+        if attempts_count > 2:
             return Response(
                 {"error": "Превышено макс. число попыток (3)"},
                 status=status.HTTP_400_BAD_REQUEST
@@ -289,10 +289,11 @@ def submit_answers(request):
                 score += scores_per_answer
 
     latest_attempt.score = round(score)
+    latest_attempt.is_valid = True
     latest_attempt.save()
 
     best_score = Attempt.objects.filter(
-        user=user, category=category
+        user=user, category=category, is_valid=True
     ).order_by('-score').first().score
 
     return Response(
@@ -337,7 +338,7 @@ def get_attempts_status(request):
         )
 
     attempts_count = Attempt.objects.filter(
-        user=user, category=category
+        user=user, category=category, is_valid=True
     ).count()
     if attempts_count < 3:
         return Response(
@@ -345,7 +346,7 @@ def get_attempts_status(request):
             status=status.HTTP_200_OK
         )
     best_score = Attempt.objects.filter(
-        user=user, category=category
+        user=user, category=category, is_valid=True
     ).order_by('-score').first().score
     return Response(
         {

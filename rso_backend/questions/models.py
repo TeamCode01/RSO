@@ -72,6 +72,9 @@ class Attempt(models.Model):
         default=0,
         verbose_name='Количество баллов'
     )
+    is_valid = models.BooleanField(
+        default=False, verbose_name='Получены ответы по попытке'
+    )
 
     def __str__(self):
         return (
