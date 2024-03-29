@@ -340,9 +340,13 @@ def get_attempts_status(request):
     attempts_count = Attempt.objects.filter(
         user=user, category=category, is_valid=True
     ).count()
-    best_score = Attempt.objects.filter(
+    best_attempt = Attempt.objects.filter(
         user=user, category=category, is_valid=True
-    ).order_by('-score').first().score
+    ).order_by('-score').first()
+    if best_attempt:
+        best_score = best_attempt.score
+    else:
+        best_score = 0
     if attempts_count < 3:
         return Response(
             {
