@@ -924,17 +924,18 @@ class Q17EventSerializer(serializers.ModelSerializer):
             'id',
             'source_name'
         )
+        read_only_fields = ('id',)
 
 
 class Q17LinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Q17Link
         fields = ('id', 'link')
+        read_only_fields = ('id',)
 
 
 class Q17DetachmentReportSerializer(serializers.ModelSerializer):
 
-    #TODO: вложенные сериализаторы и запись данных в их таблицы
     q17_event = Q17EventSerializer()
     q17_link = Q17LinkSerializer()
 
@@ -948,22 +949,50 @@ class Q17DetachmentReportSerializer(serializers.ModelSerializer):
             'q17_event',
             'q17_link'
         )
-        read_only_fields = ('is_verified', 'detachment', 'competition',)
+        read_only_fields = ('is_verified', 'detachment', 'competition')
 
-    # def create(self, validated_data):
+    def create(self, validated_data):
+        link_data = validated_data.pop('q17_link')
+        event_data = validated_data.pop('q17_event')
 
-    #     link = validated_data.pop('q17_link')
-    #     event = validated_data.pop('q17_event')
-    #     with transaction.atomic():
-    #         report = super().create(validated_data)
-    #         links_serializer = Q17LinkSerializer(
-    #             many=True,
-    #             data=link,
-    #             context={
-    #                 'request': self.context.get('request'),
-    #                 'detachment_report': report???
-    #             }
-    #         )
+        competition_pk = self.context.get('view').kwargs.get('competition_pk')
+        try:
+            competition = Competitions.objects.get(id=competition_pk)
+        except Competitions.DoesNotExist:
+            raise serializers.ValidationError(
+                {'competition': 'Неправильный id конкурса.'}
+            )
+        try:
+            detachment = Detachment.objects.get(
+                commander=self.context.get('request').user
+            )
+        except Detachment.DoesNotExist:
+            raise serializers.ValidationError(
+                {
+                    'detachment': 'Заполнять данные '
+                    'может только командир отряда.'
+                }
+            )
+
+        link_serializer = Q17LinkSerializer(data=link_data)
+        event_serializer = Q17EventSerializer(data=event_data)
+
+        if link_serializer.is_valid() and event_serializer.is_valid():
+            link_instance = link_serializer.save()
+            event_instance = event_serializer.save()
+
+            validated_data['competition'] = competition
+            validated_data['detachment'] = detachment
+            validated_data['q17_link'] = link_instance
+            validated_data['q17_event'] = event_instance
+
+            with transaction.atomic():
+                instance = super().create(validated_data)
+                return instance
+        else:
+            raise serializers.ValidationError(
+                'Ошибка валидации данных для q17_link или q17_event'
+            )
 
 
 class Q18DetachmentReportSerializer(serializers.ModelSerializer):

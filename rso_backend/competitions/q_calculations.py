@@ -1,15 +1,19 @@
+from collections import Counter
+
 from datetime import date
 from django.db.models import Max
 from django.conf import settings
 import logging
-from competitions.models import Q13EventOrganization, Q18Ranking, \
+from competitions.models import Q13EventOrganization, Q17DetachmentReport, Q17Ranking, Q17TandemRanking, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
     Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
     Q5TandemRanking, Q5Ranking, \
     Q5EducatedParticipant, Q5DetachmentReport
+from competitions.utils import assign_ranks, find_second_element_by_first, tandem_or_start, is_main_detachment
 from headquarters.models import UserDetachmentPosition
 from questions.models import Attempt
+
 
 logger = logging.getLogger('tasks')
 
@@ -57,6 +61,86 @@ def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
     if calculations['Волонтерское'] > 14:
         place -= 1
     return place
+
+
+def calculate_q17_place(competition_id):
+
+    LAST_PLACE = 999
+
+    reports_count_dict = Counter(Q17DetachmentReport.objects.filter(
+        competition_id=competition_id,
+        is_verified=True
+    ).all().values_list('detachment_id', flat=True))
+
+    start_list = []
+    tandem_list = []
+    for id, report_count in reports_count_dict.items():
+        is_tandem = tandem_or_start(
+            competition=competition_id,
+            detachment=id,
+            competition_model=CompetitionParticipants
+        )
+        if not is_tandem:
+            start_list.append((id, report_count))
+        if is_tandem:
+            tandem_list.append((id, report_count))
+
+    ranked_start = assign_ranks(start_list)
+    ranked_tandem = assign_ranks(tandem_list)
+
+    Q17Ranking.objects.all().delete()
+    Q17TandemRanking.objects.all().delete()
+
+    for id, place in ranked_start:
+        Q17Ranking.objects.create(
+            competition_id=competition_id,
+            detachment_id=id,
+            place=place
+        )
+    for id, place in ranked_tandem:
+        is_main = is_main_detachment(
+            competition_id=competition_id,
+            detachment_id=id,
+            competition_model=CompetitionParticipants
+        )
+        if is_main:
+            junior_detachment_id = CompetitionParticipants.objects.filter(
+                competition_id=competition_id,
+                detachment_id=id
+            ).first().junior_detachment.id
+            junior_place = find_second_element_by_first(
+                ranked_tandem, junior_detachment_id
+            )
+            if junior_place:
+                tandem_place = round(((junior_place + place) / 2), 2)
+            else:
+                tandem_place = LAST_PLACE
+
+            Q17TandemRanking.objects.get_or_create(
+                competition_id=competition_id,
+                detachment_id=id,
+                junior_detachment_id=junior_detachment_id,
+                place=tandem_place
+            )
+        else:
+            main_detachment_id = CompetitionParticipants.objects.filter(
+                competition_id=competition_id,
+                junior_detachment=id
+            ).first().detachment_id
+
+            junior_place = find_second_element_by_first(
+                ranked_tandem, main_detachment_id
+            )
+            if junior_place:
+                tandem_place = round(((junior_place + place) / 2), 2)
+            else:
+                tandem_place = LAST_PLACE
+            Q17TandemRanking.objects.get_or_create(
+                competition_id=competition_id,
+                junior_detachment_id=id,
+                detachment_id=main_detachment_id,
+                place=tandem_place
+            )
 
 
 def calculate_q18_place(competition_id):

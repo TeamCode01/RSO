@@ -359,6 +359,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'competitions.tasks.calculate_q12_places_task',
         'schedule': timedelta(hours=24)
     },
+    'calculate_q17': {
+        'task': 'competitions.tasks.calculate_q17_places_task',
+        'schedule': timedelta(hours=24)
+    },
     'calculate_q1_score': {
         'task': 'competitions.tasks.calculate_q1_score_task',
         'schedule': timedelta(hours=24)

@@ -35,14 +35,14 @@ from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
     Q13EventOrganization,
-    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q17DetachmentReport, Q19Report, Q1Ranking,
+    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q17DetachmentReport, Q17Link, Q17Ranking, Q19Report, Q1Ranking,
     Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking,
     Q2TandemRanking, Q7Report, Q18DetachmentReport,
     Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking,
     Q19TandemRanking, Q4TandemRanking, Q4Ranking, Q3TandemRanking, Q3Ranking,
     Q5DetachmentReport, Q5TandemRanking, Q5Ranking, Q5EducatedParticipant
 )
-from competitions.q_calculations import calculate_q13_place, \
+from competitions.q_calculations import calculate_q13_place, calculate_q17_place, \
     calculate_q19_place
 from competitions.serializers import (
     CompetitionApplicationsObjectSerializer, CompetitionApplicationsSerializer,
@@ -724,10 +724,10 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
     Пример POST-запроса:
     {
-    "commander_achievement": true,
-    "commissioner_achievement": true,
-    "commander_link": "https://some-link.com",
-    "commissioner_link": "https://some-link.com"
+      "commander_achievement": true,
+      "commissioner_achievement": true,
+      "commander_link": "https://some-link.com",
+      "commissioner_link": "https://some-link.com"
     }
 
     Поля “Региональная школа командного состава пройдена командиром отряда”
@@ -2316,10 +2316,203 @@ class Q13EventOrganizationViewSet(UpdateDestroyViewSet):
             )
         return super().destroy(request, *args, **kwargs)
 
-class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
+
+class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
+    """
+    Пример POST-запроса:
+    {
+      "q17_event": {
+        "source_name": "string2"
+      },
+      "q17_link": {
+        "link": "http://127.0.0.1:8000/swagger/"
+      }
+    }
+
+    Оба поля ввода обязательные. При нажатии на “Добавить источник”
+    подгружается новый блок с полями: “Наименование источника”,
+    “Ссылка на публикацию”. Количество подгружаемых блоков не ограничено.
+
+    Программа должна посчитать количество заполненных блоков.
+    Итоговую цифру сравнить с цифрами из ответов других отрядов,
+    присвоить место. 1 место - самая большая цифра.
+
+    """
 
     serializer_class = Q17DetachmentReportSerializer
-    queryset = Q17DetachmentReport.objects.all()
+
+    def get_queryset(self):
+        return Q17DetachmentReport.objects.filter(
+            competition_id=self.kwargs.get('competition_pk')
+        )
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated(),
+                    IsCommanderDetachmentInParameterOrRegionalCommissioner()]
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(),
+                    IsRegionalCommanderOrAdmin()]
+        if self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(),
+                    IsRegionalCommanderOrAuthor()]
+        return super().get_permissions()
+
+    def get_competitions(self):
+        return get_object_or_404(
+            Competitions, id=self.kwargs.get('competition_pk')
+        )
+
+    def get_detachment(self, obj):
+        return obj.detachment
+
+    def create(self, request, *args, **kwargs):
+
+        competition = get_object_or_404(
+            Competitions, id=self.kwargs.get('competition_pk')
+        )
+        q17_link = request.data.get(
+            'q17_link'
+        ).get('link')
+        if not q17_link:
+            return Response(
+                {'error': 'Не заполнена ссылка.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            detachment = get_object_or_404(
+                Detachment, id=request.user.detachment_commander.id
+            )
+        except Detachment.DoesNotExist:
+            return Response(
+                {'error': 'Заполнять данные может только командир отряда.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        #TODO заменить на фильтрацию с Q ->
+        if not CompetitionParticipants.objects.filter(
+            competition=competition, detachment=detachment
+        ).exists():
+            if not CompetitionParticipants.objects.filter(
+                competition=competition, junior_detachment=detachment
+            ).exists():
+                return Response(
+                    {
+                        'error': 'Отряд не зарегистрирован'
+                        ' как участник конкурса.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        detachment_links = Q17DetachmentReport.objects.filter(
+            detachment=detachment.id
+        ).values_list('q17_link', flat=True)
+        if not len(detachment_links) == 0:
+            for id in detachment_links:
+                link_url = Q17Link.objects.get(id=id).link
+                if q17_link == link_url:
+                    return Response(
+                        {
+                            'error': (
+                                'Отчет с этой ссылкой и отрядом уже существует.'
+                            )
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+        return super().create(request, *args, **kwargs)
+
+    @action(
+            detail=False,
+            methods=['get'],
+            url_path='get-place',
+            serializer_class=None
+    )
+    def get_place(self, request, competition_pk, **kwargs):
+        """Определение места по показателю.
+
+        Возвращается место или статус показателя.
+        Если показатель не был подан ранее, то возвращается код 400.
+        """
+
+        detachment = self.request.user.detachment_commander
+        report = Q17DetachmentReport.objects.filter(
+            detachment=detachment,
+            competition_id=self.kwargs.get('competition_pk')
+        ).first()
+        if not report:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        is_verified = report.is_verified
+        is_tandem = tandem_or_start(
+            competition=report.competition,
+            detachment=report.detachment,
+            competition_model=CompetitionParticipants
+        )
+
+        if not is_verified:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={'detail': 'Показатель в обработке.'}
+            )
+        tandem_ranking = getattr(
+            detachment, 'q17tandemranking_main_detachment'
+        ).filter(competition_id=competition_pk).first()
+        if not tandem_ranking:
+            tandem_ranking = getattr(
+                detachment, 'q17tandemranking_junior_detachment'
+            ).filter(competition_id=competition_pk).first()
+
+        if is_tandem:
+            if tandem_ranking and tandem_ranking.place is not None:
+                return Response(
+                    {'place': tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+        else:
+            ranking = Q17Ranking.objects.filter(
+                detachment=report.detachment
+            ).first()
+            if ranking and ranking.place is not None:
+                return Response(
+                    {'place': ranking.place}, status=status.HTTP_200_OK
+                )
+
+        return Response(
+                status=status.HTTP_404_NOT_FOUND,
+                data={'detail': 'Показатель в обработке.'}
+            )
+
+    @action(
+            detail=True,
+            methods=['post', 'delete'],
+            serializer_class=None,
+    )
+    def verify(self, *args, **kwargs):
+        """Верификация отчета по показателю.
+
+        Доступно только командиру РШ связанного с отрядом.
+        Если отчет уже верифицирован, возвращается 400 Bad Request с описанием
+        ошибки `{"detail": "Данный отчет уже верифицирован"}`.
+        При удалении отчета удаляются записи из таблиц Rankin и TandemRankin.
+        """
+
+        detachment_report = self.get_object()
+
+        if self.request.method == 'DELETE':
+            if detachment_report.is_verified:
+                return Response(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    data={'detail': 'Верифицированный отчет нельзя удалить.'}
+                )
+            detachment_report.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        with transaction.atomic():
+            if detachment_report.is_verified:
+                return Response({
+                    'detail': 'Данный отчет уже верифицирован'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            detachment_report.is_verified = True
+            detachment_report.save()
+            return Response(status=status.HTTP_200_OK)
 
 
 class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):

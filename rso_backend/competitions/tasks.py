@@ -12,12 +12,22 @@ from competitions.models import (
 )
 
 from competitions.q_calculations import (
+    calculate_q17_place,
     calculate_q18_place,
     calculate_place,
     calculate_q1_score, calculate_q3_q4_place, calculate_q5_place
 )
 
 logger = logging.getLogger('tasks')
+
+
+@shared_task
+def calculate_q17_places_task():
+    logger.info('Начинаем считать места по 17 показателю')
+    calculate_q17_place(competition_id=settings.COMPETITION_ID)
+    logger.info(
+        'Посчитали.'
+    )
 
 
 @shared_task

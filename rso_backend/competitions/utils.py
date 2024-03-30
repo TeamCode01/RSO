@@ -112,3 +112,32 @@ def get_place_q2(
     ):
         place = PLACE_SECOND
     return place
+
+
+def is_main_detachment(competition_id, detachment_id, competition_model) -> bool:
+    """Определение типа отряда."""
+    if competition_model.objects.filter(
+            competition=competition_id,
+            detachment=detachment_id
+    ).exists():
+        return True
+    return False
+
+
+def assign_ranks(data_list) -> list:
+    ranked_list = []
+    previous_score = None
+    rank = 0
+    for item in data_list:
+        if item[1] != previous_score:
+            rank += 1
+        ranked_list.append((item[0], rank))
+        previous_score = item[1]
+    return ranked_list
+
+
+def find_second_element_by_first(tuple_list, first_element) -> int | None:
+    for item in tuple_list:
+        if item[0] == first_element:
+            return item[1]
+    return None
