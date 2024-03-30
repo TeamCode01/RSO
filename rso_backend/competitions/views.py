@@ -35,7 +35,7 @@ from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
     Q13EventOrganization,
-    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q17DetachmentReport, Q17Link, Q17Ranking, Q19Report, Q1Ranking,
+    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q16Report, Q17DetachmentReport, Q17Link, Q17Ranking, Q19Report, Q1Ranking,
     Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking,
     Q2TandemRanking, Q7Report, Q18DetachmentReport,
     Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking,
@@ -50,7 +50,7 @@ from competitions.serializers import (
     CompetitionSerializer, CreateQ10Serializer, CreateQ11Serializer,
     CreateQ12Serializer, CreateQ7Serializer, CreateQ8Serializer,
     CreateQ9Serializer, Q10ReportSerializer, Q10Serializer,
-    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer, Q17DetachmentReportSerializer,
+    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer, Q16ReportSerializer, Q17DetachmentReportSerializer,
     Q19DetachmenrtReportSerializer, Q20ReportSerializer,
     Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
     Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
@@ -3224,3 +3224,194 @@ def get_place_q4(request, competition_pk=None):
 
     return Response({'error': 'Рейтинг еще не сформирован'},
                     status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Q16ViewSet(CreateListRetrieveUpdateViewSet):
+    """Вьюсет для показателя 'Активность отряда в социальных сетях.'.
+
+    Доступ:
+        - чтение: Командир отряда из инстанса объекта к которому
+                  нужен доступ, а также комиссары региональных штабов.
+        - чтение(list): только комиссары региональных штабов.
+                        Выводятся заявки только его рег штаба.
+        - изменение: Если заявка не подтверждена - командир отряда из
+                     инстанса объекта который изменяют,
+                     а также комиссары региональных штабов.
+                     Если подтверждена - только комиссар регионального штаба.
+    """
+    queryset = Q16Report.objects.all()
+    serializer_class = Q16ReportSerializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+        IsCommanderDetachmentInParameterOrRegionalCommissioner
+    )
+
+    def get_queryset(self):
+        if self.action == 'list':
+            regional_headquarter = (
+                self.request.user.userregionalheadquarterposition.headquarter
+            )
+            return Q16Report.objects.filter(
+                detachment__regional_headquarter=regional_headquarter,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        if self.action == 'me':
+            return Q16Report.objects.filter(
+                detachment__commander=self.request.user,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        return Q16Report.objects.filter(
+            competition_id=self.kwargs.get('competition_pk')
+        )
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.IsAuthenticated(),
+                    IsCommanderAndCompetitionParticipant()]
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
+        if self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(),
+                    IsRegionalCommissionerOrCommanderDetachmentWithVerif()]
+        return super().get_permissions()
+
+    def get_competitions(self):
+        return get_object_or_404(
+            Competitions, id=self.kwargs.get('competition_pk')
+        )
+
+    def get_detachment(self, obj):
+        return obj.detachment
+
+    @action(detail=False,
+            methods=['get'],
+            url_path='me',
+            permission_classes=(permissions.IsAuthenticated,))
+    def me(self, request, competition_pk, *args, **kwargs):
+        """
+        Action для получения своего отчета по параметру 16
+        для текущего пользователя.
+
+        Доступ: все авторизованные пользователи.
+        Если пользователь не командир отряда, или у его отряда нет
+        поданного отчета - вернется пустой список.
+        """
+        return super().list(request, *args, **kwargs)
+
+    @action(detail=True,
+            methods=['post', 'delete'],
+            url_path='accept',
+            permission_classes=(permissions.IsAuthenticated,
+                                IsRegionalCommissioner,))
+    @swagger_auto_schema(
+        request_body=openapi.Schema(type=openapi.TYPE_OBJECT, properties={},),
+        responses={200: Q16ReportSerializer}
+    )
+    def accept_report(self, request, competition_pk, pk, *args, **kwargs):
+        """
+        Action для верификации отчета рег. комиссаром.
+
+        Принимает пустой POST запрос.
+        Доступ: комиссары региональных штабов.
+        """
+        report = self.get_object()
+        if report.is_verified:
+            return Response({'error': 'Отчет уже подтвержден.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'POST':
+            report.is_verified = True
+            report.save()
+            return Response(Q16ReportSerializer(report).data,
+                            status=status.HTTP_200_OK)
+        report.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False,
+            methods=['get'],
+            url_path='get_place',
+            permission_classes=(permissions.IsAuthenticated,
+                                IsCompetitionParticipantAndCommander))
+    def get_place(self, request, competition_pk, **kwargs):
+        """
+        Action для получения рейтинга по данному показателю.
+
+        Доступ: командиры отрядов, которые участвуют в конкурсе.
+        Если отчета еще не подан, вернется ошибка 404. (данные не отправлены)
+        Если отчет подан, но еще не верифицировн - вернется
+        {"place": "Показатель в обработке"}.
+        Если отчет подан и верифицирован - вернется место в рейтинге:
+        {"place": int}
+        """
+        detachment = self.request.user.detachment_commander
+        report = Q16Report.objects.filter(
+            detachment=detachment,
+            competition_id=competition_pk
+        ).first()
+        if not report:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        ranking = getattr(
+            detachment, 'q16ranking'
+        ).filter(competition_id=competition_pk).first()
+        if ranking:
+            return Response(
+                {"place": ranking.place}, status=status.HTTP_200_OK
+            )
+        tandem_ranking = getattr(
+                    detachment, 'q16tandemranking_main_detachment'
+        ).filter(competition_id=competition_pk).first()
+        if tandem_ranking:
+            return Response(
+                {"place": tandem_ranking.place},
+                status=status.HTTP_200_OK
+            )
+        tandem_ranking = getattr(
+            detachment, 'q16tandemranking_junior_detachment'
+            ).filter(competition_id=competition_pk).first()
+        if tandem_ranking:
+            return Response(
+                {"place": tandem_ranking.place},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            {"place": "Показатель в обработке"},
+            status=status.HTTP_200_OK
+        )
+
+    def create(self, request, competition_pk, *args, **kwargs):
+        """
+        Action для создания отчета по параметру 16
+        для текущего пользователя.
+
+        Доступ: командиры отрядов-участников конкурса.
+        """
+        competition = get_object_or_404(
+            Competitions, id=competition_pk
+        )
+        detachment = get_object_or_404(
+            Detachment, id=self.request.user.detachment_commander.id
+        )
+        serializer = Q16ReportSerializer(data=request.data,
+                                         context={'request': request,
+                                                  'competition': competition,
+                                                  'detachment': detachment})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(competition=competition, detachment=detachment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

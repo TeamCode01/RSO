@@ -14,7 +14,7 @@ from api.views import (AreaViewSet, EducationalInstitutionViewSet,
 from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q17DetachmentReportViewSet,
+    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q17DetachmentReportViewSet, Q16ViewSet,
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
@@ -46,7 +46,7 @@ from users.views import (CustomUserViewSet, ForeignUserDocumentsViewSet,
                          UserProfessionalEducationViewSet, UserRegionViewSet,
                          UsersParentViewSet, UserStatementDocumentsViewSet,
                          apply_for_verification)
-from questions.views import QuestionsView, submit_answers
+from questions.views import QuestionsView, submit_answers, get_attempts_status
 
 app_name = 'api'
 
@@ -164,6 +164,11 @@ router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q20',
     Q20ViewSet,
     basename='q20'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q16',
+    Q16ViewSet,
+    basename='q16'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q18',
@@ -449,5 +454,6 @@ urlpatterns = [
     ),
     path('questions/', QuestionsView.as_view(), name='questions'),
     path('submit_answers/', submit_answers, name='submit-answers'),
+    path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
     path('', include(router.urls)),
 ] + user_nested_urls

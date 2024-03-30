@@ -10,7 +10,7 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from questions.models import Question, Attempt, UserAnswer
+from questions.models import Question, Attempt, UserAnswer, AnswerOption
 from questions.serializers import QuestionSerializer
 import random
 
@@ -82,8 +82,13 @@ class QuestionsView(APIView):
         safety_deadline = datetime(2024, 6, 15).date()
 
         attempts_count = Attempt.objects.filter(
-            user=user, category=category
+            user=user, category=category, is_valid=True
         ).count()
+        if attempts_count > 2:
+            return Response(
+                {"error": "Превышено макс. число попыток (3)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if category == 'university':
             if current_date > university_deadline:
@@ -99,7 +104,7 @@ class QuestionsView(APIView):
                     {"error": "Срок получения вопросов по "
                               "категории 'safety' истек."},
                     status=status.HTTP_400_BAD_REQUEST
-            )
+                )
             questions = self.get_block_questions(5, 15)
         else:
             return Response(
@@ -114,7 +119,7 @@ class QuestionsView(APIView):
         attempt.questions.set(questions)
         attempt.save()
 
-        serializer = QuestionSerializer(questions, many=True)
+        serializer = QuestionSerializer(questions, many=True, context={'request': request})
         return Response(serializer.data)
 
     def get_university_questions_mix(self):
@@ -156,7 +161,9 @@ def submit_answers(request):
 
     Принимаемые данные:
     Функция принимает POST-запрос с JSON телом, содержащим список ответов
-    пользователя. Каждый ответ представлен словарем с двумя ключами:
+    пользователя ("answers"). Также в ключе "category" указывается категория.
+
+     Каждый ответ представлен словарем с двумя ключами:
 
     question_id - идентификатор вопроса (целое число),
     answer_option_id - идентификатор выбранного варианта ответа (целое число).
@@ -173,7 +180,8 @@ def submit_answers(request):
               "answer_option_id": 5
             },
             ...
-        ]
+        ],
+      "category": "university"
     }
     ```
     Ответ функции:
@@ -184,7 +192,7 @@ def submit_answers(request):
     При успешной обработке ответов:
     ```
     {
-        "message": "Ответы успешно отправлены. Получено баллов: X"
+        "score": X
     }
     ```
     Где X - итоговое количество набранных баллов (целое число).
@@ -218,18 +226,25 @@ def submit_answers(request):
     """
     user = request.user
     answers_data = request.data.get('answers', [])
+    category = request.data.get('category', None)
+
+    if category not in ('safety', 'university'):
+        return Response(
+            {
+                "error": "Неверная категория. "
+                         "Выберите university или safety."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     # Получаем последнюю попытку
     latest_attempt = Attempt.objects.filter(
-        user=user
+        user=user, category=category
     ).order_by('-timestamp').first()
     if not latest_attempt:
         return Response(
             {'error': 'Сначала нужны получить вопросы.'}, status=400
         )
-
-    score = 0
-    scores_per_answer = 6.66 if latest_attempt.category == 'safety' else 5
 
     with transaction.atomic():
         # Проверяем, есть ли уже ответы для этой попытки
@@ -239,24 +254,31 @@ def submit_answers(request):
                 status=400
             )
 
+        score = 0
+        scores_per_answer = 6.66 if latest_attempt.category == 'safety' else 5
+
         for answer in answers_data:
             question_id = answer.get('question_id')
             answer_option_id = answer.get('answer_option_id')
 
             # Проверяем, принадлежит ли вопрос к последней попытке
-            if not Question.objects.filter(
-                    id=question_id, attempt=latest_attempt
-            ).exists():
+            if not latest_attempt.questions.filter(id=question_id).exists():
                 return Response(
-                    {'error': 'Вопрос не относится '
-                                'к последней попытке.'},
-                    status=400
+                    {'error': 'Вопрос не относится к последней попытке.'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-            question = get_object_or_404(Question, id=question_id)
-            answer_option = get_object_or_404(
-                question.answer_options, id=answer_option_id
-            )
+            try:
+                question = Question.objects.get(id=question_id)
+                answer_option = question.answer_options.get(id=answer_option_id)
+            except (Question.DoesNotExist, AnswerOption.DoesNotExist):
+                return Response(
+                    {
+                        'error': f'Неверная пара id вопрос-ответ: '
+                                 f'question_id: {question_id}, answer_id: {answer_option_id}.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             UserAnswer.objects.create(
                 attempt=latest_attempt,
@@ -267,12 +289,76 @@ def submit_answers(request):
                 score += scores_per_answer
 
     latest_attempt.score = round(score)
+    latest_attempt.is_valid = True
     latest_attempt.save()
+
+    best_score = Attempt.objects.filter(
+        user=user, category=category, is_valid=True
+    ).order_by('-score').first().score
 
     return Response(
         {
-            'message': f'Ответы успешно отправлены. '
-                    f'Получено баллов: {score}'
+            'score': score,
+            'best_score': best_score
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_attempts_status(request):
+    """
+    Получает статус попыток пользователя по конкретной категории тестирования.
+
+    Эндпоинт принимает GET-запрос и ожидает параметр 'category' в query параметрах запроса.
+    Category может быть либо 'university' и 'safety'. Функция возвращает JSON-ответ,
+    содержащий информацию о статусе попыток пользователя в указанной категории.
+
+    1. Проверяет, что пользователь аутентифицирован.
+    2. Валидирует значение 'category' из query параметров запроса.
+    3. Считает количество попыток пользователя в данной категории.
+    4. Если количество попыток меньше 3, возвращает сообщение о количестве оставшихся попыток.
+    5. Если попытки исчерпаны, определяет лучший результат среди всех попыток и возвращает его.
+
+    Ответы:
+    - HTTP 400 для неверно указанной категории с соответствующим сообщением.
+    - HTTP 200 с сообщением о недостатке попыток, если их менее трех.
+    - HTTP 200 с лучшим результатом, если попытки были сделаны.
+    """
+    user = request.user
+    category = request.query_params.get('category', None)
+    if category not in ('safety', 'university'):
+        return Response(
+            {
+                "error": "Неверная категория. "
+                         "Выберите university или safety."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    attempts_count = Attempt.objects.filter(
+        user=user, category=category, is_valid=True
+    ).count()
+    best_attempt = Attempt.objects.filter(
+        user=user, category=category, is_valid=True
+    ).order_by('-score').first()
+    if best_attempt:
+        best_score = best_attempt.score
+    else:
+        best_score = 0
+    if attempts_count < 3:
+        return Response(
+            {
+                "left_attempts": 3-attempts_count,
+                'best_score': best_score
+            },
+            status=status.HTTP_200_OK
+        )
+
+    return Response(
+        {
+            'best_score': best_score
         },
         status=status.HTTP_200_OK
     )

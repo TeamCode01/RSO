@@ -8,7 +8,7 @@ from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions,
     LinksQ7, LinksQ8, Q10Report, Q11Report, Q12Report,
-    Q13EventOrganization, Q13DetachmentReport, Q17DetachmentReport, Q17Event, Q17Link,
+    Q13EventOrganization, Q13DetachmentReport, Q16Report, Q17DetachmentReport, Q17Event, Q17Link,
     Q18DetachmentReport, Q19Report, Q20Report, Q2DetachmentReport, Q7Report,
     Q8Report, Q9Report, Q5EducatedParticipant, Q5DetachmentReport)
 from headquarters.models import Detachment
@@ -1102,5 +1102,50 @@ class Q20ReportSerializer(serializers.ModelSerializer):
             ).exists():
                 raise serializers.ValidationError(
                     {'error': 'Отчет по данному показателю уже существует'}
+                )
+        return attrs
+
+
+
+
+
+
+
+class Q16ReportSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Q16Report
+        fields = (
+            'id',
+            'detachment',
+            'competition',
+            'is_verified',
+            'link_vk_commander',
+            'link_vk_commissar',
+            'vk_rso_number_subscribers',
+            'link_vk_detachment',
+            'vk_detachment_number_subscribers',
+        )
+        read_only_fields = (
+            'is_verified',
+            'detachment',
+            'competition'
+        )
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if request.method == 'POST':
+            competition = self.context.get('competition')
+            detachment = self.context.get('detachment')
+            if Q16Report.objects.filter(
+                    competition=competition, detachment=detachment
+            ).exists():
+                raise serializers.ValidationError(
+                    {'error': 'Отчет по данному показателю уже существует'}
+                )
+            if attrs.get('vk_rso_number_subscribers') > detachment.members.count() + 1:
+                raise serializers.ValidationError(
+                    {'vk_rso_number_subscribers':
+                     'Количество подписчиков больше, чем участников отряда'}
                 )
         return attrs

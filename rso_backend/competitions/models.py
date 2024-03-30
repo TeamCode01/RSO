@@ -1259,16 +1259,6 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
     Отчет по показателю 'Соответствие требованиями положения
     символики и атрибутике форменной одежды и символики отрядов'
     Поля: отряд, конкурс, флаг верификации и необязательные поля ссылок.
-    Очки - 1.
-
-    # TODO: Примечание ниже для понятности. Временно.
-    # Очки считаются после сохранения верифицированной заявки (сигналом
-    после верификации), если заявка не верифицирована - очков ноль.
-    # Далее при подсчете они будут в конце рейтинга. Т.е. они будут в рейтинге,
-    но на последних местах среди нулей.
-    # То есть не отправить хуже, чем не верифицировать, те, кто не
-    отправил будут делить самое последнее место на всех при подсчете в
-    финальной таске.
     """
     link_emblem = models.URLField(
         verbose_name='Ссылка на фото эмблемы',
@@ -1314,3 +1304,81 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
     class Meta:
         verbose_name = 'Отчет по 20 показателю'
         verbose_name_plural = 'Отчеты по 20 показателю'
+
+
+
+
+
+
+
+
+
+class Q16TandemRanking(QBaseTandemRanking):
+    """
+    Рейтинг для тандема-участников.
+    Создается и заполняется переодической таской.
+    """
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 16'
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 16 показателю'
+        verbose_name_plural = 'Тандем-места по 16 показателю'
+
+
+class Q16Ranking(QBaseRanking):
+    """
+    Рейтинг для старт-участников.
+    Создается и заполняется переодической таской.
+    """
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 16'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 16 показателю'
+        verbose_name_plural = 'Места по 16 показателю'
+
+
+class Q16Report(QBaseReport, QBaseReportIsVerified):
+    """
+    Отчет по показателю 'Активность отряда в социальных сетях'.
+    Поля: отряд, конкурс, флаг верификации и текущие поля.
+    """
+    link_vk_commander = models.URLField(
+        verbose_name='Ссылка на vk командира',
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    link_vk_commissar = models.URLField(
+        verbose_name='Ссылка на vk комиссара',
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    vk_rso_number_subscribers = models.PositiveSmallIntegerField(
+        verbose_name='Количество участников подписанных на страницу RSO в vk',
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+    )
+    link_vk_detachment = models.URLField(
+        verbose_name='Ссылка на vk отряда',
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    vk_detachment_number_subscribers = models.PositiveSmallIntegerField(
+        verbose_name='Количество подписок на страницу отряда в vk',
+        default=0,
+    )
+    score = models.PositiveSmallIntegerField(
+        verbose_name='Очки',
+        default=0  # Чем больше, тем выше рейтинг
+    )
+    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        verbose_name = 'Отчет по 16 показателю'
+        verbose_name_plural = 'Отчеты по 16 показателю'

@@ -16,7 +16,9 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        is_safe_method,
                        get_detachment_commander_num, is_regional_commander,
                        get_regional_hq_commander_num, is_safe_method,
-                       is_stuff_or_central_commander)
+                       is_stuff_or_central_commander,
+                       get_district_hq_commander_num,
+                       get_central_hq_commander_num)
 from competitions.models import CompetitionParticipants, Q13DetachmentReport, Q5DetachmentReport
 from competitions.utils import is_competition_participant
 from events.models import Event, EventOrganizationData
@@ -976,7 +978,7 @@ class IsRegionalCommanderOrAuthor(permissions.BasePermission):
         )
 
 
-class IsDetComOrRegComAndRegionMatches(permissions.BasePermission):
+class PersonalDataPermission(permissions.BasePermission):
     """
     Проверяет, является ли пользователь командиром
     отряда или регионального штаба и совпадает ли регион
@@ -990,18 +992,14 @@ class IsDetComOrRegComAndRegionMatches(permissions.BasePermission):
         request_user = request.user
         request_user_reghq = get_regional_hq_commander_num(request_user)
         request_user_detcom = get_detachment_commander_num(request_user)
+        request_user_distrcom = get_district_hq_commander_num(request_user)
+        request_user_centralcom = get_central_hq_commander_num(request_user)
+        if request_user_centralcom:
+            return True
         obj_user_id = obj.id
         obj_region_code = obj.region.code
         if request_user.id == obj_user_id:
             return True
-        try:
-            UserVerificationRequest.objects.get(
-                user=obj_user_id
-            )
-        except (
-            UserVerificationRequest.DoesNotExist, AttributeError, ValueError
-        ):
-            return False
         try:
             obj_detachment = UserDetachmentPosition.objects.filter(
                 user=obj_user_id
@@ -1024,6 +1022,21 @@ class IsDetComOrRegComAndRegionMatches(permissions.BasePermission):
                 (request_user_region_code is not None)
                 and (obj_region_code is not None)
                 and (request_user_region_code == obj_region_code)
+            ):
+                return True
+        if request_user_distrcom:
+            try:
+                obj_district = UserDistrictHeadquarterPosition.objects.filter(
+                    user=obj_user_id
+                ).first().headquarter.id
+            except (
+                    UserDetachmentPosition.DoesNotExist, AttributeError,
+                    ValueError,
+            ):
+                obj_district = None
+            if (
+                (obj_district is not None)
+                and (obj_district == request_user_distrcom)
             ):
                 return True
         return False

@@ -319,8 +319,8 @@ CELERY_BEAT_SCHEDULE = {
             month_of_year=10,
         )
     },
-    'calculate_q18': {
-        'task': 'competitions.tasks.calculate_q18_places_task',
+    'calculate_q1_score': {
+        'task': 'competitions.tasks.calculate_q1_score_task',
         'schedule': timedelta(hours=24)
     },
     'calculate_q1': {
@@ -363,8 +363,16 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'competitions.tasks.calculate_q17_places_task',
         'schedule': timedelta(hours=24)
     },
-    'calculate_q1_score': {
-        'task': 'competitions.tasks.calculate_q1_score_task',
+    'calculate_q16_score': {
+        'task': 'competitions.tasks.calculate_q16_score_task',
+        'schedule': timedelta(seconds=24)
+    },
+    'calculate_q16': {
+        'task': 'competitions.tasks.calculate_q16_places_task',
+        'schedule': timedelta(seconds=24)
+    },
+    'calculate_q18': {
+        'task': 'competitions.tasks.calculate_q18_places_task',
         'schedule': timedelta(hours=24)
     },
     'calculate_q19': {
