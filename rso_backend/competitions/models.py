@@ -453,8 +453,8 @@ class Q5TandemRanking(QBaseTandemRanking):
     )
 
     class Meta:
-        verbose_name = 'Тандем-места по 13 показателю'
-        verbose_name_plural = 'Тандем-места по 13 показателю'
+        verbose_name = 'Тандем-места по 5 показателю'
+        verbose_name_plural = 'Тандем-места по 5 показателю'
 
 
 class Q5Ranking(QBaseRanking):
@@ -465,8 +465,8 @@ class Q5Ranking(QBaseRanking):
     )
 
     class Meta:
-        verbose_name = 'Места по 13 показателю'
-        verbose_name_plural = 'Места по 13 показателю'
+        verbose_name = 'Места по 5 показателю'
+        verbose_name_plural = 'Места по 5 показателю'
 
 
 class Q5DetachmentReport(QBaseReport):
@@ -487,6 +487,61 @@ class Q5EducatedParticipant(models.Model):
         blank=True
     )
     is_verified = models.BooleanField(default=False)
+
+
+class Q6TandemRanking(QBaseTandemRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 6'
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 6 показателю'
+        verbose_name_plural = 'Тандем-места по 6 показателю'
+
+
+class Q6Ranking(QBaseRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 6'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 6 показателю'
+        verbose_name_plural = 'Места по 6 показателю'
+
+
+class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
+    first_may_demonstration = models.BooleanField(default=False)
+    first_may_demonstration_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+    patriotic_action = models.BooleanField(default=False)
+    patriotic_action_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+    safety_work_week = models.BooleanField(default=False)
+    safety_work_week_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+    commander_commissioner_school = models.BooleanField(default=False)
+    commander_commissioner_school_participants = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+    working_semester_opening = models.BooleanField(default=False)
+    working_semester_opening_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+    spartakiad = models.BooleanField(default=False)
+    spartakiad_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+    professional_competition = models.BooleanField(default=False)
+    professional_competition_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 6 показателю'
+        verbose_name_plural = 'Отчеты по 6 показателю'
 
 
 class Q7TandemRanking(QBaseTandemRanking):

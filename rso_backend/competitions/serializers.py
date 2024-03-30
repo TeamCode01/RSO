@@ -12,7 +12,7 @@ from competitions.models import (
     Q17Event, Q17Link, Q14LaborProject, Q14Ranking, Q14TandemRanking,
     Q18DetachmentReport, Q19Report, Q20Report, Q2DetachmentReport, Q7Report,
     Q8Report, Q9Report, Q5EducatedParticipant, Q5DetachmentReport,
-    Q14DetachmentReport)
+    Q14DetachmentReport, Q6DetachmentReport)
 from headquarters.models import Detachment
 from headquarters.serializers import BaseShortUnitSerializer
 
@@ -878,6 +878,33 @@ class Q5DetachmentReportSerializer(serializers.ModelSerializer):
             detachment_report=instance
         )
         return Q5EducatedParticipantSerializer(educated_participants, many=True).data
+
+
+class Q6DetachmentReportSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Q6DetachmentReport
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'first_may_demonstration',
+            'first_may_demonstration_participants',
+            'patriotic_action',
+            'patriotic_action_participants',
+            'safety_work_week',
+            'safety_work_week_participants',
+            'commander_commissioner_school',
+            'commander_commissioner_school_participants',
+            'working_semester_opening',
+            'working_semester_opening_participants',
+            'spartakiad',
+            'spartakiad_participants',
+            'professional_competition',
+            'professional_competition_participants',
+            'is_verified',
+        )
+        read_only_fields = ('competition', 'detachment', 'is_verified')
 
 
 class Q13EventOrganizationSerializer(serializers.ModelSerializer):
