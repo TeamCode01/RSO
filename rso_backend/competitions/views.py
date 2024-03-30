@@ -2424,7 +2424,8 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
             detail=False,
             methods=['get'],
             url_path='get-place',
-            serializer_class=None
+            serializer_class=None,
+            permission_classes=[permissions.IsAuthenticated,]
     )
     def get_place(self, request, competition_pk, **kwargs):
         """Определение места по показателю.
