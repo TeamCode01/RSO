@@ -150,11 +150,11 @@ router.register(
     Q12ViewSet,
     basename='q12'
 )
-# router.register(
-#     r'competitions/(?P<competition_pk>\d+)/reports/q17',
-#     Q17DetachmentReportViewSet,
-#     basename='q17_report'
-# )
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q17',
+    Q17DetachmentReportViewSet,
+    basename='q17_report'
+)
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q19',
     Q19DetachmentReportViewset,
