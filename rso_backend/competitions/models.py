@@ -1116,12 +1116,6 @@ class Q17DetachmentReport(QBaseReport, QBaseReportIsVerified):
     class Meta:
         verbose_name = 'Отчет по 17 показателю'
         verbose_name_plural = 'Отчеты по 17 показателю'
-        constraints = [
-            models.UniqueConstraint(
-                fields=('q17_link', 'detachment'),
-                name='unique_link_detachment_%(class)s'
-            )
-        ]
 
 
 class Q17Ranking(QBaseRanking):
