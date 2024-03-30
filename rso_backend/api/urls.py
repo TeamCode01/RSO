@@ -14,7 +14,7 @@ from api.views import (AreaViewSet, EducationalInstitutionViewSet,
 from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q17DetachmentReportViewSet, Q16ViewSet,
+    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q17DetachmentReportViewSet, Q16ViewSet,
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
@@ -149,6 +149,11 @@ router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q12',
     Q12ViewSet,
     basename='q12'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q14',
+    Q14DetachmentReportViewSet,
+    basename='q14_report'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q17',

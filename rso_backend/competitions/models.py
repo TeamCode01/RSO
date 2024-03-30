@@ -1089,6 +1089,59 @@ class Q13EventOrganization(models.Model):
     is_verified = models.BooleanField(default=False)
 
 
+class Q14LaborProject(models.Model):
+    lab_project_name = models.CharField(
+        max_length=150,
+    )
+    amount = models.PositiveSmallIntegerField(
+        verbose_name=(
+            'Количество бойцов, отработавших в летнем трудовом семестре'
+        ),
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+    )
+
+# class Q14LaborProjectParticipants(models.Model):
+#     amount = models.PositiveSmallIntegerField(
+#         verbose_name=(
+#             'Количество бойцов, отработавших в летнем трудовом семестре'
+#         ),
+#         validators=[MinValueValidator(1), MaxValueValidator(1000)],
+#     )
+
+
+class Q14DetachmentReport(QBaseReport, QBaseReportIsVerified):
+    q14_labor_project = models.ForeignKey(
+        'competitions.Q14LaborProject',
+        on_delete=models.CASCADE,
+        related_name='q14_labor_project',
+        verbose_name='Участники трудового проекта'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 14 показателю'
+        verbose_name_plural = 'Отчеты по 14 показателю'
+
+
+class Q14Ranking(QBaseRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 14 показателю'
+        verbose_name_plural = 'Места по 14 показателю'
+
+
+class Q14TandemRanking(QBaseTandemRanking):
+    place = models.FloatField(
+        verbose_name='Итоговое место по показателю в тандеме',
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 14 показателю'
+        verbose_name_plural = 'Тандем-места по 14 показателю'
+
+
 class Q17Link(Links):
     pass
 
