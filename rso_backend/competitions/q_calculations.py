@@ -2,7 +2,7 @@ from datetime import date
 from django.db.models import Max
 from django.conf import settings
 import logging
-from competitions.models import Q13EventOrganization, Q18Ranking, \
+from competitions.models import Q13EventOrganization, Q16Report, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
     Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
@@ -174,6 +174,62 @@ def calculate_detachment_members(entry, partner_entry=None):
         partner_entry.save()
 
 
+def calculate_score_q16(competition_id):
+    """
+    Таска для расчета очков Q16.
+
+    Для celery-beat, считает вплоть до 15 октября 2024 года.
+    :param competition_id: id конкурса
+    """
+    today = date.today()
+    cutoff_date = date(2024, 10, 15)
+
+    if today >= cutoff_date:
+        return
+
+    reports = Q16Report.objects.filter(
+        competition_id=competition_id,
+        is_verified=True
+    )
+
+    for report in reports:
+        # если дата меньше 15 июня, или отчет сдан после 15 июня,
+        # пересчитываем score. После 15 июня пересчитывать смысла нет
+        # так как количество участников будет тем же
+        logger.info(f'Расчет очков для отчета {report}')
+        if today <= date(2024, 6, 15) or report.score == 0:
+            report.june_15_detachment_members = report.detachment.members.count() + 1
+            score = 0
+            # первый блок
+            if report.link_vk_commander and report.link_vk_commissar:
+                score += 3
+            # второй блок
+            points_vk = (report.vk_rso_number_subscribers
+                         / report.june_15_detachment_members
+                         * 100)
+            if points_vk >= 76:
+                score += 3
+            elif points_vk >= 51:
+                score += 2
+            elif points_vk == 50:
+                score += 1
+            # третий блок
+            if report.link_vk_detachment:
+                score += 3
+            # четвертый блок
+            if report.vk_detachment_number_subscribers:
+                if report.vk_detachment_number_subscribers >= 300:
+                    score += 3
+                elif report.vk_detachment_number_subscribers >= 200:
+                    score += 2
+                elif report.vk_detachment_number_subscribers >= 100:
+                    score += 1
+
+            report.score = score
+            logger.info(f'Очки {score} для отчета {report}')
+            report.save()
+
+
 def calculate_place(
         competition_id, model_report, model_ranking, model_tandem_ranking,
         reverse=True
@@ -248,8 +304,6 @@ def calculate_place(
                                    else (0 if reverse else len(tandem_ids))))),
         reverse=reverse
     )
-
-    logger.info(f'Отчеты: {sorted_by_score_tandem_reports}')
 
     to_create_entries = []
     for index, report in enumerate(sorted_by_score_tandem_reports):

@@ -5,7 +5,7 @@ from django.conf import settings
 from competitions.models import (
     Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking,
     Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
-    Q12TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking, Q20Ranking,
+    Q12TandemRanking, Q16Ranking, Q16Report, Q16TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking, Q20Ranking,
     Q20Report, Q20TandemRanking, Q7Ranking, Q7Report, Q7TandemRanking,
     Q8Ranking, Q8Report, Q8TandemRanking, Q9Ranking, Q9Report,
     Q9TandemRanking
@@ -14,7 +14,8 @@ from competitions.models import (
 from competitions.q_calculations import (
     calculate_q18_place,
     calculate_place,
-    calculate_q1_score, calculate_q3_q4_place, calculate_q5_place
+    calculate_q1_score, calculate_q3_q4_place, calculate_q5_place,
+    calculate_score_q16
 )
 
 logger = logging.getLogger('tasks')
@@ -122,3 +123,17 @@ def calculate_q3_q4_places_task():
 def calculate_q5_places_task():
     """Считает места по 3-4 показателям."""
     calculate_q5_place(competition_id=settings.COMPETITION_ID)
+
+
+@shared_task
+def calculate_q16_score_task():
+    calculate_score_q16(competition_id=settings.COMPETITION_ID)
+
+
+@shared_task
+def calculate_q16_places_task():
+    """Считает места по 16 показателю."""
+    calculate_place(competition_id=settings.COMPETITION_ID,
+                    model_report=Q16Report,
+                    model_ranking=Q16Ranking,
+                    model_tandem_ranking=Q16TandemRanking)

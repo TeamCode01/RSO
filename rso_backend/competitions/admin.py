@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from competitions.models import (
     Q10, Q9, CompetitionApplications, CompetitionParticipants, Competitions,
-    Q7, Q10Ranking, Q10Report, Q10TandemRanking, Q18Ranking, Q19Ranking,
+    Q7, Q10Ranking, Q10Report, Q10TandemRanking, Q16Ranking, Q16Report, Q16TandemRanking, Q18Ranking, Q19Ranking,
     Q19Report, Q19TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking,
     Q20Ranking, Q20Report, Q20TandemRanking, Q2DetachmentReport, Q2Ranking,
     Q7Ranking, Q7Report, Q13TandemRanking, Q18TandemRanking, Q13Ranking,
@@ -118,3 +118,13 @@ class Q20ReportAdmin(admin.ModelAdmin):
 
 admin.site.register(Q20TandemRanking)
 admin.site.register(Q20Ranking)
+
+
+
+@admin.register(Q16Report)
+class Q16ReportAdmin(admin.ModelAdmin):
+    list_display = ('id', 'detachment', 'is_verified')
+
+
+admin.site.register(Q16TandemRanking)
+admin.site.register(Q16Ranking)

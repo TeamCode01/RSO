@@ -3,7 +3,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from competitions.models import (
-    Q10, Q11, Q12, Q7, Q8, Q9, Q20Report
+    Q10, Q11, Q12, Q7, Q8, Q9, Q16Report, Q20Report
 )
 
 
