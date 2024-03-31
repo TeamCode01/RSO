@@ -64,7 +64,7 @@ def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
 
 
 def calculate_q14_place(competition_id):
-
+    print('зашли в калькулятор q14')
     Q14TandemRanking.objects.all().delete()
     Q14Ranking.objects.all().delete()
 
