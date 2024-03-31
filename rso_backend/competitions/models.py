@@ -1204,10 +1204,11 @@ class Q15Rank(QBaseRanking):
 
 
 class Q15DetachmentReport(QBaseReport):
+    score = models.PositiveSmallIntegerField(default=0, verbose_name='Очки')
 
     class Meta:
-        verbose_name = 'Отчет по 5 показателю'
-        verbose_name_plural = 'Отчеты по 5 показателю'
+        verbose_name = 'Отчет по 15 показателю'
+        verbose_name_plural = 'Отчеты по 15 показателю'
 
 
 class Q15GrantWinner(models.Model):

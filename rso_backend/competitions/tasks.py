@@ -16,7 +16,7 @@ from competitions.q_calculations import (
     calculate_q18_place,
     calculate_place,
     calculate_q1_score, calculate_q3_q4_place, calculate_q5_place,
-    calculate_score_q16
+    calculate_score_q16, calculate_q15_place
 )
 
 logger = logging.getLogger('tasks')
@@ -147,3 +147,9 @@ def calculate_q16_places_task():
                     model_report=Q16Report,
                     model_ranking=Q16Ranking,
                     model_tandem_ranking=Q16TandemRanking)
+
+
+@shared_task
+def calculate_q15_places_task():
+    """Считает места по 15 показателю."""
+    calculate_q15_place(competition_id=settings.COMPETITION_ID)

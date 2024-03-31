@@ -1,15 +1,17 @@
 from collections import Counter
+from typing import List
 
 from datetime import date
 from django.db.models import Max
 from django.conf import settings
 import logging
-from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q16Report, Q17DetachmentReport, Q17Ranking, Q17TandemRanking, Q18Ranking, \
+from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q16Report, \
+    Q17DetachmentReport, Q17Ranking, Q17TandemRanking, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
     Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
     Q5TandemRanking, Q5Ranking, \
-    Q5EducatedParticipant, Q5DetachmentReport
+    Q5EducatedParticipant, Q5DetachmentReport, Q15TandemRank, Q15Rank, Q15DetachmentReport, Q15GrantWinner
 from competitions.utils import assign_ranks, find_second_element_by_first, tandem_or_start, is_main_detachment
 from headquarters.models import UserDetachmentPosition
 from questions.models import Attempt
@@ -272,7 +274,7 @@ def calculate_q18_place(competition_id):
 
     logger.info(f'Сегодняшняя дата: {today}')
 
-    verified_entries = Q18DetachmentReport.objects.filter(is_verified=True)
+    verified_entries = Q18DetachmentReport.objects.filter(is_verified=True, competition_id=competition_id)
     logger.info(
         f'Получили верифицированные отчеты: {verified_entries.count()}')
 
@@ -293,6 +295,7 @@ def calculate_q18_place(competition_id):
             if participants_entry:
                 partner_entry = Q18DetachmentReport.objects.filter(
                     detachment=participants_entry.detachment,
+                    competition_id=competition_id,
                     is_verified=True
                 ).first()
                 if partner_entry:
@@ -309,6 +312,7 @@ def calculate_q18_place(competition_id):
                 category = tandem_entries
                 entry = Q18DetachmentReport.objects.filter(
                     detachment=participants_entry.junior_detachment,
+                    competition_id=competition_id,
                     is_verified=True
                 ).first()
                 if entry:
@@ -324,17 +328,18 @@ def calculate_q18_place(competition_id):
             )
             calculate_detachment_members(entry, partner_entry)
 
-        entry.score = entry.participants_number / entry.june_15_detachment_members
-        entry.save()
+        if entry:
+            entry.score = entry.participants_number / entry.june_15_detachment_members
+            entry.save()
 
-        if partner_entry:
+        if partner_entry and entry:
             partner_entry.score = partner_entry.participants_number / partner_entry.june_15_detachment_members
             partner_entry.save()
             tuple_to_append = (
                 entry, partner_entry, entry.score + partner_entry.score)
             if tuple_to_append not in category:
                 category.append(tuple_to_append)
-        else:
+        elif entry and not partner_entry:
             category.append((entry, entry.score))
 
     if solo_entries:
@@ -694,6 +699,138 @@ def calculate_q3_q4_place(competition_id: int):
                 place=final_place
             )
 
+
+def calculate_q15_place(competition_id: int):
+    """
+    За указание 1 регионального конкурса начисляется 10 баллов.
+
+    За указание 1 окружного конкурса начисляется 30 баллов.
+
+    За указание 1 всероссийского конкурса начисляется 50 баллов.
+
+    Далее баллы по всем указанным конкурсам суммируются, итоговая цифра сравнивается с цифрами из ответов других участников и определяется место. 1 место - самая большая цифра.
+    """
+    logger.info(
+        'Начинаем считать Q15'
+    )
+    Q15TandemRank.objects.all().delete()
+    Q15Rank.objects.all().delete()
+    verified_entries = Q15DetachmentReport.objects.filter()
+    logger.info(
+        f'Получили отчеты: {verified_entries.count()}'
+    )
+
+    solo_entries = []
+    tandem_entries = []
+
+    for entry in verified_entries:
+        participants_entry = CompetitionParticipants.objects.filter(
+            junior_detachment=entry.detachment
+        ).first()
+        partner_entry = None
+        if participants_entry and not participants_entry.detachment:
+            category = solo_entries
+            logger.info(f'Отчет {entry} - соло участник')
+        elif participants_entry:
+            logger.info(f'Отчет {entry} - тандем участник')
+            category = tandem_entries
+            if participants_entry:
+                partner_entry = Q15DetachmentReport.objects.filter(
+                    detachment=participants_entry.detachment,
+                    competition_id=competition_id,
+                ).first()
+                if partner_entry:
+                    logger.info(
+                        f'Для отчета {entry} найден '
+                        f'партнерский отчет: {partner_entry}'
+                    )
+        elif not participants_entry:
+            participants_entry = CompetitionParticipants.objects.filter(
+                detachment=entry.detachment
+            ).first()
+            partner_entry = entry
+            if participants_entry:
+                category = tandem_entries
+                entry = Q15DetachmentReport.objects.filter(
+                    detachment=participants_entry.junior_detachment,
+                    competition_id=competition_id,
+                ).first()
+                if entry:
+                    logger.info(
+                        f'Для отчета {partner_entry} найден '
+                        f'партнерский отчет: {entry}'
+                    )
+
+        if entry:
+            logger.info('Отчет старшего отряда:')
+            entry_grant_data = Q15GrantWinner.objects.filter(detachment_report=entry)
+            entry.score = calculate_q15_score(entry_grant_data)
+            entry.save()
+
+        if partner_entry and entry:
+            partner_entry_grant_data = Q15GrantWinner.objects.filter(detachment_report=partner_entry)
+            partner_entry.score = calculate_q15_score(partner_entry_grant_data)
+            partner_entry.save()
+            logger.info(f'Сумма тандема для отчетов {partner_entry} и {entry} - {entry.score + partner_entry.score}')
+            tuple_to_append = (
+                entry, partner_entry, entry.score + partner_entry.score
+            )
+            if tuple_to_append not in category:
+                category.append(tuple_to_append)
+        elif entry and not partner_entry:
+            logger.info(f'Сумма соло отчета {entry} - {entry.score}')
+            category.append((entry, entry.score))
+
+    if solo_entries:
+        logger.info(
+            'Есть записи для соло-участников. Удаляем записи из таблицы Q15 Ranking'
+        )
+        Q15Rank.objects.all().delete()
+        solo_entries.sort(key=lambda entry: entry[1])
+        place = len(solo_entries)
+        for entry in solo_entries:
+            logger.info(
+                f'Отчет {entry[0]} занимает {place} место'
+            )
+            Q15Rank.objects.create(
+                detachment=entry[0].detachment,
+                place=place,
+                competition_id=competition_id
+            )
+            place -= 1
+
+    if tandem_entries:
+        logger.info(
+            'Есть записи для тандем-участников. Удаляем записи из таблицы Q15 TandemRanking'
+        )
+        Q15TandemRank.objects.all().delete()
+        tandem_entries.sort(key=lambda entry: entry[2])
+        place = len(tandem_entries)
+        for entry in tandem_entries:
+            logger.info(
+                f'Отчеты {entry[0]} и {entry[1]} занимают {place} место'
+            )
+            Q15TandemRank.objects.create(
+                junior_detachment=entry[0].detachment,
+                detachment=entry[1].detachment,
+                place=place,
+                competition_id=competition_id
+            )
+            place -= 1
+
+
+def calculate_q15_score(grant_winners_data: List[Q15GrantWinner]):
+    status_scores_mapping = {
+        'Региональный': 10,
+        'Окружной': 30,
+        'Всероссийский': 50
+    }
+    score = 0
+    if grant_winners_data:
+        for grant_data in grant_winners_data:
+            print(f'Grant_data status: {grant_data.status}, need to add score: {status_scores_mapping.get(grant_data.status, 0)}')
+            score += status_scores_mapping.get(grant_data.status, 0)
+    return score
 
 def calculate_q5_place(competition_id: int):
     """

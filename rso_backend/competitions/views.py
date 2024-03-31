@@ -2152,7 +2152,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 event_serializer = Q15GrantWinnerSerializer(
                     data=grant_data)
                 if event_serializer.is_valid(raise_exception=True):
-                    Q15GrantWinnerSerializer.objects.create(
+                    Q15GrantWinner.objects.create(
                         **event_serializer.validated_data,
                         detachment_report=report
                     )
@@ -2233,7 +2233,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ]
     )
     def verify_raw(self, request, competition_pk=None, pk=None,
-                     participant_id=None):
+                     grant_id=None):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
@@ -2245,8 +2245,8 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
                           'верифицировать отчеты по данному показателю'
             }, status=status.HTTP_403_FORBIDDEN)
         raw = get_object_or_404(
-            Q5EducatedParticipant,
-            pk=participant_id,
+            Q15GrantWinner,
+            pk=grant_id,
             detachment_report=report
         )
         if raw.is_verified:

@@ -7,7 +7,9 @@ from competitions.models import (
     Q20Ranking, Q20Report, Q20TandemRanking, Q2DetachmentReport, Q2Ranking,
     Q7Ranking, Q7Report, Q13TandemRanking, Q18TandemRanking, Q13Ranking,
     Q7TandemRanking, Q9Ranking, Q9Report, Q9TandemRanking, Q2TandemRanking,
-    Q17Ranking, Q17TandemRanking
+    Q17Ranking, Q17TandemRanking, Q5Ranking, Q5TandemRanking, Q15Rank, Q15TandemRank,
+    Q5DetachmentReport, Q15DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking,
+    Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking
 )
 
 admin.site.register(Q2DetachmentReport)
@@ -32,6 +34,56 @@ class Q2RankingAdmin(QBaseRankingAdmin):
 
 @admin.register(Q2TandemRanking)
 class Q2TandemRankingAdmin(QBaseTandemRankingAdmin):
+    pass
+
+
+@admin.register(Q3Ranking)
+class Q3RankingAdmin(QBaseRankingAdmin):
+    pass
+
+
+@admin.register(Q3TandemRanking)
+class Q3TandemRankingAdmin(QBaseTandemRankingAdmin):
+    pass
+
+
+@admin.register(Q4Ranking)
+class Q4RankingAdmin(QBaseRankingAdmin):
+    pass
+
+
+@admin.register(Q4TandemRanking)
+class Q4TandemRankingAdmin(QBaseTandemRankingAdmin):
+    pass
+
+
+@admin.register(Q5Ranking)
+class Q5RankingAdmin(QBaseRankingAdmin):
+    pass
+
+
+@admin.register(Q5TandemRanking)
+class Q5TandemRankingAdmin(QBaseTandemRankingAdmin):
+    pass
+
+
+@admin.register(Q6Ranking)
+class Q6RankingAdmin(QBaseRankingAdmin):
+    pass
+
+
+@admin.register(Q6TandemRanking)
+class Q6TandemRankingAdmin(QBaseTandemRankingAdmin):
+    pass
+
+
+@admin.register(Q15Rank)
+class Q15RankingAdmin(QBaseRankingAdmin):
+    pass
+
+
+@admin.register(Q15TandemRank)
+class Q15TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
