@@ -490,7 +490,7 @@ class Q5EducatedParticipant(models.Model):
 
 
 class Q6TandemRanking(QBaseTandemRanking):
-    place = models.PositiveSmallIntegerField(
+    place = models.FloatField(
         verbose_name='Итоговое место по показателю 6'
     )
 
@@ -500,7 +500,7 @@ class Q6TandemRanking(QBaseTandemRanking):
 
 
 class Q6Ranking(QBaseRanking):
-    place = models.PositiveSmallIntegerField(
+    place = models.FloatField(
         verbose_name='Итоговое место по показателю 6'
     )
 
