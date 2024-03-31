@@ -27,7 +27,7 @@ from api.permissions import (
     IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
     IsRegionalCommissionerOrCommanderDetachmentWithVerif,
-    IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor
+    IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor, IsQ15DetachmentReportAuthor
 )
 from api.utils import get_detachment_start, get_detachment_tandem
 from competitions.models import (
@@ -41,7 +41,8 @@ from competitions.models import (
     Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking,
     Q19TandemRanking, Q4TandemRanking, Q4Ranking, Q3TandemRanking, Q3Ranking,
     Q5DetachmentReport, Q5TandemRanking, Q5Ranking, Q5EducatedParticipant,
-    Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking
+    Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking, Q15DetachmentReport,
+    Q15TandemRank, Q15Rank, Q15GrantWinner
 )
 from competitions.q_calculations import (calculate_q13_place, calculate_q19_place)
 from competitions.serializers import (
@@ -57,7 +58,8 @@ from competitions.serializers import (
     Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
     ShortDetachmentCompetitionSerializer, Q13EventOrganizationSerializer,
     Q13DetachmentReportSerializer, Q18DetachmentReportSerializer,
-    Q5EducatedParticipantSerializer, Q5DetachmentReportSerializer, Q6DetachmentReportSerializer
+    Q5EducatedParticipantSerializer, Q5DetachmentReportSerializer, Q6DetachmentReportSerializer,
+    Q15DetachmentReportSerializer, Q15GrantWinnerSerializer
 )
 from competitions.utils import get_place_q2, tandem_or_start
 # сигналы ниже не удалять, иначе сломается
@@ -2054,6 +2056,239 @@ class Q5EducatedParticipantViewSet(UpdateDestroyViewSet):
     def get_queryset(self):
         report_pk = self.kwargs.get('report_pk')
         return Q5EducatedParticipant.objects.filter(
+            detachment_report_id=report_pk
+        )
+
+    def update(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
+class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
+    """Показатель 15.
+
+    Доступ:
+        - GET: Всем пользователям;
+        - POST: Командирам отрядов, принимающих участие в конкурсе;
+        - VERIFY-EVENT (POST/DELETE): Комиссарам РШ подвластных отрядов;
+        - GET-PLACE (GET): Всем пользователям
+
+    Note:
+        - 404 возвращается в случае, если не найден объект конкурса или отряд,
+          в котором юзер является командиром
+    ```
+    """
+
+    serializer_class = Q15DetachmentReportSerializer
+    permission_classes = (
+        permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
+    )
+
+    def get_queryset(self):
+        if self.action == 'me':
+            return self.serializer_class.Meta.model.objects.filter(
+                detachment__commander=self.request.user,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        return self.serializer_class.Meta.model.objects.filter(
+            competition_id=self.kwargs.get('competition_pk')
+        )
+
+    @action(detail=False,
+            methods=['get'],
+            url_path='me',
+            permission_classes=(permissions.IsAuthenticated,))
+    def me(self, request, competition_pk, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        competition = get_object_or_404(
+            Competitions, id=self.kwargs.get('competition_pk')
+        )
+        detachment = get_object_or_404(
+            Detachment, id=self.request.user.detachment_commander.id
+        )
+        grants_data = request.data.get('grants_data', [])
+
+        if not grants_data:
+            return Response(
+                {
+                    'non_field_errors': 'grants_data '
+                                        'должно быть заполнено'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        with transaction.atomic():
+            report, created = Q15DetachmentReport.objects.get_or_create(
+                competition_id=competition.id,
+                detachment_id=detachment.id
+            )
+
+            for grant_data in grants_data:
+                event_serializer = Q15GrantWinnerSerializer(
+                    data=grant_data)
+                if event_serializer.is_valid(raise_exception=True):
+                    Q15GrantWinnerSerializer.objects.create(
+                        **event_serializer.validated_data,
+                        detachment_report=report
+                    )
+                else:
+                    return Response(event_serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(
+                self.get_serializer(report).data,
+                status=(
+                    status.HTTP_201_CREATED if created else status.HTTP_200_OK
+                )
+            )
+
+    def perform_create(self, serializer):
+        competition = get_object_or_404(
+            Competitions, id=self.kwargs.get('competition_pk')
+        )
+        detachment = get_object_or_404(
+            Detachment, id=self.request.user.detachment_commander.id
+        )
+        serializer.save(competition=competition, detachment=detachment)
+
+    def get_competitions(self):
+        return get_object_or_404(
+            Competitions, id=self.kwargs.get('competition_pk')
+        )
+
+    def get_detachment(self, obj):
+        return obj.detachment
+
+    @action(detail=False, methods=['get'], url_path='get-place', permission_classes=(IsCompetitionParticipantAndCommander,))
+    def get_place(self, request, **kwargs):
+        detachment = self.request.user.detachment_commander
+        competition_id = self.kwargs.get('competition_pk')
+        report = Q15DetachmentReport.objects.filter(
+            detachment=detachment,
+            competition_id=competition_id
+        ).first()
+        if not report:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        tandem_ranking = Q15TandemRank.objects.filter(
+            detachment=report.detachment,
+            competition_id=competition_id
+        ).first()
+        if not tandem_ranking:
+            tandem_ranking = Q15Rank.objects.filter(
+                junior_detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+
+        if tandem_ranking and tandem_ranking.place is not None:
+            return Response(
+                {"place": tandem_ranking.place},
+                status=status.HTTP_200_OK
+            )
+
+        ranking = Q15Rank.objects.filter(
+            detachment=report.detachment,
+            competition_id=competition_id
+        ).first()
+        if ranking and ranking.place is not None:
+            return Response(
+                {"place": ranking.place}, status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {"place": "Показатель в обработке"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        url_path='verify-raw/(?P<grant_id>\d+)',
+        permission_classes=[
+            permissions.IsAuthenticated
+        ]
+    )
+    def verify_raw(self, request, competition_pk=None, pk=None,
+                     participant_id=None):
+        """
+        Верифицирует конкретное мероприятие по его ID.
+        """
+        report = self.get_object()
+        detachment = report.detachment
+        if detachment.regional_headquarter.commander != request.user:
+            return Response({
+                'detail': 'Только командир РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        raw = get_object_or_404(
+            Q5EducatedParticipant,
+            pk=participant_id,
+            detachment_report=report
+        )
+        if raw.is_verified:
+            return Response({
+                'detail': 'Данный отчет уже верифицирован'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'POST':
+            raw.is_verified = True
+            raw.save()
+            return Response(
+                {"status": "Данные по организации "
+                           "мероприятия верифицированы"},
+                status=status.HTTP_200_OK
+            )
+        raw.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class Q15GrantDataViewSet(UpdateDestroyViewSet):
+    """
+    Обеспечивает возможность редактирования и
+    удаления объектов Q15GrantData.
+
+    - `PUT/PATCH`: Обновляет объект Q15, если
+                   он не был верифицирован.
+                   Ограничено для объектов, принадлежащих отчету подразделения
+                   пользователя (где является командиром).
+
+    - `DELETE`: Удаляет объект Q15,
+                если он не был верифицирован.
+                Ограничено для объектов, принадлежащих отчету
+                подразделения пользователя (где является командиром).
+
+    Примечание: Операции обновления и удаления доступны только
+                если `is_verified` объекта равно `False`
+                и если подразделение пользователя (где является командиром)
+                соответствует подразделению в отчете.
+    """
+
+    serializer_class = Q15GrantWinnerSerializer
+    permission_classes = (IsQ15DetachmentReportAuthor,)
+
+    def get_queryset(self):
+        report_pk = self.kwargs.get('report_pk')
+        return Q15GrantWinner.objects.filter(
             detachment_report_id=report_pk
         )
 

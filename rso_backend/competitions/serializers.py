@@ -12,7 +12,7 @@ from competitions.models import (
     Q17Event, Q17Link, Q14LaborProject, Q14Ranking, Q14TandemRanking,
     Q18DetachmentReport, Q19Report, Q20Report, Q2DetachmentReport, Q7Report,
     Q8Report, Q9Report, Q5EducatedParticipant, Q5DetachmentReport,
-    Q14DetachmentReport, Q6DetachmentReport)
+    Q14DetachmentReport, Q6DetachmentReport, Q15GrantWinner, Q15DetachmentReport)
 from headquarters.models import Detachment
 from headquarters.serializers import BaseShortUnitSerializer
 
@@ -880,6 +880,47 @@ class Q5DetachmentReportSerializer(serializers.ModelSerializer):
         return Q5EducatedParticipantSerializer(educated_participants, many=True).data
 
 
+class Q15GrantWinnerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Q15GrantWinner
+        fields = (
+            'id',
+            'detachment_report',
+            'name',
+            'status',
+            'competition_link',
+            'prove_link',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified', 'detachment_report')
+
+
+class Q15DetachmentReportSerializer(serializers.ModelSerializer):
+    grants_data = serializers.ListField(
+        child=Q15GrantWinnerSerializer(),
+        write_only=True
+    )
+    won_grants = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Q15DetachmentReport
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'grants_data',
+            'won_grants',
+        )
+        read_only_fields = ('competition', 'detachment')
+
+    @staticmethod
+    def get_won_grants(instance):
+        won_grants = Q15GrantWinner.objects.filter(
+            detachment_report=instance
+        )
+        return Q15GrantWinnerSerializer(won_grants, many=True).data
+
+
 class Q6DetachmentReportSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -893,15 +934,11 @@ class Q6DetachmentReportSerializer(serializers.ModelSerializer):
             'patriotic_action',
             'patriotic_action_participants',
             'safety_work_week',
-            'safety_work_week_participants',
             'commander_commissioner_school',
-            'commander_commissioner_school_participants',
             'working_semester_opening',
             'working_semester_opening_participants',
             'spartakiad',
-            'spartakiad_participants',
             'professional_competition',
-            'professional_competition_participants',
             'is_verified',
         )
         read_only_fields = ('competition', 'detachment', 'is_verified')
