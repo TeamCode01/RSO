@@ -1155,14 +1155,6 @@ class Q14LaborProject(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(1000)],
     )
 
-# class Q14LaborProjectParticipants(models.Model):
-#     amount = models.PositiveSmallIntegerField(
-#         verbose_name=(
-#             'Количество бойцов, отработавших в летнем трудовом семестре'
-#         ),
-#         validators=[MinValueValidator(1), MaxValueValidator(1000)],
-#     )
-
 
 class Q14DetachmentReport(QBaseReport, QBaseReportIsVerified):
     q14_labor_project = models.ForeignKey(
@@ -1171,6 +1163,9 @@ class Q14DetachmentReport(QBaseReport, QBaseReportIsVerified):
         related_name='q14_labor_project',
         verbose_name='Участники трудового проекта'
     )
+    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+    score = models.FloatField(verbose_name='Очки', default=1000)
+
 
     class Meta:
         verbose_name = 'Отчет по 14 показателю'

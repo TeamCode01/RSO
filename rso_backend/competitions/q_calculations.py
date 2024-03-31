@@ -4,7 +4,7 @@ from datetime import date
 from django.db.models import Max
 from django.conf import settings
 import logging
-from competitions.models import Q13EventOrganization, Q16Report, Q17DetachmentReport, Q17Ranking, Q17TandemRanking, Q18Ranking, \
+from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q16Report, Q17DetachmentReport, Q17Ranking, Q17TandemRanking, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
     Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
@@ -61,6 +61,109 @@ def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
     if calculations['Волонтерское'] > 14:
         place -= 1
     return place
+
+
+def calculate_q14_place(competition_id):
+
+    Q14TandemRanking.objects.all().delete()
+    Q14Ranking.objects.all().delete()
+
+    today = date.today()
+    cutoff_date = date(2024, 6, 15)
+
+    logger.info(f'Сегодняшняя дата: {cutoff_date}')
+
+    verified_entries = Q14DetachmentReport.objects.filter(is_verified=True)
+    logger.info(
+        f'Получили верифицированные отчеты: {verified_entries.count()}')
+
+    start_list = []
+    tandem_list = []
+    tandem_participants_list = []
+    for entry in verified_entries:
+        if today <= cutoff_date:
+            logger.info(
+                f'Сегодняшняя дата {today} меньше '
+                f'cutoff date: {cutoff_date}. '
+                f'Обновляем кол-во участников.'
+            )
+            is_tandem = tandem_or_start(
+                competition=competition_id,
+                detachment=entry.detachment.id,
+                competition_model=CompetitionParticipants
+            )
+            if not is_tandem:
+                start_list += entry
+                calculate_detachment_members(
+                    entry=entry,
+                    partner_entry=None
+                )
+            if is_tandem:
+                tandem_list += entry
+                is_main = is_main_detachment(
+                    competition_id=competition_id,
+                    detachment_id=entry.detachment.id,
+                    competition_model=CompetitionParticipants
+
+                )
+                if is_main:
+                    junior_detachment = CompetitionParticipants.objects.filter(
+                        competition_id=competition_id,
+                        detachment_id=entry.detachment.id
+                    ).first().junior_detachment
+                    calculate_detachment_members(
+                        entry=entry,
+                        partner_entry=junior_detachment
+                    )
+                    tandem_participants_list += (entry.id, junior_detachment.id)
+                if not is_main:
+                    main_detachment = CompetitionParticipants.objects.filter(
+                        competition_id=competition_id,
+                        junior_detachment=entry.detachment.id
+                    ).first().detachment
+                    calculate_detachment_members(
+                        entry=entry,
+                        partner_entry=main_detachment
+                    )
+                    tandem_participants_list += (main_detachment.id, entry.id)
+                tandem_participants = set(tandem_participants_list)
+        entry.score = (
+            entry.q14_labor_project.amount
+            / entry.june_15_detachment_members
+        )
+        entry.save()
+    data_list = []
+    for entry in start_list:
+        data_list += [(entry.detachment_id, entry.score)]
+    ranked_start = assign_ranks(data_list)
+    for item in ranked_start:
+        Q14Ranking.objects.create(
+            competition_id=competition_id,
+            detachment_id=item[0],
+            place=item[1]
+        )
+    data_list.clear()
+    for entry in tandem_list:
+        data_list += [(entry.detachment_id, entry.score)]
+    ranked_tandem = assign_ranks(data_list)
+    for item in ranked_tandem:
+        for partnership in tandem_participants:
+            if item[0] == partnership[0]:
+                Q14TandemRanking.objects.get_or_create(
+                    competition_id=competition_id,
+                    detachment_id=partnership[0],
+                    junior_detachment_id=partnership[1],
+                    place=item[1]
+                )
+            if item[0] == partnership[1]:
+                Q14TandemRanking.objects.get_or_create(
+                    competition_id=competition_id,
+                    detachment_id=partnership[0],
+                    junior_detachment_id=partnership[1],
+                    place=item[1]
+                )
+
+
 
 
 def calculate_q17_place(competition_id):

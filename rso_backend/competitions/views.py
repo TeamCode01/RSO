@@ -723,6 +723,9 @@ class CompetitionJuniorDetachmentAutoComplete(
 class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     """
+    Прохождение Командиром и Комиссаром студенческого отряда региональной
+    школы командного состава.
+
     Пример POST-запроса:
     {
       "commander_achievement": true,
@@ -2476,6 +2479,9 @@ class Q13EventOrganizationViewSet(UpdateDestroyViewSet):
 
 class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
+    Отношение количества бойцов, отработавших в летнем трудовом семестре
+    к общему числу членов отряда.
+
     Пример POST-запроса:
     {
       "q14_labor_project": {
@@ -2589,6 +2595,9 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
 class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
+    Количество упоминаний в СМИ о прошедших творческих, добровольческих
+    и патриотических мероприятиях отряда.
+
     Пример POST-запроса:
     {
       "q17_event": {
