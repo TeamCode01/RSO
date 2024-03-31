@@ -64,14 +64,14 @@ def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
 
 
 def calculate_q14_place(competition_id):
-    print('зашли в калькулятор q14')
+
     Q14TandemRanking.objects.all().delete()
     Q14Ranking.objects.all().delete()
 
     today = date.today()
     cutoff_date = date(2024, 6, 15)
 
-    logger.info(f'Сегодняшняя дата: {cutoff_date}')
+    logger.info(f'Сегодняшняя дата: {today}')
 
     verified_entries = Q14DetachmentReport.objects.filter(is_verified=True)
     logger.info(
@@ -93,13 +93,13 @@ def calculate_q14_place(competition_id):
                 competition_model=CompetitionParticipants
             )
             if not is_tandem:
-                start_list += entry
+                start_list.append(entry)
                 calculate_detachment_members(
                     entry=entry,
                     partner_entry=None
                 )
             if is_tandem:
-                tandem_list += entry
+                tandem_list.append(entry)
                 is_main = is_main_detachment(
                     competition_id=competition_id,
                     detachment_id=entry.detachment.id,
@@ -111,22 +111,41 @@ def calculate_q14_place(competition_id):
                         competition_id=competition_id,
                         detachment_id=entry.detachment.id
                     ).first().junior_detachment
+                    tandem_participants_list.append((entry.id, junior_detachment.id))
+                    try:
+                        partner_entry = Q14DetachmentReport.objects.filter(
+                            competition_id=competition_id,
+                            detachment_id=junior_detachment.id
+                        ).first()
+
+                    except Q14DetachmentReport.DoesNotExist:
+                        partner_entry = None
                     calculate_detachment_members(
                         entry=entry,
-                        partner_entry=junior_detachment
+                        partner_entry=partner_entry
                     )
-                    tandem_participants_list += (entry.id, junior_detachment.id)
+                    
                 if not is_main:
                     main_detachment = CompetitionParticipants.objects.filter(
                         competition_id=competition_id,
                         junior_detachment=entry.detachment.id
                     ).first().detachment
+                    try:
+                        partner_entry = Q14DetachmentReport.objects.filter(
+                            competition_id=competition_id,
+                            detachment_id=main_detachment.id
+                        ).first()
+
+                    except Q14DetachmentReport.DoesNotExist:
+                        partner_entry = None
                     calculate_detachment_members(
                         entry=entry,
-                        partner_entry=main_detachment
+                        partner_entry=partner_entry
                     )
-                    tandem_participants_list += (main_detachment.id, entry.id)
+                    tandem_participants_list.append((main_detachment.id, entry.id))
+                print(tandem_participants_list)
                 tandem_participants = set(tandem_participants_list)
+                print(tandem_participants, 'tandem_participants')
         entry.score = (
             entry.q14_labor_project.amount
             / entry.june_15_detachment_members
@@ -148,6 +167,7 @@ def calculate_q14_place(competition_id):
     ranked_tandem = assign_ranks(data_list)
     for item in ranked_tandem:
         for partnership in tandem_participants:
+            print(partnership, 'pertnership')
             if item[0] == partnership[0]:
                 Q14TandemRanking.objects.get_or_create(
                     competition_id=competition_id,
@@ -250,7 +270,7 @@ def calculate_q18_place(competition_id):
     today = date.today()
     cutoff_date = date(2024, 6, 15)
 
-    logger.info(f'Сегодняшняя дата: {cutoff_date}')
+    logger.info(f'Сегодняшняя дата: {today}')
 
     verified_entries = Q18DetachmentReport.objects.filter(is_verified=True)
     logger.info(
