@@ -377,13 +377,13 @@ CELERY_BEAT_SCHEDULE = {
     },
     'calculate_q18': {
         'task': 'competitions.tasks.calculate_q18_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': timedelta(seconds=28)
     },
     'calculate_q19': {
         'task': 'competitions.tasks.calculate_q19',
         'schedule': timedelta(hours=30)
     },
-    'calculate_q20_': {
+    'calculate_q20': {
         'task': 'competitions.tasks.calculate_q20_places_task',
         'schedule': timedelta(hours=24)
     },
