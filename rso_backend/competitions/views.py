@@ -3510,24 +3510,6 @@ def get_place_q4(request, competition_pk=None):
                     status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Q16ViewSet(CreateListRetrieveUpdateViewSet):
     """Вьюсет для показателя 'Активность отряда в социальных сетях.'.
 

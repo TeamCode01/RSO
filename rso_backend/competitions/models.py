@@ -519,25 +519,13 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         validators=[MinValueValidator(1), MaxValueValidator(1000)]
     )
     safety_work_week = models.BooleanField(default=False)
-    safety_work_week_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
-    )
     commander_commissioner_school = models.BooleanField(default=False)
-    commander_commissioner_school_participants = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
-    )
     working_semester_opening = models.BooleanField(default=False)
     working_semester_opening_participants = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(1000)]
     )
     spartakiad = models.BooleanField(default=False)
-    spartakiad_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
-    )
     professional_competition = models.BooleanField(default=False)
-    professional_competition_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
-    )
 
     class Meta:
         verbose_name = 'Отчет по 6 показателю'
