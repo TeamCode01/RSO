@@ -526,6 +526,9 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
     )
     spartakiad = models.BooleanField(default=False)
     professional_competition = models.BooleanField(default=False)
+    april_1_detachment_members = models.PositiveSmallIntegerField(
+        default=1,
+    )
 
     class Meta:
         verbose_name = 'Отчет по 6 показателю'
@@ -1178,6 +1181,59 @@ class Q14TandemRanking(QBaseTandemRanking):
     class Meta:
         verbose_name = 'Тандем-место по 14 показателю'
         verbose_name_plural = 'Тандем-места по 14 показателю'
+
+
+class Q15TandemRank(QBaseTandemRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 15'
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 15 показателю'
+        verbose_name_plural = 'Тандем-места по 15 показателю'
+
+
+class Q15Rank(QBaseRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 15'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 15 показателю'
+        verbose_name_plural = 'Места по 15 показателю'
+
+
+class Q15DetachmentReport(QBaseReport):
+
+    class Meta:
+        verbose_name = 'Отчет по 5 показателю'
+        verbose_name_plural = 'Отчеты по 5 показателю'
+
+
+class Q15GrantWinner(models.Model):
+    class CompetitionStatus(models.TextChoices):
+        REGIONAL = 'Региональный', 'Региональный'
+        DISTRICT = 'Окружной', 'Окружной',
+        ALL_RUSSIAN = 'Всероссийский', 'Всероссийский'
+
+    detachment_report = models.ForeignKey(
+        'Q15DetachmentReport', on_delete=models.CASCADE, verbose_name='Отчет'
+    )
+    name = models.TextField(
+        verbose_name='Полное наименование грантового проекта',
+    )
+    status = models.CharField(
+        max_length=25, choices=CompetitionStatus.choices, verbose_name='Статус конкурса'
+    )
+    competition_link = models.URLField(
+        verbose_name='Ссылка на конкурс',
+        max_length=300,
+    )
+    prove_link = models.URLField(
+        verbose_name='Ссылка на новостной источник с упоминанием победы',
+        max_length=300,
+    )
+    is_verified = models.BooleanField(default=False)
 
 
 class Q17Link(Links):

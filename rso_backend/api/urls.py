@@ -22,7 +22,7 @@ from competitions.views import (
     Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
-    Q6DetachmentReportViewSet
+    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -201,6 +201,16 @@ router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/participants',
     Q5EducatedParticipantViewSet,
     basename='q5educatedparticipant'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q15',
+    Q15DetachmentReportViewSet,
+    basename='q15'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q15/(?P<report_pk>\d+)/grants',
+    Q15DetachmentReportViewSet,
+    basename='q15grants'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q6',
