@@ -3457,7 +3457,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
 
     @action(detail=False,
             methods=['get'],
-            url_path='get_place',
+            url_path='get-place',
             permission_classes=(permissions.IsAuthenticated,
                                 IsCompetitionParticipantAndCommander))
     def get_place(self, request, competition_pk, **kwargs):
@@ -3631,7 +3631,7 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
 
     @action(detail=False,
             methods=['get'],
-            url_path='get_place',
+            url_path='get-place',
             permission_classes=(permissions.IsAuthenticated,
                                 IsCompetitionParticipantAndCommander))
     def get_place(self, request, competition_pk, **kwargs):
