@@ -1915,24 +1915,28 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         context = super().get_serializer_context()
         competition_id = self.kwargs.get('competition_pk')
+        competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
         try:
-            detachment_id = self.request.user.detachment_commander.id
+            detachment_id = request.user.detachment_commander.id
         except Detachment.DoesNotExist:
-            detachment_id = None
-        context['competition'] = get_object_or_404(
-            Competitions, id=competition_id
+            return Response({"detail": "У пользователя нет командируемого отряда."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        report, created = Q6DetachmentReport.objects.get_or_create(
+            competition=competition,
+            detachment_id=detachment_id,
+            defaults=request.data
         )
-        context['detachment'] = get_object_or_404(
-            Detachment, id=detachment_id
-        )
-        serializer = self.get_serializer(
-            data=request.data, context=context
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED
-        )
+
+        # Если отчет уже существовал, обновляем его данными из запроса
+        if not created:
+            for field, value in request.data.items():
+                setattr(report, field, value)
+            report.save()
+
+        # Сериализуем и возвращаем обновленный или созданный отчет
+        serializer = self.get_serializer(report)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     def get_queryset(self):
         competition_id = self.kwargs.get('competition_pk')
