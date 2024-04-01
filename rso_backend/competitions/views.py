@@ -27,7 +27,8 @@ from api.permissions import (
     IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
     IsRegionalCommissionerOrCommanderDetachmentWithVerif,
-    IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor, IsQ15DetachmentReportAuthor
+    IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
+    IsQ15DetachmentReportAuthor
 )
 from api.utils import get_detachment_start, get_detachment_tandem
 from competitions.models import (
@@ -41,25 +42,28 @@ from competitions.models import (
     Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking,
     Q19TandemRanking, Q4TandemRanking, Q4Ranking, Q3TandemRanking, Q3Ranking,
     Q5DetachmentReport, Q5TandemRanking, Q5Ranking, Q5EducatedParticipant,
-    Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking, Q15DetachmentReport,
-    Q15TandemRank, Q15Rank, Q15GrantWinner
+    Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking,
+    Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
+    Q15DetachmentReport,
 )
-from competitions.q_calculations import (calculate_q13_place, calculate_q14_place, calculate_q19_place)
+from competitions.q_calculations import (calculate_q13_place,
+                                         calculate_q19_place)
 from competitions.serializers import (
     CompetitionApplicationsObjectSerializer, CompetitionApplicationsSerializer,
     CompetitionParticipantsObjectSerializer, CompetitionParticipantsSerializer,
     CompetitionSerializer, CreateQ10Serializer, CreateQ11Serializer,
     CreateQ12Serializer, CreateQ7Serializer, CreateQ8Serializer,
     CreateQ9Serializer, Q10ReportSerializer, Q10Serializer,
-    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer, Q14DetachmentReportSerializer,
+    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer,
     Q16ReportSerializer, Q17DetachmentReportSerializer,
     Q19DetachmenrtReportSerializer, Q20ReportSerializer,
     Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
     Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
     ShortDetachmentCompetitionSerializer, Q13EventOrganizationSerializer,
     Q13DetachmentReportSerializer, Q18DetachmentReportSerializer,
-    Q5EducatedParticipantSerializer, Q5DetachmentReportSerializer, Q6DetachmentReportSerializer,
-    Q15DetachmentReportSerializer, Q15GrantWinnerSerializer
+    Q5EducatedParticipantSerializer, Q5DetachmentReportSerializer,
+    Q15DetachmentReportSerializer, Q15GrantWinnerSerializer,
+    Q14DetachmentReportSerializer, Q6DetachmentReportSerializer,
 )
 from competitions.utils import get_place_q2, tandem_or_start
 # сигналы ниже не удалять, иначе сломается
@@ -2775,7 +2779,6 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
-        calculate_q14_place(competition.id)
         q14_amount = request.data.get(
             'q14_labor_project'
         ).get('amount')

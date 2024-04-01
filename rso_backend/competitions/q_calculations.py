@@ -74,6 +74,13 @@ def calculate_q14_place(competition_id):
     cutoff_date = date(2024, 6, 15)
 
     logger.info(f'Сегодняшняя дата: {today}')
+    check_date = today <= cutoff_date
+    if check_date:
+        logger.info(
+            f'Сегодняшняя дата {today} меньше '
+            f'cutoff date: {cutoff_date}. '
+            f'Обновляем кол-во участников.'
+        )
 
     verified_entries = Q14DetachmentReport.objects.filter(is_verified=True)
     logger.info(
@@ -83,12 +90,7 @@ def calculate_q14_place(competition_id):
     tandem_list = []
     tandem_participants_list = []
     for entry in verified_entries:
-        if today <= cutoff_date:
-            logger.info(
-                f'Сегодняшняя дата {today} меньше '
-                f'cutoff date: {cutoff_date}. '
-                f'Обновляем кол-во участников.'
-            )
+        if check_date:
             is_tandem = tandem_or_start(
                 competition=competition_id,
                 detachment=entry.detachment.id,
@@ -113,7 +115,9 @@ def calculate_q14_place(competition_id):
                         competition_id=competition_id,
                         detachment_id=entry.detachment.id
                     ).first().junior_detachment
-                    tandem_participants_list.append((entry.id, junior_detachment.id))
+                    tandem_participants_list.append((
+                        entry.detachment.id, junior_detachment.id
+                    ))
                     try:
                         partner_entry = Q14DetachmentReport.objects.filter(
                             competition_id=competition_id,
@@ -126,7 +130,7 @@ def calculate_q14_place(competition_id):
                         entry=entry,
                         partner_entry=partner_entry
                     )
-                    
+
                 if not is_main:
                     main_detachment = CompetitionParticipants.objects.filter(
                         competition_id=competition_id,
@@ -144,18 +148,26 @@ def calculate_q14_place(competition_id):
                         entry=entry,
                         partner_entry=partner_entry
                     )
-                    tandem_participants_list.append((main_detachment.id, entry.id))
-                print(tandem_participants_list)
+                    tandem_participants_list.append((
+                        main_detachment.id, entry.detachment.id
+                    ))
                 tandem_participants = set(tandem_participants_list)
-                print(tandem_participants, 'tandem_participants')
         entry.score = (
             entry.q14_labor_project.amount
             / entry.june_15_detachment_members
         )
         entry.save()
     data_list = []
+    data_dict = {}
     for entry in start_list:
-        data_list += [(entry.detachment_id, entry.score)]
+        if entry.detachment.id not in data_dict:
+            data_dict[entry.detachment.id] = entry.score
+        else:
+            score = data_dict[entry.detachment.id] + entry.score
+            data_dict[entry.detachment.id] = score
+            score = 0
+    for id, score in data_dict.items():
+        data_list += [(id, score)]
     ranked_start = assign_ranks(data_list)
     for item in ranked_start:
         Q14Ranking.objects.create(
@@ -164,12 +176,24 @@ def calculate_q14_place(competition_id):
             place=item[1]
         )
     data_list.clear()
+    data_dict.clear()
     for entry in tandem_list:
-        data_list += [(entry.detachment_id, entry.score)]
+        if entry.detachment.id not in data_dict:
+            data_dict[entry.detachment.id] = entry.score
+        else:
+            score = data_dict[entry.detachment.id] + entry.score
+            data_dict[entry.detachment.id] = score
+            score = 0
+    for item in tandem_participants:
+        score_main = data_dict.pop(item[0], 0)
+        score_junior = data_dict.pop(item[1], 0)
+        result = score_main + score_junior
+        data_dict[item[0]] = result
+    for id, score in data_dict.items():
+        data_list += [(id, score)]
     ranked_tandem = assign_ranks(data_list)
     for item in ranked_tandem:
         for partnership in tandem_participants:
-            print(partnership, 'pertnership')
             if item[0] == partnership[0]:
                 Q14TandemRanking.objects.get_or_create(
                     competition_id=competition_id,
@@ -177,15 +201,6 @@ def calculate_q14_place(competition_id):
                     junior_detachment_id=partnership[1],
                     place=item[1]
                 )
-            if item[0] == partnership[1]:
-                Q14TandemRanking.objects.get_or_create(
-                    competition_id=competition_id,
-                    detachment_id=partnership[0],
-                    junior_detachment_id=partnership[1],
-                    place=item[1]
-                )
-
-
 
 
 def calculate_q17_place(competition_id):

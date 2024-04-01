@@ -114,7 +114,9 @@ def get_place_q2(
     return place
 
 
-def is_main_detachment(competition_id, detachment_id, competition_model) -> bool:
+def is_main_detachment(
+        competition_id, detachment_id, competition_model
+) -> bool:
     """Определение типа отряда."""
     if competition_model.objects.filter(
             competition=competition_id,
@@ -124,19 +126,45 @@ def is_main_detachment(competition_id, detachment_id, competition_model) -> bool
     return False
 
 
-def assign_ranks(data_list) -> list:
-    ranked_list = []
+def assign_ranks(scores) -> list:
+    """Функция формирования списка мест.
+
+    На вход список кортежей (ID, score).
+    На выход список кортежей (ID, rank).
+    """
+
+    # Сначала сортируем список кортежей по второму элементу (очкам)
+    sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
+
+    # Переменные для отслеживания текущего ранга и предыдущего результата
+    current_rank = 1
     previous_score = None
-    rank = 0
-    for item in data_list:
-        if item[1] != previous_score:
-            rank += 1
-        ranked_list.append((item[0], rank))
-        previous_score = item[1]
-    return ranked_list
+    ranked_scores = []
+
+    # Проходим по отсортированному списку
+    for index, (id, score) in enumerate(sorted_scores):
+        if score != previous_score:
+            # Если очки не совпадают с предыдущими, обновляем текущий ранг
+            current_rank = index + 1
+        ranked_scores.append((id, current_rank))
+        previous_score = score
+
+    # Сортируем результат обратно по ID
+    ranked_scores.sort(key=lambda x: x[0])
+
+    # Присваиваем порядковые номера в соответствии с рангами
+    ranked_scores = [(id, i + 1) for i, (id, _) in enumerate(sorted(
+        ranked_scores, key=lambda x: x[1]
+    ))]
+    return ranked_scores
 
 
 def find_second_element_by_first(tuple_list, first_element) -> int | None:
+    """Функция для поиска второго элемента по первому внутри списка кортежей.
+
+    Используется для возвращения номера парного отряда в Тандеме.
+    """
+
     for item in tuple_list:
         if item[0] == first_element:
             return item[1]
