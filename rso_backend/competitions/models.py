@@ -531,7 +531,7 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         blank=True,
         null=True
     )
-    safety_work_week = models.BooleanField(default=False)
+    safety_work_week = models.BooleanField(default=False, blank=True, null=True)
     commander_commissioner_school = models.BooleanField(
         default=False,
         blank=True,
