@@ -3,6 +3,7 @@ from datetime import date
 from django.db import transaction
 from django.conf import settings
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,

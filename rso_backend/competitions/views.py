@@ -1747,8 +1747,8 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if not participants_data:
             return Response(
                 {
-                    'non_field_errors': 'participants_data '
-                                        'должно быть заполнено'
+                    'non_field_errors': f'participants_data '
+                                        f'должно быть заполнено. Присланный реквест: {request.data}'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -1934,7 +1934,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 setattr(report, field, value)
             report.save()
 
-        # Сериализуем и возвращаем обновленный или созданный отчет
         serializer = self.get_serializer(report)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
