@@ -19,8 +19,8 @@ from competitions.views import (
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
-    Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get-place_q1,
-    get-place_q3, get-place_q4,
+    Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
+    get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
     Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet
 )
@@ -448,17 +448,17 @@ user_nested_urls = [
     ),
     path(
         'competitions/<int:competition_pk>/reports/q1/get-place/',
-        get-place_q1,
+        get_place_q1,
         name='get-place-q1'
     ),
     path(
         'competitions/<int:competition_pk>/reports/q3/get-place/',
-        get-place_q3,
+        get_place_q3,
         name='get-place-q3'
     ),
     path(
         'competitions/<int:competition_pk>/reports/q4/get-place/',
-        get-place_q4,
+        get_place_q4,
         name='get-place-q4'
     ),
     path('', include('djoser.urls')),
