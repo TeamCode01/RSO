@@ -930,6 +930,7 @@ class Q6DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'first_may_demonstration',
+            'creative_festival',
             'first_may_demonstration_participants',
             'patriotic_action',
             'patriotic_action_participants',

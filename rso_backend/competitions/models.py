@@ -510,24 +510,49 @@ class Q6Ranking(QBaseRanking):
 
 
 class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
-    first_may_demonstration = models.BooleanField(default=False)
+    first_may_demonstration = models.BooleanField(default=False, blank=True, null=True)
     first_may_demonstration_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+        blank=True,
+        null=True
     )
-    patriotic_action = models.BooleanField(default=False)
+    creative_festival = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
+    patriotic_action = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
     patriotic_action_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+        blank=True,
+        null=True
     )
     safety_work_week = models.BooleanField(default=False)
-    commander_commissioner_school = models.BooleanField(default=False)
-    working_semester_opening = models.BooleanField(default=False)
-    working_semester_opening_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    commander_commissioner_school = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
     )
-    spartakiad = models.BooleanField(default=False)
-    professional_competition = models.BooleanField(default=False)
+    working_semester_opening = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
+    working_semester_opening_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+        blank=True,
+        null=True
+    )
+    spartakiad = models.BooleanField(default=False, blank=True, null=True)
+    professional_competition = models.BooleanField(default=False, blank=True, null=True)
     april_1_detachment_members = models.PositiveSmallIntegerField(
         default=1,
+        blank=True,
+        null=True
     )
 
     class Meta:
