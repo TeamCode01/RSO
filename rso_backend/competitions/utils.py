@@ -1,5 +1,7 @@
 import os
 from datetime import datetime as dt
+
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -44,12 +46,6 @@ def document_path(instance, filename):
     filename = dt.today().strftime('%Y%m%d%H%M%S') + '_' + filename[:15]
     filepath = 'documents/users'
     return os.path.join(filepath, instance.user.username, filename)
-
-
-def is_competition_participant(detachment, competition):
-    """Проверяет, является ли отряд участником конкурса."""
-    return detachment in (competition.junior_detachment.all() +
-                          competition.detachment.all())
 
 
 def round_math(num, decimals=0):

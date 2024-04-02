@@ -19,8 +19,11 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        is_stuff_or_central_commander,
                        get_district_hq_commander_num,
                        get_central_hq_commander_num)
-from competitions.models import CompetitionParticipants, Q13DetachmentReport, Q5DetachmentReport, Q15DetachmentReport
-from competitions.utils import is_competition_participant
+from competitions.models import (
+    CompetitionParticipants, Q13DetachmentReport, Q5DetachmentReport,
+    Q15DetachmentReport
+)
+from api.utils import is_competition_participant
 from events.models import Event, EventOrganizationData
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,

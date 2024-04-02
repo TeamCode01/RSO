@@ -923,6 +923,8 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
             detail=True,
             methods=['post', 'delete'],
             serializer_class=None,
+            permission_classes=(permissions.IsAuthenticated,
+                                IsRegionalCommanderOrAdmin),
     )
     def verify(self, *args, **kwargs):
         """Верификация отчета по показателю.

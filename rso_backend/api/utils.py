@@ -737,3 +737,11 @@ def get_detachment_start(user, competition_id):
         Q(competition_id=competition_id)
     ).exists():
         return detachment
+
+
+def is_competition_participant(detachment, competition):
+    """Проверяет, является ли отряд участником конкурса."""
+    return CompetitionParticipants.objects.filter(
+        Q(competition=competition, detachment=detachment) |
+        Q(competition=competition, junior_detachment=detachment)
+    ).exists()

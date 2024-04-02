@@ -525,7 +525,7 @@ class Position(models.Model):
 
     name = models.CharField(
         verbose_name='Должность',
-        max_length=43,
+        max_length=150,
         unique=True,
     )
 
