@@ -153,6 +153,74 @@ class QBaseReport(models.Model):
         ]
 
 
+class OverallRanking(models.Model):
+    competition = models.ForeignKey(
+        'Competitions',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        verbose_name='Конкурс'
+    )
+    detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        verbose_name='Отряд'
+    )
+    places_sum = models.FloatField(verbose_name='Сумма мест по всем показателям')
+    place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
+
+    class Meta:
+        verbose_name = 'Итоговое индивидуальное место'
+        verbose_name_plural = 'Итоговые индивидуальные места'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('competition', 'detachment'),
+                name='unique_overall_ranking'
+            )
+        ]
+
+
+class OverallTandemRanking(models.Model):
+    competition = models.ForeignKey(
+        'Competitions',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        verbose_name='Конкурс'
+    )
+    detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='%(class)s_main_detachment',
+        verbose_name='Отряд-наставник'
+    )
+    junior_detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='%(class)s_junior_detachment',
+        verbose_name='Младший отряд'
+    )
+    places_sum = models.FloatField(verbose_name='Сумма мест по всем показателям')
+    place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
+
+    class Meta:
+        verbose_name = 'Итоговое тандем место'
+        verbose_name_plural = 'Итоговые тандем места'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('competition', 'detachment', 'junior_detachment'),
+                name='unique_tandem_ranking_overall'
+            ),
+            models.UniqueConstraint(
+                fields=('competition', 'detachment'),
+                name='unique_main_ranking_overall'
+            ),
+            models.UniqueConstraint(
+                fields=('competition', 'junior_detachment'),
+                name='unique_junior_ranking_overall'
+            )
+        ]
+
+
 class QBaseReportIsVerified(models.Model):
     is_verified = models.BooleanField(default=False)
 

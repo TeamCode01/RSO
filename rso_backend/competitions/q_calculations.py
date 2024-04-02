@@ -12,13 +12,104 @@ from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14Ra
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
     Q5TandemRanking, Q5Ranking, \
     Q5EducatedParticipant, Q5DetachmentReport, Q15TandemRank, Q15Rank, Q15DetachmentReport, Q15GrantWinner, \
-    Q6DetachmentReport, Q6Ranking, Q6TandemRanking
+    Q6DetachmentReport, Q6Ranking, Q6TandemRanking, Q1Ranking, OverallTandemRanking, OverallRanking
 from competitions.utils import assign_ranks, find_second_element_by_first, tandem_or_start, is_main_detachment
 from headquarters.models import UserDetachmentPosition
 from questions.models import Attempt
 
 
 logger = logging.getLogger('tasks')
+
+
+def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, competition_id):
+    logger.info('Удаляем записи из OverallTandemRanking, OverallTanking')
+    OverallTandemRanking.objects.all().delete()
+    OverallRanking.objects.all().delete()
+    solo_entries = CompetitionParticipants.objects.filter(
+        competition_id=competition_id,
+        junior_detachment__isnull=False,
+        detachment__isnull=True
+    )
+    tandem_entries = CompetitionParticipants.objects.filter(
+        competition_id=competition_id,
+        junior_detachment__isnull=False,
+        detachment__isnull=False
+    )
+    solo_worst_places = {}
+    tandem_worst_places = {}
+
+    for model in solo_ranking_models:
+        worst_entry = model.objects.filter(competition_id=competition_id).order_by('-place').first()
+        solo_worst_places[model] = worst_entry.place if worst_entry else 1
+
+    for model in tandem_ranking_models:
+        worst_entry = model.objects.filter(competition_id=competition_id).order_by('-place').first()
+        tandem_worst_places[model] = worst_entry.place if worst_entry else 1
+
+    solo_rankings = []
+    tandem_rankings = []
+
+    for solo_entry in solo_entries:
+        solo_entry_place = 0
+        detachment = solo_entry.junior_detachment
+
+        for model in solo_ranking_models:
+            try:
+                ranking = model.objects.get(
+                    competition_id=competition_id, detachment=detachment
+                )
+                solo_entry_place += ranking.place
+            except model.DoesNotExist:
+                solo_entry_place += solo_worst_places[model]
+
+        solo_rankings.append({'detachment': detachment, 'place': solo_entry_place})
+
+    for tandem_entry in tandem_entries:
+        tandem_entry_place = 0
+        detachment = tandem_entry.detachment
+        junior_detachment = tandem_entry.junior_detachment
+        for model in tandem_ranking_models:
+            try:
+                ranking = model.objects.get(
+                    competition_id=competition_id,
+                    detachment=detachment,
+                    junior_detachment=junior_detachment
+                )
+                tandem_entry_place += ranking.place
+            except model.DoesNotExist:
+                tandem_entry_place += tandem_worst_places[model]
+        tandem_rankings.append(
+            {
+                'detachment': detachment,
+                'junior_detachment': junior_detachment,
+                'place': tandem_entry_place
+            }
+        )
+
+    solo_rankings.sort(key=lambda x: x['place'], reverse=True)
+    solo_place = len(solo_rankings)
+    logger.info(f'Найдены {solo_place} записей для подсчета индивидуального общего места')
+    for solo_ranking_entry in solo_rankings:
+        OverallRanking.objects.create(
+            competition_id=competition_id,
+            detachment=solo_ranking_entry['detachment'],
+            places_sum=solo_ranking_entry['place'],
+            place=solo_place
+        )
+        solo_place -= 1
+
+    tandem_rankings.sort(key=lambda x: x['place'], reverse=True)
+    tandem_place = len(tandem_rankings)
+    logger.info(f'Найдены {tandem_place} записей для подсчета общего тандем места')
+    for tandem_ranking_entry in tandem_rankings:
+        OverallTandemRanking.objects.create(
+            competition_id=competition_id,
+            detachment=tandem_ranking_entry['detachment'],
+            junior_detachment=tandem_ranking_entry['junior_detachment'],
+            places_sum=tandem_ranking_entry['place'],
+            place=tandem_place
+        )
+        tandem_place -= 1
 
 
 def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:

@@ -22,7 +22,7 @@ from competitions.views import (
     Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
-    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet
+    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -120,7 +120,12 @@ router.register(
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q2',
     Q2DetachmentReportViewSet,
-    basename='q2_report'
+    basename='q2'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q5',
+    Q5DetachmentReportViewSet,
+    basename='q5'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q7',
@@ -191,11 +196,6 @@ router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q13/(?P<report_pk>\d+)/events',
     Q13EventOrganizationViewSet,
     basename='q13eventorganization'
-)
-router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q5',
-    Q5DetachmentReportViewSet,
-    basename='q5'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/participants',
@@ -460,6 +460,11 @@ user_nested_urls = [
         'competitions/<int:competition_pk>/reports/q4/get-place/',
         get_place_q4,
         name='get-place-q4'
+    ),
+    path(
+        'competitions/<int:competition_pk>/get-place/',
+        get_place_overall,
+        name='get-place-overall'
     ),
     path('', include('djoser.urls')),
 ]

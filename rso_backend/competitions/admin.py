@@ -12,7 +12,7 @@ from competitions.models import (
     Q17Ranking, Q17TandemRanking, Q5Ranking, Q5TandemRanking, Q15Rank, Q15TandemRank,
     Q5DetachmentReport, Q15DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking,
     Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, Q13DetachmentReport, Q5EducatedParticipant,
-    Q13EventOrganization, Q15GrantWinner, Q18DetachmentReport
+    Q13EventOrganization, Q15GrantWinner, Q18DetachmentReport, OverallTandemRanking, OverallRanking
 )
 from competitions.forms import (CompetitionApplicationsForm,
                                 CompetitionParticipantsForm)
@@ -116,13 +116,27 @@ admin.site.register(Q2DetachmentReport)
 
 
 class QBaseRankingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'detachment', 'place')
+    list_display = ('id', 'competition_id', 'detachment', 'place')
     search_fields = ('detachment__name', 'place')
 
 
 class QBaseTandemRankingAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'detachment', 'junior_detachment', 'place'
+        'id', 'competition_id', 'detachment', 'junior_detachment', 'place'
+    )
+    search_fields = ('detachment__name', 'junior_detachment__name', 'place')
+
+
+@admin.register(OverallRanking)
+class OverallRankingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'competition_id', 'detachment', 'places_sum', 'place')
+    search_fields = ('detachment__name', 'place')
+
+
+@admin.register(OverallTandemRanking)
+class OverallTandemRankingAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'competition_id', 'detachment', 'junior_detachment', 'places_sum', 'place'
     )
     search_fields = ('detachment__name', 'junior_detachment__name', 'place')
 
