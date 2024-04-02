@@ -19,8 +19,11 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        is_stuff_or_central_commander,
                        get_district_hq_commander_num,
                        get_central_hq_commander_num)
-from competitions.models import CompetitionParticipants, Q13DetachmentReport, Q5DetachmentReport
-from competitions.utils import is_competition_participant
+from competitions.models import (
+    CompetitionParticipants, Q13DetachmentReport, Q5DetachmentReport,
+    Q15DetachmentReport
+)
+from api.utils import is_competition_participant
 from events.models import Event, EventOrganizationData
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
@@ -897,6 +900,25 @@ class IsCommanderDetachmentInParameterOrRegionalCommissioner(
             )
 
 
+class IsCommanderDetachmentInParameterOrRegionalCommander(
+    BasePermission
+):
+    """
+    Проверяет, является ли пользователь командиром отряда из
+    инстанса параметра или региональным комиссаром.
+
+    Только для операций с одиночными объектами.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        detachment = view.get_detachment(obj)
+        if detachment:
+            return (
+                is_commander_this_detachment(request.user, detachment) or
+                is_regional_commander(request.user)
+            )
+
+
 class IsRegionalCommissioner(BasePermission):
     """
     Проверяет, является ли пользователь комиссаром регионального штаба.
@@ -943,7 +965,10 @@ class IsQ13DetachmentReportAuthor(permissions.BasePermission):
         except Detachment.DoesNotExist:
             return False
         report_pk = view.kwargs.get('report_pk')
-        report = get_object_or_404(Q13DetachmentReport, pk=report_pk)
+        try:
+            report = Q13DetachmentReport.objects.get(pk=report_pk)
+        except Q13DetachmentReport.DoesNotExist:
+            return False
         return report.detachment_id == detachment_id
 
 
@@ -959,7 +984,29 @@ class IsQ5DetachmentReportAuthor(permissions.BasePermission):
         except Detachment.DoesNotExist:
             return False
         report_pk = view.kwargs.get('report_pk')
-        report = get_object_or_404(Q5DetachmentReport, pk=report_pk)
+        try:
+            report = Q5DetachmentReport.objects.get(pk=report_pk)
+        except Q5DetachmentReport.DoesNotExist:
+            return False
+        return report.detachment_id == detachment_id
+
+
+class IsQ15DetachmentReportAuthor(permissions.BasePermission):
+    """
+    Позволяет доступ к операциям только если подразделение пользователя
+    соответствует подразделению в отчете.
+    """
+
+    def has_permission(self, request, view):
+        try:
+            detachment_id = Detachment.objects.get(commander=request.user).id
+        except Detachment.DoesNotExist:
+            return False
+        report_pk = view.kwargs.get('report_pk')
+        try:
+            report = Q15DetachmentReport.objects.get(pk=report_pk)
+        except Q15DetachmentReport.DoesNotExist:
+            return False
         return report.detachment_id == detachment_id
 
 

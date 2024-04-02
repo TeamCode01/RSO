@@ -319,58 +319,145 @@ CELERY_BEAT_SCHEDULE = {
             month_of_year=10,
         )
     },
-    'calculate_q18': {
-        'task': 'competitions.tasks.calculate_q18_places_task',
-        'schedule': timedelta(hours=24)
+    'calculate_q1_score': {
+        'task': 'competitions.tasks.calculate_q1_score_task',
+        'schedule': crontab(
+            hour=3,
+            minute=17,
+        )
     },
     'calculate_q1': {
         'task': 'competitions.tasks.calculate_q1_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=3,
+            minute=19,
+        )
     },
     'calculate_q3_q4': {
         'task': 'competitions.tasks.calculate_q3_q4_places_task',
-        'schedule': timedelta(minutes=10)
+        'schedule': crontab(
+            hour=3,
+            minute=23,
+        )
     },
     'calculate_q5': {
         'task': 'competitions.tasks.calculate_q5_places_task',
-        'schedule': timedelta(seconds=25)
+        'schedule': crontab(
+            hour=3,
+            minute=26,
+        )
+    },
+    'calculate_q6': {
+        'task': 'competitions.tasks.calculate_q6_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=29,
+        )
     },
     'calculate_q7': {
         'task': 'competitions.tasks.calculate_q7_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=3,
+            minute=33,
+        )
     },
     'calculate_q8': {
-        'task': 'competitions.tasks.calculate_q7_places_task',
-        'schedule': timedelta(hours=24)
+        'task': 'competitions.tasks.calculate_q8_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=35,
+        )
     },
     'calculate_q9': {
         'task': 'competitions.tasks.calculate_q9_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=3,
+            minute=38,
+        )
     },
     'calculate_q10': {
         'task': 'competitions.tasks.calculate_q10_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=3,
+            minute=41,
+        )
     },
     'calculate_q11': {
         'task': 'competitions.tasks.calculate_q11_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=3,
+            minute=44,
+        )
     },
     'calculate_q12': {
         'task': 'competitions.tasks.calculate_q12_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=3,
+            minute=47,
+        )
     },
-    'calculate_q1_score': {
-        'task': 'competitions.tasks.calculate_q1_score_task',
-        'schedule': timedelta(hours=24)
+    'calculate_q14': {
+        'task': 'competitions.tasks.calculate_q14_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=49,
+        )
+    },
+    'calculate_q15': {
+        'task': 'competitions.tasks.calculate_q15_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=50,
+        )
+    },
+    'calculate_q16_score': {
+        'task': 'competitions.tasks.calculate_q16_score_task',
+        'schedule': crontab(
+            hour=3,
+            minute=52,
+        )
+    },
+    'calculate_q16': {
+        'task': 'competitions.tasks.calculate_q16_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=54,
+        )
+    },
+    'calculate_q17': {
+        'task': 'competitions.tasks.calculate_q17_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=56,
+        )
+    },
+    'calculate_q18': {
+        'task': 'competitions.tasks.calculate_q18_places_task',
+        'schedule': crontab(
+            hour=3,
+            minute=58,
+        )
     },
     'calculate_q19': {
         'task': 'competitions.tasks.calculate_q19',
-        'schedule': timedelta(hours=30)
+        'schedule': crontab(
+            hour=4,
+        )
     },
-    'calculate_q20_': {
+    'calculate_q20': {
         'task': 'competitions.tasks.calculate_q20_places_task',
-        'schedule': timedelta(hours=24)
+        'schedule': crontab(
+            hour=4,
+            minute=2,
+        )
     },
+    'calculate_overall_places': {
+        'task': 'competitions.tasks.calculate_overall_places_task',
+        'schedule': crontab(
+            hour=4,
+            minute=10
+        )
+    }
 }
 
 if DEBUG:

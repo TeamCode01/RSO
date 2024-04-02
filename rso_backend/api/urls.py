@@ -14,13 +14,15 @@ from api.views import (AreaViewSet, EducationalInstitutionViewSet,
 from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q15DetachmentReportViewSet,
+    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q17DetachmentReportViewSet,
+    Q16ViewSet,
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
     Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
     get_place_q3, get_place_q4,
-    Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet
+    Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
+    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -118,7 +120,12 @@ router.register(
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q2',
     Q2DetachmentReportViewSet,
-    basename='q2_report'
+    basename='q2'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q5',
+    Q5DetachmentReportViewSet,
+    basename='q5'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q7',
@@ -151,9 +158,14 @@ router.register(
     basename='q12'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q15',
-    Q15DetachmentReportViewSet,
-    basename='q15_report'
+    r'competitions/(?P<competition_pk>\d+)/reports/q14',
+    Q14DetachmentReportViewSet,
+    basename='q14_report'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q17',
+    Q17DetachmentReportViewSet,
+    basename='q17_report'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q19',
@@ -164,6 +176,11 @@ router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q20',
     Q20ViewSet,
     basename='q20'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q16',
+    Q16ViewSet,
+    basename='q16'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q18',
@@ -181,19 +198,24 @@ router.register(
     basename='q13eventorganization'
 )
 router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/participants',
+    Q5EducatedParticipantViewSet,
+    basename='q5educatedparticipant'
+)
+router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q15',
     Q15DetachmentReportViewSet,
     basename='q15'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q5',
-    Q5DetachmentReportViewSet,
-    basename='q5'
+    r'competitions/(?P<competition_pk>\d+)/reports/q15/(?P<report_pk>\d+)/grants',
+    Q15DetachmentReportViewSet,
+    basename='q15grants'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/participants',
-    Q5EducatedParticipantViewSet,
-    basename='q5educatedparticipant'
+    r'competitions/(?P<competition_pk>\d+)/reports/q6',
+    Q6DetachmentReportViewSet,
+    basename='q6'
 )
 
 UserEduVS = UserEducationViewSet.as_view(UPDATE_RETRIEVE)
@@ -425,19 +447,24 @@ user_nested_urls = [
         name='get-group-applications-me'
     ),
     path(
-        'competitions/<int:competition_pk>/reports/q1/get_place/',
+        'competitions/<int:competition_pk>/reports/q1/get-place/',
         get_place_q1,
         name='get-place-q1'
     ),
     path(
-        'competitions/<int:competition_pk>/reports/q3/get_place/',
+        'competitions/<int:competition_pk>/reports/q3/get-place/',
         get_place_q3,
         name='get-place-q3'
     ),
     path(
-        'competitions/<int:competition_pk>/reports/q4/get_place/',
+        'competitions/<int:competition_pk>/reports/q4/get-place/',
         get_place_q4,
         name='get-place-q4'
+    ),
+    path(
+        'competitions/<int:competition_pk>/get-place/',
+        get_place_overall,
+        name='get-place-overall'
     ),
     path('', include('djoser.urls')),
 ]

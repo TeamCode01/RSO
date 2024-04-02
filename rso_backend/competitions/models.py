@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
@@ -148,6 +149,74 @@ class QBaseReport(models.Model):
             models.UniqueConstraint(
                 fields=('competition', 'detachment'),
                 name='unique_report_%(class)s'
+            )
+        ]
+
+
+class OverallRanking(models.Model):
+    competition = models.ForeignKey(
+        'Competitions',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        verbose_name='Конкурс'
+    )
+    detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        verbose_name='Отряд'
+    )
+    places_sum = models.FloatField(verbose_name='Сумма мест по всем показателям')
+    place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
+
+    class Meta:
+        verbose_name = 'Итоговое индивидуальное место'
+        verbose_name_plural = 'Итоговые индивидуальные места'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('competition', 'detachment'),
+                name='unique_overall_ranking'
+            )
+        ]
+
+
+class OverallTandemRanking(models.Model):
+    competition = models.ForeignKey(
+        'Competitions',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        verbose_name='Конкурс'
+    )
+    detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='%(class)s_main_detachment',
+        verbose_name='Отряд-наставник'
+    )
+    junior_detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='%(class)s_junior_detachment',
+        verbose_name='Младший отряд'
+    )
+    places_sum = models.FloatField(verbose_name='Сумма мест по всем показателям')
+    place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
+
+    class Meta:
+        verbose_name = 'Итоговое тандем место'
+        verbose_name_plural = 'Итоговые тандем места'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('competition', 'detachment', 'junior_detachment'),
+                name='unique_tandem_ranking_overall'
+            ),
+            models.UniqueConstraint(
+                fields=('competition', 'detachment'),
+                name='unique_main_ranking_overall'
+            ),
+            models.UniqueConstraint(
+                fields=('competition', 'junior_detachment'),
+                name='unique_junior_ranking_overall'
             )
         ]
 
@@ -452,8 +521,8 @@ class Q5TandemRanking(QBaseTandemRanking):
     )
 
     class Meta:
-        verbose_name = 'Тандем-места по 13 показателю'
-        verbose_name_plural = 'Тандем-места по 13 показателю'
+        verbose_name = 'Тандем-места по 5 показателю'
+        verbose_name_plural = 'Тандем-места по 5 показателю'
 
 
 class Q5Ranking(QBaseRanking):
@@ -464,12 +533,16 @@ class Q5Ranking(QBaseRanking):
     )
 
     class Meta:
-        verbose_name = 'Места по 13 показателю'
-        verbose_name_plural = 'Места по 13 показателю'
+        verbose_name = 'Места по 5 показателю'
+        verbose_name_plural = 'Места по 5 показателю'
 
 
 class Q5DetachmentReport(QBaseReport):
     june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        verbose_name = 'Отчет по 5 показателю'
+        verbose_name_plural = 'Отчеты по 5 показателю'
 
 
 class Q5EducatedParticipant(models.Model):
@@ -486,6 +559,80 @@ class Q5EducatedParticipant(models.Model):
         blank=True
     )
     is_verified = models.BooleanField(default=False)
+
+
+class Q6TandemRanking(QBaseTandemRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 6'
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 6 показателю'
+        verbose_name_plural = 'Тандем-места по 6 показателю'
+
+
+class Q6Ranking(QBaseRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 6'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 6 показателю'
+        verbose_name_plural = 'Места по 6 показателю'
+
+
+class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
+    first_may_demonstration = models.BooleanField(default=False, blank=True, null=True)
+    first_may_demonstration_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+        blank=True,
+        null=True
+    )
+    creative_festival = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
+    patriotic_action = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
+    patriotic_action_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+        blank=True,
+        null=True
+    )
+    safety_work_week = models.BooleanField(default=False, blank=True, null=True)
+    commander_commissioner_school = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
+    working_semester_opening = models.BooleanField(
+        default=False,
+        blank=True,
+        null=True
+    )
+    working_semester_opening_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+        blank=True,
+        null=True
+    )
+    spartakiad = models.BooleanField(default=False, blank=True, null=True)
+    professional_competition = models.BooleanField(default=False, blank=True, null=True)
+    april_1_detachment_members = models.PositiveSmallIntegerField(
+        default=1,
+        blank=True,
+        null=True
+    )
+    score = models.FloatField(
+        default=0
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 6 показателю'
+        verbose_name_plural = 'Отчеты по 6 показателю'
 
 
 class Q7TandemRanking(QBaseTandemRanking):
@@ -1061,6 +1208,10 @@ class Q13Ranking(QBaseRanking):
 class Q13DetachmentReport(QBaseReport):
     pass
 
+    class Meta:
+        verbose_name = 'Места по 13 показателю'
+        verbose_name_plural = 'Места по 13 показателю'
+
 
 class Q13EventOrganization(models.Model):
     """Пример модели с данными для заполнения (которые по кнопке "добавить...") """
@@ -1088,6 +1239,108 @@ class Q13EventOrganization(models.Model):
     is_verified = models.BooleanField(default=False)
 
 
+class Q14LaborProject(models.Model):
+    lab_project_name = models.CharField(
+        max_length=150,
+    )
+    amount = models.PositiveSmallIntegerField(
+        verbose_name=(
+            'Количество бойцов, отработавших в летнем трудовом семестре'
+        ),
+        validators=[MinValueValidator(1), MaxValueValidator(1000)],
+    )
+
+
+class Q14DetachmentReport(QBaseReport, QBaseReportIsVerified):
+    q14_labor_project = models.ForeignKey(
+        'competitions.Q14LaborProject',
+        on_delete=models.CASCADE,
+        related_name='q14_labor_project',
+        verbose_name='Участники трудового проекта'
+    )
+    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+    score = models.FloatField(verbose_name='Очки', default=1000)
+
+
+    class Meta:
+        verbose_name = 'Отчет по 14 показателю'
+        verbose_name_plural = 'Отчеты по 14 показателю'
+
+
+class Q14Ranking(QBaseRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 14 показателю'
+        verbose_name_plural = 'Места по 14 показателю'
+
+
+class Q14TandemRanking(QBaseTandemRanking):
+    place = models.FloatField(
+        verbose_name='Итоговое место по показателю в тандеме',
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 14 показателю'
+        verbose_name_plural = 'Тандем-места по 14 показателю'
+
+
+class Q15TandemRank(QBaseTandemRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 15'
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 15 показателю'
+        verbose_name_plural = 'Тандем-места по 15 показателю'
+
+
+class Q15Rank(QBaseRanking):
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 15'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 15 показателю'
+        verbose_name_plural = 'Места по 15 показателю'
+
+
+class Q15DetachmentReport(QBaseReport):
+    score = models.PositiveSmallIntegerField(default=0, verbose_name='Очки')
+
+    class Meta:
+        verbose_name = 'Отчет по 15 показателю'
+        verbose_name_plural = 'Отчеты по 15 показателю'
+
+
+class Q15GrantWinner(models.Model):
+    class CompetitionStatus(models.TextChoices):
+        REGIONAL = 'Региональный', 'Региональный'
+        DISTRICT = 'Окружной', 'Окружной',
+        ALL_RUSSIAN = 'Всероссийский', 'Всероссийский'
+
+    detachment_report = models.ForeignKey(
+        'Q15DetachmentReport', on_delete=models.CASCADE, verbose_name='Отчет'
+    )
+    name = models.TextField(
+        verbose_name='Полное наименование грантового проекта',
+    )
+    status = models.CharField(
+        max_length=25, choices=CompetitionStatus.choices, verbose_name='Статус конкурса'
+    )
+    competition_link = models.URLField(
+        verbose_name='Ссылка на конкурс',
+        max_length=300,
+    )
+    prove_link = models.URLField(
+        verbose_name='Ссылка на новостной источник с упоминанием победы',
+        max_length=300,
+    )
+    is_verified = models.BooleanField(default=False)
+
+
 class Q17Link(Links):
     pass
 
@@ -1096,6 +1349,7 @@ class Q17Event(models.Model):
     source_name = models.CharField(
         max_length=500,
     )
+
 
 class Q17DetachmentReport(QBaseReport, QBaseReportIsVerified):
     q17_event = models.ForeignKey(
@@ -1251,16 +1505,6 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
     Отчет по показателю 'Соответствие требованиями положения
     символики и атрибутике форменной одежды и символики отрядов'
     Поля: отряд, конкурс, флаг верификации и необязательные поля ссылок.
-    Очки - 1.
-
-    # TODO: Примечание ниже для понятности. Временно.
-    # Очки считаются после сохранения верифицированной заявки (сигналом
-    после верификации), если заявка не верифицирована - очков ноль.
-    # Далее при подсчете они будут в конце рейтинга. Т.е. они будут в рейтинге,
-    но на последних местах среди нулей.
-    # То есть не отправить хуже, чем не верифицировать, те, кто не
-    отправил будут делить самое последнее место на всех при подсчете в
-    финальной таске.
     """
     link_emblem = models.URLField(
         verbose_name='Ссылка на фото эмблемы',
@@ -1306,3 +1550,81 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
     class Meta:
         verbose_name = 'Отчет по 20 показателю'
         verbose_name_plural = 'Отчеты по 20 показателю'
+
+
+
+
+
+
+
+
+
+class Q16TandemRanking(QBaseTandemRanking):
+    """
+    Рейтинг для тандема-участников.
+    Создается и заполняется переодической таской.
+    """
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 16'
+    )
+
+    class Meta:
+        verbose_name = 'Тандем-место по 16 показателю'
+        verbose_name_plural = 'Тандем-места по 16 показателю'
+
+
+class Q16Ranking(QBaseRanking):
+    """
+    Рейтинг для старт-участников.
+    Создается и заполняется переодической таской.
+    """
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 16'
+    )
+
+    class Meta:
+        verbose_name = 'Место по 16 показателю'
+        verbose_name_plural = 'Места по 16 показателю'
+
+
+class Q16Report(QBaseReport, QBaseReportIsVerified):
+    """
+    Отчет по показателю 'Активность отряда в социальных сетях'.
+    Поля: отряд, конкурс, флаг верификации и текущие поля.
+    """
+    link_vk_commander = models.URLField(
+        verbose_name='Ссылка на vk командира',
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    link_vk_commissar = models.URLField(
+        verbose_name='Ссылка на vk комиссара',
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    vk_rso_number_subscribers = models.PositiveSmallIntegerField(
+        verbose_name='Количество участников подписанных на страницу RSO в vk',
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+    )
+    link_vk_detachment = models.URLField(
+        verbose_name='Ссылка на vk отряда',
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    vk_detachment_number_subscribers = models.PositiveSmallIntegerField(
+        verbose_name='Количество подписок на страницу отряда в vk',
+        default=0,
+    )
+    score = models.PositiveSmallIntegerField(
+        verbose_name='Очки',
+        default=0  # Чем больше, тем выше рейтинг
+    )
+    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        verbose_name = 'Отчет по 16 показателю'
+        verbose_name_plural = 'Отчеты по 16 показателю'
