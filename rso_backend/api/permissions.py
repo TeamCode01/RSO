@@ -897,6 +897,25 @@ class IsCommanderDetachmentInParameterOrRegionalCommissioner(
             )
 
 
+class IsCommanderDetachmentInParameterOrRegionalCommander(
+    BasePermission
+):
+    """
+    Проверяет, является ли пользователь командиром отряда из
+    инстанса параметра или региональным комиссаром.
+
+    Только для операций с одиночными объектами.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        detachment = view.get_detachment(obj)
+        if detachment:
+            return (
+                is_commander_this_detachment(request.user, detachment) or
+                is_regional_commander(request.user)
+            )
+
+
 class IsRegionalCommissioner(BasePermission):
     """
     Проверяет, является ли пользователь комиссаром регионального штаба.

@@ -21,6 +21,7 @@ from api.mixins import (
 )
 from api.permissions import (
     IsCommanderAndCompetitionParticipant,
+    IsCommanderDetachmentInParameterOrRegionalCommander,
     IsCommanderDetachmentInParameterOrRegionalCommissioner,
     IsCompetitionParticipantAndCommander,
     IsRegionalCommanderOrAdmin, IsRegionalCommanderOrAdminOrAuthor,
@@ -769,7 +770,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommissioner()]
+                    IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
@@ -2757,7 +2758,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommissioner()]
+                    IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
@@ -2964,7 +2965,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommissioner()]
+                    IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
@@ -3335,7 +3336,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommissioner()]
+                    IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]

@@ -362,7 +362,7 @@ CELERY_BEAT_SCHEDULE = {
         )
     },
     'calculate_q8': {
-        'task': 'competitions.tasks.calculate_q7_places_task',
+        'task': 'competitions.tasks.calculate_q8_places_task',
         'schedule': crontab(
             hour=3,
             minute=35,
@@ -397,7 +397,7 @@ CELERY_BEAT_SCHEDULE = {
         )
     },
     'calculate_q14': {
-        'task': 'competitions.tasks.calculate_q15_places_task',
+        'task': 'competitions.tasks.calculate_q14_places_task',
         'schedule': crontab(
             hour=3,
             minute=49,
