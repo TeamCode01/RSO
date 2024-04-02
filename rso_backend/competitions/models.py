@@ -472,6 +472,10 @@ class Q5Ranking(QBaseRanking):
 class Q5DetachmentReport(QBaseReport):
     june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
 
+    class Meta:
+        verbose_name = 'Отчет по 5 показателю'
+        verbose_name_plural = 'Отчеты по 5 показателю'
+
 
 class Q5EducatedParticipant(models.Model):
     detachment_report = models.ForeignKey(
@@ -553,6 +557,9 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         default=1,
         blank=True,
         null=True
+    )
+    score = models.FloatField(
+        default=0
     )
 
     class Meta:
@@ -1132,6 +1139,10 @@ class Q13Ranking(QBaseRanking):
 
 class Q13DetachmentReport(QBaseReport):
     pass
+
+    class Meta:
+        verbose_name = 'Места по 13 показателю'
+        verbose_name_plural = 'Места по 13 показателю'
 
 
 class Q13EventOrganization(models.Model):
