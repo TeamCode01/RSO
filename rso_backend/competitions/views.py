@@ -2148,7 +2148,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
-        super().get_permissions()
+        return super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
@@ -3205,7 +3205,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
-        super().get_permissions()
+        return super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
