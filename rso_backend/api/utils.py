@@ -695,6 +695,22 @@ def is_regional_commissioner(user):
     return position_name == 'Комиссар' or user.is_staff
 
 
+def is_central_event_master(user):
+    """
+    Проверяет, является ли пользователь начальником
+    отдела реализации мероприятий по
+    профессиональному обучению участников
+    студенческих отрядов ЦШ.
+    """
+    if not user.is_authenticated:
+        return False
+    try:
+        position_name = user.usercentralheadquarterposition.position.name
+    except UserCentralHeadquarterPosition.DoesNotExist:
+        return False
+    return position_name == 'Начальник отдела реализации мероприятий по профессиональному обучению участников студенческих отрядов ЦШ' or user.is_staff
+
+
 def get_detachment_tandem(user, competition_id):
     """
     Возвращает отряд-участник заявки тандем, в котором юзер командир.

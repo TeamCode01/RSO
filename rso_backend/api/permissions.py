@@ -930,6 +930,20 @@ class IsRegionalCommissioner(BasePermission):
         return is_regional_commissioner(request.user)
 
 
+class IsCentralEventMaster(BasePermission):
+    """
+    Проверяет, является ли пользователь начальником
+    отдела реализации мероприятий по
+    профессиональному обучению участников
+    студенческих отрядов ЦШ.
+    """
+    def has_permission(self, request, view):
+        return is_regional_commissioner(request.user)
+
+    def has_object_permission(self, request, view, obj):
+        return is_regional_commissioner(request.user)
+
+
 class IsRegionalCommissionerOrCommanderDetachmentWithVerif(
     BasePermission
 ):
