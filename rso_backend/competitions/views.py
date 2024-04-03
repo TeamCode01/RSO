@@ -29,7 +29,7 @@ from api.permissions import (
     IsRegionalCommissioner,
     IsRegionalCommissionerOrCommanderDetachmentWithVerif,
     IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
-    IsQ15DetachmentReportAuthor
+    IsQ15DetachmentReportAuthor, IsCentralEventMaster
 )
 from api.utils import get_detachment_start, get_detachment_tandem
 from competitions.models import (
@@ -1688,7 +1688,8 @@ class Q12ViewSet(
 
 
 class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
-    """Показатель 5.
+    """Показатель 5. Выводится полный список (т.к. верифицирующее лицо -
+    сотрудник ЦШ).
 
     Пример POST-запроса:
     ```
@@ -1846,7 +1847,8 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='verify-raw/(?P<participant_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated
+            permissions.IsAuthenticated,
+            IsCentralEventMaster
         ]
     )
     def verify_raw(self, request, competition_pk=None, pk=None,
@@ -1855,12 +1857,6 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         Верифицирует конкретное мероприятие по его ID.
         """
         report = self.get_object()
-        detachment = report.detachment
-        if detachment.regional_headquarter.commander != request.user:
-            return Response({
-                'detail': 'Только командир РШ из иерархии может '
-                          'верифицировать отчеты по данному показателю'
-            }, status=status.HTTP_403_FORBIDDEN)
         raw = get_object_or_404(
             Q5EducatedParticipant,
             pk=participant_id,
@@ -1884,6 +1880,8 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
 class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
+    Список выводится только по региону комиссара!
+
     Доступ:
         - GET: Всем пользователям;
         - POST: Командирам отрядов, принимающих участие в конкурсе;
@@ -1910,6 +1908,11 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
+        return super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
@@ -2104,6 +2107,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     Доступ:
         - GET: Всем пользователям;
+        - list (GET) командирам РШ, выводятся отчеты только его рег штаба;
         - POST: Командирам отрядов, принимающих участие в конкурсе;
         - VERIFY-EVENT (POST/DELETE): Комиссарам РШ подвластных отрядов;
         - GET-PLACE (GET): Всем пользователям
@@ -2125,9 +2129,26 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
+        if self.action == 'list':
+            try:
+                regional_headquarter = (
+                    self.request.user.regionalheadquarter_commander
+                )
+            except ObjectDoesNotExist:
+                return Q15DetachmentReport.objects.all()
+            return Q15DetachmentReport.objects.filter(
+                detachment__regional_headquarter=regional_headquarter,
+                competition_id=self.kwargs.get('competition_pk')
+            )
         return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(),
+                    IsRegionalCommanderOrAdmin()]
+        super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
@@ -2336,6 +2357,8 @@ class Q15GrantDataViewSet(UpdateDestroyViewSet):
 class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """Показатель "Организация собственных мероприятий отряда".
 
+    Выводятся записи только по РШ комиссара!
+
     Пример POST-запроса:
     ```
     {
@@ -2385,6 +2408,11 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
+        super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
@@ -3143,7 +3171,8 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     дне Ударного труда."
 
     Доступ:
-        - GET: Всем пользователям;
+        - list (GET) командирам РШ, выводятся отчеты только его рег штаба;
+        - retrieve (GET): Всем пользователям;
         - POST: Командирам отрядов, принимающих участие в конкурсе;
         - VERIFY (POST/DELETE): Комиссарам РШ подвластных отрядов;
         - GET-PLACE (GET): Всем пользователям
@@ -3153,10 +3182,13 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_queryset(self):
         if self.action == 'list':
-            regional_headquarter = (
-                self.request.user.userregionalheadquarterposition.headquarter
-            )
-            return self.serializer_class.Meta.model.objects.filter(
+            try:
+                regional_headquarter = (
+                    self.request.user.regionalheadquarter_commander
+                )
+            except ObjectDoesNotExist:
+                return Q18DetachmentReport.objects.all()
+            return Q18DetachmentReport.objects.filter(
                 detachment__regional_headquarter=regional_headquarter,
                 competition_id=self.kwargs.get('competition_pk')
             )
@@ -3168,6 +3200,12 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(),
+                    IsRegionalCommanderOrAdmin()]
+        super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
@@ -3197,12 +3235,6 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         self.perform_create(serializer)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED
-        )
-
-    def get_queryset(self):
-        competition_id = self.kwargs.get('competition_pk')
-        return Q18DetachmentReport.objects.filter(
-            competition_id=competition_id
         )
 
     def perform_create(self, serializer):
