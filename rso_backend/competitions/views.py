@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import date
 
 from dal import autocomplete
@@ -6,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from django.http import QueryDict
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -13,6 +15,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from api.mixins import (
@@ -1722,7 +1725,6 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (
         permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
     )
-
     MAX_PLACE = 20
 
     def get_queryset(self):
@@ -1751,7 +1753,23 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         detachment = get_object_or_404(
             Detachment, id=self.request.user.detachment_commander.id
         )
-        participants_data = request.data.get('participants_data', [])
+        if isinstance(request.data, QueryDict):
+            data_dict = {}
+            for key, value in request.data.lists():
+                match = re.match(r'participants_data\[(\d+)\]\[(\w+)\]', key)
+                if match:
+                    index, field_name = match.groups()
+                    index = int(index)
+                    if index not in data_dict:
+                        data_dict[index] = {}
+                    data_dict[index][field_name] = value[0] if len(value) == 1 else value
+
+            participants_data = list(data_dict.values())
+
+            for i, participant in enumerate(participants_data):
+                file_key = f'participants_data[{i}][document]'
+                if file_key in request.FILES:
+                    participant['document'] = request.FILES[file_key]
 
         if not participants_data:
             return Response(
