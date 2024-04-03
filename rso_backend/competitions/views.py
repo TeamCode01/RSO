@@ -1726,6 +1726,8 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     MAX_PLACE = 20
 
     def get_queryset(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'me':
             return self.serializer_class.Meta.model.objects.filter(
                 detachment__commander=self.request.user,
@@ -1892,6 +1894,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter
@@ -2145,6 +2149,8 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
     def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
@@ -2392,6 +2398,8 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     MAX_PLACE = 6
 
     def get_queryset(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter
@@ -3181,6 +3189,8 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             try:
                 regional_headquarter = (
