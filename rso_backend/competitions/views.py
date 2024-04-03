@@ -13,6 +13,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from api.mixins import (
@@ -1722,7 +1723,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (
         permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
     )
-
+    parser_classes = (MultiPartParser, JSONParser)
     MAX_PLACE = 20
 
     def get_queryset(self):
