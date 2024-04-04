@@ -783,7 +783,8 @@ def get_events_data(request):
                     index, field_name, sub_index, sub_field_name = match.groups()
                     index = int(index)
                     if data_dict.get(index, {}).get(field_name) is None:
-                        data_dict[index][field_name] = [{sub_field_name: value[0] if len(value) == 1 else value}]
+                        data_dict[index][field_name] = []
+                        data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
                     else:
                         data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
 

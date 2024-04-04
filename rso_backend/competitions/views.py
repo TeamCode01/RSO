@@ -1155,7 +1155,7 @@ class Q7ViewSet(
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response({'events_data': events_data[0].get('links')}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'links': events_data[0].get('links')}, status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ7Serializer(
                 data=event,
