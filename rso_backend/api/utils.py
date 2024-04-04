@@ -782,11 +782,12 @@ def get_events_data(request):
                 if match:
                     index, field_name, sub_index, sub_field_name = match.groups()
                     index = int(index)
+                    link_dict = {sub_field_name: value[0] if len(value) == 1 else value}
                     if data_dict.get(index, {}).get(field_name) is None:
                         data_dict[index][field_name] = []
-                        data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
+                        data_dict[index][field_name].append(link_dict)
                     else:
-                        data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
+                        data_dict[index][field_name].append(link_dict)
 
         events_data = list(data_dict.values())
 
