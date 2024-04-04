@@ -2494,7 +2494,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'list':
             return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
-        super().get_permissions()
+        return super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
