@@ -1155,8 +1155,6 @@ class Q7ViewSet(
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response({'links': events_data[0].get('links')},
-                        status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ7Serializer(
                 data=event,
@@ -1407,6 +1405,9 @@ class Q9ViewSet(
             competition=competition
         )
         events_data = get_events_data(request)
+        if not events_data:
+            return Response({'error': 'Отчет пустой.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         if not events_data:
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
