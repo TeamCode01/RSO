@@ -2933,6 +2933,20 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     )
         return super().create(request, *args, **kwargs)
 
+    @action(detail=False,
+            methods=['get'],
+            url_path='me',
+            permission_classes=(permissions.IsAuthenticated,))
+    def me(self, request, competition_pk, *args, **kwargs):
+        """
+        Action для получения списка отчетов отряда текущего пользователя.
+
+        Доступ: все авторизованные пользователи.
+        Если пользователь не командир отряда, и у его отряда нет
+        поданных отчетов - вернется пустой список.
+        """
+        return super().list(request, *args, **kwargs)
+
     @action(
         detail=False,
         methods=['get'],
@@ -3134,6 +3148,20 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     )
 
         return super().create(request, *args, **kwargs)
+
+    @action(detail=False,
+            methods=['get'],
+            url_path='me',
+            permission_classes=(permissions.IsAuthenticated,))
+    def me(self, request, competition_pk, *args, **kwargs):
+        """
+        Action для получения списка отчетов отряда текущего пользователя.
+
+        Доступ: все авторизованные пользователи.
+        Если пользователь не командир отряда, и у его отряда нет
+        поданных отчетов - вернется пустой список.
+        """
+        return super().list(request, *args, **kwargs)
 
     @action(
         detail=False,

@@ -777,17 +777,14 @@ def get_events_data(request):
                     data_dict[index] = {}
                 data_dict[index][field_name] = value[0] if len(value) == 1 else value
             else:
-                match = re.match(r'participants_data\[(\d+)\]\[(\w+)\][(\d+)\]\[(\w+)\]', key)
+                match = re.match(r'participants_data\[(\d+)\]\[(\w+)\]\[(\d+)\]\[(\w+)\]', key)
                 if match:
                     index, field_name, sub_index, sub_field_name = match.groups()
                     index = int(index)
-                    # sub_index = int(sub_index)
-                    # if index not in data_dict:
-                    #     data_dict[index] = {}
                     if not data_dict[index][field_name]:
                         data_dict[index][field_name] = [{sub_field_name: value[0] if len(value) == 1 else value}]
                     else:
-                        data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})     
+                        data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
 
     events_data = list(data_dict.values())
 
