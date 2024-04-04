@@ -268,9 +268,16 @@ class Q7Admin(admin.ModelAdmin):
     )
 
 
+class Q7Inline(admin.TabularInline):
+    model = Q7
+    extra = 0
+
+
 @admin.register(Q7Report)
 class Q7ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q7Inline]
 
 
 @admin.register(Q7Ranking)
@@ -291,9 +298,16 @@ class Q8Admin(admin.ModelAdmin):
     )
 
 
+class Q8Inline(admin.TabularInline):
+    model = Q8
+    extra = 0
+
+
 @admin.register(Q8Report)
 class Q8ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q8Inline]
 
 
 @admin.register(Q8Ranking)
@@ -314,9 +328,16 @@ class Q9Admin(admin.ModelAdmin):
     )
 
 
+class Q9Inline(admin.TabularInline):
+    model = Q9
+    extra = 0
+
+
 @admin.register(Q9Report)
 class Q9ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q9Inline]
 
 
 @admin.register(Q9Ranking)
@@ -335,9 +356,16 @@ class Q10Admin(admin.ModelAdmin):
                     'is_verified', 'prize_place')
 
 
+class Q10Inline(admin.TabularInline):
+    model = Q10
+    extra = 0
+
+
 @admin.register(Q10Report)
 class Q10ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q10Inline]
 
 
 @admin.register(Q10Ranking)
@@ -356,9 +384,16 @@ class Q11Admin(admin.ModelAdmin):
                     'is_verified', 'prize_place')
 
 
+class Q11Inline(admin.TabularInline):
+    model = Q11
+    extra = 0
+
+
 @admin.register(Q11Report)
 class Q11ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q11Inline]
 
 
 @admin.register(Q11Ranking)
@@ -377,9 +412,16 @@ class Q12Admin(admin.ModelAdmin):
                     'is_verified', 'prize_place')
 
 
+class Q12Inline(admin.TabularInline):
+    model = Q12
+    extra = 0
+
+
 @admin.register(Q12Report)
 class Q12ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q12Inline]
 
 
 @admin.register(Q12Ranking)
