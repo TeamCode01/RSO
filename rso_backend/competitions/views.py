@@ -33,7 +33,7 @@ from api.permissions import (
     IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
     IsQ15DetachmentReportAuthor, IsCentralEventMaster
 )
-from api.utils import get_detachment_start, get_detachment_tandem, get_events_data, get_events_data2
+from api.utils import get_detachment_start, get_detachment_tandem, get_events_data
 from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
