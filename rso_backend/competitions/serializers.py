@@ -281,6 +281,7 @@ class CreateQ7Serializer(
     links = LinksQ7Serializer(
         many=True
     )
+    # certificate_scans = serializers.FileField(required=False)
 
     class Meta:
         model = Q7
