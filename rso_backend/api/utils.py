@@ -769,7 +769,7 @@ def get_events_data(request):
     data_dict = {}
     if isinstance(request.data, QueryDict):
         for key, value in request.data.lists():
-            match = re.match(r'[(\d+)\]\[(\w+)\]', key)
+            match = re.match(r'participants_data\[(\d+)\]\[(\w+)\]', key)
             if match:
                 index, field_name = match.groups()
                 index = int(index)
@@ -777,7 +777,7 @@ def get_events_data(request):
                     data_dict[index] = {}
                 data_dict[index][field_name] = value[0] if len(value) == 1 else value
             else:
-                match = re.match(r'[(\d+)\]\[(\w+)\][(\d+)\]\[(\w+)\]', key)
+                match = re.match(r'participants_data\[(\d+)\]\[(\w+)\][(\d+)\]\[(\w+)\]', key)
                 if match:
                     index, field_name, sub_index, sub_field_name = match.groups()
                     index = int(index)
