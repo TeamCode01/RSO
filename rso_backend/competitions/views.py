@@ -1320,8 +1320,7 @@ class Q8ViewSet(Q7ViewSet):
             detachment=detachment,
             competition=competition
         )
-        events_data = get_events_data2(request)
-        return Response(str(events_data), status=status.HTTP_400_BAD_REQUEST)
+        events_data = get_events_data(request)
         for event in events_data:
             serializer = CreateQ8Serializer(
                 data=event,
@@ -1408,10 +1407,10 @@ class Q9ViewSet(
             competition=competition
         )
         events_data = get_events_data(request)
-        if not request.data:
+        if not events_data:
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
-        for event in request.data:
+        for event in events_data:
             serializer = CreateQ9Serializer(
                 data=event,
                 context={'request': request,
@@ -1497,12 +1496,10 @@ class Q10ViewSet(
             competition=competition
         )
         events_data = get_events_data(request)
-        event = events_data[0]
-        return Response({'event_name': event.get('event_name')}, status=status.HTTP_400_BAD_REQUEST)
-        if not request.data:
+        if not events_data:
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
-        for event in request.data:
+        for event in events_data:
             serializer = CreateQ10Serializer(
                 data=event,
                 context={'request': request,
@@ -1591,6 +1588,9 @@ class Q11ViewSet(
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
         events_data = get_events_data(request)
+        if not events_data:
+            return Response({'error': 'Отчет пустой.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ11Serializer(
                 data=event,
@@ -1680,6 +1680,9 @@ class Q12ViewSet(
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
         events_data = get_events_data(request)
+        if not events_data:
+            return Response({'error': 'Отчет пустой.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ12Serializer(
                 data=event,
