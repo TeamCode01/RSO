@@ -889,6 +889,7 @@ class Q15GrantWinnerSerializer(serializers.ModelSerializer):
             'detachment_report',
             'name',
             'status',
+            'author_name',
             'competition_link',
             'prove_link',
             'is_verified'

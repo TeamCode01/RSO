@@ -1330,6 +1330,9 @@ class Q15GrantWinner(models.Model):
     status = models.CharField(
         max_length=25, choices=CompetitionStatus.choices, verbose_name='Статус конкурса'
     )
+    author_name = models.CharField(
+        max_length=250, verbose_name='Автор проекта', blank=True, null=True
+    )
     competition_link = models.URLField(
         verbose_name='Ссылка на конкурс',
         max_length=300,
