@@ -1131,7 +1131,6 @@ class Q7ViewSet(
         request_body=q7schema_request,
         responses={201: Q7ReportSerializer}
     )
-    # @parser_classes([MultiPartParser, FormParser])
     def create(self, request, *args, **kwargs):
         """Action для создания отчета.
 
@@ -1147,8 +1146,6 @@ class Q7ViewSet(
             competition=competition
         )
         events_data = get_events_data(request)
-        if isinstance(events_data, Response):
-            return events_data
         if not events_data:
             return Response(
                 {
@@ -1158,6 +1155,7 @@ class Q7ViewSet(
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        return Response({'events_data': events_data}, status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ7Serializer(
                 data=event,
@@ -1171,38 +1169,6 @@ class Q7ViewSet(
                             is_verified=False)
         return Response(Q7ReportSerializer(detachment_report).data,
                         status=status.HTTP_201_CREATED)
-
-        # try:
-        #     for item, file_data in zip(request.data, request.FILES.getlist('certificate_scans')):
-        #         serializer = CreateQ7Serializer(
-        #             data=item,
-        #             files={'certificate_scans': file_data},
-        #             context={'request': request,
-        #                      'event': item,
-        #                      'competition': competition,
-        #                      'detachment_report': detachment_report},
-        #         )
-        #         serializer.is_valid(raise_exception=True)
-        #         serializer.save(detachment_report=detachment_report, is_verified=False)
-        #     return Response(Q7ReportSerializer(detachment_report).data, status=status.HTTP_201_CREATED)
-        # except Exception as e:
-        #     return Response({'error': str(e), 'data': request.data, 'files': request.FILES},
-        #                     status=status.HTTP_400_BAD_REQUEST)
-
-        # data = request.data.update({'certificate_scans': request.FILES.get('certificate_scans')})
-        # print(request.data)
-        # print(request.FILES.getlist('certificate_scans'))
-        # print(request.FILES)
-        # serializer = CreateQ7Serializer(
-        #     data=request.data,
-        #     context={'request': request,
-        #              'event': request.data,
-        #              'competition': competition,
-        #              'detachment_report': detachment_report},
-        # )
-        # serializer.is_valid(raise_exception=True)
-        # serializer.save(detachment_report=detachment_report, is_verified=False)
-        # return Response(Q7ReportSerializer(detachment_report).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True,
             methods=['post', 'delete'],

@@ -281,7 +281,6 @@ class CreateQ7Serializer(
     links = LinksQ7Serializer(
         many=True
     )
-    # certificate_scans = serializers.FileField(required=False)
 
     class Meta:
         model = Q7
@@ -304,22 +303,22 @@ class CreateQ7Serializer(
     def validate(self, attrs):
         event = self.context.get('event')
         links = event.get('links')
-        if not links:
-            raise serializers.ValidationError(
-                {"links": "Добавьте хотя бы одну ссылку на фотоотчет"}
-            )
-        if not event.get('event_name'):
-            raise serializers.ValidationError(
-                {'event_name': 'Укажите название мероприятия.'}
-            )
-        if not event.get('number_of_participants'):
-            raise serializers.ValidationError(
-                {'number_of_participants': 'Укажите количество участников.'}
-            )
-        if not links or len(links) == 0:
-            raise serializers.ValidationError(
-                {'links': 'Добавьте хотя бы одну ссылку на фотоотчет.'}
-            )
+        # if not links:
+        #     raise serializers.ValidationError(
+        #         {"links": "Добавьте хотя бы одну ссылку на фотоотчет"}
+        #     )
+        # if not event.get('event_name'):
+        #     raise serializers.ValidationError(
+        #         {'event_name': 'Укажите название мероприятия.'}
+        #     )
+        # if not event.get('number_of_participants'):
+        #     raise serializers.ValidationError(
+        #         {'number_of_participants': 'Укажите количество участников.'}
+        #     )
+        # if not links or len(links) == 0:
+        #     raise serializers.ValidationError(
+        #         {'links': 'Добавьте хотя бы одну ссылку на фотоотчет.'}
+        #     )
         if self.Meta.model.objects.filter(
             detachment_report=self.context.get('detachment_report'),
             event_name=attrs.get('event_name')

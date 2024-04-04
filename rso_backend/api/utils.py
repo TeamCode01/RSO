@@ -766,48 +766,32 @@ def is_competition_participant(detachment, competition):
     ).exists()
 
 
-logger = logging.getLogger('tasks')
-
-
 def get_events_data(request):
     if isinstance(request.data, QueryDict):
-        try:
-            # data = {'participation_data[0][event_name]': ['ggg'], 'participation_data[0][number_of_participants]': ['1'], 'participation_data[0][links][0][link]': ['https://vk.com'], 'participation_data[0][certificate_scans]': []}
-            # data = QueryDict(data)
-            data_dict = {}
-            for key, value in request.data.lists():
-                match = re.match(r'participation_data\[(\d+)\]\[(\w+)\]', key)
+        data_dict = {}
+        for key, value in request.data.lists():
+            match = re.match(r'participation_data\[(\d+)\]\[(\w+)\]', key)
+            if match:
+                index, field_name = match.groups()
+                index = int(index)
+                if index not in data_dict:
+                    data_dict[index] = {}
+                data_dict[index][field_name] = value[0] if len(value) == 1 else value
+            else:
+                match = re.match(r'participation_data\[(\d+)\]\[(\w+)\]\[(\d+)\]\[(\w+)\]', key)
                 if match:
-                    index, field_name = match.groups()
+                    index, field_name, sub_index, sub_field_name = match.groups()
                     index = int(index)
-                    if index not in data_dict:
-                        data_dict[index] = {}
-                    data_dict[index][field_name] = value[0] if len(value) == 1 else value
-                else:
-                    match = re.match(r'participation_data\[(\d+)\]\[(\w+)\]\[(\d+)\]\[(\w+)\]', key)
-                    if match:
-                        index, field_name, sub_index, sub_field_name = match.groups()
-                        index = int(index)
-                        if data_dict.get(index, {}).get(field_name) is None:
-                            # data_dict[index] = {field_name: [{sub_field_name: value[0] if len(value) == 1 else value}]}
-                            data_dict[index][field_name] = [{sub_field_name: value[0] if len(value) == 1 else value}]
-                        else:
-                            data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
+                    if data_dict.get(index, {}).get(field_name) is None:
+                        data_dict[index][field_name] = [{sub_field_name: value[0] if len(value) == 1 else value}]
+                    else:
+                        data_dict[index][field_name].append({sub_field_name: value[0] if len(value) == 1 else value})
 
-            events_data = list(data_dict.values())
+        events_data = list(data_dict.values())
 
-        except Exception as e:
-            return Response({'detail': str(e)},
-                            status=status.HTTP_400_BAD_REQUEST)
-        try:
-            for i, participant in enumerate(events_data):
-                file_key = f'participation_data[{i}][certificate_scans]'
-                if file_key in request.FILES:
-                    participant['certificate_scans'] = request.FILES[file_key]
-
-        except Exception as e:
-            return Response({'enum_events_data': enumerate(events_data),
-                             'detail': str(e)},
-                            status=status.HTTP_400_BAD_REQUEST)
+        for i, participant in enumerate(events_data):
+            file_key = f'participation_data[{i}][certificate_scans]'
+            if file_key in request.FILES:
+                participant['certificate_scans'] = request.FILES[file_key]
 
         return events_data
