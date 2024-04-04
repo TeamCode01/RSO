@@ -40,11 +40,11 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
 
     for model in solo_ranking_models:
         worst_entry = model.objects.filter(competition_id=competition_id).order_by('-place').first()
-        solo_worst_places[model] = worst_entry.place if worst_entry else 1
+        solo_worst_places[model] = worst_entry.place + 1 if worst_entry else 1
 
     for model in tandem_ranking_models:
         worst_entry = model.objects.filter(competition_id=competition_id).order_by('-place').first()
-        tandem_worst_places[model] = worst_entry.place if worst_entry else 1
+        tandem_worst_places[model] = worst_entry.place + 1 if worst_entry else 1
 
     solo_rankings = []
     tandem_rankings = []
