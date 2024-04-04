@@ -1155,7 +1155,7 @@ class Q7ViewSet(
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response({'events_data': events_data}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'events_data': events_data[0].get('links')}, status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ7Serializer(
                 data=event,
@@ -1319,7 +1319,8 @@ class Q8ViewSet(Q7ViewSet):
             detachment=detachment,
             competition=competition
         )
-        for event in request.data:
+        events_data = get_events_data(request)
+        for event in events_data:
             serializer = CreateQ8Serializer(
                 data=event,
                 context={'request': request,
@@ -1404,6 +1405,8 @@ class Q9ViewSet(
             detachment=detachment,
             competition=competition
         )
+        events_data = get_events_data(request)
+        return Response(str(events_data), status=status.HTTP_400_BAD_REQUEST)
         if not request.data:
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -1492,6 +1495,9 @@ class Q10ViewSet(
             detachment=detachment,
             competition=competition
         )
+        events_data = get_events_data(request)
+        event = events_data[0]
+        return Response({'event_name': event.get('event_name')}, status=status.HTTP_400_BAD_REQUEST)
         if not request.data:
             return Response({'error': 'Отчет пустой.'},
                             status=status.HTTP_400_BAD_REQUEST)
