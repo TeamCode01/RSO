@@ -33,7 +33,7 @@ from api.permissions import (
     IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
     IsQ15DetachmentReportAuthor, IsCentralEventMaster
 )
-from api.utils import get_detachment_start, get_detachment_tandem
+from api.utils import get_detachment_start, get_detachment_tandem, get_events_data
 from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
@@ -1132,23 +1132,7 @@ class Q7ViewSet(
             detachment=detachment,
             competition=competition
         )
-        data_dict = {}
-        if isinstance(request.data, QueryDict):
-            for key, value in request.data.lists():
-                match = re.match(r'[(\d+)\]\[(\w+)\]', key)
-                if match:
-                    index, field_name = match.groups()
-                    index = int(index)
-                    if index not in data_dict:
-                        data_dict[index] = {}
-                    data_dict[index][field_name] = value[0] if len(value) == 1 else value
-
-        events_data = list(data_dict.values())
-
-        for i, participant in enumerate(events_data):
-            file_key = f'[{i}][certificate_scans]'
-            if file_key in request.FILES:
-                participant['certificate_scans'] = request.FILES[file_key]
+        events_data = get_events_data(request)
         if not events_data:
             return Response(
                 {
