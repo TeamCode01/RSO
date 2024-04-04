@@ -860,6 +860,20 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return Response(serializer.data,
                         status=status.HTTP_201_CREATED)
 
+    @action(detail=False,
+            methods=['get'],
+            url_path='me',
+            permission_classes=(permissions.IsAuthenticated,))
+    def me(self, request, competition_pk, *args, **kwargs):
+        """
+        Action для получения списка отчетов отряда текущего пользователя.
+
+        Доступ: все авторизованные пользователи.
+        Если пользователь не командир отряда, и у его отряда нет
+        поданных отчетов - вернется пустой список.
+        """
+        return super().list(request, *args, **kwargs)
+
     @action(
         detail=False,
         methods=['get'],
@@ -1133,11 +1147,14 @@ class Q7ViewSet(
             competition=competition
         )
         events_data = get_events_data(request)
+        if isinstance(events_data, Response):
+            return events_data
         if not events_data:
             return Response(
                 {
                     'non_field_errors': f'Присланный реквест: {request.data}'
-                                        f'файлы: {request.FILES}'
+                                        f'файлы: {request.FILES}',
+                    'events_data': events_data
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
