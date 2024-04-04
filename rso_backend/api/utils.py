@@ -797,3 +797,36 @@ def get_events_data(request):
                 participant['certificate_scans'] = request.FILES[file_key]
 
         return events_data
+
+
+def get_events_data2(request):
+    if isinstance(request.data, QueryDict):
+        data_dict = {}
+        for key, value in request.data.lists():
+            match = re.match(r'participation_data\[(\d+)\]\[(\w+)\]\[(\d+)\]\[(\w+)\]', key)
+            if match:
+                index, field_name, sub_index, sub_field_name = match.groups()
+                index = int(index)
+                link_dict = {sub_field_name: value[0] if len(value) == 1 else value}
+                if data_dict.get(index, {}).get(field_name) is None:
+                    data_dict[index][field_name] = []
+                    data_dict[index][field_name].append(link_dict)
+                else:
+                    data_dict[index][field_name].append(link_dict)
+            else:
+                match = re.match(r'participation_data\[(\d+)\]\[(\w+)\]', key)
+                if match:
+                    index, field_name = match.groups()
+                    index = int(index)
+                    if index not in data_dict:
+                        data_dict[index] = {}
+                    data_dict[index][field_name] = value[0] if len(value) == 1 else value
+
+        events_data = list(data_dict.values())
+
+        for i, participant in enumerate(events_data):
+            file_key = f'participation_data[{i}][certificate_scans]'
+            if file_key in request.FILES:
+                participant['certificate_scans'] = request.FILES[file_key]
+
+        return events_data

@@ -33,7 +33,7 @@ from api.permissions import (
     IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
     IsQ15DetachmentReportAuthor, IsCentralEventMaster
 )
-from api.utils import get_detachment_start, get_detachment_tandem, get_events_data
+from api.utils import get_detachment_start, get_detachment_tandem, get_events_data, get_events_data2
 from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
@@ -1155,7 +1155,8 @@ class Q7ViewSet(
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response({'links': events_data[0].get('links')}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'links': events_data[0].get('links')},
+                        status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ7Serializer(
                 data=event,
@@ -1319,7 +1320,7 @@ class Q8ViewSet(Q7ViewSet):
             detachment=detachment,
             competition=competition
         )
-        events_data = get_events_data(request)
+        events_data = get_events_data2(request)
         return Response(str(events_data), status=status.HTTP_400_BAD_REQUEST)
         for event in events_data:
             serializer = CreateQ8Serializer(
