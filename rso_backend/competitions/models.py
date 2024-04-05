@@ -1239,6 +1239,15 @@ class Q13EventOrganization(models.Model):
     is_verified = models.BooleanField(default=False)
 
 
+class Q14DetachmentReport(QBaseReport):
+    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+    score = models.FloatField(verbose_name='Очки', default=1000)
+
+    class Meta:
+        verbose_name = 'Отчет по 14 показателю'
+        verbose_name_plural = 'Отчеты по 14 показателю'
+
+
 class Q14LaborProject(models.Model):
     lab_project_name = models.CharField(
         max_length=150,
@@ -1249,22 +1258,13 @@ class Q14LaborProject(models.Model):
         ),
         validators=[MinValueValidator(1), MaxValueValidator(1000)],
     )
-
-
-class Q14DetachmentReport(QBaseReport, QBaseReportIsVerified):
-    q14_labor_project = models.ForeignKey(
-        'competitions.Q14LaborProject',
+    detachment_report = models.ForeignKey(
+        Q14DetachmentReport,
         on_delete=models.CASCADE,
         related_name='q14_labor_project',
-        verbose_name='Участники трудового проекта'
+        verbose_name='Отчет по 14 показателю'
     )
-    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
-    score = models.FloatField(verbose_name='Очки', default=1000)
-
-
-    class Meta:
-        verbose_name = 'Отчет по 14 показателю'
-        verbose_name_plural = 'Отчеты по 14 показателю'
+    is_verified = models.BooleanField(default=False)
 
 
 class Q14Ranking(QBaseRanking):

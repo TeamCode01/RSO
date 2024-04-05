@@ -38,7 +38,7 @@ from competitions.models import (
     Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
     Q13EventOrganization,
-    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q14Ranking, Q16Report,
+    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q14Ranking, Q14TandemRanking, Q16Report,
     Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q19Report, Q1Ranking,
     Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking,
     Q2TandemRanking, Q7Report, Q18DetachmentReport,
@@ -49,7 +49,7 @@ from competitions.models import (
     Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
     Q15DetachmentReport, OverallRanking, OverallTandemRanking,
 )
-from competitions.q_calculations import (calculate_q13_place, calculate_q17_place,
+from competitions.q_calculations import (calculate_q13_place, calculate_q14_place, calculate_q17_place,
                                          calculate_q19_place)
 from competitions.serializers import (
     CompetitionApplicationsObjectSerializer, CompetitionApplicationsSerializer,
@@ -57,7 +57,7 @@ from competitions.serializers import (
     CompetitionSerializer, CreateQ10Serializer, CreateQ11Serializer,
     CreateQ12Serializer, CreateQ7Serializer, CreateQ8Serializer,
     CreateQ9Serializer, Q10ReportSerializer, Q10Serializer,
-    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer,
+    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer, Q14LaborProjectSerializer,
     Q16ReportSerializer, Q17DetachmentReportSerializer, Q17EventLinkSerializer,
     Q19DetachmenrtReportSerializer, Q20ReportSerializer,
     Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
@@ -2822,10 +2822,16 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     Пример POST-запроса:
     {
-      "q14_labor_project": {
-        "lab_project_name": "string",
-        "amount": 5
-      }
+      "q14_labor_project": [
+        {
+          "lab_project_name": "string",
+          "amount": 5
+        },
+        {
+          "lab_project_name": "string2",
+          "amount": 50
+        }
+      ]
     }
 
     Оба поля ввода обязательные. При нажатии на “Добавить проект”
@@ -2843,23 +2849,33 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     (1 раз до 30 сентября отправка показателя).
 
     """
+
     serializer_class = Q14DetachmentReportSerializer
+    permission_classes = (IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
-        return Q14DetachmentReport.objects.filter(
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
+        if self.action == 'list':
+            regional_headquarter = (
+                self.request.user.userregionalheadquarterposition.headquarter
+            )
+            return self.serializer_class.Meta.model.objects.filter(
+                detachment__regional_headquarter=regional_headquarter,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        if self.action == 'me':
+            return self.serializer_class.Meta.model.objects.filter(
+                detachment__commander=self.request.user,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
     def get_permissions(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
-            return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
-        if self.action in ['update', 'partial_update']:
-            return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAuthor()]
+            return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -2871,63 +2887,61 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     def create(self, request, *args, **kwargs):
-
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
-        q14_amount = request.data.get(
-            'q14_labor_project'
-        ).get('amount')
-        q14_lp_name = request.data.get(
-            'q14_labor_project'
-        ).get('lab_project_name')
-        if not q14_amount:
-            return Response(
-                {'error': 'Не введено количество бойцов.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            detachment = get_object_or_404(
-                Detachment, id=request.user.detachment_commander.id
-            )
-        except Detachment.DoesNotExist:
-            return Response(
-                {'error': 'Заполнять данные может только командир отряда.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # TODO заменить на фильтрацию с Q ->
+        detachment = get_object_or_404(
+            Detachment, id=self.request.user.detachment_commander.id
+        )
+        q14_labor_project = request.data.get('q14_labor_project', [])
+
         if not CompetitionParticipants.objects.filter(
-                competition=competition, detachment=detachment
+                competition=competition,
+                junior_detachment=detachment
+        ).exists() and not CompetitionParticipants.objects.filter(
+            competition=competition,
+            detachment=detachment
         ).exists():
-            if not CompetitionParticipants.objects.filter(
-                    competition=competition, junior_detachment=detachment
-            ).exists():
-                return Response(
-                    {
-                        'error': 'Отряд не зарегистрирован'
-                                 ' как участник конкурса.'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        detachment_lab_projects = Q14DetachmentReport.objects.filter(
-            detachment=detachment.id
-        ).values_list('q14_labor_project', flat=True)
-        if not len(detachment_lab_projects) == 0:
-            for id in detachment_lab_projects:
-                lab_project_name = Q14LaborProject.objects.get(
-                    id=id
-                ).lab_project_name
-                if (q14_lp_name == lab_project_name):
-                    return Response(
-                        {
-                            'error': (
-                                'Отчет для этого трудового проекта '
-                                'у данного отряда уже существует.'
-                            )
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
+            return Response(
+                {
+                    'error': 'Отряд подающего пользователя не '
+                             'участвует в конкурсе.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not q14_labor_project:
+            return Response(
+                {
+                    'non_field_errors': 'q14_labor_project '
+                                        'должно быть заполнено'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        with transaction.atomic():
+            report, created = Q14DetachmentReport.objects.get_or_create(
+                competition_id=competition.id,
+                detachment_id=detachment.id
+            )
+
+            for labor_data in q14_labor_project:
+                labor_serializer = Q14LaborProjectSerializer(
+                    data=labor_data)
+                if labor_serializer.is_valid(raise_exception=True):
+                    Q14LaborProject.objects.create(
+                        **labor_serializer.validated_data,
+                        detachment_report=report
                     )
-        return super().create(request, *args, **kwargs)
+                else:
+                    return Response(labor_serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(
+                self.get_serializer(report).data,
+                status=(
+                    status.HTTP_201_CREATED if created else status.HTTP_200_OK
+                )
+            )
 
     @action(detail=False,
             methods=['get'],
@@ -2948,60 +2962,51 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['get'],
         url_path='get-place',
         serializer_class=None,
-        permission_classes=[permissions.IsAuthenticated, ]
+        permission_classes=[IsCompetitionParticipantAndCommander,]
     )
-    def get_place(self, request, competition_pk, **kwargs):
-        """Определение места по показателю.
-
-        Возвращается место или статус показателя.
-        Если показатель не был подан ранее, то возвращается код 400.
-        """
+    def get_place(self, request, **kwargs):
 
         detachment = self.request.user.detachment_commander
+        competition_id = self.kwargs.get('competition_pk')
+        calculate_q14_place(competition_id)
         report = Q14DetachmentReport.objects.filter(
             detachment=detachment,
-            competition_id=self.kwargs.get('competition_pk')
+            competition_id=competition_id
         ).first()
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        is_verified = report.is_verified
-        is_tandem = tandem_or_start(
-            competition=report.competition,
+        tandem_ranking = Q14TandemRanking.objects.filter(
             detachment=report.detachment,
-            competition_model=CompetitionParticipants
-        )
+            competition_id=competition_id
 
-        if not is_verified:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data={'detail': 'Показатель в обработке.'}
-            )
-        tandem_ranking = getattr(
-            detachment, 'q14tandemranking_main_detachment'
-        ).filter(competition_id=competition_pk).first()
+        ).first()
         if not tandem_ranking:
-            tandem_ranking = getattr(
-                detachment, 'q14tandemranking_junior_detachment'
-            ).filter(competition_id=competition_pk).first()
-
-        if is_tandem:
-            if tandem_ranking and tandem_ranking.place is not None:
-                return Response(
-                    {'place': tandem_ranking.place},
-                    status=status.HTTP_200_OK
-                )
-        else:
-            ranking = Q14Ranking.objects.filter(
-                detachment=report.detachment
+            tandem_ranking = Q14TandemRanking.objects.filter(
+                junior_detachment=report.detachment,
+                competition_id=competition_id
             ).first()
-            if ranking and ranking.place is not None:
-                return Response(
-                    {'place': ranking.place}, status=status.HTTP_200_OK
-                )
 
+        # Пытаемся найти place в Q14TandemRanking
+        if tandem_ranking and tandem_ranking.place is not None:
+            return Response(
+                {"place": tandem_ranking.place},
+                status=status.HTTP_200_OK
+            )
+
+        # Если не найдено в Q14TandemRanking, ищем в Q14Ranking
+        ranking = Q14Ranking.objects.filter(
+            detachment=report.detachment,
+            competition_id=competition_id
+        ).first()
+        if ranking and ranking.place is not None:
+            return Response(
+                {"place": ranking.place}, status=status.HTTP_200_OK
+            )
+
+        # Если не найдено ни в одной из моделей
         return Response(
-            status=status.HTTP_404_NOT_FOUND,
-            data={'detail': 'Показатель в обработке.'}
+            {"place": "Показатель в обработке"},
+            status=status.HTTP_404_NOT_FOUND
         )
 
     @action(
@@ -3131,7 +3136,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if not source_data:
             return Response(
                 {
-                    'non_field_errors': 'organization_data '
+                    'non_field_errors': 'source_data '
                                         'должно быть заполнено'
                 },
                 status=status.HTTP_400_BAD_REQUEST
@@ -3183,10 +3188,9 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         permission_classes=[IsCompetitionParticipantAndCommander,]
     )
     def get_place(self, request, **kwargs):
-        
+
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
-        calculate_q17_place(competition_id)
         report = Q17DetachmentReport.objects.filter(
             detachment=detachment,
             competition_id=competition_id

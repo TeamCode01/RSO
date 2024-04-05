@@ -992,13 +992,18 @@ class Q14LaborProjectSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'lab_project_name',
-            'amount'
+            'amount',
+            'detachment_report',
+            'is_verified'
         )
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'is_verified', 'detachment_report')
 
 
 class Q14DetachmentReportSerializer(serializers.ModelSerializer):
-    q14_labor_project = Q14LaborProjectSerializer()
+    q14_labor_project = serializers.ListField(
+        child=Q14LaborProjectSerializer(),
+        write_only=True
+    )
 
     class Meta:
         model = Q14DetachmentReport
@@ -1006,10 +1011,9 @@ class Q14DetachmentReportSerializer(serializers.ModelSerializer):
             'id',
             'detachment',
             'competition',
-            'is_verified',
             'q14_labor_project'
         )
-        read_only_fields = ('is_verified', 'detachment', 'competition')
+        read_only_fields = ('detachment', 'competition')
 
     def create(self, validated_data):
         lab_project_data = validated_data.pop('q14_labor_project')
@@ -1060,7 +1064,7 @@ class Q17EventLinkSerializer(serializers.ModelSerializer):
             'detachment_report',
             'is_verified'
         )
-        read_only_fields = ('id','is_verified', 'detachment_report')
+        read_only_fields = ('id', 'is_verified', 'detachment_report')
 
 
 class Q17DetachmentReportSerializer(serializers.ModelSerializer):
