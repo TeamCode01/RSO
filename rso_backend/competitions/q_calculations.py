@@ -6,7 +6,7 @@ from django.db.models import Max
 from django.conf import settings
 import logging
 from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q16Report, \
-    Q17DetachmentReport, Q17Ranking, Q17TandemRanking, Q18Ranking, \
+    Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
     Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
@@ -297,28 +297,94 @@ def calculate_q14_place(competition_id):
 
 def calculate_q17_place(competition_id):
 
-    LAST_PLACE = 999
-
-    reports_count_dict = Counter(Q17DetachmentReport.objects.filter(
-        competition_id=competition_id,
-        is_verified=True
-    ).all().values_list('detachment_id', flat=True))
-
+    logger.info(f'Начинаем считать места по 17 показателю {competition_id}')
     start_list = []
-    tandem_list = []
-    for id, report_count in reports_count_dict.items():
-        is_tandem = tandem_or_start(
-            competition=competition_id,
-            detachment=id,
+    tandem_dict_count = {}
+    tandem_dict = {}
+    tandem_dict_united = {}
+    tandem_list_united = []
+    detachment_reports = Q17DetachmentReport.objects.filter(
+        competition_id=competition_id,
+    )
+    """
+    Проходим циклом по всем отчетам и считаем кол-во верифицированных отчетов.
+    source_count_dict = {id отчета: кол-во верифицированных отчетов}
+    """
+    for entry in detachment_reports:
+        source_count_dict = dict(Counter(Q17EventLink.objects.filter(
+            detachment_report=entry,
+            is_verified=True
+        ).all().values_list('detachment_report_id', flat=True)))
+
+        """
+        В цикле проверяем является ли отчет отряда тандемом.
+        Если Стандарт - добавляем в список
+        start_list = [(id отряда, кол-во верифицированных отчетов)].
+        Если Тандем - добавляем в список
+        tandem_list = [(id отряда, кол-во верифицированных отчетов)]
+        и добавляем в словарь
+        tandem_dict_count = {id отряда: кол-во верифицированных отчетов}.
+        Список start_list далее будет преобразован в ranked_start.
+        ranked_start - [(id отряда, место)]. Цикл по ranked_start
+        создаст записи в Q17Ranking.
+        """
+
+        for report_id, verified_count in source_count_dict.items():
+            detachment_id = Q17DetachmentReport.objects.get(
+                id=report_id,
+                competition_id=competition_id
+            ).detachment.id
+            is_tandem = tandem_or_start(
+                competition=competition_id,
+                detachment=detachment_id,
+                competition_model=CompetitionParticipants
+            )
+            if not is_tandem:
+                start_list.append((detachment_id, verified_count))
+            if is_tandem:
+                tandem_dict_count[detachment_id] = verified_count
+    """
+    Проходим циклом по словарю тандемов, определяем main_detachment_id
+    и junior_detachment_id. Суммируем количество отчётов и записываем
+    в новый словарь
+    tandem_dict_united = {id отряда-наставника: сумма отчетов наставника и младшего отрядов}.
+    """
+    for detachment_id, verified_count in tandem_dict_count.items():
+        is_main = is_main_detachment(
+            competition_id=competition_id,
+            detachment_id=detachment_id,
             competition_model=CompetitionParticipants
         )
-        if not is_tandem:
-            start_list.append((id, report_count))
-        if is_tandem:
-            tandem_list.append((id, report_count))
+        if is_main:
+            junior_detachment_id = CompetitionParticipants.objects.filter(
+                competition_id=competition_id,
+                detachment_id=detachment_id
+            ).first().junior_detachment.id
 
+            tandem_dict[detachment_id] = junior_detachment_id
+            junior_count = tandem_dict_count.get(junior_detachment_id, 0)
+
+            tandem_dict_united[detachment_id] = verified_count + junior_count
+        else:
+            main_detachment_id = CompetitionParticipants.objects.filter(
+                competition_id=competition_id,
+                junior_detachment=detachment_id
+            ).first().detachment_id
+            tandem_dict[main_detachment_id] = detachment_id
+            main_count = tandem_dict_count.get(main_detachment_id, 0)
+            tandem_dict_united[main_detachment_id] = (
+                verified_count + main_count
+            )
+
+    """
+    Формируем из словаря tandem_dict_united словарь кортежей, который
+    преобразуем в ranked_tandem = [(id отряда, место)].
+    Элементы из ranked_tandem будут записаны в Q17TandemRanking.
+    """
+    for main_detachment_id, verified_count in tandem_dict_united.items():
+        tandem_list_united.append((main_detachment_id, verified_count))
     ranked_start = assign_ranks(start_list)
-    ranked_tandem = assign_ranks(tandem_list)
+    ranked_tandem = assign_ranks(tandem_list_united)
 
     Q17Ranking.objects.all().delete()
     Q17TandemRanking.objects.all().delete()
@@ -330,49 +396,13 @@ def calculate_q17_place(competition_id):
             place=place
         )
     for id, place in ranked_tandem:
-        is_main = is_main_detachment(
+        Q17TandemRanking.objects.get_or_create(
             competition_id=competition_id,
+            junior_detachment_id=tandem_dict[id],
             detachment_id=id,
-            competition_model=CompetitionParticipants
+            place=place
         )
-        if is_main:
-            junior_detachment_id = CompetitionParticipants.objects.filter(
-                competition_id=competition_id,
-                detachment_id=id
-            ).first().junior_detachment.id
-            junior_place = find_second_element_by_first(
-                ranked_tandem, junior_detachment_id
-            )
-            if junior_place:
-                tandem_place = round(((junior_place + place) / 2), 2)
-            else:
-                tandem_place = LAST_PLACE
-
-            Q17TandemRanking.objects.get_or_create(
-                competition_id=competition_id,
-                detachment_id=id,
-                junior_detachment_id=junior_detachment_id,
-                place=tandem_place
-            )
-        else:
-            main_detachment_id = CompetitionParticipants.objects.filter(
-                competition_id=competition_id,
-                junior_detachment=id
-            ).first().detachment_id
-
-            junior_place = find_second_element_by_first(
-                ranked_tandem, main_detachment_id
-            )
-            if junior_place:
-                tandem_place = round(((junior_place + place) / 2), 2)
-            else:
-                tandem_place = LAST_PLACE
-            Q17TandemRanking.objects.get_or_create(
-                competition_id=competition_id,
-                junior_detachment_id=id,
-                detachment_id=main_detachment_id,
-                place=tandem_place
-            )
+    logger.info(f'Посчитали места по 17 показателю {competition_id}')
 
 
 def calculate_q18_place(competition_id):
