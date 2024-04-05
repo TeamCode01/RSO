@@ -39,7 +39,7 @@ from competitions.models import (
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
     Q13EventOrganization,
     Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q14Ranking, Q16Report,
-    Q17DetachmentReport, Q17Link, Q17Ranking, Q19Report, Q1Ranking,
+    Q17DetachmentReport, Q17EventLink, Q17Ranking, Q19Report, Q1Ranking,
     Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking,
     Q2TandemRanking, Q7Report, Q18DetachmentReport,
     Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking,
@@ -58,7 +58,7 @@ from competitions.serializers import (
     CreateQ12Serializer, CreateQ7Serializer, CreateQ8Serializer,
     CreateQ9Serializer, Q10ReportSerializer, Q10Serializer,
     Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer,
-    Q16ReportSerializer, Q17DetachmentReportSerializer,
+    Q16ReportSerializer, Q17DetachmentReportSerializer, Q17EventLinkSerializer,
     Q19DetachmenrtReportSerializer, Q20ReportSerializer,
     Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
     Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
@@ -3045,14 +3045,6 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     и патриотических мероприятиях отряда.
 
     Пример POST-запроса:
-    {
-      "q17_event": {
-        "source_name": "string2"
-      },
-      "q17_link": {
-        "link": "http://127.0.0.1:8000/swagger/"
-      }
-    }
 
     Оба поля ввода обязательные. При нажатии на “Добавить источник”
     подгружается новый блок с полями: “Наименование источника”,
@@ -3091,59 +3083,116 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_detachment(self, obj):
         return obj.detachment
 
-    def create(self, request, *args, **kwargs):
+    # def create(self, request, *args, **kwargs):
 
+    #     competition = get_object_or_404(
+    #         Competitions, id=self.kwargs.get('competition_pk')
+    #     )
+    #     q17_link = request.data.get(
+    #         'q17_link'
+    #     ).get('link')
+    #     if not q17_link:
+    #         return Response(
+    #             {'error': 'Не заполнена ссылка.'},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #     try:
+    #         detachment = get_object_or_404(
+    #             Detachment, id=request.user.detachment_commander.id
+    #         )
+    #     except Detachment.DoesNotExist:
+    #         return Response(
+    #             {'error': 'Заполнять данные может только командир отряда.'},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #     # TODO заменить на фильтрацию с Q ->
+    #     if not CompetitionParticipants.objects.filter(
+    #             competition=competition, detachment=detachment
+    #     ).exists():
+    #         if not CompetitionParticipants.objects.filter(
+    #                 competition=competition, junior_detachment=detachment
+    #         ).exists():
+    #             return Response(
+    #                 {
+    #                     'error': 'Отряд не зарегистрирован'
+    #                              ' как участник конкурса.'
+    #                 },
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+    #     detachment_links = Q17DetachmentReport.objects.filter(
+    #         detachment=detachment.id
+    #     ).values_list('q17_link', flat=True)
+    #     if not len(detachment_links) == 0:
+    #         for id in detachment_links:
+    #             link_url = Q17Link.objects.get(id=id).link
+    #             if q17_link == link_url:
+    #                 return Response(
+    #                     {
+    #                         'error': (
+    #                             'Отчет с этой ссылкой и отрядом уже существует.'
+    #                         )
+    #                     },
+    #                     status=status.HTTP_400_BAD_REQUEST
+    #                 )
+
+    #     return super().create(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
-        q17_link = request.data.get(
-            'q17_link'
-        ).get('link')
-        if not q17_link:
-            return Response(
-                {'error': 'Не заполнена ссылка.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            detachment = get_object_or_404(
-                Detachment, id=request.user.detachment_commander.id
-            )
-        except Detachment.DoesNotExist:
-            return Response(
-                {'error': 'Заполнять данные может только командир отряда.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # TODO заменить на фильтрацию с Q ->
-        if not CompetitionParticipants.objects.filter(
-                competition=competition, detachment=detachment
-        ).exists():
-            if not CompetitionParticipants.objects.filter(
-                    competition=competition, junior_detachment=detachment
-            ).exists():
-                return Response(
-                    {
-                        'error': 'Отряд не зарегистрирован'
-                                 ' как участник конкурса.'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        detachment_links = Q17DetachmentReport.objects.filter(
-            detachment=detachment.id
-        ).values_list('q17_link', flat=True)
-        if not len(detachment_links) == 0:
-            for id in detachment_links:
-                link_url = Q17Link.objects.get(id=id).link
-                if q17_link == link_url:
-                    return Response(
-                        {
-                            'error': (
-                                'Отчет с этой ссылкой и отрядом уже существует.'
-                            )
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+        detachment = get_object_or_404(
+            Detachment, id=self.request.user.detachment_commander.id
+        )
+        source_data = request.data.get('source_data', [])
 
-        return super().create(request, *args, **kwargs)
+        if not CompetitionParticipants.objects.filter(
+                competition=competition,
+                junior_detachment=detachment
+        ).exists() and not CompetitionParticipants.objects.filter(
+            competition=competition,
+            detachment=detachment
+        ).exists():
+            return Response(
+                {
+                    'error': 'Отряд подающего пользователя не '
+                             'участвует в конкурсе.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not source_data:
+            return Response(
+                {
+                    'non_field_errors': 'organization_data '
+                                        'должно быть заполнено'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        with transaction.atomic():
+            report, created = Q17DetachmentReport.objects.get_or_create(
+                competition_id=competition.id,
+                detachment_id=detachment.id
+            )
+
+            for data in source_data:
+                source_serializer = Q17EventLinkSerializer(
+                    data=data)
+                if source_serializer.is_valid(raise_exception=True):
+                    Q17EventLink.objects.create(
+                        **source_serializer.validated_data,
+                        detachment_report=report
+                    )
+                else:
+                    return Response(source_serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(
+                self.get_serializer(report).data,
+                status=(
+                    status.HTTP_201_CREATED if created else status.HTTP_200_OK
+                )
+            )
 
     @action(detail=False,
             methods=['get'],
