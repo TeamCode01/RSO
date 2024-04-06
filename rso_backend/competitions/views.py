@@ -3874,22 +3874,23 @@ def get_place_q1(request, competition_pk):
         if detachment_tandem is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if detachment_start:
-            ranking_start = Q1Ranking.objects.filter(
-                competition_id=competition_pk,
-                detachment=detachment_start
-            ).first()
-            if ranking_start:
-                return Response({'place': ranking_start.place})
+        ranking_tandem = Q1TandemRanking.objects.filter(
+            Q(competition_id=competition_pk) &
+            Q(junior_detachment=detachment_tandem) |
+            Q(detachment=detachment_tandem)
+        ).first()
+        if ranking_tandem:
+            return Response({'place': ranking_tandem.place})
+        return Response({'error': 'Рейтинг еще не сформирован'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
-        if detachment_tandem:
-            ranking_tandem = Q1TandemRanking.objects.filter(
-                Q(competition_id=competition_pk) &
-                Q(junior_detachment=detachment_tandem) |
-                Q(detachment=detachment_tandem)
-            ).first()
-            if ranking_tandem:
-                return Response({'place': ranking_tandem.place})
+    if detachment_start:
+        ranking_start = Q1Ranking.objects.filter(
+            competition_id=competition_pk,
+            detachment=detachment_start
+        ).first()
+        if ranking_start:
+            return Response({'place': ranking_start.place})
 
     # Если отряд является участником конкурса, но нет рейтинга
     return Response({'error': 'Рейтинг еще не сформирован'},
