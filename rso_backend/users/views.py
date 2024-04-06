@@ -20,7 +20,7 @@ from api.permissions import (IsCommanderOrTrustedAnywhere,
                              PersonalDataPermission, IsStuffOrAuthor)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
-from rso_backend.settings import BASE_DIR, RSOUSERS_CACHE_TTL
+from rso_backend.settings import RSOUSERS_CACHE_TTL
 from users.filters import RSOUserFilter
 from users.models import (RSOUser, UserDocuments, UserEducation,
                           UserForeignDocuments, UserMedia, UserParent,
@@ -492,7 +492,7 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filename = 'rso_membership_statement.rtf'
-        filepath = BASE_DIR.joinpath('templates', 'membership', filename)
+        filepath = settings.BASE_DIR.joinpath('templates', 'membership', filename)
         return download_file(filepath, filename)
 
     @action(
@@ -508,7 +508,7 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filename = 'consent_to_the_processing_of_personal_data.rtf'
-        filepath = BASE_DIR.joinpath('templates',  'membership', filename)
+        filepath = settings.BASE_DIR.joinpath('templates',  'membership', filename)
         return download_file(filepath, filename)
 
     @action(
@@ -527,7 +527,7 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         filename = (
             'download_parent_consent_to_the_processing_of_personal_data.rtf'
         )
-        filepath = BASE_DIR.joinpath('templates', 'membership', filename)
+        filepath = settings.BASE_DIR.joinpath('templates', 'membership', filename)
         return download_file(filepath, filename)
 
     @action(
@@ -542,14 +542,14 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         Архив доступен по эндпоинту /users/me/statement/download_all_forms/
         """
 
-        filepath = BASE_DIR.joinpath('templates', 'membership')
-        zip_filename = BASE_DIR.joinpath('templates', 'entry_forms.zip')
+        filepath = settings.BASE_DIR.joinpath('templates', 'membership')
+        zip_filename = settings.BASE_DIR.joinpath('templates', 'entry_forms.zip')
         file_dir = os.listdir(filepath)
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for file in file_dir:
                 zipf.write(os.path.join(filepath, file), file)
         zipf.close()
-        filepath = BASE_DIR.joinpath('templates', 'entry_forms.zip')
+        filepath = settings.BASE_DIR.joinpath('templates', 'entry_forms.zip')
         path = open(filepath, 'rb')
         mime_type, _ = mimetypes.guess_type(filepath)
         response = HttpResponse(path, content_type=mime_type)

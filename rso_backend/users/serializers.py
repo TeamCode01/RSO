@@ -30,8 +30,8 @@ from users.constants import (DOCUMENTS_RAW_EXISTS, EDUCATION_RAW_EXISTS,
                              MEDIA_RAW_EXISTS, PRIVACY_RAW_EXISTS,
                              REGION_RAW_EXISTS, STATEMENT_RAW_EXISTS,
                              TOO_MANY_EDUCATIONS)
-from users.models import (RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
+                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
                           UserPrivacySettings, UserProfessionalEducation,
                           UserRegion, UserStatementDocuments,
                           UserVerificationRequest)
@@ -175,8 +175,41 @@ class UserDocumentsSerializer(serializers.ModelSerializer):
         )
 
 
+class AdditionalForeignDocsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AdditionalForeignDocs
+        fields = (
+            'foreign_doc_name',
+            'foreign_doc_num',
+        )
+
+
+class UserForeignParentDocsSerializer(serializers.ModelSerializer):
+
+    additional_docs = serializers.ListField(
+        child=AdditionalForeignDocsSerializer(),
+        write_only=True
+    )
+
+    class Meta:
+        model = UserForeignParentDocs
+        fields = (
+            'name',
+            'foreign_pass_num',
+            'foreign_pass_date',
+            'foreign_pass_whom',
+            'additional_docs',
+            'snils',
+            'inn',
+            'work_book_num',
+        )
+
+
 class ForeignUserDocumentsSerializer(serializers.ModelSerializer):
-    """Сериализатор документом иностранного гражданина."""
+    """Сериализатор документов иностранного гражданина."""
+
+    parent_docs = UserForeignParentDocsSerializer()
 
     class Meta:
         model = UserForeignDocuments
@@ -188,6 +221,7 @@ class ForeignUserDocumentsSerializer(serializers.ModelSerializer):
             'snils',
             'inn',
             'work_book_num',
+            'parent_docs'
         )
 
     def create(self, validated_data):
