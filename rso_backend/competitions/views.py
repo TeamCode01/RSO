@@ -1953,7 +1953,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         - GET-PLACE (GET): Всем пользователям
     """
     serializer_class = Q6DetachmentReportSerializer
-    permission_classes = (IsCompetitionParticipantAndCommander,)
+    permission_classes = (permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
         if self.action == 'list':
@@ -2450,7 +2450,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     ```
     """
 
-    permission_classes = (IsCompetitionParticipantAndCommander,)
+    permission_classes = (permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,)
 
     MAX_PLACE = 6
 
@@ -3276,7 +3276,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         - GET-PLACE (GET): Всем пользователям
     """
     serializer_class = Q18DetachmentReportSerializer
-    permission_classes = (IsCompetitionParticipantAndCommander,)
+    permission_classes = (permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
         if self.action == 'list':
