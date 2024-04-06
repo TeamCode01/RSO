@@ -49,7 +49,7 @@ from competitions.models import (
     Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
     Q15DetachmentReport, OverallRanking, OverallTandemRanking,
 )
-from competitions.q_calculations import (calculate_q13_place, calculate_q14_place, calculate_q17_place,
+from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
 from competitions.serializers import (
     CompetitionApplicationsObjectSerializer, CompetitionApplicationsSerializer,
@@ -2973,7 +2973,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
-        calculate_q14_place(competition_id)
+
         report = Q14DetachmentReport.objects.filter(
             detachment=detachment,
             competition_id=competition_id
