@@ -210,12 +210,26 @@ class LinksQ7Serializer(
         )
 
 
+class ShortQ7ReportSerializer(serializers.ModelSerializer):
+    detachment = ShortDetachmentCompetitionSerializer()
+    competition = CompetitionSerializer()
+
+    class Meta:
+        model = Q7Report
+        fields = (
+            'id',
+            'detachment',
+            'competition'
+        )
+
+
 class Q7Serializer(
         serializers.ModelSerializer
 ):
     links = LinksQ7Serializer(
         many=True
     )
+    detachment_report = ShortQ7ReportSerializer()
 
     class Meta:
         model = Q7
@@ -303,22 +317,22 @@ class CreateQ7Serializer(
     def validate(self, attrs):
         event = self.context.get('event')
         links = event.get('links')
-        # if not links:
-        #     raise serializers.ValidationError(
-        #         {"links": "Добавьте хотя бы одну ссылку на фотоотчет"}
-        #     )
-        # if not event.get('event_name'):
-        #     raise serializers.ValidationError(
-        #         {'event_name': 'Укажите название мероприятия.'}
-        #     )
-        # if not event.get('number_of_participants'):
-        #     raise serializers.ValidationError(
-        #         {'number_of_participants': 'Укажите количество участников.'}
-        #     )
-        # if not links or len(links) == 0:
-        #     raise serializers.ValidationError(
-        #         {'links': 'Добавьте хотя бы одну ссылку на фотоотчет.'}
-        #     )
+        if not links:
+            raise serializers.ValidationError(
+                {"links": "Добавьте хотя бы одну ссылку на фотоотчет"}
+            )
+        if not event.get('event_name'):
+            raise serializers.ValidationError(
+                {'event_name': 'Укажите название мероприятия.'}
+            )
+        if not event.get('number_of_participants'):
+            raise serializers.ValidationError(
+                {'number_of_participants': 'Укажите количество участников.'}
+            )
+        if not links or len(links) == 0:
+            raise serializers.ValidationError(
+                {'links': 'Добавьте хотя бы одну ссылку на фотоотчет.'}
+            )
         if self.Meta.model.objects.filter(
             detachment_report=self.context.get('detachment_report'),
             event_name=attrs.get('event_name')
@@ -377,12 +391,28 @@ class LinksQ8Serializer(
         )
 
 
+class ShortQ8ReportSerializer(
+        serializers.ModelSerializer
+):
+    detachment = ShortDetachmentCompetitionSerializer()
+    competition = CompetitionSerializer()
+
+    class Meta:
+        model = Q8Report
+        fields = (
+            'id',
+            'detachment',
+            'competition'
+        )
+
+
 class Q8Serializer(
         serializers.ModelSerializer
 ):
     links = LinksQ8Serializer(
         many=True
     )
+    detachment_report = ShortQ8ReportSerializer()
 
     class Meta:
         model = Q8
@@ -533,9 +563,26 @@ class Q8ReportSerializer(
         fields = '__all__'
 
 
+class ShortQ9ReportSerializer(
+    serializers.ModelSerializer
+):
+    detachment = ShortDetachmentCompetitionSerializer()
+    competition = CompetitionSerializer()
+
+    class Meta:
+        model = Q9Report
+        fields = (
+            'id',
+            'detachment',
+            'competition'
+        )
+
+
 class Q9Serializer(
     serializers.ModelSerializer
 ):
+    detachment_report = ShortQ9ReportSerializer()
+
     class Meta:
         model = Q9
         fields = (
@@ -557,7 +604,6 @@ class Q9Serializer(
 class CreateQ9Serializer(
         serializers.ModelSerializer
 ):
-    # certificate_scans = serializers.FileField()
     class Meta:
         model = Q9
         fields = (
@@ -611,9 +657,26 @@ class Q9ReportSerializer(
         fields = '__all__'
 
 
+class ShortQ10ReportSerializer(
+    serializers.ModelSerializer
+):
+    detachment = ShortDetachmentCompetitionSerializer()
+    competition = CompetitionSerializer()
+
+    class Meta:
+        model = Q10Report
+        fields = (
+            'id',
+            'detachment',
+            'competition'
+        )
+
+
 class Q10Serializer(
     serializers.ModelSerializer
 ):
+    detachment_report = ShortQ10ReportSerializer()
+
     class Meta:
         model = Q10
         fields = (
@@ -688,9 +751,26 @@ class Q10ReportSerializer(
         fields = '__all__'
 
 
+class ShortQ11ReportSerializer(
+    serializers.ModelSerializer
+):
+    detachment = ShortDetachmentCompetitionSerializer()
+    competition = CompetitionSerializer()
+
+    class Meta:
+        model = Q11Report
+        fields = (
+            'id',
+            'detachment',
+            'competition'
+        )
+
+
 class Q11Serializer(
     serializers.ModelSerializer
 ):
+    detachment_report = ShortQ11ReportSerializer()
+
     class Meta:
         model = Q11
         fields = (
@@ -765,9 +845,26 @@ class Q11ReportSerializer(
         fields = '__all__'
 
 
+class ShortQ12ReportSerializer(
+    serializers.ModelSerializer
+):
+    detachment = ShortDetachmentCompetitionSerializer()
+    competition = CompetitionSerializer()
+
+    class Meta:
+        model = Q12Report
+        fields = (
+            'id',
+            'detachment',
+            'competition'
+        )
+
+
 class Q12Serializer(
     serializers.ModelSerializer
 ):
+    detachment_report = ShortQ12ReportSerializer()
+
     class Meta:
         model = Q12
         fields = (
@@ -1194,11 +1291,6 @@ class Q20ReportSerializer(serializers.ModelSerializer):
                     {'error': 'Отчет по данному показателю уже существует'}
                 )
         return attrs
-
-
-
-
-
 
 
 class Q16ReportSerializer(serializers.ModelSerializer):

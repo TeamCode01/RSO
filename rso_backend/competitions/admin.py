@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from competitions.models import (
     Q10, Q11, Q12, Q8, Q9, CompetitionApplications, CompetitionParticipants, Competitions,
-    Q7, Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking, Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
+    Q7, LinksQ7, LinksQ8, Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking, Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
     Q12TandemRanking, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q17DetachmentReport, Q16Ranking, Q16Report,
     Q16TandemRanking, Q17EventLink, Q18Ranking, Q19Ranking,
     Q19Report, Q19TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking,
@@ -260,12 +260,23 @@ class Q6TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
+class Q7LinksInline(admin.TabularInline):
+    model = LinksQ7
+    extra = 0
+
+
 @admin.register(Q7)
 class Q7Admin(admin.ModelAdmin):
     list_display = (
         'id', 'event_name', 'detachment_report', 'is_verified',
-        'number_of_participants'
+        'number_of_participants', 'links'
     )
+
+    inlines = [Q7LinksInline]
+
+    @admin.display(description='Ссылки')
+    def links(self, obj):
+        return LinksQ7.objects.filter(event=obj).count()
 
 
 class Q7Inline(admin.TabularInline):
@@ -290,12 +301,22 @@ class Q7TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
+class Q8LinksInline(admin.TabularInline):
+    model = LinksQ8
+    extra = 0
+
 @admin.register(Q8)
 class Q8Admin(admin.ModelAdmin):
     list_display = (
         'id', 'event_name', 'detachment_report', 'is_verified',
-        'number_of_participants'
+        'number_of_participants', 'links'
     )
+
+    inlines = [Q8LinksInline]
+
+    @admin.display(description='Ссылки')
+    def links(self, obj):
+        return LinksQ8.objects.filter(event=obj).count()
 
 
 class Q8Inline(admin.TabularInline):
