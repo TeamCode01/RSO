@@ -3910,35 +3910,41 @@ def get_place_q3(request, competition_pk=None):
     Если пользователь не командир, либо не участвует в мероприятии -
     выводится ошибка 404.
     """
-    detachment_start = get_detachment_start(
-        request.user, competition_pk
-    )
-    if detachment_start is None:
-        detachment_tandem = get_detachment_tandem(
-            request.user, competition_pk
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    tandem_ranking = Q3TandemRanking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if not tandem_ranking:
+        tandem_ranking = Q3TandemRanking.objects.filter(
+            junior_detachment=detachment,
+            competition=competition
+        ).first()
+
+    if tandem_ranking and tandem_ranking.place is not None:
+        return Response(
+            {"place": tandem_ranking.place},
+            status=status.HTTP_200_OK
         )
-        if detachment_tandem is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    elif tandem_ranking:
+        return Response(
+            {"error": "Рейтинг еще не сформирован"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    ranking = Q3Ranking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if ranking and ranking.place is not None:
+        return Response(
+            {"place": ranking.place}, status=status.HTTP_200_OK
+        )
 
-        if detachment_start:
-            ranking_start = Q3Ranking.objects.filter(
-                competition_id=competition_pk,
-                detachment=detachment_start
-            ).first()
-            if ranking_start:
-                return Response({'place': ranking_start.place})
-
-        if detachment_tandem:
-            ranking_tandem = Q3TandemRanking.objects.filter(
-                Q(competition_id=competition_pk) &
-                Q(junior_detachment=detachment_tandem) |
-                Q(detachment=detachment_tandem)
-            ).first()
-            if ranking_tandem:
-                return Response({'place': ranking_tandem.place})
-
-    return Response({'error': 'Рейтинг еще не сформирован'},
-                    status=status.HTTP_400_BAD_REQUEST)
+    return Response(
+        {"place": "Рейтинг еще не сформирован"},
+        status=status.HTTP_404_NOT_FOUND
+    )
 
 
 @api_view(['GET'])
@@ -3955,35 +3961,41 @@ def get_place_q4(request, competition_pk=None):
     Если пользователь не командир, либо не участвует в мероприятии -
     выводится ошибка 404.
     """
-    detachment_start = get_detachment_start(
-        request.user, competition_pk
-    )
-    if detachment_start is None:
-        detachment_tandem = get_detachment_tandem(
-            request.user, competition_pk
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    tandem_ranking = Q4TandemRanking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if not tandem_ranking:
+        tandem_ranking = Q4TandemRanking.objects.filter(
+            junior_detachment=detachment,
+            competition=competition
+        ).first()
+
+    if tandem_ranking and tandem_ranking.place is not None:
+        return Response(
+            {"place": tandem_ranking.place},
+            status=status.HTTP_200_OK
         )
-        if detachment_tandem is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    elif tandem_ranking:
+        return Response(
+            {"error": "Рейтинг еще не сформирован"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    ranking = Q4Ranking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if ranking and ranking.place is not None:
+        return Response(
+            {"place": ranking.place}, status=status.HTTP_200_OK
+        )
 
-        if detachment_start:
-            ranking_start = Q4Ranking.objects.filter(
-                competition_id=competition_pk,
-                detachment=detachment_start
-            ).first()
-            if ranking_start:
-                return Response({'place': ranking_start.place})
-
-        if detachment_tandem:
-            ranking_tandem = Q4TandemRanking.objects.filter(
-                Q(competition_id=competition_pk) &
-                Q(junior_detachment=detachment_tandem) |
-                Q(detachment=detachment_tandem)
-            ).first()
-            if ranking_tandem:
-                return Response({'place': ranking_tandem.place})
-
-    return Response({'error': 'Рейтинг еще не сформирован'},
-                    status=status.HTTP_400_BAD_REQUEST)
+    return Response(
+        {"place": "Рейтинг еще не сформирован"},
+        status=status.HTTP_404_NOT_FOUND
+    )
 
 
 class Q16ViewSet(CreateListRetrieveUpdateViewSet):
@@ -4177,42 +4189,78 @@ def get_place_overall(request, competition_pk=None):
     Если пользователь не командир, либо не участвует в мероприятии -
     выводится ошибка 404.
     """
-    detachment_start = get_detachment_start(
-        request.user, competition_pk
-    )
-    if detachment_start is None:
-        detachment_tandem = get_detachment_tandem(
-            request.user, competition_pk
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    tandem_ranking = OverallTandemRanking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if not tandem_ranking:
+        tandem_ranking = OverallTandemRanking.objects.filter(
+            junior_detachment=detachment,
+            competition=competition
+        ).first()
+
+    if tandem_ranking and tandem_ranking.place is not None:
+        return Response(
+            {"place": tandem_ranking.place},
+            status=status.HTTP_200_OK
         )
-        if detachment_tandem is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    elif tandem_ranking:
+        return Response(
+            {"error": "Рейтинг еще не сформирован"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    ranking = OverallRanking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if ranking and ranking.place is not None:
+        return Response(
+            {"place": ranking.place}, status=status.HTTP_200_OK
+        )
 
-        if detachment_start:
-            ranking_start = OverallRanking.objects.filter(
-                competition_id=competition_pk,
-                detachment=detachment_start
-            ).first()
-            if ranking_start:
-                return Response(
-                    {
-                        'place': ranking_start.place,
-                        'places_sum': ranking_start.places_sum
-                    }
-                )
+    return Response(
+        {"place": "Рейтинг еще не сформирован"},
+        status=status.HTTP_404_NOT_FOUND
+    )
 
-        if detachment_tandem:
-            ranking_tandem = OverallTandemRanking.objects.filter(
-                Q(competition_id=competition_pk) &
-                Q(junior_detachment=detachment_tandem) |
-                Q(detachment=detachment_tandem)
-            ).first()
-            if ranking_tandem:
-                return Response(
-                    {
-                        'place': ranking_tandem.place,
-                        'places_sum': ranking_tandem.places_sum
-                    }
-                )
 
-    return Response({'error': 'Рейтинг еще не сформирован'},
-                    status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_detachment_place(request, detachment_pk=None, competition_pk=None):
+    detachment = get_object_or_404(Detachment, pk=detachment_pk)
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    tandem_ranking = OverallTandemRanking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if not tandem_ranking:
+        tandem_ranking = OverallTandemRanking.objects.filter(
+            junior_detachment=detachment,
+            competition=competition
+        ).first()
+
+    if tandem_ranking and tandem_ranking.place is not None:
+        return Response(
+            {"place": tandem_ranking.place},
+            status=status.HTTP_200_OK
+        )
+    elif tandem_ranking:
+        return Response(
+            {"error": "Рейтинг еще не сформирован"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    ranking = OverallRanking.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+    if ranking and ranking.place is not None:
+        return Response(
+            {"place": ranking.place}, status=status.HTTP_200_OK
+        )
+
+    return Response(
+        {"place": "Рейтинг еще не сформирован"},
+        status=status.HTTP_404_NOT_FOUND
+    )
