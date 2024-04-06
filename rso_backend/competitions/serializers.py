@@ -952,12 +952,8 @@ class Q5EducatedParticipantSerializer(serializers.ModelSerializer):
         read_only_fields = ('is_verified', 'detachment_report')
 
 
-class Q5DetachmentReportSerializer(serializers.ModelSerializer):
-    participants_data = serializers.ListField(
-        child=Q5EducatedParticipantSerializer(),
-        write_only=True
-    )
-    educated_participants = serializers.SerializerMethodField()
+class Q5DetachmentReportReadSerializer(serializers.ModelSerializer):
+    participants_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Q5DetachmentReport
@@ -966,16 +962,32 @@ class Q5DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'participants_data',
-            'educated_participants',
         )
         read_only_fields = ('competition', 'detachment')
 
     @staticmethod
-    def get_educated_participants(instance):
-        educated_participants = Q5EducatedParticipant.objects.filter(
+    def get_participants_data(instance):
+        participants_data = Q5EducatedParticipant.objects.filter(
             detachment_report=instance
         )
-        return Q5EducatedParticipantSerializer(educated_participants, many=True).data
+        return Q5EducatedParticipantSerializer(participants_data, many=True).data
+
+
+class Q5DetachmentReportWriteSerializer(serializers.ModelSerializer):
+    participants_data = serializers.ListField(
+        child=Q5EducatedParticipantSerializer(),
+        write_only=True
+    )
+
+    class Meta:
+        model = Q5DetachmentReport
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'participants_data',
+        )
+        read_only_fields = ('competition', 'detachment')
 
 
 class Q15GrantWinnerSerializer(serializers.ModelSerializer):
@@ -994,12 +1006,11 @@ class Q15GrantWinnerSerializer(serializers.ModelSerializer):
         read_only_fields = ('is_verified', 'detachment_report')
 
 
-class Q15DetachmentReportSerializer(serializers.ModelSerializer):
+class Q15DetachmentReportWriteSerializer(serializers.ModelSerializer):
     grants_data = serializers.ListField(
         child=Q15GrantWinnerSerializer(),
         write_only=True
     )
-    won_grants = serializers.SerializerMethodField()
 
     class Meta:
         model = Q15DetachmentReport
@@ -1008,16 +1019,29 @@ class Q15DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'grants_data',
-            'won_grants',
+        )
+        read_only_fields = ('competition', 'detachment')
+
+
+class Q15DetachmentReportReadSerializer(serializers.ModelSerializer):
+    grants_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Q15DetachmentReport
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'grants_data',
         )
         read_only_fields = ('competition', 'detachment')
 
     @staticmethod
-    def get_won_grants(instance):
-        won_grants = Q15GrantWinner.objects.filter(
+    def get_grants_data(instance):
+        grants_data = Q15GrantWinner.objects.filter(
             detachment_report=instance
         )
-        return Q15GrantWinnerSerializer(won_grants, many=True).data
+        return Q15GrantWinnerSerializer(grants_data, many=True).data
 
 
 class Q6DetachmentReportSerializer(serializers.ModelSerializer):
@@ -1057,12 +1081,24 @@ class Q13EventOrganizationSerializer(serializers.ModelSerializer):
         read_only_fields = ('is_verified', 'detachment_report')
 
 
-class Q13DetachmentReportSerializer(serializers.ModelSerializer):
+class Q13DetachmentReportReadSerializer(serializers.ModelSerializer):
+    organization_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Q13DetachmentReport
+        fields = ('id', 'competition', 'detachment', 'organization_data')
+
+    @staticmethod
+    def get_organization_data(instance):
+        organized_events = Q13EventOrganization.objects.filter(detachment_report=instance)
+        return Q13EventOrganizationSerializer(organized_events, many=True).data
+
+
+class Q13DetachmentReportWriteSerializer(serializers.ModelSerializer):
     organization_data = serializers.ListField(
         child=Q13EventOrganizationSerializer(),
         write_only=True
     )
-    organized_events = serializers.SerializerMethodField()
 
     class Meta:
         model = Q13DetachmentReport
@@ -1071,16 +1107,8 @@ class Q13DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'organization_data',
-            'organized_events',
         )
         read_only_fields = ('competition', 'detachment')
-
-    @staticmethod
-    def get_organized_events(instance):
-        organized_events = Q13EventOrganization.objects.filter(
-            detachment_report=instance
-        )
-        return Q13EventOrganizationSerializer(organized_events, many=True).data
 
 
 class Q14LaborProjectSerializer(serializers.ModelSerializer):

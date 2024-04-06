@@ -63,10 +63,11 @@ from competitions.serializers import (
     Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
     Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
     ShortDetachmentCompetitionSerializer, Q13EventOrganizationSerializer,
-    Q13DetachmentReportSerializer, Q18DetachmentReportSerializer,
-    Q5EducatedParticipantSerializer, Q5DetachmentReportSerializer,
-    Q15DetachmentReportSerializer, Q15GrantWinnerSerializer,
-    Q14DetachmentReportSerializer, Q6DetachmentReportSerializer,
+    Q18DetachmentReportSerializer, Q15GrantWinnerSerializer,
+    Q5EducatedParticipantSerializer,
+    Q14DetachmentReportSerializer, Q6DetachmentReportSerializer, Q5DetachmentReportReadSerializer,
+    Q5DetachmentReportWriteSerializer, Q15DetachmentReportReadSerializer, Q15DetachmentReportWriteSerializer,
+    Q13DetachmentReportWriteSerializer, Q13DetachmentReportReadSerializer,
 )
 from competitions.utils import get_place_q2, tandem_or_start
 # сигналы ниже не удалять, иначе сломается
@@ -1758,15 +1759,17 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     ```
     """
 
-    serializer_class = Q5DetachmentReportSerializer
     permission_classes = (
         permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
     )
     MAX_PLACE = 20
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return Q5DetachmentReportWriteSerializer
+        return Q5DetachmentReportReadSerializer
+
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
         if self.action == 'me':
             return self.serializer_class.Meta.model.objects.filter(
                 detachment__commander=self.request.user,
@@ -1775,6 +1778,11 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
 
     @action(detail=False,
             methods=['get'],
@@ -1948,8 +1956,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter
@@ -1968,6 +1974,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
     def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
         return super().get_permissions()
@@ -1981,8 +1989,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     @swagger_auto_schema(request_body=Q6DetachmentReportSerializer)
     def create(self, request, *args, **kwargs):
-        context = super().get_serializer_context()
-        competition_id = self.kwargs.get('competition_pk')
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
         try:
             detachment_id = request.user.detachment_commander.id
@@ -2004,12 +2010,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         serializer = self.get_serializer(report)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
-
-    def get_queryset(self):
-        competition_id = self.kwargs.get('competition_pk')
-        return Q6DetachmentReport.objects.filter(
-            competition_id=competition_id
-        )
 
     def perform_create(self, serializer):
         competition = get_object_or_404(
@@ -2176,10 +2176,14 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
     ```
     """
 
-    serializer_class = Q15DetachmentReportSerializer
     permission_classes = (
         permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
     )
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return Q15DetachmentReportWriteSerializer
+        return Q15DetachmentReportReadSerializer
 
     def get_queryset(self):
         if self.action == 'me':
@@ -2446,14 +2450,16 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     ```
     """
 
-    serializer_class = Q13DetachmentReportSerializer
     permission_classes = (IsCompetitionParticipantAndCommander,)
 
     MAX_PLACE = 6
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return Q13DetachmentReportWriteSerializer
+        return Q13DetachmentReportReadSerializer
+
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter
@@ -2472,6 +2478,8 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
     def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
         return super().get_permissions()
@@ -3271,8 +3279,6 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             try:
                 regional_headquarter = (
@@ -3294,6 +3300,8 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
     def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
