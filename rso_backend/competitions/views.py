@@ -2592,7 +2592,10 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         serializer.save(competition=competition, detachment=detachment)
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(
+                permissions.IsAuthenticated,
+                IsCompetitionParticipantAndCommander,
+            ))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2962,7 +2965,9 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['get'],
         url_path='get-place',
         serializer_class=None,
-        permission_classes=[IsCompetitionParticipantAndCommander,]
+        permission_classes=[
+            permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
+        ]
     )
     def get_place(self, request, **kwargs):
 
@@ -3012,36 +3017,49 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        serializer_class=None,
+        url_path='verify-labor-project/(?P<labor_project_id>\d+)',
+        permission_classes=[
+            permissions.IsAuthenticated, IsRegionalCommissioner,
+        ],
     )
-    def verify(self, *args, **kwargs):
+    def verify(self, request, competition_pk=None, pk=None,
+                      labor_project_id=None):
         """Верификация отчета по показателю.
+
+        competition_pk - id конкурса;
+        id - id отчета;
+        labor_project_id - id одного из трудовых проектов
+        из привязанных к отчёту.
 
         Доступно только командиру РШ связанного с отрядом.
         Если отчет уже верифицирован, возвращается 400 Bad Request с описанием
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
-        При удалении отчета удаляются записи из таблиц Rankin и TandemRankin.
+        При удалении отчета удаляются записи из таблиц Ranking и TandemRanking.
         """
 
         detachment_report = self.get_object()
-
+        q14_labor_project = get_object_or_404(
+            Q14LaborProject,
+            pk=labor_project_id,
+            detachment_report=detachment_report
+        )
         if self.request.method == 'DELETE':
-            if detachment_report.is_verified:
+            if q14_labor_project.is_verified:
                 return Response(
                     status=status.HTTP_400_BAD_REQUEST,
                     data={'detail': 'Верифицированный отчет нельзя удалить.'}
                 )
-            detachment_report.delete()
+            q14_labor_project.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        with transaction.atomic():
-            if detachment_report.is_verified:
-                return Response({
-                    'detail': 'Данный отчет уже верифицирован'
-                }, status=status.HTTP_400_BAD_REQUEST)
 
-            detachment_report.is_verified = True
-            detachment_report.save()
-            return Response(status=status.HTTP_200_OK)
+        if q14_labor_project.is_verified:
+            return Response({
+                'detail': 'Данный отчет уже верифицирован'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        q14_labor_project.is_verified = True
+        q14_labor_project.save()
+        return Response(status=status.HTTP_200_OK)
 
 
 class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
@@ -3185,7 +3203,9 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['get'],
         url_path='get-place',
         serializer_class=None,
-        permission_classes=[IsCompetitionParticipantAndCommander,]
+        permission_classes=[
+            permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
+        ]
     )
     def get_place(self, request, **kwargs):
 
@@ -3242,6 +3262,11 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def verify_source(self, request, competition_pk=None, pk=None,
                       source_id=None):
         """Верификация отчета по показателю.
+
+        
+        competition_pk - id конкурса;
+        id - id отчета;
+        source_id - id одной публикации из привязанных к отчёту.
 
         Доступно только командиру РШ связанного с отрядом.
         Если отчет уже верифицирован, возвращается 400 Bad Request с описанием

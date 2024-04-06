@@ -5,7 +5,7 @@ from datetime import date
 from django.db.models import Max
 from django.conf import settings
 import logging
-from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q16Report, \
+from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q16Report, \
     Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
     Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
@@ -159,9 +159,6 @@ def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
 
 def calculate_q14_place(competition_id):
 
-    Q14TandemRanking.objects.all().delete()
-    Q14Ranking.objects.all().delete()
-
     today = date.today()
     cutoff_date = date(2024, 6, 15)
 
@@ -174,41 +171,46 @@ def calculate_q14_place(competition_id):
             f'Обновляем кол-во участников.'
         )
 
-    verified_entries = Q14DetachmentReport.objects.filter(is_verified=True)
-    logger.info(
-        f'Получили верифицированные отчеты: {verified_entries.count()}')
+    detachment_reports = Q14DetachmentReport.objects.filter(
+        competition_id=competition_id,
+    )
 
     start_list = []
     tandem_list = []
     tandem_participants_list = []
-    for entry in verified_entries:
+    """
+    Проходим циклом по всем отчетам
+    и записываем число участников отрядов до 15.06.2024
+    в поле отчёта.
+    """
+    for report in detachment_reports:
         if check_date:
             is_tandem = tandem_or_start(
                 competition=competition_id,
-                detachment=entry.detachment.id,
+                detachment=report.detachment.id,
                 competition_model=CompetitionParticipants
             )
             if not is_tandem:
-                start_list.append(entry)
+                start_list.append(report)
                 calculate_june_detachment_members(
-                    entry=entry,
+                    entry=report,
                     partner_entry=None
                 )
             if is_tandem:
-                tandem_list.append(entry)
+                tandem_list.append(report)
                 is_main = is_main_detachment(
                     competition_id=competition_id,
-                    detachment_id=entry.detachment.id,
+                    detachment_id=report.detachment.id,
                     competition_model=CompetitionParticipants
 
                 )
                 if is_main:
                     junior_detachment = CompetitionParticipants.objects.filter(
                         competition_id=competition_id,
-                        detachment_id=entry.detachment.id
+                        detachment_id=report.detachment.id
                     ).first().junior_detachment
                     tandem_participants_list.append((
-                        entry.detachment.id, junior_detachment.id
+                        report.detachment.id, junior_detachment.id
                     ))
                     try:
                         partner_entry = Q14DetachmentReport.objects.filter(
@@ -219,14 +221,14 @@ def calculate_q14_place(competition_id):
                     except Q14DetachmentReport.DoesNotExist:
                         partner_entry = None
                     calculate_june_detachment_members(
-                        entry=entry,
+                        entry=report,
                         partner_entry=partner_entry
                     )
 
                 if not is_main:
                     main_detachment = CompetitionParticipants.objects.filter(
                         competition_id=competition_id,
-                        junior_detachment=entry.detachment.id
+                        junior_detachment=report.detachment.id
                     ).first().detachment
                     try:
                         partner_entry = Q14DetachmentReport.objects.filter(
@@ -237,30 +239,34 @@ def calculate_q14_place(competition_id):
                     except Q14DetachmentReport.DoesNotExist:
                         partner_entry = None
                     calculate_june_detachment_members(
-                        entry=entry,
+                        entry=report,
                         partner_entry=partner_entry
                     )
                     tandem_participants_list.append((
-                        main_detachment.id, entry.detachment.id
+                        main_detachment.id, report.detachment.id
                     ))
                 tandem_participants = set(tandem_participants_list)
-        entry.score = (
-            entry.q14_labor_project.amount
-            / entry.june_15_detachment_members
+        verified_projects = (Q14LaborProject.objects.filter(
+            detachment_report=report,
+            is_verified=True
+        ))
+        result_amount = sum([entry.amount for entry in verified_projects])
+        report.score = (
+            result_amount / report.june_15_detachment_members
         )
-        entry.save()
+        report.save()
     data_list = []
     data_dict = {}
     for entry in start_list:
         if entry.detachment.id not in data_dict:
-            data_dict[entry.detachment.id] = entry.score
+            score = entry.score
         else:
             score = data_dict[entry.detachment.id] + entry.score
-            data_dict[entry.detachment.id] = score
-            score = 0
-    for id, score in data_dict.items():
-        data_list += [(id, score)]
+
+        data_list += [(entry.detachment.id, score)]
+        score = 0
     ranked_start = assign_ranks(data_list)
+    Q14Ranking.objects.all().delete()
     for item in ranked_start:
         Q14Ranking.objects.create(
             competition_id=competition_id,
@@ -281,9 +287,9 @@ def calculate_q14_place(competition_id):
         score_junior = data_dict.pop(item[1], 0)
         result = score_main + score_junior
         data_dict[item[0]] = result
-    for id, score in data_dict.items():
-        data_list += [(id, score)]
+        data_list += [(item[0], result)]
     ranked_tandem = assign_ranks(data_list)
+    Q14TandemRanking.objects.all().delete()
     for item in ranked_tandem:
         for partnership in tandem_participants:
             if item[0] == partnership[0]:
@@ -307,7 +313,8 @@ def calculate_q17_place(competition_id):
         competition_id=competition_id,
     )
     """
-    Проходим циклом по всем отчетам и считаем кол-во верифицированных отчетов.
+    Проходим циклом по всем отчетам и считаем кол-во
+    верифицированных публикаций.
     source_count_dict = {id отчета: кол-во верифицированных отчетов}
     """
     for entry in detachment_reports:
@@ -661,7 +668,9 @@ def calculate_june_detachment_members(entry, partner_entry=None):
     entry.june_15_detachment_members = entry.detachment.members.count() + 1
     entry.save()
     if partner_entry:
-        partner_entry.june_15_detachment_members = partner_entry.detachment.members.count() + 1
+        partner_entry.june_15_detachment_members = (
+            partner_entry.detachment.members.count() + 1
+        )
         partner_entry.save()
 
 
@@ -669,7 +678,9 @@ def calculate_april_detachment_members(entry, partner_entry=None):
     entry.april_1_detachment_members = entry.detachment.members.count() + 1
     entry.save()
     if partner_entry:
-        partner_entry.april_1_detachment_members = partner_entry.detachment.members.count() + 1
+        partner_entry.april_1_detachment_members = (
+            partner_entry.detachment.members.count() + 1
+        )
         partner_entry.save()
 
 
