@@ -2187,7 +2187,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_queryset(self):
         if self.action == 'me':
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q15DetachmentReport.objects.filter(
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
@@ -2202,7 +2202,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 detachment__regional_headquarter=regional_headquarter,
                 competition_id=self.kwargs.get('competition_pk')
             )
-        return self.serializer_class.Meta.model.objects.filter(
+        return Q15DetachmentReport.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
