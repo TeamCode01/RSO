@@ -1248,6 +1248,24 @@ class Q14DetachmentReport(QBaseReport):
         verbose_name_plural = 'Отчеты по 14 показателю'
 
 
+# class Q14LaborProject(models.Model):
+#     lab_project_name = models.CharField(
+#         max_length=150,
+#     )
+#     amount = models.PositiveSmallIntegerField(
+#         verbose_name=(
+#             'Количество бойцов, отработавших в летнем трудовом семестре'
+#         ),
+#         validators=[MinValueValidator(1), MaxValueValidator(1000)],
+#     )
+#     # detachment_report = models.ForeignKey(
+#     #     Q14DetachmentReport,
+#     #     on_delete=models.CASCADE,
+#     #     related_name='q14_labor_project',
+#     #     verbose_name='Отчет по 14 показателю'
+#     # )
+#     is_verified = models.BooleanField(default=False)
+
 class Q14LaborProject(models.Model):
     lab_project_name = models.CharField(
         max_length=150,
@@ -1265,7 +1283,6 @@ class Q14LaborProject(models.Model):
         verbose_name='Отчет по 14 показателю'
     )
     is_verified = models.BooleanField(default=False)
-
 
 class Q14Ranking(QBaseRanking):
     place = models.PositiveSmallIntegerField(

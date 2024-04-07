@@ -3,7 +3,7 @@ from django.contrib import admin
 from competitions.models import (
     Q10, Q11, Q12, Q8, Q9, CompetitionApplications, CompetitionParticipants, Competitions,
     Q7, LinksQ7, LinksQ8, Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking, Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
-    Q12TandemRanking, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q17DetachmentReport, Q16Ranking, Q16Report,
+    Q12TandemRanking, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q17DetachmentReport, Q16Ranking, Q16Report,
     Q16TandemRanking, Q17EventLink, Q18Ranking, Q19Ranking,
     Q19Report, Q19TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking,
     Q20Ranking, Q20Report, Q20TandemRanking, Q2DetachmentReport, Q2Ranking,
@@ -500,25 +500,25 @@ class Q13TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
-class Q14LaborProjectInline(admin.TabularInline):
-    model = Q14LaborProject
-    extra = 0
+# class Q14LaborProjectInline(admin.TabularInline):
+#     model = Q14LaborProject
+#     extra = 0
 
-@admin.register(Q14DetachmentReport)
-class Q14DetachmentReportAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'competition_id',
-        'detachment_id',
-        'get_detachment_name',
-    )
-    inlines = [Q14LaborProjectInline]
-    search_fields = ('detachment__name',)
+# @admin.register(Q14DetachmentReport)
+# class Q14DetachmentReportAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'id',
+#         'competition_id',
+#         'detachment_id',
+#         'get_detachment_name',
+#     )
+#     inlines = [Q14LaborProjectInline]
+#     search_fields = ('detachment__name',)
 
-    def get_detachment_name(self, obj):
-        return obj.detachment.name
-    get_detachment_name.admin_order_field = 'detachment__name'
-    get_detachment_name.short_description = 'Название отряда'
+#     def get_detachment_name(self, obj):
+#         return obj.detachment.name
+#     get_detachment_name.admin_order_field = 'detachment__name'
+#     get_detachment_name.short_description = 'Название отряда'
 
 
 @admin.register(Q14Ranking)
