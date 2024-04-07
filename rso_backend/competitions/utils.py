@@ -148,10 +148,6 @@ def assign_ranks(scores) -> list:
     # Сортируем результат обратно по ID
     ranked_scores.sort(key=lambda x: x[0])
 
-    # Присваиваем порядковые номера в соответствии с рангами
-    ranked_scores = [(id, i + 1) for i, (id, _) in enumerate(sorted(
-        ranked_scores, key=lambda x: x[1]
-    ))]
     return ranked_scores
 
 
