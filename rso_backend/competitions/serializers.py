@@ -1097,10 +1097,8 @@ class Q14LaborProjectSerializer(serializers.ModelSerializer):
 
 
 class Q14DetachmentReportSerializer(serializers.ModelSerializer):
-    q14_labor_project = serializers.ListField(
-        child=Q14LaborProjectSerializer(),
-        write_only=True
-    )
+
+    q14_labor_projects = serializers.SerializerMethodField()
 
     class Meta:
         model = Q14DetachmentReport
@@ -1108,47 +1106,15 @@ class Q14DetachmentReportSerializer(serializers.ModelSerializer):
             'id',
             'detachment',
             'competition',
-            'q14_labor_project'
+            'q14_labor_projects'
         )
         read_only_fields = ('detachment', 'competition')
 
-    def create(self, validated_data):
-        lab_project_data = validated_data.pop('q14_labor_project')
-        competition_pk = self.context.get('view').kwargs.get('competition_pk')
-        try:
-            competition = Competitions.objects.get(id=competition_pk)
-        except Competitions.DoesNotExist:
-            raise serializers.ValidationError(
-                {'competition': 'Неправильный id конкурса.'}
-            )
-        try:
-            detachment = Detachment.objects.get(
-                commander=self.context.get('request').user
-            )
-        except Detachment.DoesNotExist:
-            raise serializers.ValidationError(
-                {
-                    'detachment': 'Заполнять данные '
-                    'может только командир отряда.'
-                }
-            )
-
-        lab_serializer = Q14LaborProjectSerializer(data=lab_project_data)
-
-        if lab_serializer.is_valid():
-            lab_instance = lab_serializer.save()
-
-            validated_data['competition'] = competition
-            validated_data['detachment'] = detachment
-            validated_data['q14_labor_project'] = lab_instance
-
-            with transaction.atomic():
-                instance = super().create(validated_data)
-                return instance
-        else:
-            raise serializers.ValidationError(
-                'Ошибка валидации данных для lab_instance'
-            )
+    def get_q14_labor_projects(self, instance):
+        q14_labor_projects = Q14LaborProject.objects.filter(
+            detachment_report=instance
+        )
+        return Q14LaborProjectSerializer(q14_labor_projects, many=True).data
 
 
 class Q17EventLinkSerializer(serializers.ModelSerializer):
@@ -1166,10 +1132,6 @@ class Q17EventLinkSerializer(serializers.ModelSerializer):
 
 class Q17DetachmentReportSerializer(serializers.ModelSerializer):
 
-    # source_data = serializers.ListField(
-    #     child=Q17EventLinkSerializer(),
-    #     write_only=True
-    # )
     source_data = serializers.SerializerMethodField()
 
     class Meta:

@@ -771,7 +771,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommander()]
+                    IsCommanderDetachmentInParameterOrRegionalCommander(),]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
@@ -2526,21 +2526,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
         organization_data = request.data.get('organization_data', [])
 
-        if not CompetitionParticipants.objects.filter(
-                competition=competition,
-                junior_detachment=detachment
-        ).exists() and not CompetitionParticipants.objects.filter(
-            competition=competition,
-            detachment=detachment
-        ).exists():
-            return Response(
-                {
-                    'error': 'Отряд подающего пользователя не '
-                             'участвует в конкурсе.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         if not organization_data:
             return Response(
                 {
@@ -2825,7 +2810,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     Пример POST-запроса:
     {
-      "q14_labor_project": [
+      "q14_labor_projects": [
         {
           "lab_project_name": "string",
           "amount": 5
@@ -2854,29 +2839,35 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
 
     serializer_class = Q14DetachmentReportSerializer
-    permission_classes = (IsCompetitionParticipantAndCommander,)
+    permission_classes = (
+        permissions.IsAuthenticated,
+        IsCompetitionParticipantAndCommander,
+    )
 
     def get_queryset(self):
         if self.action == 'list':
-            regional_headquarter = (
-                self.request.user.userregionalheadquarterposition.headquarter
-            )
-            return self.serializer_class.Meta.model.objects.filter(
+            try:
+                regional_headquarter = (
+                    self.request.user.regionalheadquarter_commander
+                )
+            except ObjectDoesNotExist:
+                return Q14DetachmentReport.objects.all()
+            return Q14DetachmentReport.objects.filter(
                 detachment__regional_headquarter=regional_headquarter,
                 competition_id=self.kwargs.get('competition_pk')
             )
         if self.action == 'me':
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q14DetachmentReport.objects.filter(
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
-        return self.serializer_class.Meta.model.objects.filter(
+        return Q14DetachmentReport.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
     def get_permissions(self):
         if self.action == 'list':
-            return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(),]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -2887,6 +2878,27 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_detachment(self, obj):
         return obj.detachment
 
+    @swagger_auto_schema( 
+            request_body=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'q14_labor_projects': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'lab_project_name': openapi.Schema(
+                                    type=openapi.TYPE_STRING
+                                ),
+                                'amount': openapi.Schema(
+                                    type=openapi.TYPE_STRING
+                                )
+                            }
+                        )
+                    )
+                }
+            )
+        )
     def create(self, request, *args, **kwargs):
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -2894,27 +2906,12 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         detachment = get_object_or_404(
             Detachment, id=self.request.user.detachment_commander.id
         )
-        q14_labor_project = request.data.get('q14_labor_project', [])
+        q14_labor_projects = request.data.get('q14_labor_projects', [])
 
-        if not CompetitionParticipants.objects.filter(
-                competition=competition,
-                junior_detachment=detachment
-        ).exists() and not CompetitionParticipants.objects.filter(
-            competition=competition,
-            detachment=detachment
-        ).exists():
+        if not q14_labor_projects:
             return Response(
                 {
-                    'error': 'Отряд подающего пользователя не '
-                             'участвует в конкурсе.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if not q14_labor_project:
-            return Response(
-                {
-                    'non_field_errors': 'q14_labor_project '
+                    'non_field_errors': 'q14_labor_projects '
                                         'должно быть заполнено'
                 },
                 status=status.HTTP_400_BAD_REQUEST
@@ -2925,7 +2922,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 detachment_id=detachment.id
             )
 
-            for labor_data in q14_labor_project:
+            for labor_data in q14_labor_projects:
                 labor_serializer = Q14LaborProjectSerializer(
                     data=labor_data)
                 if labor_serializer.is_valid(raise_exception=True):
@@ -3017,7 +3014,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='verify-labor-project/(?P<labor_project_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated, IsRegionalCommissioner,
+            permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
         ],
     )
     def verify(self, request, competition_pk=None, pk=None,
@@ -3090,31 +3087,34 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
 
     serializer_class = Q17DetachmentReportSerializer
-    permission_classes = (IsCompetitionParticipantAndCommander,)
+    permission_classes = (
+        permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,
+    )
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
         if self.action == 'list':
-            regional_headquarter = (
-                self.request.user.userregionalheadquarterposition.headquarter
-            )
-            return self.serializer_class.Meta.model.objects.filter(
+            try:
+                regional_headquarter = (
+                    self.request.user.regionalheadquarter_commander
+                )
+            except ObjectDoesNotExist:
+                return Q17DetachmentReport.objects.all()
+            return Q17DetachmentReport.objects.filter(
                 detachment__regional_headquarter=regional_headquarter,
                 competition_id=self.kwargs.get('competition_pk')
             )
         if self.action == 'me':
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q17DetachmentReport.objects.filter(
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
-        return self.serializer_class.Meta.model.objects.filter(
+        return Q17DetachmentReport.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
     def get_permissions(self):
         if self.action == 'list':
-            return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin()]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -3125,6 +3125,27 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_detachment(self, obj):
         return obj.detachment
 
+    @swagger_auto_schema( 
+            request_body=openapi.Schema( 
+                type=openapi.TYPE_OBJECT, 
+                properties={ 
+                    'source_data': openapi.Schema( 
+                        type=openapi.TYPE_ARRAY, 
+                        items=openapi.Schema( 
+                            type=openapi.TYPE_OBJECT, 
+                            properties={ 
+                                'source_name': openapi.Schema( 
+                                    type=openapi.TYPE_STRING 
+                                ), 
+                                'link': openapi.Schema( 
+                                    type=openapi.TYPE_STRING 
+                                ) 
+                            } 
+                        )
+                    )
+                }
+            )
+        )
     def create(self, request, *args, **kwargs):
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3163,17 +3184,9 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 detachment_id=detachment.id
             )
 
-            for data in source_data:
-                source_serializer = Q17EventLinkSerializer(
-                    data=data)
-                if source_serializer.is_valid(raise_exception=True):
-                    Q17EventLink.objects.create(
-                        **source_serializer.validated_data,
-                        detachment_report=report
-                    )
-                else:
-                    return Response(source_serializer.errors,
-                                    status=status.HTTP_400_BAD_REQUEST)
+            source_serializer = Q17EventLinkSerializer(data=source_data, many=True)
+            source_serializer.is_valid(raise_exception=True) 
+            source_serializer.save(detachment_report=report)
 
             return Response(
                 self.get_serializer(report).data,
@@ -3254,7 +3267,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='verify-source/(?P<source_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated, IsRegionalCommissioner,
+            permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
         ]
     )
     def verify_source(self, request, competition_pk=None, pk=None,
@@ -3279,18 +3292,14 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
             detachment_report=detachment_report
 
         )
-        if self.request.method == 'DELETE':
-            if source_data.is_verified:
-                return Response(
-                    status=status.HTTP_400_BAD_REQUEST,
-                    data={'detail': 'Верифицированный отчет нельзя удалить.'}
-                )
-            source_data.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
         if source_data.is_verified:
             return Response({
-                'detail': 'Данный отчет уже верифицирован'
+                'detail': 'Данный отчет уже верифицирован. '
+                'Нельзя удалить или верифицировать.'
             }, status=status.HTTP_400_BAD_REQUEST)
+        if self.request.method == 'DELETE':
+            source_data.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         source_data.is_verified = True
         source_data.save()
