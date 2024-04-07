@@ -1771,11 +1771,11 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_queryset(self):
         if self.action == 'me':
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q5DetachmentReport.objects.filter(
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
-        return self.serializer_class.Meta.model.objects.filter(
+        return Q5DetachmentReport.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
@@ -1960,16 +1960,16 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter
             )
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q6DetachmentReport.objects.filter(
                 detachment__regional_headquarter=regional_headquarter,
                 competition_id=self.kwargs.get('competition_pk')
             )
         if self.action == 'me':
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q6DetachmentReport.objects.filter(
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
-        return self.serializer_class.Meta.model.objects.filter(
+        return Q6DetachmentReport.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
@@ -2464,16 +2464,16 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter
             )
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q13DetachmentReport.objects.filter(
                 detachment__regional_headquarter=regional_headquarter,
                 competition_id=self.kwargs.get('competition_pk')
             )
         if self.action == 'me':
-            return self.serializer_class.Meta.model.objects.filter(
+            return Q13DetachmentReport.objects.filter(
                 detachment__commander=self.request.user,
                 competition_id=self.kwargs.get('competition_pk')
             )
-        return self.serializer_class.Meta.model.objects.filter(
+        return Q13DetachmentReport.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
 
