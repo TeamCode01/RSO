@@ -750,7 +750,7 @@ class IsUserModelPositionCommander(permissions.BasePermission):
 
     def has_permission(self, request, view):
         if (
-            request.method in ['PUT', 'PATCH']
+            request.method in ['PUT', 'PATCH', 'DELETE']
             and request.user.is_authenticated
         ):
             return self.has_object_permission(request, view, view.get_object())
