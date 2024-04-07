@@ -2857,8 +2857,6 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (IsCompetitionParticipantAndCommander,)
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
         if self.action == 'list':
             regional_headquarter = (
                 self.request.user.userregionalheadquarterposition.headquarter

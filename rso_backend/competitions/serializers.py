@@ -1166,10 +1166,11 @@ class Q17EventLinkSerializer(serializers.ModelSerializer):
 
 class Q17DetachmentReportSerializer(serializers.ModelSerializer):
 
-    source_data = serializers.ListField(
-        child=Q17EventLinkSerializer(),
-        write_only=True
-    )
+    # source_data = serializers.ListField(
+    #     child=Q17EventLinkSerializer(),
+    #     write_only=True
+    # )
+    source_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Q17DetachmentReport
@@ -1180,6 +1181,12 @@ class Q17DetachmentReportSerializer(serializers.ModelSerializer):
             'source_data',
         )
         read_only_fields = ('is_verified', 'detachment', 'competition')
+
+    def get_source_data(self, instance):
+        source_data = Q17EventLink.objects.filter(
+            detachment_report=instance
+        )
+        return Q17EventLinkSerializer(source_data, many=True).data
 
 
 class Q18DetachmentReportSerializer(serializers.ModelSerializer):
