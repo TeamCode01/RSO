@@ -2924,30 +2924,30 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        with transaction.atomic():
-            report, created = Q14DetachmentReport.objects.get_or_create(
-                competition_id=competition.id,
-                detachment_id=detachment.id
-            )
 
-            for labor_data in q14_labor_projects:
-                labor_serializer = Q14LaborProjectSerializer(
-                    data=labor_data)
-                if labor_serializer.is_valid(raise_exception=True):
-                    Q14LaborProject.objects.create(
-                        **labor_serializer.validated_data,
-                        detachment_report=report
-                    )
-                else:
-                    return Response(labor_serializer.errors,
-                                    status=status.HTTP_400_BAD_REQUEST)
+        report, created = Q14DetachmentReport.objects.get_or_create(
+            competition_id=competition.id,
+            detachment_id=detachment.id
+        )
 
-            return Response(
-                self.get_serializer(report).data,
-                status=(
-                    status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        for labor_data in q14_labor_projects:
+            labor_serializer = Q14LaborProjectSerializer(
+                data=labor_data)
+            if labor_serializer.is_valid(raise_exception=True):
+                Q14LaborProject.objects.create(
+                    **labor_serializer.validated_data,
+                    detachment_report=report
                 )
+            else:
+                return Response(labor_serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            self.get_serializer(report).data,
+            status=(
+                status.HTTP_201_CREATED if created else status.HTTP_200_OK
             )
+        )
 
     @action(detail=False,
             methods=['get'],
@@ -3163,21 +3163,6 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
         source_data = request.data.get('source_data', [])
 
-        if not CompetitionParticipants.objects.filter(
-                competition=competition,
-                junior_detachment=detachment
-        ).exists() and not CompetitionParticipants.objects.filter(
-            competition=competition,
-            detachment=detachment
-        ).exists():
-            return Response(
-                {
-                    'error': 'Отряд подающего пользователя не '
-                             'участвует в конкурсе.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         if not source_data:
             return Response(
                 {
@@ -3186,22 +3171,22 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        with transaction.atomic():
-            report, created = Q17DetachmentReport.objects.get_or_create(
-                competition_id=competition.id,
-                detachment_id=detachment.id
-            )
 
-            source_serializer = Q17EventLinkSerializer(data=source_data, many=True)
-            source_serializer.is_valid(raise_exception=True) 
-            source_serializer.save(detachment_report=report)
+        report, created = Q17DetachmentReport.objects.get_or_create(
+            competition_id=competition.id,
+            detachment_id=detachment.id
+        )
 
-            return Response(
-                self.get_serializer(report).data,
-                status=(
-                    status.HTTP_201_CREATED if created else status.HTTP_200_OK
-                )
+        source_serializer = Q17EventLinkSerializer(data=source_data, many=True)
+        source_serializer.is_valid(raise_exception=True) 
+        source_serializer.save(detachment_report=report)
+
+        return Response(
+            self.get_serializer(report).data,
+            status=(
+                status.HTTP_201_CREATED if created else status.HTTP_200_OK
             )
+        )
 
     @action(detail=False,
             methods=['get'],

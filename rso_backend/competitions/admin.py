@@ -112,8 +112,6 @@ class CompetitionParticipantsAdmin(admin.ModelAdmin):
         return 'Тандем' if obj.detachment is not None else 'Старт'
 
 
-admin.site.register(Q2DetachmentReport)
-
 
 class QBaseRankingAdmin(admin.ModelAdmin):
     list_display = ('id', 'competition_id', 'detachment', 'place')
@@ -154,6 +152,22 @@ class Q1RankingAdmin(QBaseRankingAdmin):
 @admin.register(Q1TandemRanking)
 class Q1TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
+
+
+@admin.register(Q2DetachmentReport)
+class Q2DetachmentReportAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'competition_id',
+        'detachment_id',
+        'get_detachment_name',
+    )
+    search_fields = ('detachment__name',)
+
+    def get_detachment_name(self, obj):
+        return obj.detachment.name
+    get_detachment_name.admin_order_field = 'detachment__name'
+    get_detachment_name.short_description = 'Название отряда'
 
 
 @admin.register(Q2Ranking)
