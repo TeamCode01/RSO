@@ -169,7 +169,6 @@ class Q2DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
-
 @admin.register(Q2Ranking)
 class Q2RankingAdmin(QBaseRankingAdmin):
     pass
