@@ -517,10 +517,17 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
     Фильтрация:
         - is_tandem: фильтр по типу участия (старт или тандем),
           принимает значения True и False (или true и false в нижнем регистре).
+        - area: фильтр по направлению, принимает название направления,
+                только полное совпадение.
     Сортировка:
-        - доступные поля для сортировки: junior_detachment__name,
-                                         detachment__name,
-                                         created_at.
+        - доступные поля для сортировки:
+            'junior_detachment__name',
+            'detachment__name',
+            'created_at',
+            'junior_detachment__overallranking__place' (старт рейтинг),
+            'detachment__overalltandemranking_main_detachment__place' (тандем).
+          Можно сортировать в обратном порядке добавив признак '-'
+          перед названием поля, например -created_at.
         - порядок сортировки по дефолту: junior_detachment__name,
                                          detachment__name,
                                          created_at.
@@ -538,7 +545,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
     )
     ordering_fields = ('detachment__name',
                        'junior_detachment__name',
-                       'created_at')
+                       'created_at',
+                       'junior_detachment__overallranking__place',
+                       'detachment__overalltandemranking_main_detachment__place')
     ordering = ('junior_detachment__name',
                 'detachment__name',
                 'created_at')
