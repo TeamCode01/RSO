@@ -2,9 +2,9 @@ from django.contrib import admin
 
 from competitions.models import (
     Q10, Q11, Q12, Q8, Q9, CompetitionApplications, CompetitionParticipants, Competitions,
-    Q7, Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking, Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
-    Q12TandemRanking, Q14DetachmentReport, Q14Ranking, Q14TandemRanking, Q17DetachmentReport, Q16Ranking, Q16Report,
-    Q16TandemRanking, Q18Ranking, Q19Ranking,
+    Q7, LinksQ7, LinksQ8, Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking, Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
+    Q12TandemRanking, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q17DetachmentReport, Q16Ranking, Q16Report,
+    Q16TandemRanking, Q17EventLink, Q18Ranking, Q19Ranking,
     Q19Report, Q19TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking,
     Q20Ranking, Q20Report, Q20TandemRanking, Q2DetachmentReport, Q2Ranking,
     Q7Ranking, Q7Report, Q13TandemRanking, Q18TandemRanking, Q13Ranking,
@@ -112,8 +112,6 @@ class CompetitionParticipantsAdmin(admin.ModelAdmin):
         return 'Тандем' if obj.detachment is not None else 'Старт'
 
 
-admin.site.register(Q2DetachmentReport)
-
 
 class QBaseRankingAdmin(admin.ModelAdmin):
     list_display = ('id', 'competition_id', 'detachment', 'place')
@@ -155,6 +153,21 @@ class Q1RankingAdmin(QBaseRankingAdmin):
 class Q1TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
+
+@admin.register(Q2DetachmentReport)
+class Q2DetachmentReportAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'competition_id',
+        'detachment_id',
+        'get_detachment_name',
+    )
+    search_fields = ('detachment__name',)
+
+    def get_detachment_name(self, obj):
+        return obj.detachment.name
+    get_detachment_name.admin_order_field = 'detachment__name'
+    get_detachment_name.short_description = 'Название отряда'
 
 @admin.register(Q2Ranking)
 class Q2RankingAdmin(QBaseRankingAdmin):
@@ -260,17 +273,35 @@ class Q6TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
+class Q7LinksInline(admin.TabularInline):
+    model = LinksQ7
+    extra = 0
+
+
 @admin.register(Q7)
 class Q7Admin(admin.ModelAdmin):
     list_display = (
         'id', 'event_name', 'detachment_report', 'is_verified',
-        'number_of_participants'
+        'number_of_participants', 'links'
     )
+
+    inlines = [Q7LinksInline]
+
+    @admin.display(description='Ссылки')
+    def links(self, obj):
+        return LinksQ7.objects.filter(event=obj).count()
+
+
+class Q7Inline(admin.TabularInline):
+    model = Q7
+    extra = 0
 
 
 @admin.register(Q7Report)
 class Q7ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q7Inline]
 
 
 @admin.register(Q7Ranking)
@@ -283,17 +314,34 @@ class Q7TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
+class Q8LinksInline(admin.TabularInline):
+    model = LinksQ8
+    extra = 0
+
 @admin.register(Q8)
 class Q8Admin(admin.ModelAdmin):
     list_display = (
         'id', 'event_name', 'detachment_report', 'is_verified',
-        'number_of_participants'
+        'number_of_participants', 'links'
     )
+
+    inlines = [Q8LinksInline]
+
+    @admin.display(description='Ссылки')
+    def links(self, obj):
+        return LinksQ8.objects.filter(event=obj).count()
+
+
+class Q8Inline(admin.TabularInline):
+    model = Q8
+    extra = 0
 
 
 @admin.register(Q8Report)
 class Q8ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q8Inline]
 
 
 @admin.register(Q8Ranking)
@@ -314,9 +362,16 @@ class Q9Admin(admin.ModelAdmin):
     )
 
 
+class Q9Inline(admin.TabularInline):
+    model = Q9
+    extra = 0
+
+
 @admin.register(Q9Report)
 class Q9ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q9Inline]
 
 
 @admin.register(Q9Ranking)
@@ -335,9 +390,16 @@ class Q10Admin(admin.ModelAdmin):
                     'is_verified', 'prize_place')
 
 
+class Q10Inline(admin.TabularInline):
+    model = Q10
+    extra = 0
+
+
 @admin.register(Q10Report)
 class Q10ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q10Inline]
 
 
 @admin.register(Q10Ranking)
@@ -356,9 +418,16 @@ class Q11Admin(admin.ModelAdmin):
                     'is_verified', 'prize_place')
 
 
+class Q11Inline(admin.TabularInline):
+    model = Q11
+    extra = 0
+
+
 @admin.register(Q11Report)
 class Q11ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q11Inline]
 
 
 @admin.register(Q11Ranking)
@@ -377,9 +446,16 @@ class Q12Admin(admin.ModelAdmin):
                     'is_verified', 'prize_place')
 
 
+class Q12Inline(admin.TabularInline):
+    model = Q12
+    extra = 0
+
+
 @admin.register(Q12Report)
 class Q12ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+
+    inlines = [Q12Inline]
 
 
 @admin.register(Q12Ranking)
@@ -424,9 +500,25 @@ class Q13TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
+class Q14LaborProjectInline(admin.TabularInline):
+    model = Q14LaborProject
+    extra = 0
+
 @admin.register(Q14DetachmentReport)
 class Q14DetachmentReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'detachment', 'is_verified')
+    list_display = (
+        'id',
+        'competition_id',
+        'detachment_id',
+        'get_detachment_name',
+    )
+    inlines = [Q14LaborProjectInline]
+    search_fields = ('detachment__name',)
+
+    def get_detachment_name(self, obj):
+        return obj.detachment.name
+    get_detachment_name.admin_order_field = 'detachment__name'
+    get_detachment_name.short_description = 'Название отряда'
 
 
 @admin.register(Q14Ranking)
@@ -488,6 +580,11 @@ class Q16TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
+class Q17EventLinkInline(admin.TabularInline):
+    model = Q17EventLink
+    extra = 0
+
+
 @admin.register(Q17Ranking)
 class Q17RankingAdmin(QBaseRankingAdmin):
     pass
@@ -500,7 +597,19 @@ class Q17TandemRankingAdmin(QBaseTandemRankingAdmin):
 
 @admin.register(Q17DetachmentReport)
 class Q17DetachmentReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'detachment', 'is_verified')
+    list_display = (
+        'id',
+        'competition_id',
+        'detachment_id',
+        'get_detachment_name',
+    )
+    inlines = [Q17EventLinkInline]
+    search_fields = ('detachment__name',)
+
+    def get_detachment_name(self, obj):
+        return obj.detachment.name
+    get_detachment_name.admin_order_field = 'detachment__name'
+    get_detachment_name.short_description = 'Название отряда'
 
 
 @admin.register(Q18Ranking)

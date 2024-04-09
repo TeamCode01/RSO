@@ -7,7 +7,7 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DOWNLOAD_MEMBERSHIP_FILE,
                            DOWNLOAD_PARENT_CONSENT_PD, LIST, LIST_CREATE,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
-                           UPDATE_RETRIEVE)
+                           UPDATE_RETRIEVE, DELETE_UPDATE_RETRIEVE)
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
                        change_membership_fee_status, verify_user)
@@ -22,7 +22,7 @@ from competitions.views import (
     Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
-    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall
+    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -252,7 +252,7 @@ ForeignUserDocsVS = ForeignUserDocumentsViewSet.as_view(
 DetachmentAcceptVS = DetachmentAcceptViewSet.as_view(CREATE_DELETE)
 DetachmentApplicationVS = DetachmentApplicationViewSet.as_view(CREATE_DELETE)
 DetachmentPositionListVS = DetachmentPositionViewSet.as_view(LIST)
-DetachmentPositionUpdateVS = DetachmentPositionViewSet.as_view(UPDATE_RETRIEVE)
+DetachmentPositionUpdateDeleteVS = DetachmentPositionViewSet.as_view(DELETE_UPDATE_RETRIEVE)
 EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
 EducationalPositionUpdateVS = EducationalPositionViewSet.as_view(
     UPDATE_RETRIEVE
@@ -343,8 +343,13 @@ user_nested_urls = [
     ),
     path(
         'detachments/<int:pk>/members/<int:membership_pk>/',
-        DetachmentPositionUpdateVS,
+        DetachmentPositionUpdateDeleteVS,
         name='detachment-members-update'
+    ),
+    path(
+        'detachments/<int:detachment_pk>/competitions/<int:competition_pk>/place/',
+        get_detachment_place,
+        name='detachment-competition-place'
     ),
     path(
         'educationals/<int:pk>/members/',

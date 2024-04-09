@@ -132,6 +132,9 @@ response_junior_detachments = {
 
 
 q7schema_request = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'participation_data': openapi.Schema(
             type=openapi.TYPE_ARRAY,
             items=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
@@ -154,7 +157,7 @@ q7schema_request = openapi.Schema(
                         description='Ссылки на публикации',
                         items=openapi.Schema(
                             type=openapi.TYPE_OBJECT,
-                            required=['link'],
+                            required=['link', 'certificate_scans'],
                             properties={
                                 'link': openapi.Schema(
                                     type=openapi.TYPE_STRING,
@@ -167,17 +170,22 @@ q7schema_request = openapi.Schema(
                         )
                     ),
                     'certificate_scans': openapi.Schema(
-                        type=openapi.TYPE_STRING,
-                        title='Сканы сертификатов',
-                        format='url',
-                        x_nullable=True
+                        type=openapi.TYPE_FILE,
+                        title='Сканы сертификатов binary',
+                        required='true',
+                        format='binary'
                     )
                 }
             )
         )
+    }
+)
 
 
 q9schema_request = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'participation_data': openapi.Schema(
             type=openapi.TYPE_ARRAY,
             items=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
@@ -195,11 +203,13 @@ q9schema_request = openapi.Schema(
                         enum=[1, 2, 3]
                     ),
                     'certificate_scans': openapi.Schema(
-                        type=openapi.TYPE_STRING,
-                        title='Сканы сертификатов',
+                        type=openapi.TYPE_FILE,
+                        title='Сканы сертификатов binary',
                         required='true',
-                        format='url'
+                        format='binary'
                     )
                 }
             )
         )
+    }
+)
