@@ -378,6 +378,9 @@ class EventOrganizationData(models.Model):
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'organizer'], name='unique_event_organizer')
+        ]
         verbose_name_plural = 'Организаторы мероприятий'
         verbose_name = 'Организатор'
 
