@@ -4241,13 +4241,13 @@ def get_place_overall(request, competition_pk=None):
         detachment=detachment,
         competition=competition
     ).first()
-    is_older_detachment = True
+    is_older_detachment = False
     if not tandem_ranking:
         tandem_ranking = OverallTandemRanking.objects.filter(
             junior_detachment=detachment,
             competition=competition
         ).first()
-        is_older_detachment = False
+        is_older_detachment = True
     if tandem_ranking and tandem_ranking.place is not None:
         return Response(
             {
