@@ -492,14 +492,13 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
         inn = request.data.get('inn', None)
         work_book_num = request.data.get('work_book_num', None)
 
-
         try:
             UserForeignParentDocs.objects.get(
                 user=user,
             )
             return self.partial_update(request, *args, **kwargs)  
         except UserForeignParentDocs.DoesNotExist:
-            with transaction.atomic(): #дописать partial_update и delete для additional_docs
+            with transaction.atomic(): #нужен delete для additional_docs
                 instance = UserForeignParentDocs.objects.create(
                     user=user,
                     name=name,
@@ -513,20 +512,34 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                 for document in additional_docs:
                     add_docs_serilaizer = AdditionalForeignDocsSerializer(
                         data=document)
-                    if add_docs_serilaizer.is_valid(raise_exception=True):
-                        AdditionalForeignDocs.objects.create(
-                            **add_docs_serilaizer.validated_data,
-                            foreign_docs=instance
-                        )
-                    else:
-                        return Response(add_docs_serilaizer.errors,
-                                        status=status.HTTP_400_BAD_REQUEST)
+                    add_docs_serilaizer.is_valid(raise_exception=True)
+                    AdditionalForeignDocs.objects.create(
+                        **add_docs_serilaizer.validated_data,
+                        foreign_docs=instance
+                    )
+
                 return Response(
                     self.get_serializer(instance).data,
                     status=(
                         status.HTTP_201_CREATED
                     )
                 )
+    
+    def partial_update(self, request, *args, **kwargs):
+        user = self.request.user
+        instance = UserForeignParentDocs.objects.get(
+                user=user,
+            )
+        additional_docs = request.data.get('additional_docs', [])
+        for document in additional_docs:
+            add_docs_serilaizer = AdditionalForeignDocsSerializer(
+                data=document)
+            add_docs_serilaizer.is_valid(raise_exception=True)
+            AdditionalForeignDocs.objects.create(
+                **add_docs_serilaizer.validated_data,
+                foreign_docs=instance
+            )
+        return super().partial_update(request, *args, **kwargs)
 
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""
