@@ -60,6 +60,12 @@ class UserAnswerAdmin(admin.ModelAdmin):
     list_filter = ('attempt__category', 'question__block')
     readonly_fields = ('attempt', 'question', 'answer_option')
 
+    def get_region(self, obj):
+        return obj.region
+
+    get_region.admin_order_field = 'attempt__user__region'
+    get_region.short_description = 'Регион'
+
     def get_username(self, obj):
         return obj.attempt.user.username
     get_username.admin_order_field = 'attempt__user__username'

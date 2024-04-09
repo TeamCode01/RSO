@@ -4241,15 +4241,22 @@ def get_place_overall(request, competition_pk=None):
         detachment=detachment,
         competition=competition
     ).first()
+    is_older_detachment = True
     if not tandem_ranking:
         tandem_ranking = OverallTandemRanking.objects.filter(
             junior_detachment=detachment,
             competition=competition
         ).first()
-
+        is_older_detachment = False
     if tandem_ranking and tandem_ranking.place is not None:
         return Response(
-            {"place": tandem_ranking.place},
+            {
+                "place": tandem_ranking.place,
+                "partner_detachment": (
+                    ShortDetachmentSerializer(tandem_ranking.detachment) if is_older_detachment else
+                    ShortDetachmentSerializer(tandem_ranking.junior_detachment)
+                )
+            },
             status=status.HTTP_200_OK
         )
     elif tandem_ranking:
