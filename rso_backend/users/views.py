@@ -5,12 +5,15 @@ import zipfile
 from dal import autocomplete
 from django.db.models import Q
 from django.conf import settings
+from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -22,8 +25,8 @@ from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
 from rso_backend.settings import RSOUSERS_CACHE_TTL
 from users.filters import RSOUserFilter
-from users.models import (RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
+                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
                           UserPrivacySettings, UserProfessionalEducation,
                           UserRegion, UserStatementDocuments,
                           UserVerificationRequest)
@@ -32,7 +35,7 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                RSOUserSerializer, SafeUserSerializer,
                                UserCommanderSerializer,
                                UserDocumentsSerializer,
-                               UserEducationSerializer,
+                               UserEducationSerializer, UserForeignParentDocsSerializer,
                                UserHeadquarterPositionSerializer,
                                UserMediaSerializer,
                                UserNotificationsCountSerializer,
@@ -40,7 +43,9 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                UserProfessionalEducationSerializer,
                                UserRegionSerializer, UsersParentSerializer,
                                UserStatementDocumentsSerializer,
-                               UserTrustedSerializer)
+                               UserTrustedSerializer,
+                               AdditionalForeignDocsSerializer,
+                               UserForeignParentDocsSerializer)
 
 
 class CustomUserViewSet(UserViewSet):
@@ -422,6 +427,106 @@ class UserDocumentsViewSet(BaseUserViewSet):
     def get_object(self):
         return get_object_or_404(UserDocuments, user=self.request.user)
 
+
+class UserForeignParentDocsViewSet(BaseUserViewSet):
+    """Представляет документы родительского пользователя."""
+
+    queryset = UserForeignParentDocs.objects.all()
+    serializer_class = UserForeignParentDocsSerializer
+    permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+
+    def get_object(self):
+        return get_object_or_404(UserForeignParentDocs, user=self.request.user)
+
+    @swagger_auto_schema( 
+                request_body=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=[],
+                    properties={
+                        'name': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'foreign_pass_num': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'foreign_pass_date': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'foreign_pass_whom': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'snils': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'inn': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'work_book_num': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'additional_docs': openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    'foreign_doc_name': openapi.Schema(
+                                        type=openapi.TYPE_STRING
+                                    ),
+                                    'foreign_doc_num': openapi.Schema(
+                                        type=openapi.TYPE_STRING
+                                    )
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+    def create(self, request, *args, **kwargs):
+        user = self.request.user
+        additional_docs = request.data.get('additional_docs', [])
+        name = request.data.get('name', None)
+        foreign_pass_num = request.data.get('foreign_pass_num', None)
+        foreign_pass_date = request.data.get('foreign_pass_date', None)
+        foreign_pass_whom = request.data.get('foreign_pass_whom', None)
+        snils = request.data.get('snils', None)
+        inn = request.data.get('inn', None)
+        work_book_num = request.data.get('work_book_num', None)
+
+
+        try:
+            UserForeignParentDocs.objects.get(
+                user=user,
+            )
+            return self.partial_update(request, *args, **kwargs)  
+        except UserForeignParentDocs.DoesNotExist:
+            with transaction.atomic(): #дописать partial_update и delete для additional_docs
+                instance = UserForeignParentDocs.objects.create(
+                    user=user,
+                    name=name,
+                    foreign_pass_num=foreign_pass_num,
+                    foreign_pass_date=foreign_pass_date,
+                    foreign_pass_whom=foreign_pass_whom,
+                    snils=snils,
+                    inn=inn,
+                    work_book_num=work_book_num
+                )
+                for document in additional_docs:
+                    add_docs_serilaizer = AdditionalForeignDocsSerializer(
+                        data=document)
+                    if add_docs_serilaizer.is_valid(raise_exception=True):
+                        AdditionalForeignDocs.objects.create(
+                            **add_docs_serilaizer.validated_data,
+                            foreign_docs=instance
+                        )
+                    else:
+                        return Response(add_docs_serilaizer.errors,
+                                        status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    self.get_serializer(instance).data,
+                    status=(
+                        status.HTTP_201_CREATED
+                    )
+                )
 
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""

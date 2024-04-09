@@ -206,10 +206,42 @@ class UserForeignParentDocsSerializer(serializers.ModelSerializer):
         )
 
 
+class AdditionalForeignDocsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AdditionalForeignDocs
+        fields = (
+            'foreign_doc_name',
+            'foreign_doc_num',
+        )
+
+class UserForeignParentDocsSerializer(serializers.ModelSerializer):
+
+    additional_docs = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserForeignParentDocs
+        fields = (
+            'name',
+            'foreign_pass_num',
+            'foreign_pass_date',
+            'foreign_pass_whom',
+            'additional_docs',
+            'snils',
+            'inn',
+            'work_book_num',
+        )
+
+    @staticmethod
+    def get_additional_docs(instance):
+        additional_docs = AdditionalForeignDocs.objects.filter(
+            foreign_docs=instance
+        )
+        return AdditionalForeignDocsSerializer(additional_docs, many=True).data
+
+
 class ForeignUserDocumentsSerializer(serializers.ModelSerializer):
     """Сериализатор документов иностранного гражданина."""
-
-    parent_docs = UserForeignParentDocsSerializer()
 
     class Meta:
         model = UserForeignDocuments
@@ -221,7 +253,6 @@ class ForeignUserDocumentsSerializer(serializers.ModelSerializer):
             'snils',
             'inn',
             'work_book_num',
-            'parent_docs'
         )
 
     def create(self, validated_data):

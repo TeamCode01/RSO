@@ -416,15 +416,7 @@ class UserForeignDocuments(models.Model):
 class UserForeignParentDocs(models.Model):
     """Информация о законном представителе несовершеннолетнего иностранного пользователя."""
 
-    child_docs = models.ForeignKey(
-        to='UserForeignDocuments',
-        on_delete=models.PROTECT,
-        related_name='foreign_child_docs',
-        verbose_name=(
-            'Документы несоверешеннолетнего иностранного пользователя'
-        ),
-    )
-    child_user = models.OneToOneField(
+    user = models.OneToOneField(
         verbose_name='Несоверешнный пользователь',
         to='RSOUser',
         on_delete=models.CASCADE,
@@ -432,7 +424,9 @@ class UserForeignParentDocs(models.Model):
     )
     name = models.CharField(
         max_length=200,
-        verbose_name='Документ, удостоверяющий личность'
+        verbose_name='Документ, удостоверяющий личность',
+        blank=True,
+        null=True,
     )
     snils = models.CharField(
         max_length=30,
