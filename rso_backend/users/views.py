@@ -19,7 +19,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere,
+from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor,
                              PersonalDataPermission, IsStuffOrAuthor)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
@@ -429,7 +429,37 @@ class UserDocumentsViewSet(BaseUserViewSet):
 
 
 class UserForeignParentDocsViewSet(BaseUserViewSet):
-    """Представляет документы родительского пользователя."""
+    """Документы опекуна иностранного юзера.
+
+        Поддерживаются только GET, POST и DELETE запросы.
+        Если запись у данного юзера уже существует, то вызывается
+        PATCH-запрос самостоятельно на бэке.
+        Если записи нет, то создается новая.
+        Таким образом фронт всегда отправляет POST-запрос при создании
+        и POST-запрос при обновлении записей.
+
+        DELETE-запрос на этот эндпоинт удаляет и все дополнительные документы.
+        Удаление отдельных записей о дополнительных документах реализовано
+        на эндпоинте /rsousers/me/foreign_parent_additional_documents/{id}/.
+
+        Пример POST-запроса:
+        {
+        "name": "foo",
+        "foreign_pass_num": "bar",
+        "foreign_pass_date": "1970-01-01",
+        "foreign_pass_whom": "string",
+        "snils": "string",
+        "inn": "string",
+        "work_book_num": "string",
+        "additional_docs": [
+            {
+            "foreign_doc_name": "string",
+            "foreign_doc_num": "string"
+            }
+        ]
+        }
+
+    """
 
     queryset = UserForeignParentDocs.objects.all()
     serializer_class = UserForeignParentDocsSerializer
@@ -444,13 +474,16 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                     required=[],
                     properties={
                         'name': openapi.Schema(
-                            type=openapi.TYPE_STRING
+                            type=openapi.TYPE_STRING,
+                            default='foobar'
                         ),
                         'foreign_pass_num': openapi.Schema(
-                            type=openapi.TYPE_STRING
+                            type=openapi.TYPE_STRING,
+                            default='XII X IV'
                         ),
                         'foreign_pass_date': openapi.Schema(
-                            type=openapi.TYPE_STRING
+                            type=openapi.TYPE_STRING,
+                            default='1970-01-01'
                         ),
                         'foreign_pass_whom': openapi.Schema(
                             type=openapi.TYPE_STRING
@@ -482,6 +515,13 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                 )
             )
     def create(self, request, *args, **kwargs):
+        """
+        В методе реализована проверка на наличие записей.
+        Если запись у данного юзера уже существует, то вызывается
+        partial_update.
+        Если записи нет, то создается новая.
+        """
+
         user = self.request.user
         additional_docs = request.data.get('additional_docs', [])
         name = request.data.get('name', None)
@@ -498,7 +538,7 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
             )
             return self.partial_update(request, *args, **kwargs)  
         except UserForeignParentDocs.DoesNotExist:
-            with transaction.atomic(): #нужен delete для additional_docs
+            with transaction.atomic():
                 instance = UserForeignParentDocs.objects.create(
                     user=user,
                     name=name,
@@ -524,8 +564,11 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                         status.HTTP_201_CREATED
                     )
                 )
-    
+
     def partial_update(self, request, *args, **kwargs):
+        """
+        Добавление в метод сохранения записей о дополнительных документах.
+        """
         user = self.request.user
         instance = UserForeignParentDocs.objects.get(
                 user=user,
@@ -540,6 +583,31 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                 foreign_docs=instance
             )
         return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Удаляет документы родительского пользователя
+        вместе со всеми дополнительными документами.
+        """
+        instance = UserForeignParentDocs.objects.get(
+                user=self.request.user,
+            )
+        AdditionalForeignDocs.objects.filter(foreign_docs=instance).delete()
+        return super().destroy(request, *args, **kwargs)
+
+
+class AdditionalForeignDocsViewSet(BaseUserViewSet):
+    """Дополнительные документы иностранного пользователя.
+
+    DELETE-запрос при передаче id удаляет отдельные записи.
+    """
+
+    queryset = AdditionalForeignDocs.objects.all()
+    serializer_class = AdditionalForeignDocsSerializer
+    permission_classes = (
+        permissions.IsAuthenticated, IsForeignAdditionalDocsAuthor,
+    )
+
 
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""

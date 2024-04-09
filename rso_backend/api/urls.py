@@ -2,7 +2,7 @@ from django.urls import include, path
 from djoser.views import UserViewSet
 from rest_framework.routers import DefaultRouter
 
-from api.constants import (CREATE_DELETE, CREATE_METHOD, CRUD_METHODS_WITHOUT_LIST, DELETE,
+from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DOWNLOAD_ALL_FORMS, DOWNLOAD_CONSENT_PD,
                            DOWNLOAD_MEMBERSHIP_FILE,
                            DOWNLOAD_PARENT_CONSENT_PD, LIST, LIST_CREATE,
@@ -41,7 +41,7 @@ from headquarters.views import (CentralPositionViewSet, CentralViewSet,
                                 LocalPositionViewSet, LocalViewSet,
                                 PositionViewSet, RegionalPositionViewSet,
                                 RegionalViewSet, get_structural_units)
-from users.views import (CustomUserViewSet, ForeignUserDocumentsViewSet,
+from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet, ForeignUserDocumentsViewSet,
                          RSOUserViewSet, SafeUserViewSet, UserDocumentsViewSet,
                          UserEducationViewSet, UserForeignParentDocsViewSet, UserMediaViewSet,
                          UserPrivacySettingsViewSet,
@@ -250,7 +250,10 @@ ForeignUserDocsVS = ForeignUserDocumentsViewSet.as_view(
     UPDATE_RETRIEVE
 )
 ForeignParentDocsVS = UserForeignParentDocsViewSet.as_view(
-    CRUD_METHODS_WITHOUT_LIST
+    RETRIEVE_CREATE | DELETE
+)
+AdditionalDocsVS = AdditionalForeignDocsViewSet.as_view(
+    DELETE
 )
 DetachmentAcceptVS = DetachmentAcceptViewSet.as_view(CREATE_DELETE)
 DetachmentApplicationVS = DetachmentApplicationViewSet.as_view(CREATE_DELETE)
@@ -287,6 +290,11 @@ user_nested_urls = [
         'rsousers/me/foreign_parent_documents/',
         ForeignParentDocsVS,
         name='foreign-parent-documents'
+    ),
+    path(
+        'rsousers/me/foreign_parent_additional_documents/<int:pk>/',
+        AdditionalDocsVS,
+        name='foreign-parent-additional-documents'
     ),
     path('rsousers/me/region/', UserRegVS, name='user-region'),
     path('rsousers/me/privacy/', UserPrivacyVS, name='user-privacy'),

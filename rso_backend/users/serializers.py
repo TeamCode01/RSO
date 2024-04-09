@@ -180,40 +180,11 @@ class AdditionalForeignDocsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdditionalForeignDocs
         fields = (
+            'id',
             'foreign_doc_name',
             'foreign_doc_num',
         )
 
-
-class UserForeignParentDocsSerializer(serializers.ModelSerializer):
-
-    additional_docs = serializers.ListField(
-        child=AdditionalForeignDocsSerializer(),
-        write_only=True
-    )
-
-    class Meta:
-        model = UserForeignParentDocs
-        fields = (
-            'name',
-            'foreign_pass_num',
-            'foreign_pass_date',
-            'foreign_pass_whom',
-            'additional_docs',
-            'snils',
-            'inn',
-            'work_book_num',
-        )
-
-
-class AdditionalForeignDocsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = AdditionalForeignDocs
-        fields = (
-            'foreign_doc_name',
-            'foreign_doc_num',
-        )
 
 class UserForeignParentDocsSerializer(serializers.ModelSerializer):
 
