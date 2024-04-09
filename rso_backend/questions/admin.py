@@ -1,6 +1,7 @@
 from django.utils.safestring import mark_safe
 from django.contrib import admin
 from questions.models import Question, AnswerOption, Attempt, UserAnswer
+from import_export.admin import ExportActionModelAdmin
 
 
 class AnswerOptionInline(admin.TabularInline):
@@ -38,17 +39,28 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Attempt)
-class AttemptAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category')
+class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
+    list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid', 'get_user_region', 'get_user_position')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category', 'user__region', 'user__userdetachmentposition__headquarter__name')
     list_filter = ('timestamp', 'category')
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
 
-    def has_add_permission(self, request, obj=None):
-        return False
+    def get_user_region(self, obj):
+        return obj.user.region
+    get_user_region.admin_order_field = 'user__region'
+    get_user_region.short_description = 'Регион'
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    def get_user_position(self, obj):
+        detachment_position = getattr(obj.user, 'userdetachmentposition', None)
+        return detachment_position.headquarter.name if detachment_position and getattr(detachment_position, 'headquarter', None) else None
+    get_user_position.admin_order_field = 'user__userdetachmentposition__headquarter__name'
+    get_user_position.short_description = 'Должность'
+
+    # def has_add_permission(self, request, obj=None):
+    #     return False
+
+    # def has_change_permission(self, request, obj=None):
+    #     return False
 
 
 @admin.register(UserAnswer)
