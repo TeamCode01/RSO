@@ -1209,8 +1209,8 @@ class Q13DetachmentReport(QBaseReport):
     pass
 
     class Meta:
-        verbose_name = 'Места по 13 показателю'
-        verbose_name_plural = 'Места по 13 показателю'
+        verbose_name = 'Отчёт по 13 показателю'
+        verbose_name_plural = 'Отчёты по 13 показателю'
 
 
 class Q13EventOrganization(models.Model):
@@ -1239,6 +1239,15 @@ class Q13EventOrganization(models.Model):
     is_verified = models.BooleanField(default=False)
 
 
+class Q14DetachmentReport(QBaseReport):
+    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+    score = models.FloatField(verbose_name='Очки', default=1000)
+
+    class Meta:
+        verbose_name = 'Отчет по 14 показателю'
+        verbose_name_plural = 'Отчеты по 14 показателю'
+
+
 class Q14LaborProject(models.Model):
     lab_project_name = models.CharField(
         max_length=150,
@@ -1249,22 +1258,13 @@ class Q14LaborProject(models.Model):
         ),
         validators=[MinValueValidator(1), MaxValueValidator(1000)],
     )
-
-
-class Q14DetachmentReport(QBaseReport, QBaseReportIsVerified):
-    q14_labor_project = models.ForeignKey(
-        'competitions.Q14LaborProject',
+    detachment_report = models.ForeignKey(
+        Q14DetachmentReport,
         on_delete=models.CASCADE,
         related_name='q14_labor_project',
-        verbose_name='Участники трудового проекта'
+        verbose_name='Отчет по 14 показателю'
     )
-    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
-    score = models.FloatField(verbose_name='Очки', default=1000)
-
-
-    class Meta:
-        verbose_name = 'Отчет по 14 показателю'
-        verbose_name_plural = 'Отчеты по 14 показателю'
+    is_verified = models.BooleanField(default=False)
 
 
 class Q14Ranking(QBaseRanking):
@@ -1344,33 +1344,24 @@ class Q15GrantWinner(models.Model):
     is_verified = models.BooleanField(default=False)
 
 
-class Q17Link(Links):
-    pass
-
-
-class Q17Event(models.Model):
-    source_name = models.CharField(
-        max_length=500,
-    )
-
-
-class Q17DetachmentReport(QBaseReport, QBaseReportIsVerified):
-    q17_event = models.ForeignKey(
-        'competitions.Q17Event',
-        on_delete=models.CASCADE,
-        related_name='q17_event',
-        verbose_name='Название источника статьи'
-    )
-    q17_link = models.ForeignKey(
-        'competitions.Q17Link',
-        on_delete=models.CASCADE,
-        related_name='q17_link',
-        verbose_name='Ссылка на статью об участии отряда'
-    )
-
+class Q17DetachmentReport(QBaseReport):
     class Meta:
         verbose_name = 'Отчет по 17 показателю'
         verbose_name_plural = 'Отчеты по 17 показателю'
+
+    def __str__(self):
+        return f'Отчет {self.id}'
+
+class Q17EventLink(models.Model):
+    source_name = models.CharField(max_length=500, verbose_name='Название источника')
+    link = models.URLField(max_length=300, verbose_name='Ссылка')
+    detachment_report = models.ForeignKey(
+        Q17DetachmentReport,
+        on_delete=models.CASCADE,
+        related_name='q17_event_links',
+        verbose_name='Отчет по 17 показателю'
+    )
+    is_verified = models.BooleanField(default=False)
 
 
 class Q17Ranking(QBaseRanking):
@@ -1422,6 +1413,10 @@ class Q18DetachmentReport(QBaseReport, QBaseReportIsVerified):
     )
     june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
     score = models.FloatField(verbose_name='Очки', default=1000)
+
+    class Meta:
+        verbose_name = 'Отчет по 18 показателю'
+        verbose_name_plural = 'Отчеты по 18 показателю'
 
 
 class Q19TandemRanking(QBaseTandemRanking):

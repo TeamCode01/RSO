@@ -693,7 +693,7 @@ def is_regional_commissioner(user):
         return False
     try:
         position_name = user.userregionalheadquarterposition.position.name
-    except UserRegionalHeadquarterPosition.DoesNotExist:
+    except (UserRegionalHeadquarterPosition.DoesNotExist, AttributeError):
         return False
     return position_name == 'Комиссар' or user.is_staff
 

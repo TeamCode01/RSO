@@ -10,7 +10,7 @@ from competitions.models import (
     CompetitionParticipants, Competitions,
     LinksQ7, LinksQ8, Q10Report, Q11Report, Q12Report,
     Q13EventOrganization, Q13DetachmentReport, Q16Report, Q17DetachmentReport,
-    Q17Event, Q17Link, Q14LaborProject, Q14Ranking, Q14TandemRanking,
+    Q17EventLink, Q14LaborProject, Q14Ranking, Q14TandemRanking,
     Q18DetachmentReport, Q19Report, Q20Report, Q2DetachmentReport, Q7Report,
     Q8Report, Q9Report, Q5EducatedParticipant, Q5DetachmentReport,
     Q14DetachmentReport, Q6DetachmentReport, Q15GrantWinner, Q15DetachmentReport)
@@ -952,12 +952,8 @@ class Q5EducatedParticipantSerializer(serializers.ModelSerializer):
         read_only_fields = ('is_verified', 'detachment_report')
 
 
-class Q5DetachmentReportSerializer(serializers.ModelSerializer):
-    participants_data = serializers.ListField(
-        child=Q5EducatedParticipantSerializer(),
-        write_only=True
-    )
-    educated_participants = serializers.SerializerMethodField()
+class Q5DetachmentReportReadSerializer(serializers.ModelSerializer):
+    participants_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Q5DetachmentReport
@@ -966,16 +962,32 @@ class Q5DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'participants_data',
-            'educated_participants',
         )
         read_only_fields = ('competition', 'detachment')
 
     @staticmethod
-    def get_educated_participants(instance):
-        educated_participants = Q5EducatedParticipant.objects.filter(
+    def get_participants_data(instance):
+        participants_data = Q5EducatedParticipant.objects.filter(
             detachment_report=instance
         )
-        return Q5EducatedParticipantSerializer(educated_participants, many=True).data
+        return Q5EducatedParticipantSerializer(participants_data, many=True).data
+
+
+class Q5DetachmentReportWriteSerializer(serializers.ModelSerializer):
+    participants_data = serializers.ListField(
+        child=Q5EducatedParticipantSerializer(),
+        write_only=True
+    )
+
+    class Meta:
+        model = Q5DetachmentReport
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'participants_data',
+        )
+        read_only_fields = ('competition', 'detachment')
 
 
 class Q15GrantWinnerSerializer(serializers.ModelSerializer):
@@ -994,12 +1006,11 @@ class Q15GrantWinnerSerializer(serializers.ModelSerializer):
         read_only_fields = ('is_verified', 'detachment_report')
 
 
-class Q15DetachmentReportSerializer(serializers.ModelSerializer):
+class Q15DetachmentReportWriteSerializer(serializers.ModelSerializer):
     grants_data = serializers.ListField(
         child=Q15GrantWinnerSerializer(),
         write_only=True
     )
-    won_grants = serializers.SerializerMethodField()
 
     class Meta:
         model = Q15DetachmentReport
@@ -1008,16 +1019,29 @@ class Q15DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'grants_data',
-            'won_grants',
+        )
+        read_only_fields = ('competition', 'detachment')
+
+
+class Q15DetachmentReportReadSerializer(serializers.ModelSerializer):
+    grants_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Q15DetachmentReport
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'grants_data',
         )
         read_only_fields = ('competition', 'detachment')
 
     @staticmethod
-    def get_won_grants(instance):
-        won_grants = Q15GrantWinner.objects.filter(
+    def get_grants_data(instance):
+        grants_data = Q15GrantWinner.objects.filter(
             detachment_report=instance
         )
-        return Q15GrantWinnerSerializer(won_grants, many=True).data
+        return Q15GrantWinnerSerializer(grants_data, many=True).data
 
 
 class Q6DetachmentReportSerializer(serializers.ModelSerializer):
@@ -1057,12 +1081,24 @@ class Q13EventOrganizationSerializer(serializers.ModelSerializer):
         read_only_fields = ('is_verified', 'detachment_report')
 
 
-class Q13DetachmentReportSerializer(serializers.ModelSerializer):
+class Q13DetachmentReportReadSerializer(serializers.ModelSerializer):
+    organization_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Q13DetachmentReport
+        fields = ('id', 'competition', 'detachment', 'organization_data')
+
+    @staticmethod
+    def get_organization_data(instance):
+        organized_events = Q13EventOrganization.objects.filter(detachment_report=instance)
+        return Q13EventOrganizationSerializer(organized_events, many=True).data
+
+
+class Q13DetachmentReportWriteSerializer(serializers.ModelSerializer):
     organization_data = serializers.ListField(
         child=Q13EventOrganizationSerializer(),
         write_only=True
     )
-    organized_events = serializers.SerializerMethodField()
 
     class Meta:
         model = Q13DetachmentReport
@@ -1071,16 +1107,8 @@ class Q13DetachmentReportSerializer(serializers.ModelSerializer):
             'competition',
             'detachment',
             'organization_data',
-            'organized_events',
         )
         read_only_fields = ('competition', 'detachment')
-
-    @staticmethod
-    def get_organized_events(instance):
-        organized_events = Q13EventOrganization.objects.filter(
-            detachment_report=instance
-        )
-        return Q13EventOrganizationSerializer(organized_events, many=True).data
 
 
 class Q14LaborProjectSerializer(serializers.ModelSerializer):
@@ -1089,13 +1117,16 @@ class Q14LaborProjectSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'lab_project_name',
-            'amount'
+            'amount',
+            'detachment_report',
+            'is_verified'
         )
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'is_verified', 'detachment_report')
 
 
 class Q14DetachmentReportSerializer(serializers.ModelSerializer):
-    q14_labor_project = Q14LaborProjectSerializer()
+
+    q14_labor_projects = serializers.SerializerMethodField()
 
     class Meta:
         model = Q14DetachmentReport
@@ -1103,71 +1134,33 @@ class Q14DetachmentReportSerializer(serializers.ModelSerializer):
             'id',
             'detachment',
             'competition',
-            'is_verified',
-            'q14_labor_project'
+            'q14_labor_projects'
         )
-        read_only_fields = ('is_verified', 'detachment', 'competition')
+        read_only_fields = ('detachment', 'competition')
 
-    def create(self, validated_data):
-        lab_project_data = validated_data.pop('q14_labor_project')
-        competition_pk = self.context.get('view').kwargs.get('competition_pk')
-        try:
-            competition = Competitions.objects.get(id=competition_pk)
-        except Competitions.DoesNotExist:
-            raise serializers.ValidationError(
-                {'competition': 'Неправильный id конкурса.'}
-            )
-        try:
-            detachment = Detachment.objects.get(
-                commander=self.context.get('request').user
-            )
-        except Detachment.DoesNotExist:
-            raise serializers.ValidationError(
-                {
-                    'detachment': 'Заполнять данные '
-                    'может только командир отряда.'
-                }
-            )
-
-        lab_serializer = Q14LaborProjectSerializer(data=lab_project_data)
-
-        if lab_serializer.is_valid():
-            lab_instance = lab_serializer.save()
-
-            validated_data['competition'] = competition
-            validated_data['detachment'] = detachment
-            validated_data['q14_labor_project'] = lab_instance
-
-            with transaction.atomic():
-                instance = super().create(validated_data)
-                return instance
-        else:
-            raise serializers.ValidationError(
-                'Ошибка валидации данных для lab_instance'
-            )
+    def get_q14_labor_projects(self, instance):
+        q14_labor_projects = Q14LaborProject.objects.filter(
+            detachment_report=instance
+        )
+        return Q14LaborProjectSerializer(q14_labor_projects, many=True).data
 
 
-class Q17EventSerializer(serializers.ModelSerializer):
+class Q17EventLinkSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Q17Event
+        model = Q17EventLink
         fields = (
             'id',
-            'source_name'
+            'source_name',
+            'link',
+            'detachment_report',
+            'is_verified'
         )
-        read_only_fields = ('id',)
-
-
-class Q17LinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Q17Link
-        fields = ('id', 'link')
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'is_verified', 'detachment_report')
 
 
 class Q17DetachmentReportSerializer(serializers.ModelSerializer):
 
-    q17_event = Q17EventSerializer()
-    q17_link = Q17LinkSerializer()
+    source_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Q17DetachmentReport
@@ -1175,54 +1168,15 @@ class Q17DetachmentReportSerializer(serializers.ModelSerializer):
             'id',
             'detachment',
             'competition',
-            'is_verified',
-            'q17_event',
-            'q17_link'
+            'source_data',
         )
         read_only_fields = ('is_verified', 'detachment', 'competition')
 
-    def create(self, validated_data):
-        link_data = validated_data.pop('q17_link')
-        event_data = validated_data.pop('q17_event')
-
-        competition_pk = self.context.get('view').kwargs.get('competition_pk')
-        try:
-            competition = Competitions.objects.get(id=competition_pk)
-        except Competitions.DoesNotExist:
-            raise serializers.ValidationError(
-                {'competition': 'Неправильный id конкурса.'}
-            )
-        try:
-            detachment = Detachment.objects.get(
-                commander=self.context.get('request').user
-            )
-        except Detachment.DoesNotExist:
-            raise serializers.ValidationError(
-                {
-                    'detachment': 'Заполнять данные '
-                    'может только командир отряда.'
-                }
-            )
-
-        link_serializer = Q17LinkSerializer(data=link_data)
-        event_serializer = Q17EventSerializer(data=event_data)
-
-        if link_serializer.is_valid() and event_serializer.is_valid():
-            link_instance = link_serializer.save()
-            event_instance = event_serializer.save()
-
-            validated_data['competition'] = competition
-            validated_data['detachment'] = detachment
-            validated_data['q17_link'] = link_instance
-            validated_data['q17_event'] = event_instance
-
-            with transaction.atomic():
-                instance = super().create(validated_data)
-                return instance
-        else:
-            raise serializers.ValidationError(
-                'Ошибка валидации данных для q17_link или q17_event'
-            )
+    def get_source_data(self, instance):
+        source_data = Q17EventLink.objects.filter(
+            detachment_report=instance
+        )
+        return Q17EventLinkSerializer(source_data, many=True).data
 
 
 class Q18DetachmentReportSerializer(serializers.ModelSerializer):

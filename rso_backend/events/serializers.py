@@ -77,12 +77,20 @@ class EventOrganizerDataSerializer(serializers.ModelSerializer):
             'is_contact_person',
         )
 
+    def validate(self, data):
+        event = self.context.get('event')
+
+        if EventOrganizationData.objects.filter(event=event, organizer=data.get('organizer')).exists():
+            raise serializers.ValidationError("Для данного мероприятия уже назначен этот организатор.")
+        return data
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         organizer_id = representation['organizer']
         organizer = get_object_or_404(RSOUser, id=organizer_id)
         representation['organizer'] = ShortUserSerializer(organizer).data
         return representation
+
 
 class EventDocumentSerializer(serializers.ModelSerializer):
     class Meta:
