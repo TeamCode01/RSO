@@ -549,14 +549,11 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                     inn=inn,
                     work_book_num=work_book_num
                 )
-                for document in additional_docs:
-                    add_docs_serilaizer = AdditionalForeignDocsSerializer(
-                        data=document)
-                    add_docs_serilaizer.is_valid(raise_exception=True)
-                    AdditionalForeignDocs.objects.create(
-                        **add_docs_serilaizer.validated_data,
-                        foreign_docs=instance
-                    )
+
+                add_docs_serilaizer = AdditionalForeignDocsSerializer(
+                    data=additional_docs, many=True)
+                add_docs_serilaizer.is_valid(raise_exception=True)
+                add_docs_serilaizer.save(foreign_docs=instance)
 
                 return Response(
                     self.get_serializer(instance).data,
@@ -574,14 +571,10 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
                 user=user,
             )
         additional_docs = request.data.get('additional_docs', [])
-        for document in additional_docs:
-            add_docs_serilaizer = AdditionalForeignDocsSerializer(
-                data=document)
-            add_docs_serilaizer.is_valid(raise_exception=True)
-            AdditionalForeignDocs.objects.create(
-                **add_docs_serilaizer.validated_data,
-                foreign_docs=instance
-            )
+        add_docs_serilaizer = AdditionalForeignDocsSerializer(
+            data=additional_docs, many=True)
+        add_docs_serilaizer.is_valid(raise_exception=True)
+        add_docs_serilaizer.save(foreign_docs=instance)
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
