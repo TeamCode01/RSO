@@ -34,7 +34,7 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition)
-from users.models import RSOUser, UserVerificationRequest
+from users.models import AdditionalForeignDocs, RSOUser, UserForeignParentDocs
 from users.serializers import UserCommanderSerializer, UserTrustedSerializer
 
 
@@ -1102,3 +1102,16 @@ class PersonalDataPermission(permissions.BasePermission):
                 return True
         return False
 
+
+
+class IsForeignAdditionalDocsAuthor(BasePermission):
+
+    message = 'Вы пытаетесь удалить чужие записи.'
+
+    def has_object_permission(self, request, view, obj):
+        docs_instance = UserForeignParentDocs.objects.get(user=request.user)
+        if isinstance(obj, AdditionalForeignDocs):
+            return (
+                docs_instance == obj.foreign_docs
+                or request.user.is_superuser
+            )

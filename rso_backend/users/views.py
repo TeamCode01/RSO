@@ -5,25 +5,28 @@ import zipfile
 from dal import autocomplete
 from django.db.models import Q
 from django.conf import settings
+from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere,
+from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor,
                              PersonalDataPermission, IsStuffOrAuthor)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
-from rso_backend.settings import BASE_DIR, RSOUSERS_CACHE_TTL
+from rso_backend.settings import RSOUSERS_CACHE_TTL
 from users.filters import RSOUserFilter
-from users.models import (RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
+                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
                           UserPrivacySettings, UserProfessionalEducation,
                           UserRegion, UserStatementDocuments,
                           UserVerificationRequest)
@@ -32,7 +35,7 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                RSOUserSerializer, SafeUserSerializer,
                                UserCommanderSerializer,
                                UserDocumentsSerializer,
-                               UserEducationSerializer,
+                               UserEducationSerializer, UserForeignParentDocsSerializer,
                                UserHeadquarterPositionSerializer,
                                UserMediaSerializer,
                                UserNotificationsCountSerializer,
@@ -40,7 +43,9 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                UserProfessionalEducationSerializer,
                                UserRegionSerializer, UsersParentSerializer,
                                UserStatementDocumentsSerializer,
-                               UserTrustedSerializer)
+                               UserTrustedSerializer,
+                               AdditionalForeignDocsSerializer,
+                               UserForeignParentDocsSerializer)
 
 
 class CustomUserViewSet(UserViewSet):
@@ -423,6 +428,180 @@ class UserDocumentsViewSet(BaseUserViewSet):
         return get_object_or_404(UserDocuments, user=self.request.user)
 
 
+class UserForeignParentDocsViewSet(BaseUserViewSet):
+    """Документы опекуна иностранного юзера.
+
+        Поддерживаются только GET, POST и DELETE запросы.
+        Если запись у данного юзера уже существует, то вызывается
+        PATCH-запрос самостоятельно на бэке.
+        Если записи нет, то создается новая.
+        Таким образом фронт всегда отправляет POST-запрос при создании
+        и POST-запрос при обновлении записей.
+
+        DELETE-запрос на этот эндпоинт удаляет и все дополнительные документы.
+        Удаление отдельных записей о дополнительных документах реализовано
+        на эндпоинте /rsousers/me/foreign_parent_additional_documents/{id}/.
+
+        Пример POST-запроса:
+        {
+        "name": "foo",
+        "foreign_pass_num": "bar",
+        "foreign_pass_date": "1970-01-01",
+        "foreign_pass_whom": "string",
+        "snils": "string",
+        "inn": "string",
+        "work_book_num": "string",
+        "additional_docs": [
+            {
+            "foreign_doc_name": "string",
+            "foreign_doc_num": "string"
+            }
+        ]
+        }
+
+    """
+
+    queryset = UserForeignParentDocs.objects.all()
+    serializer_class = UserForeignParentDocsSerializer
+    permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+
+    def get_object(self):
+        return get_object_or_404(UserForeignParentDocs, user=self.request.user)
+
+    @swagger_auto_schema( 
+                request_body=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=[],
+                    properties={
+                        'name': openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            default='foobar'
+                        ),
+                        'foreign_pass_num': openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            default='XII X IV'
+                        ),
+                        'foreign_pass_date': openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            default='1970-01-01'
+                        ),
+                        'foreign_pass_whom': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'snils': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'inn': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'work_book_num': openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                        'additional_docs': openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    'foreign_doc_name': openapi.Schema(
+                                        type=openapi.TYPE_STRING
+                                    ),
+                                    'foreign_doc_num': openapi.Schema(
+                                        type=openapi.TYPE_STRING
+                                    )
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+    def create(self, request, *args, **kwargs):
+        """
+        В методе реализована проверка на наличие записей.
+        Если запись у данного юзера уже существует, то вызывается
+        partial_update.
+        Если записи нет, то создается новая.
+        """
+
+        user = self.request.user
+        additional_docs = request.data.get('additional_docs', [])
+        name = request.data.get('name', None)
+        foreign_pass_num = request.data.get('foreign_pass_num', None)
+        foreign_pass_date = request.data.get('foreign_pass_date', None)
+        foreign_pass_whom = request.data.get('foreign_pass_whom', None)
+        snils = request.data.get('snils', None)
+        inn = request.data.get('inn', None)
+        work_book_num = request.data.get('work_book_num', None)
+
+        try:
+            UserForeignParentDocs.objects.get(
+                user=user,
+            )
+            return self.partial_update(request, *args, **kwargs)  
+        except UserForeignParentDocs.DoesNotExist:
+            with transaction.atomic():
+                instance = UserForeignParentDocs.objects.create(
+                    user=user,
+                    name=name,
+                    foreign_pass_num=foreign_pass_num,
+                    foreign_pass_date=foreign_pass_date,
+                    foreign_pass_whom=foreign_pass_whom,
+                    snils=snils,
+                    inn=inn,
+                    work_book_num=work_book_num
+                )
+
+                add_docs_serilaizer = AdditionalForeignDocsSerializer(
+                    data=additional_docs, many=True)
+                add_docs_serilaizer.is_valid(raise_exception=True)
+                add_docs_serilaizer.save(foreign_docs=instance)
+
+                return Response(
+                    self.get_serializer(instance).data,
+                    status=(
+                        status.HTTP_201_CREATED
+                    )
+                )
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Добавление в метод сохранения записей о дополнительных документах.
+        """
+        user = self.request.user
+        instance = UserForeignParentDocs.objects.get(
+                user=user,
+            )
+        additional_docs = request.data.get('additional_docs', [])
+        add_docs_serilaizer = AdditionalForeignDocsSerializer(
+            data=additional_docs, many=True)
+        add_docs_serilaizer.is_valid(raise_exception=True)
+        add_docs_serilaizer.save(foreign_docs=instance)
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Удаляет документы родительского пользователя
+        вместе со всеми дополнительными документами.
+        """
+        instance = UserForeignParentDocs.objects.get(
+                user=self.request.user,
+            )
+        AdditionalForeignDocs.objects.filter(foreign_docs=instance).delete()
+        return super().destroy(request, *args, **kwargs)
+
+
+class AdditionalForeignDocsViewSet(BaseUserViewSet):
+    """Дополнительные документы иностранного пользователя.
+
+    DELETE-запрос при передаче id удаляет отдельные записи.
+    """
+
+    queryset = AdditionalForeignDocs.objects.all()
+    serializer_class = AdditionalForeignDocsSerializer
+    permission_classes = (
+        permissions.IsAuthenticated, IsForeignAdditionalDocsAuthor,
+    )
+
+
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""
 
@@ -492,7 +671,7 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filename = 'rso_membership_statement.rtf'
-        filepath = BASE_DIR.joinpath('templates', 'membership', filename)
+        filepath = settings.BASE_DIR.joinpath('templates', 'membership', filename)
         return download_file(filepath, filename)
 
     @action(
@@ -508,7 +687,7 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filename = 'consent_to_the_processing_of_personal_data.rtf'
-        filepath = BASE_DIR.joinpath('templates',  'membership', filename)
+        filepath = settings.BASE_DIR.joinpath('templates',  'membership', filename)
         return download_file(filepath, filename)
 
     @action(
@@ -527,7 +706,7 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         filename = (
             'download_parent_consent_to_the_processing_of_personal_data.rtf'
         )
-        filepath = BASE_DIR.joinpath('templates', 'membership', filename)
+        filepath = settings.BASE_DIR.joinpath('templates', 'membership', filename)
         return download_file(filepath, filename)
 
     @action(
@@ -542,14 +721,14 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         Архив доступен по эндпоинту /users/me/statement/download_all_forms/
         """
 
-        filepath = BASE_DIR.joinpath('templates', 'membership')
-        zip_filename = BASE_DIR.joinpath('templates', 'entry_forms.zip')
+        filepath = settings.BASE_DIR.joinpath('templates', 'membership')
+        zip_filename = settings.BASE_DIR.joinpath('templates', 'entry_forms.zip')
         file_dir = os.listdir(filepath)
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for file in file_dir:
                 zipf.write(os.path.join(filepath, file), file)
         zipf.close()
-        filepath = BASE_DIR.joinpath('templates', 'entry_forms.zip')
+        filepath = settings.BASE_DIR.joinpath('templates', 'entry_forms.zip')
         path = open(filepath, 'rb')
         mime_type, _ = mimetypes.guess_type(filepath)
         response = HttpResponse(path, content_type=mime_type)
