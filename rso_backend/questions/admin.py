@@ -2,6 +2,7 @@ from django.utils.safestring import mark_safe
 from django.contrib import admin
 from questions.models import Question, AnswerOption, Attempt, UserAnswer
 from import_export.admin import ExportActionModelAdmin
+from headquarters.models import UserDetachmentPosition
 
 
 class AnswerOptionInline(admin.TabularInline):
@@ -60,9 +61,10 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     get_user_detachment.short_description = 'Отряд'
 
     def get_user_position(self, obj):
-        detachment_position = getattr(obj.user, 'userdetachmentposition', None)
-        if detachment_position and getattr(detachment_position, 'headquarter', None):
-            return detachment_position.headquarter.position
+        user_detachment_position = UserDetachmentPosition.objects.first()
+        if user_detachment_position:
+            position = user_detachment_position.position
+            return position
         return None
     get_user_position.admin_order_field = 'user__userdetachmentposition'
     get_user_position.short_description = 'Должность'
