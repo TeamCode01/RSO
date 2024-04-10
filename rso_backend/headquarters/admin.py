@@ -1,6 +1,5 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
-from django.http import HttpResponseRedirect
 from import_export.admin import ImportExportModelAdmin
 
 from headquarters.forms import (CentralForm, CentralPositionForm,

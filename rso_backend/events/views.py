@@ -190,6 +190,14 @@ class EventOrganizationDataViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(event__id=event_pk)
         return queryset
 
+    def get_serializer_context(self):
+        context = super(EventOrganizationDataViewSet, self).get_serializer_context()
+        # Получение и добавление event в контекст
+        event_pk = self.kwargs.get('event_pk')
+        if event_pk is not None:
+            context['event'] = get_object_or_404(Event, pk=event_pk)
+        return context
+
     def create(self, request, *args, **kwargs):
         event_pk = self.kwargs.get('event_pk')
         event = get_object_or_404(Event, pk=event_pk)
