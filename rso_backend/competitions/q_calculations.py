@@ -8,12 +8,12 @@ import logging
 from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q16Report, \
     Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q18Ranking, \
     Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
-    Q19Report, Q19TandemRanking, Q1Report, Q7Ranking, Q7Report, \
+    Q19Report, Q19TandemRanking, Q1Report, Q2DetachmentReport, Q2Ranking, Q2TandemRanking, Q7Ranking, Q7Report, \
     Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
     Q5TandemRanking, Q5Ranking, \
     Q5EducatedParticipant, Q5DetachmentReport, Q15TandemRank, Q15Rank, Q15DetachmentReport, Q15GrantWinner, \
     Q6DetachmentReport, Q6Ranking, Q6TandemRanking, Q1Ranking, OverallTandemRanking, OverallRanking
-from competitions.utils import assign_ranks, find_second_element_by_first, tandem_or_start, is_main_detachment
+from competitions.utils import assign_ranks, find_second_element_by_first, get_place_q2, tandem_or_start, is_main_detachment
 from headquarters.models import UserDetachmentPosition
 from questions.models import Attempt
 
@@ -524,7 +524,7 @@ def calculate_q18_place(competition_id):
 
 def calculate_q6_place(competition_id):
     today = date.today()
-    cutoff_date = date(2024, 4, 10)
+    cutoff_date = date(2024, 4, 15)
 
     logger.info(f'Сегодняшняя дата: {today}')
 
@@ -940,16 +940,22 @@ def calculate_q3_q4_place(competition_id: int):
         junior_detachment__isnull=False,
         detachment__isnull=True
     )
+    logger.info('SOLO ENTRIES:')
+    logger.info(solo_entries)
     tandem_entries = CompetitionParticipants.objects.filter(
         competition_id=competition_id,
         junior_detachment__isnull=False,
         detachment__isnull=False
     )
+    logger.info('TANDEM ENTRIES:')
+    logger.info(tandem_entries)
     for entry in solo_entries:
         # Получаем результаты для командира отряда
         try:
             entry_report = entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
+            logger.info(f'SOLO ENTRY REPORT FOUND!: detachment report id {entry_report.id}')
         except Q5DetachmentReport.DoesNotExist:
+            logger.info(f'SOLO ENTRY REPORT NOT FOUND for entry id {entry.id}')
             continue
         q3_place = get_q3_q4_place(entry_report, 'university')
         q4_place = get_q3_q4_place(entry_report, 'safety')
