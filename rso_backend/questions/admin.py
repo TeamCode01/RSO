@@ -61,11 +61,11 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     get_user_detachment.short_description = 'Отряд'
 
     def get_user_position(self, obj):
-        user_detachment_position = UserDetachmentPosition.objects.first()
-        if user_detachment_position:
-            position = user_detachment_position.position
-            return position
-        return None
+        try:
+            user_detachment_position = UserDetachmentPosition.objects.get(user_id=obj.user_id)
+            return user_detachment_position.position
+        except UserDetachmentPosition.DoesNotExist:
+            return "-"
     get_user_position.admin_order_field = 'user__userdetachmentposition'
     get_user_position.short_description = 'Должность'
 
