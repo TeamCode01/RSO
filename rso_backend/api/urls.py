@@ -41,9 +41,9 @@ from headquarters.views import (CentralPositionViewSet, CentralViewSet,
                                 LocalPositionViewSet, LocalViewSet,
                                 PositionViewSet, RegionalPositionViewSet,
                                 RegionalViewSet, get_structural_units)
-from users.views import (CustomUserViewSet, ForeignUserDocumentsViewSet,
+from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet, ForeignUserDocumentsViewSet,
                          RSOUserViewSet, SafeUserViewSet, UserDocumentsViewSet,
-                         UserEducationViewSet, UserMediaViewSet,
+                         UserEducationViewSet, UserForeignParentDocsViewSet, UserMediaViewSet,
                          UserPrivacySettingsViewSet,
                          UserProfessionalEducationViewSet, UserRegionViewSet,
                          UsersParentViewSet, UserStatementDocumentsViewSet,
@@ -249,6 +249,12 @@ UserStatementDownloadAllVS = UserStatementDocumentsViewSet.as_view(
 ForeignUserDocsVS = ForeignUserDocumentsViewSet.as_view(
     UPDATE_RETRIEVE
 )
+ForeignParentDocsVS = UserForeignParentDocsViewSet.as_view(
+    RETRIEVE_CREATE | DELETE
+)
+AdditionalDocsVS = AdditionalForeignDocsViewSet.as_view(
+    DELETE
+)
 DetachmentAcceptVS = DetachmentAcceptViewSet.as_view(CREATE_DELETE)
 DetachmentApplicationVS = DetachmentApplicationViewSet.as_view(CREATE_DELETE)
 DetachmentPositionListVS = DetachmentPositionViewSet.as_view(LIST)
@@ -279,6 +285,16 @@ user_nested_urls = [
         'rsousers/me/foreign_documents/',
         ForeignUserDocsVS,
         name='foreign-documents'
+    ),
+    path(
+        'rsousers/me/foreign_parent_documents/',
+        ForeignParentDocsVS,
+        name='foreign-parent-documents'
+    ),
+    path(
+        'rsousers/me/foreign_parent_additional_documents/<int:pk>/',
+        AdditionalDocsVS,
+        name='foreign-parent-additional-documents'
     ),
     path('rsousers/me/region/', UserRegVS, name='user-region'),
     path('rsousers/me/privacy/', UserPrivacyVS, name='user-privacy'),
