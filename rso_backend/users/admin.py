@@ -10,7 +10,7 @@ from rest_framework.authtoken.models import TokenProxy
 
 from headquarters.models import UserDetachmentPosition
 from users.forms import RSOUserForm
-from users.models import (RSOUser, UserDocuments, UserEducation, UserMedia,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation, UserForeignDocuments, UserForeignParentDocs, UserMedia,
                           UserMemberCertLogs, UserMembershipLogs, UserParent,
                           UserPrivacySettings, UserRegion,
                           UserStatementDocuments, UserVerificationLogs)
@@ -49,6 +49,16 @@ class UsersParentInline(admin.StackedInline):
 
 class UserStatementDocumentsInLine(admin.StackedInline):
     model = UserStatementDocuments
+    extra = 0
+
+
+class UserForeignDocumentsInline(admin.StackedInline):
+    model = UserForeignDocuments
+    extra = 0
+
+
+class UserForeignParentDocsInline(admin.StackedInline):
+    model = UserForeignParentDocs
     extra = 0
 
 
@@ -91,6 +101,8 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         UserPrivacySettingsInline,
         UsersParentInline,
         UserStatementDocumentsInLine,
+        UserForeignDocumentsInline,
+        UserForeignParentDocsInline,
     ]
 
     list_display = (
