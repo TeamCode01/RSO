@@ -39,10 +39,17 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 @admin.register(Attempt)
 class AttemptAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid')
+    list_display = ('id', 'user', 'timestamp', 'category', 'get_region', 'score', 'is_valid')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category')
     list_filter = ('timestamp', 'category')
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
+
+    def get_region(self, obj):
+        return obj.region
+
+    get_region.admin_order_field = 'attempt__user__region'
+    get_region.short_description = 'Регион'
+
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -59,12 +66,6 @@ class UserAnswerAdmin(admin.ModelAdmin):
     search_fields = ('attempt__user__username', 'question__title', 'answer_option__text')
     list_filter = ('attempt__category', 'question__block')
     readonly_fields = ('attempt', 'question', 'answer_option')
-
-    def get_region(self, obj):
-        return obj.region
-
-    get_region.admin_order_field = 'attempt__user__region'
-    get_region.short_description = 'Регион'
 
     def get_username(self, obj):
         return obj.attempt.user.username
