@@ -86,30 +86,48 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
             }
         )
 
-    solo_rankings.sort(key=lambda x: x['place'], reverse=True)
-    solo_place = len(solo_rankings)
-    logger.info(f'Найдены {solo_place} записей для подсчета индивидуального общего места')
+    solo_rankings.sort(key=lambda x: x['place'])
+    current_place = 1
+    previous_places_sum = None
+    count_same_place = 1
+
     for solo_ranking_entry in solo_rankings:
+        if solo_ranking_entry['place'] == previous_places_sum:
+            count_same_place += 1
+        else:
+            if previous_places_sum is not None:
+                current_place += count_same_place
+            count_same_place = 1
+
         OverallRanking.objects.create(
             competition_id=competition_id,
             detachment=solo_ranking_entry['detachment'],
             places_sum=solo_ranking_entry['place'],
-            place=solo_place
+            place=current_place
         )
-        solo_place -= 1
+        previous_places_sum = solo_ranking_entry['place']
 
-    tandem_rankings.sort(key=lambda x: x['place'], reverse=True)
-    tandem_place = len(tandem_rankings)
-    logger.info(f'Найдены {tandem_place} записей для подсчета общего тандем места')
+    tandem_rankings.sort(key=lambda x: x['place'])
+    current_place = 1
+    previous_places_sum = None
+    count_same_place = 1
+
     for tandem_ranking_entry in tandem_rankings:
+        if tandem_ranking_entry['place'] == previous_places_sum:
+            count_same_place += 1
+        else:
+            if previous_places_sum is not None:
+                current_place += count_same_place
+            count_same_place = 1
+
         OverallTandemRanking.objects.create(
             competition_id=competition_id,
             detachment=tandem_ranking_entry['detachment'],
             junior_detachment=tandem_ranking_entry['junior_detachment'],
             places_sum=tandem_ranking_entry['place'],
-            place=tandem_place
+            place=current_place
         )
-        tandem_place -= 1
+        previous_places_sum = tandem_ranking_entry['place']
 
 
 def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:

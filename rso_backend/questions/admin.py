@@ -46,8 +46,9 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category',
                       'user__region', 'user__userdetachmentposition__headquarter__name')
     list_filter = ('timestamp', 'category', 'user__userdetachmentposition',
-                   'user__userdetachmentposition__headquarter__name', 'user__region' )
+                   'user__userdetachmentposition__headquarter__name', 'user__region')
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
+    list_per_page = 25
 
     def get_user_region(self, obj):
         return obj.user.region
