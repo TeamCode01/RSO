@@ -151,7 +151,6 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         'last_login',
         'is_verified',
         'membership_fee',
-        'get_user_position',
         'is_staff',
         'region',
     )
