@@ -957,14 +957,14 @@ def calculate_q3_q4_place(competition_id: int):
             logger.info(f'Для СОЛО {entry} посчитали Q3 место - {q3_place}')
             Q3Ranking.objects.create(
                 competition_id=competition_id,
-                detachment=entry.detachment,
+                detachment=entry.junior_detachment,
                 place=q3_place,
             )
         if q4_place:
             logger.info(f'Для {entry} посчитали Q4 место - {q4_place}')
             Q4Ranking.objects.create(
                 competition_id=competition_id,
-                detachment=entry,
+                detachment=entry.junior_detachment,
                 place=q3_place,
             )
     for tandem_entry in tandem_entries:
