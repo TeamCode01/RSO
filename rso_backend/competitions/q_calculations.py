@@ -14,7 +14,7 @@ from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14La
     Q5EducatedParticipant, Q5DetachmentReport, Q15TandemRank, Q15Rank, Q15DetachmentReport, Q15GrantWinner, \
     Q6DetachmentReport, Q6Ranking, Q6TandemRanking, Q1Ranking, OverallTandemRanking, OverallRanking
 from competitions.utils import assign_ranks, find_second_element_by_first, get_place_q2, tandem_or_start, is_main_detachment
-from headquarters.models import UserDetachmentPosition
+from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
 
 
@@ -951,19 +951,13 @@ def calculate_q3_q4_place(competition_id: int):
     logger.info(tandem_entries)
     for entry in solo_entries:
         # Получаем результаты для командира отряда
-        try:
-            entry_report = entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
-            logger.info(f'SOLO ENTRY REPORT FOUND!: detachment report id {entry_report.id}')
-        except Q5DetachmentReport.DoesNotExist:
-            logger.info(f'SOLO ENTRY REPORT NOT FOUND for entry id {entry.id}')
-            continue
-        q3_place = get_q3_q4_place(entry_report, 'university')
-        q4_place = get_q3_q4_place(entry_report, 'safety')
+        q3_place = get_q3_q4_place(entry.junior_detachment, 'university')
+        q4_place = get_q3_q4_place(entry.junior_detachment, 'safety')
         if q3_place:
             logger.info(f'Для СОЛО {entry} посчитали Q3 место - {q3_place}')
             Q3Ranking.objects.create(
                 competition_id=competition_id,
-                detachment=entry_report.detachment,
+                detachment=entry.detachment,
                 place=q3_place,
             )
         if q4_place:
@@ -974,16 +968,10 @@ def calculate_q3_q4_place(competition_id: int):
                 place=q3_place,
             )
     for tandem_entry in tandem_entries:
-        try:
-            tandem_entry_report = tandem_entry.detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
-            junior_tandem_entry_report = tandem_entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
-            logger.info(f'detachment reports for tandem entries: {tandem_entry_report}, {junior_tandem_entry_report}')
-        except Q5DetachmentReport.DoesNotExist:
-            continue
-        q3_place_1 = get_q3_q4_place(junior_tandem_entry_report, 'university')
-        q3_place_2 = get_q3_q4_place(tandem_entry_report, 'university')
-        q4_place_1 = get_q3_q4_place(junior_tandem_entry_report, 'safety')
-        q4_place_2 = get_q3_q4_place(tandem_entry_report, 'safety')
+        q3_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'university')
+        q3_place_2 = get_q3_q4_place(tandem_entry.detachment, 'university')
+        q4_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'safety')
+        q4_place_2 = get_q3_q4_place(tandem_entry.detachment, 'safety')
         if q3_place_1 and q3_place_2:
             final_place = round((q3_place_1 + q3_place_2) / 2)
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q3 место - {final_place}')
@@ -1289,18 +1277,19 @@ def get_q5_place(participants_count: int, june_15_detachment_members: int) -> in
         return 20
 
 
-def get_q3_q4_place(entry: CompetitionParticipants, category: str):
+def get_q3_q4_place(detachment: Detachment, category: str):
     commander_score = Attempt.objects.filter(
-        user=entry.detachment.commander,
+        user=detachment.commander,
         category=category
     ).aggregate(Max('score'))['score__max'] or 0
+    logger.info(f'Command score for entry {CompetitionParticipants} is {commander_score}')
 
     if category == 'university':
         # Получаем результаты для комиссара отряда
         commissioner_score = 0
         commissioners = UserDetachmentPosition.objects.filter(
             position__name=settings.COMMISSIONER_POSITION_NAME,
-            detachment=entry.detachment
+            detachment=detachment
         )
         for commissioner in commissioners:
             commissioner_max_score = Attempt.objects.filter(
@@ -1319,7 +1308,7 @@ def get_q3_q4_place(entry: CompetitionParticipants, category: str):
         # Получаем результаты для всех участников отряда
         score = 0
         participants = UserDetachmentPosition.objects.filter(
-            detachment=entry.detachment
+            detachment=detachment
         )
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
