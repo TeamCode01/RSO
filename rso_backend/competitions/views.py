@@ -766,8 +766,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     Командир выбрал “Нет” + Комиссар выбрал “Нет” - 3 место
     """
 
-    PLACE_FIRST = 1
-    PLACE_SECOND = 2
+    MAX_PLACE = 3
 
     serializer_class = Q2DetachmentReportSerializer
     permission_classes = (permissions.IsAuthenticated,
@@ -1011,29 +1010,27 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                         ).first().detachment
                     )
                     partner_is_junior = False
-                try:
-                    partner_detahcment_report = (
-                        Q2DetachmentReport.objects.filter(
-                            competition=competition,
-                            detachment=partner_detachment
-                        ).first()
-                    )
-                except Q2DetachmentReport.DoesNotExist:
-                    return Response(
-                        status=status.HTTP_404_NOT_FOUND,
-                        data={
-                            'detail': 'Отряд-напарник не подал отчет'
-                                      ' по показателю.'
-                        }
-                    )
-                place_2 = get_place_q2(
-                    commander_achievment=(
-                        partner_detahcment_report.commander_achievement
-                    ),
-                    commissioner_achievement=(
-                        partner_detahcment_report.commissioner_achievement
-                    )
+
+                partner_detahcment_report = (
+                    Q2DetachmentReport.objects.filter(
+                        competition=competition,
+                        detachment=partner_detachment
+                    ).first()
                 )
+                if (
+                    partner_detahcment_report is None
+                    or not partner_detahcment_report.is_verified
+                ):
+                    place_2 = self.MAX_PLACE
+                else:
+                    place_2 = get_place_q2(
+                        commander_achievment=(
+                            partner_detahcment_report.commander_achievement
+                        ),
+                        commissioner_achievement=(
+                            partner_detahcment_report.commissioner_achievement
+                        )
+                    )
                 result_place = round((place_1 + place_2) / 2, 2)
                 if partner_is_junior:
                     tandem_ranking, _ = Q2TandemRanking.objects.get_or_create(
