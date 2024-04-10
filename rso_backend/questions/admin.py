@@ -67,6 +67,12 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     get_user_position.admin_order_field = 'user__userdetachmentposition'
     get_user_position.short_description = 'Должность'
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
