@@ -45,7 +45,7 @@ class AttemptAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
 
     def get_region(self, obj):
-        return obj.region
+        return obj.user.region
 
     get_region.admin_order_field = 'attempt__user__region'
     get_region.short_description = 'Регион'
