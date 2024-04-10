@@ -1289,7 +1289,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         commissioner_score = 0
         commissioners = UserDetachmentPosition.objects.filter(
             position__name=settings.COMMISSIONER_POSITION_NAME,
-            detachment=detachment
+            headquarter=detachment
         )
         for commissioner in commissioners:
             commissioner_max_score = Attempt.objects.filter(
@@ -1308,7 +1308,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         # Получаем результаты для всех участников отряда
         score = 0
         participants = UserDetachmentPosition.objects.filter(
-            detachment=detachment
+            headquarter=detachment
         )
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
