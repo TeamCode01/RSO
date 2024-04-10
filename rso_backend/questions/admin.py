@@ -40,9 +40,12 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 @admin.register(Attempt)
 class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
-    list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid', 'get_user_region', 'get_user_position')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category', 'user__region', 'user__userdetachmentposition__headquarter__name')
-    list_filter = ('timestamp', 'category')
+    list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid',
+                     'get_user_region', 'get_user_position')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category',
+                      'user__region', 'user__userdetachmentposition__headquarter__name')
+    list_filter = ('timestamp', 'category', 
+                   'user__userdetachmentposition__headquarter__name', 'user__region' )
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
 
     def get_user_region(self, obj):
@@ -56,11 +59,11 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     get_user_position.admin_order_field = 'user__userdetachmentposition__headquarter__name'
     get_user_position.short_description = 'Должность'
 
-    # def has_add_permission(self, request, obj=None):
-    #     return False
+    def has_add_permission(self, request, obj=None):
+        return False
 
-    # def has_change_permission(self, request, obj=None):
-    #     return False
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(UserAnswer)
