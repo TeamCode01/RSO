@@ -1209,8 +1209,8 @@ class Q13DetachmentReport(QBaseReport):
     pass
 
     class Meta:
-        verbose_name = 'Отчёт по 13 показателю'
-        verbose_name_plural = 'Отчёты по 13 показателю'
+        verbose_name = 'Отчет по 13 показателю'
+        verbose_name_plural = 'Отчеты по 13 показателю'
 
 
 class Q13EventOrganization(models.Model):

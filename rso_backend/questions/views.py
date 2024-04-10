@@ -1,10 +1,7 @@
-from django.http import Http404
-from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.views import APIView
