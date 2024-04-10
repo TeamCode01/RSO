@@ -360,7 +360,9 @@ class UserForeignDocuments(models.Model):
     )
     name = models.CharField(
         max_length=200,
-        verbose_name='Документ, удостоверяющий личность'
+        verbose_name='Документ, удостоверяющий личность',
+        blank=True,
+        null=True,
     )
     snils = models.CharField(
         max_length=30,
@@ -410,6 +412,98 @@ class UserForeignDocuments(models.Model):
         return (
             f'Пользователь {self.user.last_name} '
             f'{self.user.first_name}. Id: {self.user.id}'
+        )
+
+
+class UserForeignParentDocs(models.Model):
+    """Информация о законном представителе несовершеннолетнего иностранного пользователя."""
+
+    user = models.OneToOneField(
+        verbose_name='Несоверешнный пользователь',
+        to='RSOUser',
+        on_delete=models.CASCADE,
+        related_name='foreign_parent_documents',
+    )
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Документ, удостоверяющий личность',
+        blank=True,
+        null=True,
+    )
+    snils = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        verbose_name='СНИЛС'
+    )
+    inn = models.CharField(
+        verbose_name='ИНН',
+        max_length=30,
+        blank=True,
+        null=True,
+    )
+    foreign_pass_num = models.CharField(
+        verbose_name='Серия и номер',
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+    foreign_pass_whom = models.CharField(
+        max_length=230,
+        verbose_name='Кем выдан',
+        blank=True,
+        null=True,
+    )
+    foreign_pass_date = models.DateField(
+        verbose_name='Дата выдачи',
+        blank=True,
+        null=True,
+    )
+    work_book_num = models.CharField(
+        verbose_name='Трудовая книжка: серия, номер',
+        max_length=15,
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        verbose_name_plural = (
+            'Документы законного представителя иностранного пользователя'
+        )
+        verbose_name = (
+            'Документ законного представителя иностранного пользователя'
+        )
+
+
+class AdditionalForeignDocs(models.Model):
+    """Дополнительные документы иностранного пользователя.
+
+    Используются для кнопки "Добавить документ"
+    """
+    foreign_docs = models.ForeignKey(
+        to='UserForeignParentDocs',
+        on_delete=models.CASCADE,
+        related_name='additional_foreign_docs',
+        verbose_name=(
+            'Документы представителя '
+            'несовершеннолетнего иностранного пользователя'
+        ),
+    )
+    foreign_doc_name = models.CharField(
+        max_length=500,
+        verbose_name='Название документа',
+    )
+    foreign_doc_num = models.CharField(
+        max_length=500,
+        verbose_name='Номер, дата и тд.',
+    )
+
+    class Meta:
+        verbose_name_plural = (
+            'Дополнительные документы иностранного пользователя'
+        )
+        verbose_name = (
+            'Дополнительный документ иностранного пользователя'
         )
 
 

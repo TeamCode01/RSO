@@ -30,8 +30,8 @@ from users.constants import (DOCUMENTS_RAW_EXISTS, EDUCATION_RAW_EXISTS,
                              MEDIA_RAW_EXISTS, PRIVACY_RAW_EXISTS,
                              REGION_RAW_EXISTS, STATEMENT_RAW_EXISTS,
                              TOO_MANY_EDUCATIONS)
-from users.models import (RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
+                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
                           UserPrivacySettings, UserProfessionalEducation,
                           UserRegion, UserStatementDocuments,
                           UserVerificationRequest)
@@ -175,8 +175,44 @@ class UserDocumentsSerializer(serializers.ModelSerializer):
         )
 
 
+class AdditionalForeignDocsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AdditionalForeignDocs
+        fields = (
+            'id',
+            'foreign_doc_name',
+            'foreign_doc_num',
+        )
+
+
+class UserForeignParentDocsSerializer(serializers.ModelSerializer):
+
+    additional_docs = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserForeignParentDocs
+        fields = (
+            'name',
+            'foreign_pass_num',
+            'foreign_pass_date',
+            'foreign_pass_whom',
+            'additional_docs',
+            'snils',
+            'inn',
+            'work_book_num',
+        )
+
+    @staticmethod
+    def get_additional_docs(instance):
+        additional_docs = AdditionalForeignDocs.objects.filter(
+            foreign_docs=instance
+        )
+        return AdditionalForeignDocsSerializer(additional_docs, many=True).data
+
+
 class ForeignUserDocumentsSerializer(serializers.ModelSerializer):
-    """Сериализатор документом иностранного гражданина."""
+    """Сериализатор документов иностранного гражданина."""
 
     class Meta:
         model = UserForeignDocuments
