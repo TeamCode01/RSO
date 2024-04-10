@@ -940,16 +940,22 @@ def calculate_q3_q4_place(competition_id: int):
         junior_detachment__isnull=False,
         detachment__isnull=True
     )
+    logger.info('SOLO ENTRIES:')
+    logger.info(solo_entries)
     tandem_entries = CompetitionParticipants.objects.filter(
         competition_id=competition_id,
         junior_detachment__isnull=False,
         detachment__isnull=False
     )
+    logger.info('TANDEM ENTRIES:')
+    logger.info(tandem_entries)
     for entry in solo_entries:
         # Получаем результаты для командира отряда
         try:
             entry_report = entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
+            logger.info(f'SOLO ENTRY REPORT FOUND!: detachment report id {entry_report.id}')
         except Q5DetachmentReport.DoesNotExist:
+            logger.info(f'SOLO ENTRY REPORT NOT FOUND for entry id {entry.id}')
             continue
         q3_place = get_q3_q4_place(entry_report, 'university')
         q4_place = get_q3_q4_place(entry_report, 'safety')
