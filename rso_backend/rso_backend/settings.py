@@ -450,7 +450,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     'calculate_overall_places': {
         'task': 'competitions.tasks.calculate_overall_places_task',
-        'schedule': timedelta(minutes=5)
+        'schedule': crontab(
+            hour=4,
+            minute=6,
+        )
     }
 }
 
