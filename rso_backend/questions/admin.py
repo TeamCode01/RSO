@@ -2,7 +2,7 @@ from django.utils.safestring import mark_safe
 from django.contrib import admin
 from questions.models import Question, AnswerOption, Attempt, UserAnswer
 from import_export.admin import ExportActionModelAdmin
-from headquarters.models import UserDetachmentPosition
+from headquarters.models import UserDetachmentPosition, Detachment
 
 
 class AnswerOptionInline(admin.TabularInline):
@@ -23,6 +23,7 @@ class QuestionAdmin(admin.ModelAdmin):
         if obj.image:
             return mark_safe(f'<img src="{obj.image.url}" width="150" height="auto" />')
         return "No Image"
+
     image_tag.short_description = 'Image'
 
 
@@ -36,37 +37,48 @@ class AnswerOptionAdmin(admin.ModelAdmin):
         if obj.image:
             return mark_safe(f'<img src="{obj.image.url}" width="150" height="auto" />')
         return "No Image"
+
     image_tag.short_description = 'Image'
 
 
 @admin.register(Attempt)
 class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid',
-                     'get_user_region', 'get_user_position', 'get_user_detachment')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category',
-                      'user__region', 'user__userdetachmentposition__headquarter__name')
-    list_filter = ('timestamp', 'category', 'user__userdetachmentposition',
-                   'user__userdetachmentposition__headquarter__name', 'user__region')
+                    'get_user_region', 'get_user_position', 'get_user_detachment')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category', 'user__region',)
+    list_filter = ('timestamp', 'category', 'user__region')
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
     list_per_page = 25
 
     def get_user_region(self, obj):
         return obj.user.region
+
     get_user_region.admin_order_field = 'user__region'
     get_user_region.short_description = 'Регион'
 
     def get_user_detachment(self, obj):
-        detachment_position = getattr(obj.user, 'userdetachmentposition', None)
-        return detachment_position.headquarter.name if detachment_position and getattr(detachment_position, 'headquarter', None) else None
+        detachment = Detachment.objects.filter(commander=obj.user).first()
+        if detachment:
+            return detachment.name
+        else:
+            detachment_position = getattr(obj.user, 'userdetachmentposition', None)
+            return detachment_position.headquarter.name if detachment_position and hasattr(
+                detachment_position,
+                'headquarter'
+            ) else None
+
     get_user_detachment.admin_order_field = 'user__userdetachmentposition__headquarter__name'
     get_user_detachment.short_description = 'Отряд'
 
     def get_user_position(self, obj):
-        try:
-            user_detachment_position = UserDetachmentPosition.objects.get(user_id=obj.user_id)
-            return user_detachment_position.position
-        except UserDetachmentPosition.DoesNotExist:
-            return "-"
+        if Detachment.objects.filter(commander=obj.user).exists():
+            return "Командир"
+        else:
+            user_detachment_position = getattr(obj.user, 'userdetachmentposition', None)
+            return user_detachment_position.position.name if user_detachment_position and hasattr(
+                user_detachment_position, 'position'
+            ) else "-"
+
     get_user_position.admin_order_field = 'user__userdetachmentposition'
     get_user_position.short_description = 'Должность'
 
@@ -88,6 +100,7 @@ class UserAnswerAdmin(admin.ModelAdmin):
 
     def get_username(self, obj):
         return obj.attempt.user.username
+
     get_username.admin_order_field = 'attempt__user__username'
     get_username.short_description = 'Username'
 
@@ -100,6 +113,7 @@ class UserAnswerAdmin(admin.ModelAdmin):
 
     def get_user_id(self, obj):
         return obj.attempt.user.id
+
     get_user_id.admin_order_field = 'attempt__user__id'
     get_user_id.short_description = 'User ID'
 

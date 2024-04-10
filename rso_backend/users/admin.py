@@ -8,7 +8,7 @@ from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
 from import_export.admin import ImportExportModelAdmin
 from rest_framework.authtoken.models import TokenProxy
 
-from headquarters.models import UserDetachmentPosition
+from headquarters.models import UserDetachmentPosition, Detachment
 from users.forms import RSOUserForm
 from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation, UserForeignDocuments, UserForeignParentDocs, UserMedia,
                           UserMemberCertLogs, UserMembershipLogs, UserParent,
@@ -69,10 +69,27 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         """
         Return the name of the detachment the user belongs to.
         """
-        try:
-            return obj.userdetachmentposition.headquarter.name
-        except UserDetachmentPosition.DoesNotExist:
-            return None
+        detachment = Detachment.objects.filter(commander=obj).first()
+        if detachment:
+            return detachment.name
+        else:
+            detachment_position = getattr(obj, 'userdetachmentposition', None)
+            return detachment_position.headquarter.name if detachment_position and hasattr(
+                detachment_position,
+                'headquarter'
+            ) else None
+
+    def get_user_position(self, obj):
+        if Detachment.objects.filter(commander=obj).exists():
+            return "Командир"
+        else:
+            user_detachment_position = getattr(obj, 'userdetachmentposition', None)
+            return user_detachment_position.position.name if user_detachment_position and hasattr(
+                user_detachment_position, 'position'
+            ) else "-"
+
+    get_user_position.admin_order_field = 'user__userdetachmentposition'
+    get_user_position.short_description = 'Должность'
 
     detachment_name.short_description = 'Отряд'
 
@@ -117,6 +134,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         'is_staff',
         'region',
         'detachment_name',
+        'get_user_position',
         'date_joined',
         'last_login',
     )
