@@ -22,14 +22,10 @@ class EventFilter(filters.FilterSet):
         lookup_expr='icontains',
         label='Масштаб мероприятия'
     )
-    active_organizer_user_id = filters.CharFilter(
-        field_name = 'author',
-        label='Мероприятия, где пользователь организатор'
-    )
 
     class Meta:
         model = Event
-        fields = ('format_type', 'direction', 'status', 'scale', 'active_organizer_user_id')
+        fields = ('format_type', 'direction', 'status', 'scale')
 
     def filter_scale_or_direction(self, queryset, name, value):
         print(value)
@@ -47,19 +43,4 @@ class EventFilter(filters.FilterSet):
                     print(val)
                     q_objects |= Q(direction__icontains=val)
 
-        return queryset.filter(q_objects)
-    
-    def filter_organizer_or_not_closed_accepting_application(self, queryset, name, value):
-        print(value)
-        filter_values = value.split('|')
-        print(filter_values)
-        q_objects = Q()
-
-        for filter_value in filter_values:
-            if '=' in filter_value:
-                key, val = filter_value.split('=')
-                if key == 'active_organizer_user_id' and val:
-                    print(val)
-                    q_objects |= Q(active_organizer_user_id=val)
-                    
         return queryset.filter(q_objects)
