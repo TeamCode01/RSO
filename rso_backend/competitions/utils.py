@@ -97,8 +97,9 @@ def get_place_q2(
 
     PLACE_FIRST = 1
     PLACE_SECOND = 2
+    PLACE_THIRD = 3
 
-    place = None
+    place = PLACE_THIRD
     if commander_achievment and commissioner_achievement:
         place = PLACE_FIRST
     if (
