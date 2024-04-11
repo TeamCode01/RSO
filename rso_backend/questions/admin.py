@@ -88,6 +88,9 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return False  # Prevent deletion
+
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
@@ -122,3 +125,6 @@ class UserAnswerAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # Prevent deletion
