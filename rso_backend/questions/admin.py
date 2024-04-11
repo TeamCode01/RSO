@@ -45,7 +45,7 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid',
                     'get_user_region', 'get_user_position', 'get_user_detachment')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'category', 'user__region',)
+    search_fields = ('user', 'get_user_region', 'category', 'get_user_position', 'get_user_detachment')
     list_filter = ('timestamp', 'category', 'user__region')
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
     list_per_page = 25
