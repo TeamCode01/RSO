@@ -88,7 +88,7 @@ class QuestionsView(APIView):
             )
 
         if category == 'university':
-            if current_date > university_deadline:
+            if current_date > university_deadline and user.region.code != 90:
                 return Response(
                     {"error": "Срок получения вопросов по "
                               "категории 'university' истек."},
