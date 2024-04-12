@@ -772,10 +772,25 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     permission_classes = (permissions.IsAuthenticated,
                           IsCompetitionParticipantAndCommander)
 
+
     def get_queryset(self):
-        return Q2DetachmentReport.objects.filter(
+        if self.action == 'list':
+            regional_headquarter = (
+                self.request.user.regionalheadquarter_commander
+            )
+            return self.serializer_class.Meta.model.objects.filter(
+                detachment__regional_headquarter=regional_headquarter,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        if self.action == 'me':
+            return self.serializer_class.Meta.model.objects.filter(
+                detachment__commander=self.request.user,
+                competition_id=self.kwargs.get('competition_pk')
+            )
+        return self.serializer_class.Meta.model.objects.filter(
             competition_id=self.kwargs.get('competition_pk')
         )
+
 
     def get_permissions(self):
         if self.action == 'retrieve':
