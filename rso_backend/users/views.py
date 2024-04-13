@@ -9,11 +9,12 @@ from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from openpyxl import Workbook
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -36,7 +37,7 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                UserCommanderSerializer,
                                UserDocumentsSerializer,
                                UserEducationSerializer, UserForeignParentDocsSerializer,
-                               UserHeadquarterPositionSerializer,
+                               UserHeadquarterPositionSerializer, UserIdRegionSerializer,
                                UserMediaSerializer,
                                UserNotificationsCountSerializer,
                                UserPrivacySettingsSerializer,
@@ -605,7 +606,7 @@ class AdditionalForeignDocsViewSet(BaseUserViewSet):
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""
 
-    queryset = UserForeignDocuments.objects.all()
+    # queryset = UserForeignDocuments.objects.all()
     serializer_class = ForeignUserDocumentsSerializer
     permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
 
@@ -616,12 +617,79 @@ class ForeignUserDocumentsViewSet(BaseUserViewSet):
 class UserRegionViewSet(BaseUserViewSet):
     """Представляет информацию о проживании пользователя."""
 
+    data_for_excel = []
+
     queryset = UserRegion.objects.all()
-    serializer_class = UserRegionSerializer
     permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+    ordering_fields = ('reg_region', 'reg_town')
+
+    @staticmethod
+    def get_objects_for_json_and_list(cls, request):
+        queryset = cls.filter_queryset(cls.get_queryset())
+        queryset = queryset.order_by('reg_region')
+        serializer = cls.get_serializer(queryset, many=True)
+        cls.data_for_excel.clear()
+        cls.data_for_excel = serializer.data
+        return serializer.data
 
     def get_object(self):
         return get_object_or_404(UserRegion, user=self.request.user)
+
+    @method_decorator(cache_page(settings.RSOUSERS_CACHE_TTL))
+    def list(self, request, *args, **kwargs):
+        return Response(self.get_objects_for_json_and_list(self, request))
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'get_xlsx_users_data':
+            serializer_class = UserIdRegionSerializer
+        else:
+            serializer_class = UserRegionSerializer
+        return serializer_class
+
+    @action(methods=['get'], detail=False)
+    def get_xlsx_users_data(self, request):
+        file_path = os.path.join(
+            str(settings.BASE_DIR),
+            'templates',
+            'samples',
+            'users_data.xlsx'
+        )
+        workbook = Workbook()
+
+        worksheet = workbook.active
+        worksheet.append([
+            'Регион ID',
+            'Регион прописки',
+            'ID пользователя',
+            'Имя',
+            'Фамилия',
+            'Отчество',
+            'Username',
+            'Регион',
+            'Код региона',
+            'Дата рождения',
+            'наличие паспорта РФ',
+            'Город прописки',
+            'Адрес прописки',
+            'Совпадает с фактическим адресом проживания',
+            'Фактический регион ID',
+            'Регион фактического проживания',
+            'Город фактического проживания',
+            'Адрес фактического проживания',
+
+        ])
+        worksheet.freeze_panes = 'A2'
+
+        if len(self.data_for_excel) == 0:
+            self.data_for_excel = self.get_objects_for_json_and_list(
+                self, request
+            )
+
+        for item in self.data_for_excel:
+            worksheet.append(list(dict(item).values()))
+        workbook.save(filename=file_path)
+
+        return download_file(file_path, 'users_data.xlsx', reading_mode='rb')
 
 
 class UserPrivacySettingsViewSet(BaseUserViewSet):

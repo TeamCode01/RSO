@@ -366,6 +366,55 @@ class UserRegionSerializer(serializers.ModelSerializer):
         )
 
 
+class UserIdRegionSerializer(UserRegionSerializer):
+
+    user_id = serializers.IntegerField(source='user.id')
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    patronymic_name = serializers.CharField(source='user.patronymic_name')
+    username = serializers.CharField(source='user.username')
+    date_of_birth = serializers.DateField(source='user.date_of_birth')
+    passport = serializers.BooleanField(
+        source='user.documents.russian_passport'
+    )
+    reg_region_name = serializers.SerializerMethodField()
+    reg_region_code = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserRegion
+        fields = (
+            'reg_region_id',
+            'reg_region',
+            'user_id',
+            'first_name',
+            'last_name',
+            'patronymic_name',
+            'username',
+            'reg_region_name',
+            'reg_region_code',
+            'date_of_birth',
+            'passport',
+            'reg_town',
+            'reg_house',
+            'reg_fact_same_address',
+            'fact_region_id',
+            'fact_region',
+            'fact_town',
+            'fact_house',
+
+        )
+
+    def get_reg_region_name(self, obj):
+        if obj.reg_region:
+            return obj.reg_region.name
+        return None
+
+    def get_reg_region_code(self, obj):
+        if obj.reg_region:
+            return obj.reg_region.code
+        return None
+
+
 class UsersParentSerializer(serializers.ModelSerializer):
     """Сериализатор законного представителя."""
 
