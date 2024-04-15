@@ -615,21 +615,26 @@ class ForeignUserDocumentsViewSet(BaseUserViewSet):
 
 
 class UserRegionViewSet(BaseUserViewSet):
-    """Представляет информацию о проживании пользователя."""
+    """Представляет информацию о проживании пользователя.
+
+    GET-запрос на /regions/users_list выдает пагинированный ответ
+    с личной информацией всех пользователей сайта.
+    GET-запрос на /regions/download_xlsx_users_data выгружает
+    таблицу с личной информацией всех пользователей в формате xlsx.
+    """
 
     data_for_excel = []
 
     queryset = UserRegion.objects.all()
     permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
-    ordering_fields = ('reg_region', 'reg_town')
 
     @staticmethod
-    def get_objects_for_json_and_list(cls, request):
+    def get_objects_data(cls, request):
+        """Отсортированный кверисет для вывода на лист Excel."""
+
         queryset = cls.filter_queryset(cls.get_queryset())
         queryset = queryset.order_by('reg_region')
         serializer = cls.get_serializer(queryset, many=True)
-        cls.data_for_excel.clear()
-        cls.data_for_excel = serializer.data
         return serializer.data
 
     def get_object(self):
@@ -637,7 +642,15 @@ class UserRegionViewSet(BaseUserViewSet):
 
     @method_decorator(cache_page(settings.RSOUSERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
-        return Response(self.get_objects_for_json_and_list(self, request))
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'get_xlsx_users_data':
@@ -680,15 +693,13 @@ class UserRegionViewSet(BaseUserViewSet):
         ])
         worksheet.freeze_panes = 'A2'
 
-        if len(self.data_for_excel) == 0:
-            self.data_for_excel = self.get_objects_for_json_and_list(
-                self, request
-            )
-
+        self.data_for_excel = self.get_objects_data(
+            self, request
+        )
         for item in self.data_for_excel:
             worksheet.append(list(dict(item).values()))
         workbook.save(filename=file_path)
-
+        self.data_for_excel.clear()
         return download_file(file_path, 'users_data.xlsx', reading_mode='rb')
 
 
