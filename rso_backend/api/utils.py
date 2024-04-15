@@ -39,14 +39,14 @@ def create_first_or_exception(self, validated_data, instance, error_msg: str):
         raise serializers.ValidationError({'detail': error_msg})
 
 
-def download_file(filepath, filename):
+def download_file(filepath, filename, reading_mode='r'):
     """Функция скачивания бланков заявлений.
 
     На вход получает путь до файла и имя файла.
     """
 
     if os.path.exists(filepath):
-        path = open(filepath, 'r')
+        path = open(filepath, reading_mode)
         mime_type, _ = mimetypes.guess_type(filepath)
         response = HttpResponse(path, content_type=mime_type)
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
