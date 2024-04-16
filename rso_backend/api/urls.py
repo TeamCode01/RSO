@@ -282,7 +282,11 @@ EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
-    path('regions/download_xlsx_users_data', UsersRegionsDownloadVS, name='user-regions-download'),
+    path(
+        'regions/download_xlsx_users_data',
+        UsersRegionsDownloadVS,
+        name='user-regions-download'
+    ),
     path('rsousers/me/education/', UserEduVS, name='user-education'),
     path('rsousers/me/documents/', UserDocVS, name='user-documents'),
     path(

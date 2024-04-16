@@ -21,10 +21,10 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor,
+from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor, IsRegionalCommanderOrAdmin, IsStuffOrCentralCommander,
                              PersonalDataPermission, IsStuffOrAuthor)
 from api.tasks import send_reset_password_email_without_user
-from api.utils import download_file, get_user
+from api.utils import download_file, get_user, is_stuff_or_central_commander
 from rso_backend.settings import RSOUSERS_CACHE_TTL
 from users.filters import RSOUserFilter
 from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
@@ -622,6 +622,7 @@ class UserRegionViewSet(BaseUserViewSet):
     с личной информацией всех пользователей сайта.
     GET-запрос на /regions/download_xlsx_users_data выгружает
     таблицу с личной информацией всех пользователей в формате xlsx.
+    Доступ - админ или командир ЦШ.
     """
 
     data_for_excel = []
@@ -638,11 +639,13 @@ class UserRegionViewSet(BaseUserViewSet):
         serializer = cls.get_serializer(queryset, many=True)
         return serializer.data
 
-    def get_object(self):
-        return get_object_or_404(UserRegion, user=self.request.user)
-
     @method_decorator(cache_page(settings.RSOUSERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
+        if not is_stuff_or_central_commander(request):
+            return Response(
+                {'detail': 'Доступ запрещен.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
 
@@ -653,6 +656,9 @@ class UserRegionViewSet(BaseUserViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    def get_object(self):
+        return get_object_or_404(UserRegion, user=self.request.user)
+
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'get_xlsx_users_data':
             serializer_class = UserIdRegionSerializer
@@ -660,13 +666,22 @@ class UserRegionViewSet(BaseUserViewSet):
             serializer_class = UserRegionSerializer
         return serializer_class
 
-    @action(methods=['get'], detail=False)
+    @action(
+            methods=['get'],
+            detail=False,
+            permission_classes=(permissions.IsAdminUser,),
+    )
     def get_xlsx_users_data(self, request):
         # file_path = os.path.join(
         #     str(settings.BASE_DIR),
         #     'media',
         #     'users_data.xlsx'
         # )
+        if not is_stuff_or_central_commander(request):
+            return Response(
+                {'detail': 'Доступ запрещен.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         file_stream = io.BytesIO()
         workbook = Workbook()
 
@@ -702,8 +717,15 @@ class UserRegionViewSet(BaseUserViewSet):
         workbook.save(file_stream)
         self.data_for_excel.clear()
         # return download_file(file_stream.getvalue(), 'users_data.xlsx', reading_mode='rb')
-        response = HttpResponse(file_stream.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="%s.xlsx"' % 'users_data'
+        response = HttpResponse(
+            file_stream.getvalue(),
+            content_type=(
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="%s.xlsx"' % 'users_data'
+        )
 
         return response
 

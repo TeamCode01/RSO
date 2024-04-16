@@ -961,7 +961,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         detail=True,
         methods=['post', 'delete'],
         url_path='accept',
-        serializer_class=None,
+        # serializer_class=None,
         permission_classes=(permissions.IsAuthenticated,
                             IsRegionalCommanderOrAdmin),
     )
