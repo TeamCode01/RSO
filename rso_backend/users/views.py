@@ -1,6 +1,7 @@
 import mimetypes
 import os
 import zipfile
+import io
 
 from dal import autocomplete
 from django.db.models import Q
@@ -661,11 +662,12 @@ class UserRegionViewSet(BaseUserViewSet):
 
     @action(methods=['get'], detail=False)
     def get_xlsx_users_data(self, request):
-        file_path = os.path.join(
-            str(settings.BASE_DIR),
-            'media',
-            'users_data.xlsx'
-        )
+        # file_path = os.path.join(
+        #     str(settings.BASE_DIR),
+        #     'media',
+        #     'users_data.xlsx'
+        # )
+        file_stream = io.BytesIO()
         workbook = Workbook()
 
         worksheet = workbook.active
@@ -697,9 +699,13 @@ class UserRegionViewSet(BaseUserViewSet):
         )
         for item in self.data_for_excel:
             worksheet.append(list(dict(item).values()))
-        workbook.save(filename=file_path)
+        workbook.save(file_stream)
         self.data_for_excel.clear()
-        return download_file(file_path, 'users_data.xlsx', reading_mode='rb')
+        # return download_file(file_stream.getvalue(), 'users_data.xlsx', reading_mode='rb')
+        response = HttpResponse(file_stream.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="%s.xlsx"' % 'users_data'
+
+        return response
 
 
 class UserPrivacySettingsViewSet(BaseUserViewSet):
