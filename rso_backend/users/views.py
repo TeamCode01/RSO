@@ -663,8 +663,7 @@ class UserRegionViewSet(BaseUserViewSet):
     def get_xlsx_users_data(self, request):
         file_path = os.path.join(
             str(settings.BASE_DIR),
-            'templates',
-            'samples',
+            'media',
             'users_data.xlsx'
         )
         workbook = Workbook()
