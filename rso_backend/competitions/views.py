@@ -791,7 +791,6 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
             competition_id=self.kwargs.get('competition_pk')
         )
 
-
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
@@ -961,7 +960,8 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        serializer_class=None,
+        url_path='accept',
+        # serializer_class=None,
         permission_classes=(permissions.IsAuthenticated,
                             IsRegionalCommanderOrAdmin),
     )
@@ -1930,7 +1930,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        url_path='verify-raw/(?P<participant_id>\d+)',
+        url_path='accept/(?P<participant_id>\d+)',
         permission_classes=[
             permissions.IsAuthenticated,
             IsCentralEventMaster
@@ -2043,7 +2043,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     @action(
         detail=True,
-        url_path='verify',
+        url_path='accept',
         methods=(['POST', 'DELETE']),
         permission_classes=[
             permissions.IsAuthenticated
@@ -2345,7 +2345,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        url_path='verify-raw/(?P<grant_id>\d+)',
+        url_path='accept/(?P<grant_id>\d+)',
         permission_classes=[
             permissions.IsAuthenticated
         ]
@@ -2656,7 +2656,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        url_path='verify-event/(?P<event_id>\d+)',
+        url_path='accept/(?P<event_id>\d+)',
         permission_classes=[
             permissions.IsAuthenticated, IsRegionalCommissioner,
         ]
@@ -3041,7 +3041,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        url_path='verify-labor-project/(?P<labor_project_id>\d+)',
+        url_path='accept/(?P<labor_project_id>\d+)',
         permission_classes=[
             permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
         ],
@@ -3279,7 +3279,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        url_path='verify-source/(?P<source_id>\d+)',
+        url_path='accept/(?P<source_id>\d+)',
         permission_classes=[
             permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
         ]
@@ -3405,7 +3405,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     @action(
         detail=True,
-        url_path='verify',
+        url_path='accept',
         methods=(['POST', 'DELETE']),
         permission_classes=[
             permissions.IsAuthenticated
@@ -3565,7 +3565,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
 
     @action(detail=True,
             methods=['post', 'delete'],
-            url_path='verify',
+            url_path='accept',
             permission_classes=(permissions.IsAuthenticated,
                                 IsRegionalCommanderOrAdmin,)
             )

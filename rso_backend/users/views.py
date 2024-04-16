@@ -1,6 +1,7 @@
 import mimetypes
 import os
 import zipfile
+import io
 
 from dal import autocomplete
 from django.db.models import Q
@@ -9,20 +10,21 @@ from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from openpyxl import Workbook
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor,
+from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor, IsRegionalCommanderOrAdmin, IsStuffOrCentralCommander,
                              PersonalDataPermission, IsStuffOrAuthor)
 from api.tasks import send_reset_password_email_without_user
-from api.utils import download_file, get_user
+from api.utils import download_file, get_user, is_stuff_or_central_commander
 from rso_backend.settings import RSOUSERS_CACHE_TTL
 from users.filters import RSOUserFilter
 from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
@@ -36,7 +38,7 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                UserCommanderSerializer,
                                UserDocumentsSerializer,
                                UserEducationSerializer, UserForeignParentDocsSerializer,
-                               UserHeadquarterPositionSerializer,
+                               UserHeadquarterPositionSerializer, UserIdRegionSerializer,
                                UserMediaSerializer,
                                UserNotificationsCountSerializer,
                                UserPrivacySettingsSerializer,
@@ -605,7 +607,7 @@ class AdditionalForeignDocsViewSet(BaseUserViewSet):
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""
 
-    queryset = UserForeignDocuments.objects.all()
+    # queryset = UserForeignDocuments.objects.all()
     serializer_class = ForeignUserDocumentsSerializer
     permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
 
@@ -614,14 +616,118 @@ class ForeignUserDocumentsViewSet(BaseUserViewSet):
 
 
 class UserRegionViewSet(BaseUserViewSet):
-    """Представляет информацию о проживании пользователя."""
+    """Представляет информацию о проживании пользователя.
+
+    GET-запрос на /regions/users_list выдает пагинированный ответ
+    с личной информацией всех пользователей сайта.
+    GET-запрос на /regions/download_xlsx_users_data выгружает
+    таблицу с личной информацией всех пользователей в формате xlsx.
+    Доступ - админ или командир ЦШ.
+    """
+
+    data_for_excel = []
 
     queryset = UserRegion.objects.all()
-    serializer_class = UserRegionSerializer
     permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+
+    @staticmethod
+    def get_objects_data(cls, request):
+        """Отсортированный кверисет для вывода на лист Excel."""
+
+        queryset = cls.filter_queryset(cls.get_queryset())
+        queryset = queryset.order_by('reg_region')
+        serializer = cls.get_serializer(queryset, many=True)
+        return serializer.data
+
+    @method_decorator(cache_page(settings.RSOUSERS_CACHE_TTL))
+    def list(self, request, *args, **kwargs):
+        if not is_stuff_or_central_commander(request):
+            return Response(
+                {'detail': 'Доступ запрещен.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_object(self):
         return get_object_or_404(UserRegion, user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'get_xlsx_users_data':
+            serializer_class = UserIdRegionSerializer
+        else:
+            serializer_class = UserRegionSerializer
+        return serializer_class
+
+    @action(
+            methods=['get'],
+            detail=False,
+            permission_classes=(permissions.IsAdminUser,),
+    )
+    def get_xlsx_users_data(self, request):
+        # file_path = os.path.join(
+        #     str(settings.BASE_DIR),
+        #     'media',
+        #     'users_data.xlsx'
+        # )
+        if not is_stuff_or_central_commander(request):
+            return Response(
+                {'detail': 'Доступ запрещен.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        file_stream = io.BytesIO()
+        workbook = Workbook()
+
+        worksheet = workbook.active
+        worksheet.append([
+            'Регион ID',
+            'Регион прописки',
+            'ID пользователя',
+            'Имя',
+            'Фамилия',
+            'Отчество',
+            'Username',
+            'Регион',
+            'Код региона',
+            'Дата рождения',
+            'наличие паспорта РФ',
+            'Город прописки',
+            'Адрес прописки',
+            'Совпадает с фактическим адресом проживания',
+            'Фактический регион ID',
+            'Регион фактического проживания',
+            'Город фактического проживания',
+            'Адрес фактического проживания',
+
+        ])
+        worksheet.freeze_panes = 'A2'
+
+        self.data_for_excel = self.get_objects_data(
+            self, request
+        )
+        for item in self.data_for_excel:
+            worksheet.append(list(dict(item).values()))
+        workbook.save(file_stream)
+        self.data_for_excel.clear()
+        # return download_file(file_stream.getvalue(), 'users_data.xlsx', reading_mode='rb')
+        response = HttpResponse(
+            file_stream.getvalue(),
+            content_type=(
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="%s.xlsx"' % 'users_data'
+        )
+
+        return response
 
 
 class UserPrivacySettingsViewSet(BaseUserViewSet):
