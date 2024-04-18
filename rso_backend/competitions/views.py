@@ -4273,8 +4273,8 @@ def get_place_overall(request, competition_pk=None):
             {
                 "place": tandem_ranking.place,
                 "partner_detachment": (
-                    ShortDetachmentSerializer(tandem_ranking.detachment) if is_older_detachment else
-                    ShortDetachmentSerializer(tandem_ranking.junior_detachment)
+                    ShortDetachmentSerializer(tandem_ranking.detachment).data if is_older_detachment else
+                    ShortDetachmentSerializer(tandem_ranking.junior_detachment).data
                 )
             },
             status=status.HTTP_200_OK
