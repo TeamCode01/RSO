@@ -18,7 +18,7 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        get_regional_hq_commander_num, is_safe_method,
                        is_stuff_or_central_commander,
                        get_district_hq_commander_num,
-                       get_central_hq_commander_num)
+                       get_central_hq_commander_num, is_central_event_master)
 from competitions.models import (
     CompetitionParticipants, Q13DetachmentReport, Q5DetachmentReport,
     Q15DetachmentReport
@@ -938,10 +938,10 @@ class IsCentralEventMaster(BasePermission):
     студенческих отрядов ЦШ.
     """
     def has_permission(self, request, view):
-        return is_regional_commissioner(request.user)
+        return is_central_event_master(request.user)
 
     def has_object_permission(self, request, view, obj):
-        return is_regional_commissioner(request.user)
+        return is_central_event_master(request.user)
 
 
 class IsRegionalCommissionerOrCommanderDetachmentWithVerif(

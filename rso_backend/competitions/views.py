@@ -16,6 +16,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api.mixins import (
     CreateListRetrieveUpdateViewSet, ListRetrieveDestroyViewSet,
@@ -802,7 +803,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated(),
-                    IsCommanderDetachmentInParameterOrRegionalCommander(),]
+                    IsCommanderDetachmentInParameterOrRegionalCommander(), ]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAdmin()]
@@ -1041,8 +1042,8 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     ).first()
                 )
                 if (
-                    partner_detahcment_report is None
-                    or not partner_detahcment_report.is_verified
+                        partner_detahcment_report is None
+                        or not partner_detahcment_report.is_verified
                 ):
                     place_2 = self.MAX_PLACE
                 else:
@@ -1811,6 +1812,8 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated()]
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(), IsCentralEventMaster()]
         return super().get_permissions()
 
     @action(detail=False,
@@ -2615,8 +2618,8 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     @action(detail=False, methods=['get'], url_path='get-place',
             permission_classes=(
-                permissions.IsAuthenticated,
-                IsCompetitionParticipantAndCommander,
+                    permissions.IsAuthenticated,
+                    IsCompetitionParticipantAndCommander,
             ))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
@@ -2904,7 +2907,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_permissions(self):
         if self.action == 'list':
-            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(),]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(), ]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -2915,27 +2918,27 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_detachment(self, obj):
         return obj.detachment
 
-    @swagger_auto_schema( 
-            request_body=openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'q14_labor_projects': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Schema(
-                            type=openapi.TYPE_OBJECT,
-                            properties={
-                                'lab_project_name': openapi.Schema(
-                                    type=openapi.TYPE_STRING
-                                ),
-                                'amount': openapi.Schema(
-                                    type=openapi.TYPE_STRING
-                                )
-                            }
-                        )
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'q14_labor_projects': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'lab_project_name': openapi.Schema(
+                                type=openapi.TYPE_STRING
+                            ),
+                            'amount': openapi.Schema(
+                                type=openapi.TYPE_STRING
+                            )
+                        }
                     )
-                }
-            )
+                )
+            }
         )
+    )
     def create(self, request, *args, **kwargs):
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3055,7 +3058,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ],
     )
     def verify(self, request, competition_pk=None, pk=None,
-                      labor_project_id=None):
+               labor_project_id=None):
         """Верификация отчета по показателю.
 
         competition_pk - id конкурса;
@@ -3162,27 +3165,27 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_detachment(self, obj):
         return obj.detachment
 
-    @swagger_auto_schema( 
-            request_body=openapi.Schema( 
-                type=openapi.TYPE_OBJECT, 
-                properties={ 
-                    'source_data': openapi.Schema( 
-                        type=openapi.TYPE_ARRAY, 
-                        items=openapi.Schema( 
-                            type=openapi.TYPE_OBJECT, 
-                            properties={ 
-                                'source_name': openapi.Schema( 
-                                    type=openapi.TYPE_STRING 
-                                ), 
-                                'link': openapi.Schema( 
-                                    type=openapi.TYPE_STRING 
-                                ) 
-                            } 
-                        )
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'source_data': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'source_name': openapi.Schema(
+                                type=openapi.TYPE_STRING
+                            ),
+                            'link': openapi.Schema(
+                                type=openapi.TYPE_STRING
+                            )
+                        }
                     )
-                }
-            )
+                )
+            }
         )
+    )
     def create(self, request, *args, **kwargs):
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3207,7 +3210,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
         source_serializer = Q17EventLinkSerializer(data=source_data, many=True)
-        source_serializer.is_valid(raise_exception=True) 
+        source_serializer.is_valid(raise_exception=True)
         source_serializer.save(detachment_report=report)
 
         return Response(
@@ -3317,7 +3320,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if source_data.is_verified:
             return Response({
                 'detail': 'Данный отчет уже верифицирован. '
-                'Нельзя удалить или верифицировать.'
+                          'Нельзя удалить или верифицировать.'
             }, status=status.HTTP_400_BAD_REQUEST)
         if self.request.method == 'DELETE':
             source_data.delete()
@@ -4337,3 +4340,29 @@ def get_detachment_place(request, detachment_pk=None, competition_pk=None):
         {"place": "Рейтинг еще не сформирован"},
         status=status.HTTP_404_NOT_FOUND
     )
+
+
+class DetachmentCompetitionIsTandemView(APIView):
+    """
+    Позволяет определить, участвует ли заданный отряд в качестве основного или младшего
+    отряда в указанном конкурсе. При успешной проверке возвращает результат в формате JSON
+    с ключом 'is_tandem', который указывает, выполняется ли условие тандема (True или False).
+    В случае возникновения ошибки возвращает JSON с ключом 'error' и описанием ошибки.
+
+    Параметры URL:
+    - detachment_pk: первичный ключ отряда (целое число).
+    - competition_pk: первичный ключ конкурса (целое число).
+
+    Пример ответа:
+    - При успешном запросе: {'is_tandem': True} или {'is_tandem': False}
+    - При ошибке: {'error': 'Описание ошибки'}
+    """
+    def get(self, request, detachment_pk, competition_pk):
+        detachment = get_object_or_404(Detachment, pk=detachment_pk)
+        competition = get_object_or_404(Competitions, pk=competition_pk)
+
+        try:
+            result = tandem_or_start(competition_pk, detachment_pk, CompetitionParticipants)
+            return Response({'is_tandem': result}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

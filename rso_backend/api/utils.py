@@ -711,7 +711,10 @@ def is_central_event_master(user):
         position_name = user.usercentralheadquarterposition.position.name
     except UserCentralHeadquarterPosition.DoesNotExist:
         return False
-    return position_name == 'Начальник отдела реализации мероприятий по профессиональному обучению участников студенческих отрядов ЦШ' or user.is_staff
+    return (
+            'Начальник отдела реализации мероприятий по '
+            'профессиональному обучению участников студенческих отрядов ЦШ' in position_name or user.is_staff
+    )
 
 
 def get_detachment_tandem(user, competition_id):
