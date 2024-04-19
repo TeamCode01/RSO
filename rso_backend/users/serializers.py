@@ -377,23 +377,47 @@ class UserIdRegionSerializer(UserRegionSerializer):
     passport = serializers.BooleanField(
         source='user.documents.russian_passport'
     )
+    pass_ser_num = serializers.CharField(source='user.documents.pass_ser_num')
+    pass_whom = serializers.CharField(source='user.documents.pass_whom')
+    pass_date = serializers.DateField(source='user.documents.pass_date')
+    pass_code = serializers.CharField(source='user.documents.pass_code')
+    inn = serializers.CharField(source='user.documents.inn')
+    snils = serializers.CharField(source='user.documents.snils')
     reg_region_name = serializers.SerializerMethodField()
     reg_region_code = serializers.SerializerMethodField()
+    study_institution = serializers.CharField(source='user.education.study_institution')
+    study_faculty = serializers.CharField(source='user.education.study_faculty')
+    study_speciality = serializers.CharField(source='user.education.study_specialty')
+    study_year = serializers.CharField(source='user.education.study_year')
+    phone_number = serializers.CharField(source='user.phone_number')
+    email = serializers.CharField(source='user.email')
+    social_vk = serializers.CharField(source='user.social_vk')
+    social_tg = serializers.CharField(source='user.social_tg')
+    is_rso_member = serializers.BooleanField(source='user.is_rso_member')
+    is_verified = serializers.BooleanField(source='user.is_verified')
+    membership_fee = serializers.BooleanField(source='user.membership_fee')
+    # districtheadquarterposition = serializers.BooleanField(source='user.userdistrictheadquarterposition')
+
+
 
     class Meta:
         model = UserRegion
         fields = (
-            'reg_region_id',
-            'reg_region',
+            'reg_region_code',
+            'reg_region_name',
             'user_id',
             'first_name',
             'last_name',
             'patronymic_name',
             'username',
-            'reg_region_name',
-            'reg_region_code',
             'date_of_birth',
             'passport',
+            'pass_ser_num',
+            'pass_whom',
+            'pass_date',
+            'pass_code',
+            'inn',
+            'snils',
             'reg_town',
             'reg_house',
             'reg_fact_same_address',
@@ -401,8 +425,31 @@ class UserIdRegionSerializer(UserRegionSerializer):
             'fact_region',
             'fact_town',
             'fact_house',
-
+            'study_institution',
+            'study_faculty',
+            'study_speciality',
+            'study_year',
+            'phone_number',
+            'email',
+            'social_vk',
+            'social_tg',
+            'is_rso_member',
+            'is_verified',
+            'membership_fee',
+            # 'districtheadquarterposition'
         )
+
+    def get_queryset(self):
+        """
+        В метод добавлена 'жадная загрузка' к связанным таблицам
+        для сокращения обращений к БД.
+        """
+
+        queryset = super().get_queryset()
+        queryset = queryset.select_related(
+            'user', 'user__documents', 'user__education'
+        )
+        return queryset
 
     def get_reg_region_name(self, obj):
         if obj.reg_region:
