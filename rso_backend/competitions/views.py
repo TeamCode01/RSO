@@ -1812,7 +1812,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticated()]
         if self.action == 'list':
-            return [permissions.IsAuthenticated, IsCentralEventMaster]
+            return [permissions.IsAuthenticated(), IsCentralEventMaster()]
         return super().get_permissions()
 
     @action(detail=False,
