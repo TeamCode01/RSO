@@ -539,8 +539,11 @@ class UserIdRegionSerializer(UserRegionSerializer):
             'user__documents',
             'user__education',
             'user__usercentralheadquarterposition',
+            'user__centralheadquarter_commander',
             'user__userdistrictheadquarterposition',
+            'use__districtheadquarter_commander',
             'user__userregionalheadquarterposition',
+            'user__regionalheadquarter_commander',
             'user__userlocalheadquarterposition',
             'user__usereducationalheadquarterposition',
             'user__userdetachmentposition'
