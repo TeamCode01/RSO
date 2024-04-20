@@ -7,10 +7,10 @@ from rest_framework import serializers
 
 from api.serializers import EducationalInstitutionSerializer, RegionSerializer
 from api.utils import (create_first_or_exception, get_detachment_commander_num,
-                       get_is_trusted, get_regional_headquarters_if_commander, get_regional_hq_commander_num)
+                       get_is_trusted, get_regional_headquarters_if_commander,
+                       get_regional_hq_commander_num)
 from competitions.models import CompetitionApplications
 from events.constants import EVENT_APPLICATIONS_MODEL
-from events.models import EventOrganizationData
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  EducationalInstitution, Position, Region,
                                  RegionalHeadquarter,
@@ -30,11 +30,11 @@ from users.constants import (DOCUMENTS_RAW_EXISTS, EDUCATION_RAW_EXISTS,
                              MEDIA_RAW_EXISTS, PRIVACY_RAW_EXISTS,
                              REGION_RAW_EXISTS, STATEMENT_RAW_EXISTS,
                              TOO_MANY_EDUCATIONS)
-from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
+                          UserForeignDocuments, UserForeignParentDocs,
                           UserPrivacySettings, UserProfessionalEducation,
-                          UserRegion, UserStatementDocuments,
-                          UserVerificationRequest)
+                          UserRegion, UserStatementDocuments, UserEducation,
+                          UserVerificationRequest, UserMedia, UserParent,)
 from users.short_serializers import ShortUserSerializer
 
 
@@ -385,9 +385,15 @@ class UserIdRegionSerializer(UserRegionSerializer):
     snils = serializers.CharField(source='user.documents.snils')
     reg_region_name = serializers.SerializerMethodField()
     reg_region_code = serializers.SerializerMethodField()
-    study_institution = serializers.CharField(source='user.education.study_institution')
-    study_faculty = serializers.CharField(source='user.education.study_faculty')
-    study_speciality = serializers.CharField(source='user.education.study_specialty')
+    study_institution = serializers.CharField(
+        source='user.education.study_institution'
+    )
+    study_faculty = serializers.CharField(
+        source='user.education.study_faculty'
+    )
+    study_speciality = serializers.CharField(
+        source='user.education.study_specialty'
+    )
     study_year = serializers.CharField(source='user.education.study_year')
     phone_number = serializers.CharField(source='user.phone_number')
     email = serializers.CharField(source='user.email')
@@ -396,9 +402,72 @@ class UserIdRegionSerializer(UserRegionSerializer):
     is_rso_member = serializers.BooleanField(source='user.is_rso_member')
     is_verified = serializers.BooleanField(source='user.is_verified')
     membership_fee = serializers.BooleanField(source='user.membership_fee')
-    # districtheadquarterposition = serializers.BooleanField(source='user.userdistrictheadquarterposition')
-
-
+    centralhq_member = serializers.CharField(
+        source='user.usercentralheadquarterposition.headquarter.name'
+    )
+    centralhq_member_position = serializers.CharField(
+        source='user.usercentralheadquarterposition.position.name',
+        allow_null=True
+    )
+    centralhq_commander = serializers.CharField(
+        source='user.centralheadquarter_commander.name'
+    )
+    districthq_member = serializers.CharField(
+        source='user.userdistrictheadquarterposition.headquarter.name'
+    )
+    districthq_member_position = serializers.CharField(
+        source='user.userdistrictheadquarterposition.position.name',
+        allow_null=True
+    )
+    district_commander = serializers.CharField(
+        source='user.districtheadquarter_commander.name'
+    )
+    regionalhq_member = serializers.CharField(
+        source='user.userregionalheadquarterposition.headquarter.name'
+    )
+    regionalhq_member_position = serializers.CharField(
+        source='user.userregionalheadquarterposition.position.name',
+        allow_null=True
+    )
+    regionalhq_commander = serializers.CharField(
+        source='user.regionalheadquarter_commander.name'
+    )
+    localhq_member = serializers.CharField(
+        source='user.userlocalheadquarterposition.headquarter.name'
+    )
+    localhq_member_position = serializers.CharField(
+        source='user.userlocalheadquarterposition.position.name',
+        allow_null=True
+    )
+    localhq_commander = serializers.CharField(
+        source='user.localheadquarter_commander.name'
+    )
+    eduhq_member = serializers.CharField(
+        source='user.usereducationalheadquarterposition.headquarter.name'
+    )
+    eduhq_member_position = serializers.CharField(
+        source='user.usereducationalheadquarterposition.position.name',
+        allow_null=True
+    )
+    eduhq_commander = serializers.CharField(
+        source='user.educationalheadquarter_commander.name'
+    )
+    detachment_member = serializers.CharField(
+        source='user.userdetachmentposition.headquarter.name'
+    )
+    detachment_member_area = serializers.CharField(
+        source='user.userdetachmentposition.headquarter.area.name'
+    )
+    deatachment_member_position = serializers.CharField(
+        source='user.userdetachmentposition.position.name',
+        allow_null=True
+    )
+    detachment_commander = serializers.CharField(
+        source='user.detachment_commander.name'
+    )
+    detachment_commander_area = serializers.CharField(
+        source='user.detachment_commander.area.name'
+    )
 
     class Meta:
         model = UserRegion
@@ -436,18 +505,45 @@ class UserIdRegionSerializer(UserRegionSerializer):
             'is_rso_member',
             'is_verified',
             'membership_fee',
-            # 'districtheadquarterposition'
+            'centralhq_member',
+            'centralhq_member_position',
+            'centralhq_commander',
+            'districthq_member',
+            'districthq_member_position',
+            'district_commander',
+            'regionalhq_member',
+            'regionalhq_member_position',
+            'regionalhq_commander',
+            'localhq_member',
+            'localhq_member_position',
+            'localhq_commander',
+            'eduhq_member',
+            'eduhq_member_position',
+            'eduhq_commander',
+            'detachment_member',
+            'detachment_member_area',
+            'deatachment_member_position',
+            'detachment_commander',
+            'detachment_commander_area',
         )
 
     def get_queryset(self):
         """
-        В метод добавлена 'жадная загрузка' к связанным таблицам
+        В метод добавлена 'жадная загрузка' к некоторым связанным таблицам
         для сокращения обращений к БД.
         """
 
         queryset = super().get_queryset()
         queryset = queryset.select_related(
-            'user', 'user__documents', 'user__education'
+            'user',
+            'user__documents',
+            'user__education',
+            'user__usercentralheadquarterposition',
+            'user__userdistrictheadquarterposition',
+            'user__userregionalheadquarterposition',
+            'user__userlocalheadquarterposition',
+            'user__usereducationalheadquarterposition',
+            'user__userdetachmentposition'
         )
         return queryset
 
