@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from djoser.serializers import UserCreatePasswordRetypeSerializer
@@ -402,59 +403,47 @@ class UserIdRegionSerializer(UserRegionSerializer):
     is_rso_member = serializers.BooleanField(source='user.is_rso_member')
     is_verified = serializers.BooleanField(source='user.is_verified')
     membership_fee = serializers.BooleanField(source='user.membership_fee')
-    centralhq_member = serializers.CharField(
-        source='user.usercentralheadquarterposition.headquarter.name'
-    )
+    centralhq_member = serializers.SerializerMethodField()
     centralhq_member_position = serializers.CharField(
         source='user.usercentralheadquarterposition.position.name',
         allow_null=True
     )
-    centralhq_commander = serializers.CharField(
-        source='user.centralheadquarter_commander.name'
+    centralhq_commander = serializers.BooleanField(
+        source='user.centralheadquarter_commander'
     )
-    districthq_member = serializers.CharField(
-        source='user.userdistrictheadquarterposition.headquarter.name'
-    )
+    districthq_member = serializers.SerializerMethodField()
     districthq_member_position = serializers.CharField(
         source='user.userdistrictheadquarterposition.position.name',
         allow_null=True
     )
-    district_commander = serializers.CharField(
-        source='user.districtheadquarter_commander.name'
+    district_commander = serializers.BooleanField(
+        source='user.districtheadquarter_commander'
     )
-    regionalhq_member = serializers.CharField(
-        source='user.userregionalheadquarterposition.headquarter.name'
-    )
+    regionalhq_member = serializers.SerializerMethodField()
     regionalhq_member_position = serializers.CharField(
         source='user.userregionalheadquarterposition.position.name',
         allow_null=True
     )
-    regionalhq_commander = serializers.CharField(
-        source='user.regionalheadquarter_commander.name'
+    regionalhq_commander = serializers.BooleanField(
+        source='user.regionalheadquarter_commander'
     )
-    localhq_member = serializers.CharField(
-        source='user.userlocalheadquarterposition.headquarter.name'
-    )
+    localhq_member = serializers.SerializerMethodField()
     localhq_member_position = serializers.CharField(
         source='user.userlocalheadquarterposition.position.name',
         allow_null=True
     )
-    localhq_commander = serializers.CharField(
-        source='user.localheadquarter_commander.name'
+    localhq_commander = serializers.BooleanField(
+        source='user.localheadquarter_commander'
     )
-    eduhq_member = serializers.CharField(
-        source='user.usereducationalheadquarterposition.headquarter.name'
-    )
+    eduhq_member = serializers.SerializerMethodField()
     eduhq_member_position = serializers.CharField(
         source='user.usereducationalheadquarterposition.position.name',
         allow_null=True
     )
-    eduhq_commander = serializers.CharField(
-        source='user.educationalheadquarter_commander.name'
+    eduhq_commander = serializers.BooleanField(
+        source='user.educationalheadquarter_commander'
     )
-    detachment_member = serializers.CharField(
-        source='user.userdetachmentposition.headquarter.name'
-    )
+    detachment_member = serializers.SerializerMethodField()
     detachment_member_area = serializers.CharField(
         source='user.userdetachmentposition.headquarter.area.name'
     )
@@ -462,8 +451,8 @@ class UserIdRegionSerializer(UserRegionSerializer):
         source='user.userdetachmentposition.position.name',
         allow_null=True
     )
-    detachment_commander = serializers.CharField(
-        source='user.detachment_commander.name'
+    detachment_commander = serializers.BooleanField(
+        source='user.detachment_commander'
     )
     detachment_commander_area = serializers.CharField(
         source='user.detachment_commander.area.name'
@@ -559,6 +548,60 @@ class UserIdRegionSerializer(UserRegionSerializer):
         if obj.reg_region:
             return obj.reg_region.code
         return None
+
+    def get_centralhq_member(self, obj):
+        try:
+            return obj.user.usercentralheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.centralheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+
+    def get_districthq_member(self, obj):
+        try:
+            return obj.user.userdistrictheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.districtheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+    
+    def get_regionalhq_member(self, obj):
+        try:
+            return obj.user.userregionalheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.regionalheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+            
+    def get_localhq_member(self, obj):
+        try:
+            return obj.user.userlocalheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.localheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+    
+    def get_eduhq_member(self, obj):
+        try:
+            return obj.user.usereducationalheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.educationalheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+    
+    def get_detachment_member(self, obj):
+        try:
+            return obj.user.userdetachmentposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.detachment_commander.name
+            except ObjectDoesNotExist:
+                return None
 
 
 class UsersParentSerializer(serializers.ModelSerializer):

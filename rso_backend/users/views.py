@@ -624,82 +624,10 @@ class UserRegionViewSet(BaseUserViewSet):
 
     GET-запрос на /regions/users_list выдает пагинированный ответ
     с личной информацией всех пользователей сайта.
-    GET-запрос на /regions/download_xlsx_users_data выгружает
-    таблицу с личной информацией всех пользователей в формате xlsx.
     Доступ - админ или командир ЦШ.
     """
 
-    FIRST_ROW = 1
-    FIRST_ROW_HEIGHT = 55
-    ROW_FILTER_CELLS = 'A1:BZ1'
-    FREEZE_HEADERS_ROW = 'D2'
-    ZOOM_SCALE = 80
-    EXCEL_HEADERS = [
-            'Код региона прописки',
-            'Регион прописки',
-            'ID юзера',
-            'Имя',
-            'Фамилия',
-            'Отчество',
-            'Username',
-            'Дата рождения',
-            'Наличие паспорта РФ',
-            'Серия и номер паспорта',
-            'Кем выдан паспорт',
-            'Дата выдачи паспорта',
-            'Код подразделения',
-            'ИНН',
-            'СНИЛС',
-            'Город прописки',
-            'Адрес прописки',
-            'Совпадает с фактическим адресом проживания',
-            'Фактический регион ID',
-            'Регион фактического проживания',
-            'Город фактического проживания',
-            'Адрес фактического проживания',
-            'Название ОО',
-            'Факультет',
-            'Специальность',
-            'Курс',
-            'Телефон',
-            'Email',
-            'Ссылка на ВК',
-            'Ссылка на Telegram',
-            'Статус членства в РСО',
-            'Статус верификации',
-            'Статус оплаты членского взноса',
-            'Член ЦШ',
-            'Должность в ЦШ',
-            'Командир ЦШ',
-            'Член окружного штаба',
-            'Должность в окр. штабе',
-            'Командир окр.штаба',
-            'Член регионального штаба',
-            'Должность в рег. штабе',
-            'Командир рег.штаба',
-            'Член местного штаба',
-            'Должность в мест. штабе',
-            'Командир местного штаба',
-            'Член образ. штаба',
-            'Должность в образ. штабе',
-            'Командир образ. штаба',
-            'Член отряда',
-            'Направление отряда(участник)',
-            'Должность в отряде',
-            'Командир отряда',
-            'Направление отряда(командир)',
-        ]
-    data_for_excel = []
     queryset = UserRegion.objects.all()
-
-    @staticmethod
-    def get_objects_data(cls, request):
-        """Отсортированный кверисет для вывода на лист Excel."""
-
-        queryset = cls.filter_queryset(cls.get_queryset())
-        queryset = queryset.order_by('reg_region')
-        serializer = cls.get_serializer(queryset, many=True)
-        return serializer.data
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'get_xlsx_users_data':
@@ -730,58 +658,11 @@ class UserRegionViewSet(BaseUserViewSet):
         return get_object_or_404(UserRegion, user=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'get_xlsx_users_data':
+        if self.action == 'list':
             serializer_class = UserIdRegionSerializer
         else:
             serializer_class = UserRegionSerializer
         return serializer_class
-
-    @action(
-            methods=['get'],
-            detail=False,
-            permission_classes=(permissions.IsAdminUser,),
-    )
-    def get_xlsx_users_data(self, request):
-        # file_path = os.path.join(
-        #     str(settings.BASE_DIR),
-        #     'media',
-        #     'users_data.xlsx'
-        # )
-
-        file_stream = io.BytesIO()
-        workbook = Workbook()
-
-        worksheet = workbook.active
-
-        """Настройка формата отображения листа."""
-        worksheet.auto_filter.ref = self.ROW_FILTER_CELLS
-        worksheet.append(self.EXCEL_HEADERS)
-        worksheet.row_dimensions[self.FIRST_ROW].height = self.FIRST_ROW_HEIGHT
-        worksheet.sheet_view.zoomScale = self.ZOOM_SCALE
-        worksheet.freeze_panes = self.FREEZE_HEADERS_ROW
-
-        self.data_for_excel = self.get_objects_data(
-            self, request
-        )
-        for item in self.data_for_excel:
-            worksheet.append(list(dict(item).values()))
-        workbook.save(file_stream)
-        self.data_for_excel.clear()
-        # return download_file(
-        #     file_stream.getvalue(), 'users_data.xlsx', reading_mode='rb'
-        # )
-        response = HttpResponse(
-            file_stream.getvalue(),
-            content_type=(
-                'application/'
-                'vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-        )
-        response['Content-Disposition'] = (
-            'attachment; filename="%s.xlsx"' % 'users_data'
-        )
-
-        return response
 
 
 class UserPrivacySettingsViewSet(BaseUserViewSet):

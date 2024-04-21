@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DOWNLOAD_ALL_FORMS, DOWNLOAD_CONSENT_PD,
                            DOWNLOAD_MEMBERSHIP_FILE,
-                           DOWNLOAD_PARENT_CONSENT_PD, DOWNLOAD_XLSX_USER_DATA, LIST, LIST_CREATE,
+                           DOWNLOAD_PARENT_CONSENT_PD, LIST, LIST_CREATE,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
                            UPDATE_RETRIEVE, DELETE_UPDATE_RETRIEVE)
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
@@ -229,7 +229,6 @@ UserProfEduPUDVS = UserProfessionalEducationViewSet.as_view(
 UserDocVS = UserDocumentsViewSet.as_view(UPDATE_RETRIEVE)
 UserRegVS = UserRegionViewSet.as_view(UPDATE_RETRIEVE)
 UsersRegionsVS = UserRegionViewSet.as_view(LIST)
-UsersRegionsDownloadVS = UserRegionViewSet.as_view(DOWNLOAD_XLSX_USER_DATA)
 UserPrivacyVS = UserPrivacySettingsViewSet.as_view(UPDATE_RETRIEVE)
 UserMediaVS = UserMediaViewSet.as_view(UPDATE_RETRIEVE)
 UserStatementVS = UserStatementDocumentsViewSet.as_view(
@@ -283,11 +282,6 @@ EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
-    path(
-        'regions/download_xlsx_users_data',
-        UsersRegionsDownloadVS,
-        name='user-regions-download'
-    ),
     path('rsousers/me/education/', UserEduVS, name='user-education'),
     path('rsousers/me/documents/', UserDocVS, name='user-documents'),
     path(

@@ -202,8 +202,12 @@ class UserVerificationLogsAdmin(admin.ModelAdmin):
         return False
 
 
-
 class UserRegionAdmin(admin.ModelAdmin):
+
+    """
+    Добавлен action с выгрузкойтаблицы с личной информацией всех пользователей
+    в формате xlsx.
+    """
 
     FIRST_ROW = 1
     FIRST_ROW_HEIGHT = 55
@@ -267,6 +271,11 @@ class UserRegionAdmin(admin.ModelAdmin):
         ]
 
     actions = ['download_xlsx_users_data']
+    list_display = ('user_id', 'user', 'reg_region', 'fact_region',)
+    readonly_fields = (
+        'user_id', 'user', 'reg_region', 'fact_region',
+    )
+    list_filter = ('reg_region', 'fact_region')
 
     @staticmethod
     def get_objects_data(cls, request):
@@ -290,10 +299,10 @@ class UserRegionAdmin(admin.ModelAdmin):
         worksheet.sheet_view.zoomScale = self.ZOOM_SCALE
         worksheet.freeze_panes = self.FREEZE_HEADERS_ROW
 
-        self.data_for_excel = self.get_objects_data(
+        data_for_excel = self.get_objects_data(
             self, request
         )
-        for item in self.data_for_excel:
+        for item in data_for_excel:
             worksheet.append(list(dict(item).values()))
 
         workbook.save(file_stream)
@@ -312,11 +321,13 @@ class UserRegionAdmin(admin.ModelAdmin):
 
         return response
 
-    download_xlsx_users_data.short_description = "Download XLSX Users Data"
+    download_xlsx_users_data.short_description = (
+        'Скачать персональные данные пользователей в формате xlsx'
+        ' (рекомендуется выгружать до 10 000 строк. Используйте фильтры.)'
+    )
 
 
 admin.site.register(UserRegion, UserRegionAdmin)
-
 
 
 admin.site.unregister(Group)
