@@ -4362,7 +4362,7 @@ class DetachmentCompetitionIsTandemView(APIView):
         competition = get_object_or_404(Competitions, pk=competition_pk)
 
         try:
-            result = tandem_or_start(competition_pk, detachment_pk, CompetitionParticipants)
+            result = tandem_or_start(competition, detachment, CompetitionParticipants)
             return Response({'is_tandem': result}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
