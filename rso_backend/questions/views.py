@@ -302,7 +302,7 @@ def submit_answers(request):
 
     return Response(
         {
-            'score': score,
+            'score': round(score),
             'best_score': best_score
         },
         status=status.HTTP_200_OK
