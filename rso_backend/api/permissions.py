@@ -1103,7 +1103,6 @@ class PersonalDataPermission(permissions.BasePermission):
         return False
 
 
-
 class IsForeignAdditionalDocsAuthor(BasePermission):
 
     message = 'Вы пытаетесь удалить чужие записи.'
@@ -1115,3 +1114,18 @@ class IsForeignAdditionalDocsAuthor(BasePermission):
                 docs_instance == obj.foreign_docs
                 or request.user.is_superuser
             )
+
+
+class OnlyStuffOrCentralCommander(BasePermission):
+    """Пермишен для стаффа и командира центрального штаба.
+
+    Роли 'стафф', 'админ' и 'командир центрального штаба' возвращают True.
+    Остальные пользователи получают True, если обращаются к эндпоинту
+    с безопасным запросом (GET, HEAD, OPTIONS).
+    """
+    def has_permission(self, request, view):
+        return is_stuff_or_central_commander(request)
+
+
+    def has_object_permission(self, request, view, obj):
+        return is_stuff_or_central_commander(request)

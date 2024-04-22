@@ -16,6 +16,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api.mixins import (
     CreateListRetrieveUpdateViewSet, ListRetrieveDestroyViewSet,
@@ -4339,3 +4340,29 @@ def get_detachment_place(request, detachment_pk=None, competition_pk=None):
         {"place": "Рейтинг еще не сформирован"},
         status=status.HTTP_404_NOT_FOUND
     )
+
+
+class DetachmentCompetitionIsTandemView(APIView):
+    """
+    Позволяет определить, участвует ли заданный отряд в качестве основного или младшего
+    отряда в указанном конкурсе. При успешной проверке возвращает результат в формате JSON
+    с ключом 'is_tandem', который указывает, выполняется ли условие тандема (True или False).
+    В случае возникновения ошибки возвращает JSON с ключом 'error' и описанием ошибки.
+
+    Параметры URL:
+    - detachment_pk: первичный ключ отряда (целое число).
+    - competition_pk: первичный ключ конкурса (целое число).
+
+    Пример ответа:
+    - При успешном запросе: {'is_tandem': True} или {'is_tandem': False}
+    - При ошибке: {'error': 'Описание ошибки'}
+    """
+    def get(self, request, detachment_pk, competition_pk):
+        detachment = get_object_or_404(Detachment, pk=detachment_pk)
+        competition = get_object_or_404(Competitions, pk=competition_pk)
+
+        try:
+            result = tandem_or_start(competition, detachment, CompetitionParticipants)
+            return Response({'is_tandem': result}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

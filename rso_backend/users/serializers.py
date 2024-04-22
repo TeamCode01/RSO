@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from djoser.serializers import UserCreatePasswordRetypeSerializer
@@ -7,10 +8,10 @@ from rest_framework import serializers
 
 from api.serializers import EducationalInstitutionSerializer, RegionSerializer
 from api.utils import (create_first_or_exception, get_detachment_commander_num,
-                       get_is_trusted, get_regional_headquarters_if_commander, get_regional_hq_commander_num)
+                       get_is_trusted, get_regional_headquarters_if_commander,
+                       get_regional_hq_commander_num)
 from competitions.models import CompetitionApplications
 from events.constants import EVENT_APPLICATIONS_MODEL
-from events.models import EventOrganizationData
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  EducationalInstitution, Position, Region,
                                  RegionalHeadquarter,
@@ -30,11 +31,11 @@ from users.constants import (DOCUMENTS_RAW_EXISTS, EDUCATION_RAW_EXISTS,
                              MEDIA_RAW_EXISTS, PRIVACY_RAW_EXISTS,
                              REGION_RAW_EXISTS, STATEMENT_RAW_EXISTS,
                              TOO_MANY_EDUCATIONS)
-from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
+                          UserForeignDocuments, UserForeignParentDocs,
                           UserPrivacySettings, UserProfessionalEducation,
-                          UserRegion, UserStatementDocuments,
-                          UserVerificationRequest)
+                          UserRegion, UserStatementDocuments, UserEducation,
+                          UserVerificationRequest, UserMedia, UserParent,)
 from users.short_serializers import ShortUserSerializer
 
 
@@ -377,23 +378,104 @@ class UserIdRegionSerializer(UserRegionSerializer):
     passport = serializers.BooleanField(
         source='user.documents.russian_passport'
     )
+    pass_ser_num = serializers.CharField(source='user.documents.pass_ser_num')
+    pass_whom = serializers.CharField(source='user.documents.pass_whom')
+    pass_date = serializers.DateField(source='user.documents.pass_date')
+    pass_code = serializers.CharField(source='user.documents.pass_code')
+    inn = serializers.CharField(source='user.documents.inn')
+    snils = serializers.CharField(source='user.documents.snils')
     reg_region_name = serializers.SerializerMethodField()
     reg_region_code = serializers.SerializerMethodField()
+    study_institution = serializers.CharField(
+        source='user.education.study_institution'
+    )
+    study_faculty = serializers.CharField(
+        source='user.education.study_faculty'
+    )
+    study_speciality = serializers.CharField(
+        source='user.education.study_specialty'
+    )
+    study_year = serializers.CharField(source='user.education.study_year')
+    phone_number = serializers.CharField(source='user.phone_number')
+    email = serializers.CharField(source='user.email')
+    social_vk = serializers.CharField(source='user.social_vk')
+    social_tg = serializers.CharField(source='user.social_tg')
+    is_rso_member = serializers.BooleanField(source='user.is_rso_member')
+    is_verified = serializers.BooleanField(source='user.is_verified')
+    membership_fee = serializers.BooleanField(source='user.membership_fee')
+    centralhq_member = serializers.SerializerMethodField()
+    centralhq_member_position = serializers.CharField(
+        source='user.usercentralheadquarterposition.position.name',
+        allow_null=True
+    )
+    centralhq_commander = serializers.BooleanField(
+        source='user.centralheadquarter_commander'
+    )
+    districthq_member = serializers.SerializerMethodField()
+    districthq_member_position = serializers.CharField(
+        source='user.userdistrictheadquarterposition.position.name',
+        allow_null=True
+    )
+    district_commander = serializers.BooleanField(
+        source='user.districtheadquarter_commander'
+    )
+    regionalhq_member = serializers.SerializerMethodField()
+    regionalhq_member_position = serializers.CharField(
+        source='user.userregionalheadquarterposition.position.name',
+        allow_null=True
+    )
+    regionalhq_commander = serializers.BooleanField(
+        source='user.regionalheadquarter_commander'
+    )
+    localhq_member = serializers.SerializerMethodField()
+    localhq_member_position = serializers.CharField(
+        source='user.userlocalheadquarterposition.position.name',
+        allow_null=True
+    )
+    localhq_commander = serializers.BooleanField(
+        source='user.localheadquarter_commander'
+    )
+    eduhq_member = serializers.SerializerMethodField()
+    eduhq_member_position = serializers.CharField(
+        source='user.usereducationalheadquarterposition.position.name',
+        allow_null=True
+    )
+    eduhq_commander = serializers.BooleanField(
+        source='user.educationalheadquarter_commander'
+    )
+    detachment_member = serializers.SerializerMethodField()
+    detachment_member_area = serializers.CharField(
+        source='user.userdetachmentposition.headquarter.area.name'
+    )
+    deatachment_member_position = serializers.CharField(
+        source='user.userdetachmentposition.position.name',
+        allow_null=True
+    )
+    detachment_commander = serializers.BooleanField(
+        source='user.detachment_commander'
+    )
+    detachment_commander_area = serializers.CharField(
+        source='user.detachment_commander.area.name'
+    )
 
     class Meta:
         model = UserRegion
         fields = (
-            'reg_region_id',
-            'reg_region',
+            'reg_region_code',
+            'reg_region_name',
             'user_id',
             'first_name',
             'last_name',
             'patronymic_name',
             'username',
-            'reg_region_name',
-            'reg_region_code',
             'date_of_birth',
             'passport',
+            'pass_ser_num',
+            'pass_whom',
+            'pass_date',
+            'pass_code',
+            'inn',
+            'snils',
             'reg_town',
             'reg_house',
             'reg_fact_same_address',
@@ -401,8 +483,61 @@ class UserIdRegionSerializer(UserRegionSerializer):
             'fact_region',
             'fact_town',
             'fact_house',
-
+            'study_institution',
+            'study_faculty',
+            'study_speciality',
+            'study_year',
+            'phone_number',
+            'email',
+            'social_vk',
+            'social_tg',
+            'is_rso_member',
+            'is_verified',
+            'membership_fee',
+            'centralhq_member',
+            'centralhq_member_position',
+            'centralhq_commander',
+            'districthq_member',
+            'districthq_member_position',
+            'district_commander',
+            'regionalhq_member',
+            'regionalhq_member_position',
+            'regionalhq_commander',
+            'localhq_member',
+            'localhq_member_position',
+            'localhq_commander',
+            'eduhq_member',
+            'eduhq_member_position',
+            'eduhq_commander',
+            'detachment_member',
+            'detachment_member_area',
+            'deatachment_member_position',
+            'detachment_commander',
+            'detachment_commander_area',
         )
+
+    def get_queryset(self):
+        """
+        В метод добавлена 'жадная загрузка' к некоторым связанным таблицам
+        для сокращения обращений к БД.
+        """
+
+        queryset = super().get_queryset()
+        queryset = queryset.select_related(
+            'user',
+            'user__documents',
+            'user__education',
+            'user__usercentralheadquarterposition',
+            'user__centralheadquarter_commander',
+            'user__userdistrictheadquarterposition',
+            'use__districtheadquarter_commander',
+            'user__userregionalheadquarterposition',
+            'user__regionalheadquarter_commander',
+            'user__userlocalheadquarterposition',
+            'user__usereducationalheadquarterposition',
+            'user__userdetachmentposition'
+        )
+        return queryset
 
     def get_reg_region_name(self, obj):
         if obj.reg_region:
@@ -413,6 +548,60 @@ class UserIdRegionSerializer(UserRegionSerializer):
         if obj.reg_region:
             return obj.reg_region.code
         return None
+
+    def get_centralhq_member(self, obj):
+        try:
+            return obj.user.usercentralheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.centralheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+
+    def get_districthq_member(self, obj):
+        try:
+            return obj.user.userdistrictheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.districtheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+    
+    def get_regionalhq_member(self, obj):
+        try:
+            return obj.user.userregionalheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.regionalheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+            
+    def get_localhq_member(self, obj):
+        try:
+            return obj.user.userlocalheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.localheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+    
+    def get_eduhq_member(self, obj):
+        try:
+            return obj.user.usereducationalheadquarterposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.educationalheadquarter_commander.name
+            except ObjectDoesNotExist:
+                return None
+    
+    def get_detachment_member(self, obj):
+        try:
+            return obj.user.userdetachmentposition.headquarter.name
+        except ObjectDoesNotExist:
+            try:
+                return obj.user.detachment_commander.name
+            except ObjectDoesNotExist:
+                return None
 
 
 class UsersParentSerializer(serializers.ModelSerializer):

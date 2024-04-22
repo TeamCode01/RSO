@@ -82,7 +82,7 @@ def is_stuff_or_central_commander(request):
         if request.user.id == commander_id:
             check_central_commander = True
     except (CentralHeadquarter.DoesNotExist, AttributeError):
-        return False
+        check_central_commander = False
     return (request.user.is_authenticated
             and any([
                 check_central_commander,

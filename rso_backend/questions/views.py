@@ -81,9 +81,16 @@ class QuestionsView(APIView):
         attempts_count = Attempt.objects.filter(
             user=user, category=category, is_valid=True
         ).count()
-        if attempts_count > 2:
+
+        if attempts_count > 2 and category == 'university':
             return Response(
                 {"error": "Превышено макс. число попыток (3)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if attempts_count > 1 and category == 'safety':
+            return Response(
+                {"error": "Превышено макс. число попыток (2)"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -295,7 +302,7 @@ def submit_answers(request):
 
     return Response(
         {
-            'score': score,
+            'score': round(score),
             'best_score': best_score
         },
         status=status.HTTP_200_OK

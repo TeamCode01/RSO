@@ -10,7 +10,7 @@ from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from drf_yasg.utils import swagger_auto_schema
@@ -21,24 +21,25 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere, IsForeignAdditionalDocsAuthor, IsRegionalCommanderOrAdmin, IsStuffOrCentralCommander,
-                             PersonalDataPermission, IsStuffOrAuthor)
+from api.permissions import (IsCommanderOrTrustedAnywhere, IsStuffOrAuthor,
+                             PersonalDataPermission,
+                             IsForeignAdditionalDocsAuthor,
+                             OnlyStuffOrCentralCommander,)
 from api.tasks import send_reset_password_email_without_user
-from api.utils import download_file, get_user, is_stuff_or_central_commander
-from rso_backend.settings import RSOUSERS_CACHE_TTL
+from api.utils import download_file, get_user
 from users.filters import RSOUserFilter
-from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation,
-                          UserForeignDocuments, UserForeignParentDocs, UserMedia, UserParent,
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
+                          UserForeignDocuments, UserForeignParentDocs,
                           UserPrivacySettings, UserProfessionalEducation,
-                          UserRegion, UserStatementDocuments,
-                          UserVerificationRequest)
+                          UserRegion, UserStatementDocuments, UserEducation,
+                          UserVerificationRequest, UserMedia, UserParent)
 from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                ProfessionalEductionSerializer,
                                RSOUserSerializer, SafeUserSerializer,
                                UserCommanderSerializer,
                                UserDocumentsSerializer,
-                               UserEducationSerializer, UserForeignParentDocsSerializer,
-                               UserHeadquarterPositionSerializer, UserIdRegionSerializer,
+                               UserEducationSerializer,
+                               UserHeadquarterPositionSerializer,
                                UserMediaSerializer,
                                UserNotificationsCountSerializer,
                                UserPrivacySettingsSerializer,
@@ -47,7 +48,8 @@ from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
                                UserStatementDocumentsSerializer,
                                UserTrustedSerializer,
                                AdditionalForeignDocsSerializer,
-                               UserForeignParentDocsSerializer)
+                               UserForeignParentDocsSerializer,
+                               UserIdRegionSerializer,)
 
 
 class CustomUserViewSet(UserViewSet):
@@ -414,7 +416,9 @@ class UserProfessionalEducationViewSet(BaseUserViewSet):
         return Response(
             status=status.HTTP_403_FORBIDDEN,
             data={
-                'detail': 'Нельзя ввести больше 5 записей о доп. проф. образовании.'
+                'detail': (
+                    'Нельзя ввести больше 5 записей о доп. проф. образовании.'
+                )
             }
         )
 
@@ -470,7 +474,7 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
     def get_object(self):
         return get_object_or_404(UserForeignParentDocs, user=self.request.user)
 
-    @swagger_auto_schema( 
+    @swagger_auto_schema(
                 request_body=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     required=[],
@@ -538,7 +542,7 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
             UserForeignParentDocs.objects.get(
                 user=user,
             )
-            return self.partial_update(request, *args, **kwargs)  
+            return self.partial_update(request, *args, **kwargs)
         except UserForeignParentDocs.DoesNotExist:
             with transaction.atomic():
                 instance = UserForeignParentDocs.objects.create(
@@ -620,32 +624,26 @@ class UserRegionViewSet(BaseUserViewSet):
 
     GET-запрос на /regions/users_list выдает пагинированный ответ
     с личной информацией всех пользователей сайта.
-    GET-запрос на /regions/download_xlsx_users_data выгружает
-    таблицу с личной информацией всех пользователей в формате xlsx.
     Доступ - админ или командир ЦШ.
     """
 
-    data_for_excel = []
-
     queryset = UserRegion.objects.all()
-    permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
 
-    @staticmethod
-    def get_objects_data(cls, request):
-        """Отсортированный кверисет для вывода на лист Excel."""
-
-        queryset = cls.filter_queryset(cls.get_queryset())
-        queryset = queryset.order_by('reg_region')
-        serializer = cls.get_serializer(queryset, many=True)
-        return serializer.data
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'get_xlsx_users_data':
+            permission_classes = (
+                permissions.IsAuthenticated(), OnlyStuffOrCentralCommander(),
+            )
+            return permission_classes
+        else:
+            permission_classes = (
+                permissions.IsAuthenticated(), IsStuffOrAuthor(),
+            )
+        return permission_classes
 
     @method_decorator(cache_page(settings.RSOUSERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
-        if not is_stuff_or_central_commander(request):
-            return Response(
-                {'detail': 'Доступ запрещен.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
 
@@ -660,74 +658,11 @@ class UserRegionViewSet(BaseUserViewSet):
         return get_object_or_404(UserRegion, user=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'get_xlsx_users_data':
+        if self.action == 'list':
             serializer_class = UserIdRegionSerializer
         else:
             serializer_class = UserRegionSerializer
         return serializer_class
-
-    @action(
-            methods=['get'],
-            detail=False,
-            permission_classes=(permissions.IsAdminUser,),
-    )
-    def get_xlsx_users_data(self, request):
-        # file_path = os.path.join(
-        #     str(settings.BASE_DIR),
-        #     'media',
-        #     'users_data.xlsx'
-        # )
-        if not is_stuff_or_central_commander(request):
-            return Response(
-                {'detail': 'Доступ запрещен.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        file_stream = io.BytesIO()
-        workbook = Workbook()
-
-        worksheet = workbook.active
-        worksheet.append([
-            'Регион ID',
-            'Регион прописки',
-            'ID пользователя',
-            'Имя',
-            'Фамилия',
-            'Отчество',
-            'Username',
-            'Регион',
-            'Код региона',
-            'Дата рождения',
-            'наличие паспорта РФ',
-            'Город прописки',
-            'Адрес прописки',
-            'Совпадает с фактическим адресом проживания',
-            'Фактический регион ID',
-            'Регион фактического проживания',
-            'Город фактического проживания',
-            'Адрес фактического проживания',
-
-        ])
-        worksheet.freeze_panes = 'A2'
-
-        self.data_for_excel = self.get_objects_data(
-            self, request
-        )
-        for item in self.data_for_excel:
-            worksheet.append(list(dict(item).values()))
-        workbook.save(file_stream)
-        self.data_for_excel.clear()
-        # return download_file(file_stream.getvalue(), 'users_data.xlsx', reading_mode='rb')
-        response = HttpResponse(
-            file_stream.getvalue(),
-            content_type=(
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-        )
-        response['Content-Disposition'] = (
-            'attachment; filename="%s.xlsx"' % 'users_data'
-        )
-
-        return response
 
 
 class UserPrivacySettingsViewSet(BaseUserViewSet):
@@ -777,7 +712,9 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filename = 'rso_membership_statement.rtf'
-        filepath = settings.BASE_DIR.joinpath('templates', 'membership', filename)
+        filepath = settings.BASE_DIR.joinpath(
+            'templates', 'membership', filename
+        )
         return download_file(filepath, filename)
 
     @action(
@@ -793,7 +730,9 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filename = 'consent_to_the_processing_of_personal_data.rtf'
-        filepath = settings.BASE_DIR.joinpath('templates',  'membership', filename)
+        filepath = settings.BASE_DIR.joinpath(
+            'templates',  'membership', filename
+        )
         return download_file(filepath, filename)
 
     @action(
@@ -812,7 +751,9 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         filename = (
             'download_parent_consent_to_the_processing_of_personal_data.rtf'
         )
-        filepath = settings.BASE_DIR.joinpath('templates', 'membership', filename)
+        filepath = settings.BASE_DIR.joinpath(
+            'templates', 'membership', filename
+        )
         return download_file(filepath, filename)
 
     @action(
@@ -828,7 +769,9 @@ class UserStatementDocumentsViewSet(BaseUserViewSet):
         """
 
         filepath = settings.BASE_DIR.joinpath('templates', 'membership')
-        zip_filename = settings.BASE_DIR.joinpath('templates', 'entry_forms.zip')
+        zip_filename = settings.BASE_DIR.joinpath(
+            'templates', 'entry_forms.zip'
+        )
         file_dir = os.listdir(filepath)
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for file in file_dir:

@@ -542,7 +542,7 @@ def calculate_q18_place(competition_id):
 
 def calculate_q6_place(competition_id):
     today = date.today()
-    cutoff_date = date(2024, 4, 15)
+    cutoff_date = date(2024, 6, 15)
 
     logger.info(f'Сегодняшняя дата: {today}')
 

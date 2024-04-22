@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DOWNLOAD_ALL_FORMS, DOWNLOAD_CONSENT_PD,
                            DOWNLOAD_MEMBERSHIP_FILE,
-                           DOWNLOAD_PARENT_CONSENT_PD, DOWNLOAD_XLSX_USER_DATA, LIST, LIST_CREATE,
+                           DOWNLOAD_PARENT_CONSENT_PD, LIST, LIST_CREATE,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
                            UPDATE_RETRIEVE, DELETE_UPDATE_RETRIEVE)
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
@@ -22,7 +22,8 @@ from competitions.views import (
     Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
-    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place
+    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place,
+    DetachmentCompetitionIsTandemView
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -228,7 +229,6 @@ UserProfEduPUDVS = UserProfessionalEducationViewSet.as_view(
 UserDocVS = UserDocumentsViewSet.as_view(UPDATE_RETRIEVE)
 UserRegVS = UserRegionViewSet.as_view(UPDATE_RETRIEVE)
 UsersRegionsVS = UserRegionViewSet.as_view(LIST)
-UsersRegionsDownloadVS = UserRegionViewSet.as_view(DOWNLOAD_XLSX_USER_DATA)
 UserPrivacyVS = UserPrivacySettingsViewSet.as_view(UPDATE_RETRIEVE)
 UserMediaVS = UserMediaViewSet.as_view(UPDATE_RETRIEVE)
 UserStatementVS = UserStatementDocumentsViewSet.as_view(
@@ -282,11 +282,6 @@ EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
-    path(
-        'regions/download_xlsx_users_data',
-        UsersRegionsDownloadVS,
-        name='user-regions-download'
-    ),
     path('rsousers/me/education/', UserEduVS, name='user-education'),
     path('rsousers/me/documents/', UserDocVS, name='user-documents'),
     path(
@@ -373,6 +368,11 @@ user_nested_urls = [
     path(
         'detachments/<int:detachment_pk>/competitions/<int:competition_pk>/place/',
         get_detachment_place,
+        name='detachment-competition-place'
+    ),
+    path(
+        'detachments/<int:detachment_pk>/competitions/<int:competition_pk>/is_tandem/',
+        DetachmentCompetitionIsTandemView.as_view(),
         name='detachment-competition-place'
     ),
     path(
