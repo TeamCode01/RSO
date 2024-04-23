@@ -429,7 +429,7 @@ else:
         },
         'calculate_q3_q4': {
             'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': timedelta(minutes=3)
+            'schedule': timedelta(hours=6, minutes=29)
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
