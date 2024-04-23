@@ -1966,11 +1966,25 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if request.method == 'POST':
             raw.is_verified = True
             raw.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=5,
+                verified_detachment_id=raw.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(
                 {"status": "Данные по организации "
                            "мероприятия верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=5,
+            verified_detachment_id=raw.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         raw.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2082,8 +2096,22 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.request.method == 'POST':
             detachment_report.is_verified = True
             detachment_report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=6,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             return Response(status=status.HTTP_201_CREATED)
         if self.request.method == 'DELETE':
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=6,
+                verified_detachment_id=detachment.id,
+                action='Отклонил'
+            )
             detachment_report.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2386,11 +2414,25 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if request.method == 'POST':
             raw.is_verified = True
             raw.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=15,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             return Response(
                 {"status": "Данные по организации "
                            "мероприятия верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=15,
+            verified_detachment_id=detachment.id,
+            action='Отклонил'
+        )
         raw.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2692,6 +2734,13 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=13,
+                verified_detachment_id=report.detachment.id,
+                action='Верифицировал'
+            )
             participants_entry = CompetitionParticipants.objects.filter(
                 junior_detachment=report.detachment,
                 competition_id=competition_id
@@ -2784,6 +2833,13 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                            "мероприятия верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=13,
+            verified_detachment_id=report.detachment.id,
+            action='Отклонил'
+        )
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -3444,8 +3500,22 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.request.method == 'POST':
             detachment_report.is_verified = True
             detachment_report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=18,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             return Response(status=status.HTTP_201_CREATED)
         if self.request.method == 'DELETE':
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=18,
+                verified_detachment_id=detachment.id,
+                action='Отклонил'
+            )
             detachment_report.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -3600,6 +3670,13 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         if request.method == 'POST':
             report.is_verified = True
             report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=19,
+                verified_detachment_id=report.detachment.id,
+                action='Верифицировал'
+            )
             participants_entry = CompetitionParticipants.objects.filter(
                 competition_id=settings.COMPETITION_ID,
                 junior_detachment=report.detachment
@@ -3663,6 +3740,13 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                            "Успешно верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=19,
+            verified_detachment_id=report.detachment.id,
+            action='Отклонил'
+        )
         report.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

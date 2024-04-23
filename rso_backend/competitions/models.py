@@ -1626,7 +1626,7 @@ class QVerificationLog(models.Model):
         ACCEPTED = 'Верифицировал'
         REJECTED = 'Отклонил'
 
-    competition_id = models.ForeignKey(
+    competition = models.ForeignKey(
         'competitions.Competitions',
         on_delete=models.CASCADE,
         related_name='verified_logs',
