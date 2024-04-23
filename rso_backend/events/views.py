@@ -1174,7 +1174,13 @@ def group_applications(request, event_pk):
                       f'"{event_application_type}"'
         }, status=status.HTTP_400_BAD_REQUEST)
     headquarters_level = event.available_structural_units
-    model = HEADQUARTERS_MODELS_MAPPING[headquarters_level]
+    model = HEADQUARTERS_MODELS_MAPPING.get(headquarters_level)
+    if not model:
+        return Response({
+            'detail': f'У мероприятия не заполнено поле '
+                      f'"available_structural_units" - доступный '
+                      f'уровень структурной единицы к подаче'
+        }, status=status.HTTP_400_BAD_REQUEST)
     try:
         headquarter = model.objects.get(commander=request.user)
     except model.DoesNotExist:
