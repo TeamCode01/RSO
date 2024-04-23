@@ -15,6 +15,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -48,7 +49,7 @@ from competitions.models import (
     Q5DetachmentReport, Q5TandemRanking, Q5Ranking, Q5EducatedParticipant,
     Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking,
     Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
-    Q15DetachmentReport, OverallRanking, OverallTandemRanking,
+    Q15DetachmentReport, OverallRanking, OverallTandemRanking, QVerificationLog,
 )
 from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
@@ -68,7 +69,7 @@ from competitions.serializers import (
     Q5EducatedParticipantSerializer,
     Q14DetachmentReportSerializer, Q6DetachmentReportSerializer, Q5DetachmentReportReadSerializer,
     Q5DetachmentReportWriteSerializer, Q15DetachmentReportReadSerializer, Q15DetachmentReportWriteSerializer,
-    Q13DetachmentReportWriteSerializer, Q13DetachmentReportReadSerializer,
+    Q13DetachmentReportWriteSerializer, Q13DetachmentReportReadSerializer, QVerificationLogSerializer,
 )
 from competitions.utils import get_place_q2, tandem_or_start
 # сигналы ниже не удалять, иначе сломается
@@ -79,7 +80,7 @@ from competitions.signal_handlers import (
 from api.mixins import ListRetrieveDestroyViewSet
 from api.permissions import (IsRegionalCommanderOrAdmin,
                              IsRegionalCommanderOrAdminOrAuthor)
-from competitions.filters import CompetitionParticipantsFilter
+from competitions.filters import CompetitionParticipantsFilter, QVerificationLogFilter
 from competitions.models import (CompetitionApplications,
                                  CompetitionParticipants, Competitions)
 from competitions.serializers import (CompetitionApplicationsObjectSerializer,
@@ -4366,3 +4367,13 @@ class DetachmentCompetitionIsTandemView(APIView):
             return Response({'is_tandem': result}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class QVerificationLogByNumberView(ListAPIView):
+    serializer_class = QVerificationLogSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = QVerificationLogFilter
+
+    def get_queryset(self):
+        competition_id = self.kwargs['competition_id']
+        return QVerificationLog.objects.filter(competition_id=competition_id)

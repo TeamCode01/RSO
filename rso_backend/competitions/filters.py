@@ -1,8 +1,8 @@
 from django.db.models import Q
 from django_filters.rest_framework import FilterSet
-from django_filters.filters import BooleanFilter, CharFilter
+from django_filters.filters import BooleanFilter, CharFilter, NumberFilter
 
-from .models import CompetitionParticipants
+from .models import CompetitionParticipants, QVerificationLog
 
 
 class CompetitionParticipantsFilter(FilterSet):
@@ -23,3 +23,14 @@ class CompetitionParticipantsFilter(FilterSet):
         return queryset.filter(
             Q(detachment__area__name=value) | Q(junior_detachment__area__name=value)
         )
+
+
+class QVerificationLogFilter(FilterSet):
+    q_number = NumberFilter()
+    verifier_id = NumberFilter(field_name='verifier__id')
+    verified_user_id = NumberFilter(field_name='verified_user__id')
+    verified_detachment_id = NumberFilter(field_name='verified_detachment__id')
+
+    class Meta:
+        model = QVerificationLog
+        fields = ['q_number', 'verifier_id', 'verified_user_id', 'verified_detachment_id']

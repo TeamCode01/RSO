@@ -13,9 +13,10 @@ from competitions.models import (
     Q17EventLink, Q14LaborProject, Q14Ranking, Q14TandemRanking,
     Q18DetachmentReport, Q19Report, Q20Report, Q2DetachmentReport, Q7Report,
     Q8Report, Q9Report, Q5EducatedParticipant, Q5DetachmentReport,
-    Q14DetachmentReport, Q6DetachmentReport, Q15GrantWinner, Q15DetachmentReport)
+    Q14DetachmentReport, Q6DetachmentReport, Q15GrantWinner, Q15DetachmentReport, QVerificationLog)
 from headquarters.models import Detachment
-from headquarters.serializers import BaseShortUnitSerializer
+from headquarters.serializers import BaseShortUnitSerializer, ShortDetachmentSerializer
+from users.short_serializers import ShortUserSerializer
 
 
 class ShortDetachmentCompetitionSerializer(BaseShortUnitSerializer):
@@ -1328,3 +1329,34 @@ class Q16ReportSerializer(serializers.ModelSerializer):
                      'Количество подписчиков больше, чем участников отряда'}
                 )
         return attrs
+
+
+class QVerificationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QVerificationLog
+        fields = (
+            'id',
+            'competition_id',
+            'q_number',
+            'verified_user',
+            'verified_detachment',
+            'action',
+            'timestamp'
+        )
+
+    def to_representation(self, instance):
+        serialized_data = super().to_representation(instance)
+        verifier, verified_user, verified_detachment = (
+            instance.verifier,
+            instance.verified_user,
+            instance.verified_detachment
+        )
+
+        if verified_user:
+            serialized_data['verified_user'] = ShortUserSerializer(verified_user).data
+        if verifier:
+            serialized_data['verifier'] = ShortUserSerializer(verifier).data
+        if verified_detachment:
+            serialized_data['verified_detachment'] = ShortDetachmentSerializer(verified_detachment).data
+
+        return serialized_data

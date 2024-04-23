@@ -23,7 +23,7 @@ from competitions.views import (
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
     Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place,
-    DetachmentCompetitionIsTandemView
+    DetachmentCompetitionIsTandemView, QVerificationLogByNumberView
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -489,6 +489,11 @@ user_nested_urls = [
         'competitions/<int:competition_pk>/reports/q4/get-place/',
         get_place_q4,
         name='get-place-q4'
+    ),
+    path(
+        'competitions/<int:q_number>/verification_logs/',
+        QVerificationLogByNumberView.as_view(),
+        name='get-verification-log',
     ),
     path(
         'competitions/<int:competition_pk>/get-place/',
