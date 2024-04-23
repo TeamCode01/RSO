@@ -1338,7 +1338,6 @@ class QVerificationLogSerializer(serializers.ModelSerializer):
             'id',
             'competition_id',
             'q_number',
-            'verified_user',
             'verified_detachment',
             'action',
             'timestamp'
@@ -1346,14 +1345,11 @@ class QVerificationLogSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         serialized_data = super().to_representation(instance)
-        verifier, verified_user, verified_detachment = (
+        verifier, verified_detachment = (
             instance.verifier,
-            instance.verified_user,
             instance.verified_detachment
         )
 
-        if verified_user:
-            serialized_data['verified_user'] = ShortUserSerializer(verified_user).data
         if verifier:
             serialized_data['verifier'] = ShortUserSerializer(verifier).data
         if verified_detachment:

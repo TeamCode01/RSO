@@ -1550,13 +1550,6 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
         verbose_name_plural = 'Отчеты по 20 показателю'
 
 
-
-
-
-
-
-
-
 class Q16TandemRanking(QBaseTandemRanking):
     """
     Рейтинг для тандема-участников.
@@ -1648,12 +1641,6 @@ class QVerificationLog(models.Model):
     q_number = models.PositiveSmallIntegerField(
         verbose_name='Номер верифицируемого показателя',
         validators=[MinValueValidator(1), MaxValueValidator(20)]
-    )
-    verified_user = models.ForeignKey(
-        'users.RSOUser',
-        on_delete=models.CASCADE,
-        related_name='q_verified',
-        verbose_name='Верифицируемый пользователь'
     )
     verified_detachment = models.ForeignKey(
         'headquarters.Detachment',

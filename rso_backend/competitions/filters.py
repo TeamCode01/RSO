@@ -28,9 +28,8 @@ class CompetitionParticipantsFilter(FilterSet):
 class QVerificationLogFilter(FilterSet):
     q_number = NumberFilter()
     verifier_id = NumberFilter(field_name='verifier__id')
-    verified_user_id = NumberFilter(field_name='verified_user__id')
     verified_detachment_id = NumberFilter(field_name='verified_detachment__id')
 
     class Meta:
         model = QVerificationLog
-        fields = ['q_number', 'verifier_id', 'verified_user_id', 'verified_detachment_id']
+        fields = ['q_number', 'verifier_id', 'verified_detachment_id']
