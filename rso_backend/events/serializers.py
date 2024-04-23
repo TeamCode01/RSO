@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from api.constants import (HEADQUARTERS_MODELS_MAPPING,
                            SHORT_HEADQUARTERS_SERIALIZERS_MAPPING)
-from api.utils import create_first_or_exception
+from api.utils import create_first_or_exception, get_user_position_at_level
 from events.constants import (EVENT_DOCUMENT_DATA_RAW_EXISTS,
                               EVENT_TIME_DATA_RAW_EXISTS)
 from events.models import (Event, EventAdditionalIssue, EventApplications,
@@ -14,7 +14,10 @@ from events.models import (Event, EventAdditionalIssue, EventApplications,
                            MultiEventApplication)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
-                                 LocalHeadquarter, RegionalHeadquarter)
+                                 LocalHeadquarter, RegionalHeadquarter, UserDetachmentPosition,
+                                 UserRegionalHeadquarterPosition, UserCentralHeadquarterPosition,
+                                 UserEducationalHeadquarterPosition, UserDistrictHeadquarterPosition,
+                                 UserLocalHeadquarterPosition)
 from users.models import RSOUser
 from users.serializers import ShortUserSerializer
 
@@ -64,12 +67,14 @@ class EventDocumentDataSerializer(serializers.ModelSerializer):
 
 
 class EventOrganizerDataSerializer(serializers.ModelSerializer):
+    position = serializers.SerializerMethodField()
 
     class Meta:
         model = EventOrganizationData
         fields = (
             'id',
             'organizer',
+            'position',
             'organizer_phone_number',
             'organizer_email',
             'organization',
@@ -90,6 +95,23 @@ class EventOrganizerDataSerializer(serializers.ModelSerializer):
         organizer = get_object_or_404(RSOUser, id=organizer_id)
         representation['organizer'] = ShortUserSerializer(organizer).data
         return representation
+
+    def get_position(self, instance):
+        event = instance.event
+        user_id = instance.organizer.id
+        if event.scale == 'Отрядное':
+            return get_user_position_at_level(Detachment, UserDetachmentPosition, user_id)
+        if event.scale == 'Образовательное':
+            return get_user_position_at_level(EducationalHeadquarter, UserEducationalHeadquarterPosition, user_id)
+        elif event.scale == 'Городское':
+            return get_user_position_at_level(LocalHeadquarter, UserLocalHeadquarterPosition, user_id)
+        elif event.scale == 'Региональное':
+            return get_user_position_at_level(RegionalHeadquarter, UserRegionalHeadquarterPosition, user_id)
+        elif event.scale == 'Окружное':
+            return get_user_position_at_level(DistrictHeadquarter, UserDistrictHeadquarterPosition, user_id)
+        elif event.scale == 'Всероссийское':
+            return get_user_position_at_level(CentralHeadquarter, UserCentralHeadquarterPosition, user_id)
+        return None
 
 
 class EventDocumentSerializer(serializers.ModelSerializer):

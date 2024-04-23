@@ -800,3 +800,20 @@ def get_events_data(request):
                 participant['certificate_scans'] = request.FILES[file_key]
 
         return events_data
+
+
+def get_user_position_at_level(headquarter_model, position_model, user_id: int) -> dict | None:
+    if headquarter_model.objects.filter(commander_id=user_id).exists():
+        return {
+            'level': headquarter_model.__name__,
+            'headquarter_id': headquarter_model.objects.get(commander_id=user_id).detachment.id,
+            'position': 'Командир'
+        }
+    else:
+        user_headquarter_position = position_model.objects.filter(user_id=user_id).first()
+        if user_headquarter_position:
+            return {
+                'level': user_headquarter_position.headquarter.__class__.__name__,
+                'headquarter_id': user_headquarter_position.headquarter.id,
+                'position': user_headquarter_position.position.name
+            }
