@@ -1362,7 +1362,7 @@ def determine_q3_q4_place(average_score):
     elif 60 <= average_score < 65:
         return 8
     else:
-        return None
+        return 8
 
 
 def calculate_q19_place(report: Q19Report) -> int:
