@@ -1550,13 +1550,6 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
         verbose_name_plural = 'Отчеты по 20 показателю'
 
 
-
-
-
-
-
-
-
 class Q16TandemRanking(QBaseTandemRanking):
     """
     Рейтинг для тандема-участников.
@@ -1626,3 +1619,45 @@ class Q16Report(QBaseReport, QBaseReportIsVerified):
     class Meta:
         verbose_name = 'Отчет по 16 показателю'
         verbose_name_plural = 'Отчеты по 16 показателю'
+
+
+class QVerificationLog(models.Model):
+    class Action(models.TextChoices):
+        ACCEPTED = 'Верифицировал'
+        REJECTED = 'Отклонил'
+
+    competition = models.ForeignKey(
+        'competitions.Competitions',
+        on_delete=models.CASCADE,
+        related_name='verified_logs',
+        verbose_name='Конкурс'
+    )
+    verifier = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        related_name='q_verifier',
+        verbose_name='Верифицирующее лицо'
+    )
+    q_number = models.PositiveSmallIntegerField(
+        verbose_name='Номер верифицируемого показателя',
+        validators=[MinValueValidator(1), MaxValueValidator(20)]
+    )
+    verified_detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='q_verified',
+        verbose_name='Верифицируемый отряд'
+    )
+    action = models.CharField(
+        max_length=25,
+        choices=Action.choices,
+        verbose_name='Действие'
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата и время действия'
+    )
+
+    class Meta:
+        verbose_name = 'Лог верификации показателя'
+        verbose_name_plural = 'Логи верификаций показателей'
