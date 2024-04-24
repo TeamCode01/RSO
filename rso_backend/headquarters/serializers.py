@@ -437,6 +437,19 @@ class BaseUnitSerializer(serializers.ModelSerializer):
             return RSOUser.objects.count()
         return instance.members.count() + 1
 
+    def update(self, instance, validated_data):
+        try:
+            super().update(instance, validated_data)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        return instance
+
+    def create(self, validated_data):
+        try:
+            super().create(validated_data)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
     def validate(self, attrs):
         """
         Запрещает назначить пользователя командиром, если он уже им является.
@@ -742,6 +755,7 @@ class EducationalHeadquarterSerializer(BaseUnitSerializer):
     local_headquarter = serializers.PrimaryKeyRelatedField(
         queryset=LocalHeadquarter.objects.all(),
         required=False,
+        allow_null=True
     )
     detachments = serializers.SerializerMethodField(
         read_only=True
@@ -757,19 +771,6 @@ class EducationalHeadquarterSerializer(BaseUnitSerializer):
             'detachments'
         )
         read_only_fields = ('detachments',)
-
-    def validate(self, data):
-        """
-        Вызывает валидацию модели для проверки согласованности между местным
-         и региональным штабами.
-        """
-        instance = EducationalHeadquarter(**data)
-        try:
-            instance.check_headquarters_relations()
-            super().validate(data)
-        except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
-        return data
 
     def to_representation(self, instance):
         """
@@ -850,10 +851,12 @@ class DetachmentSerializer(BaseUnitSerializer):
     educational_headquarter = serializers.PrimaryKeyRelatedField(
         queryset=EducationalHeadquarter.objects.all(),
         required=False,
+        allow_null=True
     )
     local_headquarter = serializers.PrimaryKeyRelatedField(
         queryset=LocalHeadquarter.objects.all(),
-        required=False
+        required=False,
+        allow_null=True
     )
     regional_headquarter = serializers.PrimaryKeyRelatedField(
         queryset=RegionalHeadquarter.objects.all(),
@@ -902,19 +905,6 @@ class DetachmentSerializer(BaseUnitSerializer):
         serialized_data['area'] = AreaSerializer(area).data
         serialized_data['region'] = RegionSerializer(region).data
         return serialized_data
-
-    def validate(self, data):
-        """
-        Вызывает валидацию модели для проверки согласованности между
-        образовательным, местным и региональным штабами.
-        """
-        instance = Detachment(**data)
-        try:
-            instance.check_headquarters_relations()
-            super().validate(data)
-        except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
-        return data
 
     def get_leadership(self, instance):
         """
