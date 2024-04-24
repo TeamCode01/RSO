@@ -87,6 +87,8 @@ class Event(models.Model):
     conference_link = models.CharField(
         max_length=250,
         verbose_name='Ссылка на конференцию',
+        blank=True,
+        null=True
     )
     address = models.CharField(
         max_length=250,
@@ -112,8 +114,6 @@ class Event(models.Model):
         default=EventAvailableStructuralUnit.DETACHMENTS,
         verbose_name='Объекты, имеющие возможность '
                      'формировать групповые заявки',
-        blank=True,
-        null=True
     )
     # Ссылка на штаб/отряд организовавший мероприятие
     # Заполнено может быть только одно поле из шести
