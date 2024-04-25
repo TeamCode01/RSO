@@ -194,12 +194,12 @@ router.register(
     basename='q13'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q13/(?P<report_pk>\d+)/events',
+    r'competitions/(?P<competition_pk>\d+)/reports/q13/(?P<report_pk>\d+)/objects',
     Q13EventOrganizationViewSet,
     basename='q13eventorganization'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/participants',
+    r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/objects',
     Q5EducatedParticipantViewSet,
     basename='q5educatedparticipant'
 )
@@ -209,8 +209,8 @@ router.register(
     basename='q15'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q15/(?P<report_pk>\d+)/grants',
-    Q15DetachmentReportViewSet,
+    r'competitions/(?P<competition_pk>\d+)/reports/q15/(?P<report_pk>\d+)/objects',
+    Q15GrantDataViewSet,
     basename='q15grants'
 )
 router.register(
