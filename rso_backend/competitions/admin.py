@@ -12,7 +12,7 @@ from competitions.models import (
     Q17Ranking, Q17TandemRanking, Q5Ranking, Q5TandemRanking, Q15Rank, Q15TandemRank,
     Q5DetachmentReport, Q15DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking,
     Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, Q13DetachmentReport, Q5EducatedParticipant,
-    Q13EventOrganization, Q15GrantWinner, Q18DetachmentReport, OverallTandemRanking, OverallRanking
+    Q13EventOrganization, Q15GrantWinner, Q18DetachmentReport, OverallTandemRanking, OverallRanking, QVerificationLog
 )
 from competitions.forms import (CompetitionApplicationsForm,
                                 CompetitionParticipantsForm)
@@ -672,3 +672,30 @@ class Q20RankingAdmin(QBaseRankingAdmin):
 @admin.register(Q20TandemRanking)
 class Q20TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
+
+
+@admin.register(QVerificationLog)
+class QVerificationLogAdmin(admin.ModelAdmin):
+    """Таблица логов верификации пользователей."""
+
+    list_display = (
+        'competition',
+        'verifier',
+        'q_number',
+        'verified_detachment',
+        'action',
+        'timestamp'
+    )
+    readonly_fields = (
+        'competition',
+        'verifier',
+        'q_number',
+        'verified_detachment',
+        'action',
+        'timestamp'
+    )
+    list_filter = ('timestamp', 'action', 'q_number', 'verifier')
+
+    def has_add_permission(self, request, obj=None):
+        """Запрещаем добавление записи через админку."""
+        return False
