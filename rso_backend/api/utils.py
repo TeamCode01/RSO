@@ -803,10 +803,11 @@ def get_events_data(request):
 
 
 def get_user_position_at_level(headquarter_model, position_model, user_id: int) -> dict | None:
-    if headquarter_model.objects.filter(commander_id=user_id).exists():
+    commander_in_headquarter = headquarter_model.objects.filter(commander_id=user_id).first()
+    if commander_in_headquarter:
         return {
             'level': headquarter_model.__name__,
-            'headquarter_id': headquarter_model.objects.get(commander_id=user_id).detachment.id,
+            'headquarter_id': commander_in_headquarter.id,
             'position': 'Командир'
         }
     else:

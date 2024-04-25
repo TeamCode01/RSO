@@ -114,6 +114,8 @@ class Event(models.Model):
         default=EventAvailableStructuralUnit.DETACHMENTS,
         verbose_name='Объекты, имеющие возможность '
                      'формировать групповые заявки',
+        blank=True,
+        null=True
     )
     # Ссылка на штаб/отряд организовавший мероприятие
     # Заполнено может быть только одно поле из шести
@@ -193,6 +195,13 @@ class Event(models.Model):
             raise ValidationError(
                 'Структурная единица-организатор должна быть '
                 'заполнена в одном из полей и только в одном.'
+            )
+
+        # Валидация, что если тип заявок — групповой, то должны быть указаны доступные структурные единицы
+        if self.application_type == self.EventApplicationType.GROUP and not self.available_structural_units:
+            raise ValidationError(
+                'При групповом типе заявок поле "Объекты, имеющие возможность '
+                'формировать групповые заявки" должно быть заполнено.'
             )
 
     def __str__(self):

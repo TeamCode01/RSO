@@ -1,10 +1,8 @@
-from django.core.exceptions import ValidationError
+
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from competitions.utils import (
-    get_certificate_scans_path, document_path, round_math
-)
+from competitions.utils import get_certificate_scans_path
 
 
 class Competitions(models.Model):
@@ -166,7 +164,9 @@ class OverallRanking(models.Model):
         related_name='%(class)s',
         verbose_name='Отряд'
     )
-    places_sum = models.FloatField(verbose_name='Сумма мест по всем показателям')
+    places_sum = models.FloatField(
+        verbose_name='Сумма мест по всем показателям'
+    )
     place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
 
     class Meta:
@@ -199,7 +199,9 @@ class OverallTandemRanking(models.Model):
         related_name='%(class)s_junior_detachment',
         verbose_name='Младший отряд'
     )
-    places_sum = models.FloatField(verbose_name='Сумма мест по всем показателям')
+    places_sum = models.FloatField(
+        verbose_name='Сумма мест по всем показателям'
+    )
     place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
 
     class Meta:
@@ -582,7 +584,9 @@ class Q6Ranking(QBaseRanking):
 
 
 class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
-    first_may_demonstration = models.BooleanField(default=False, blank=True, null=True)
+    first_may_demonstration = models.BooleanField(
+        default=False, blank=True, null=True
+    )
     first_may_demonstration_participants = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(1000)],
         blank=True,
@@ -603,7 +607,9 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         blank=True,
         null=True
     )
-    safety_work_week = models.BooleanField(default=False, blank=True, null=True)
+    safety_work_week = models.BooleanField(
+        default=False, blank=True, null=True
+    )
     commander_commissioner_school = models.BooleanField(
         default=False,
         blank=True,
@@ -620,7 +626,9 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         null=True
     )
     spartakiad = models.BooleanField(default=False, blank=True, null=True)
-    professional_competition = models.BooleanField(default=False, blank=True, null=True)
+    professional_competition = models.BooleanField(
+        default=False, blank=True, null=True
+    )
     april_1_detachment_members = models.PositiveSmallIntegerField(
         default=1,
         blank=True,
@@ -1214,7 +1222,7 @@ class Q13DetachmentReport(QBaseReport):
 
 
 class Q13EventOrganization(models.Model):
-    """Пример модели с данными для заполнения (которые по кнопке "добавить...") """
+    """Пример модели с данными для заполнения (кот-е по кнопке "добавить..")"""
 
     class EventType(models.TextChoices):
         SPORT = 'Спортивное', 'Спортивное'
@@ -1328,7 +1336,9 @@ class Q15GrantWinner(models.Model):
         verbose_name='Полное наименование грантового проекта',
     )
     status = models.CharField(
-        max_length=25, choices=CompetitionStatus.choices, verbose_name='Статус конкурса'
+        max_length=25,
+        choices=CompetitionStatus.choices,
+        verbose_name='Статус конкурса'
     )
     author_name = models.CharField(
         max_length=250, verbose_name='Автор проекта', blank=True, null=True
@@ -1352,8 +1362,11 @@ class Q17DetachmentReport(QBaseReport):
     def __str__(self):
         return f'Отчет {self.id}'
 
+
 class Q17EventLink(models.Model):
-    source_name = models.CharField(max_length=500, verbose_name='Название источника')
+    source_name = models.CharField(
+        max_length=500, verbose_name='Название источника'
+    )
     link = models.URLField(max_length=300, verbose_name='Ссылка')
     detachment_report = models.ForeignKey(
         Q17DetachmentReport,
@@ -1550,13 +1563,6 @@ class Q20Report(QBaseReport, QBaseReportIsVerified):
         verbose_name_plural = 'Отчеты по 20 показателю'
 
 
-
-
-
-
-
-
-
 class Q16TandemRanking(QBaseTandemRanking):
     """
     Рейтинг для тандема-участников.
@@ -1626,3 +1632,45 @@ class Q16Report(QBaseReport, QBaseReportIsVerified):
     class Meta:
         verbose_name = 'Отчет по 16 показателю'
         verbose_name_plural = 'Отчеты по 16 показателю'
+
+
+class QVerificationLog(models.Model):
+    class Action(models.TextChoices):
+        ACCEPTED = 'Верифицировал'
+        REJECTED = 'Отклонил'
+
+    competition = models.ForeignKey(
+        'competitions.Competitions',
+        on_delete=models.CASCADE,
+        related_name='verified_logs',
+        verbose_name='Конкурс'
+    )
+    verifier = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        related_name='q_verifier',
+        verbose_name='Верифицирующее лицо'
+    )
+    q_number = models.PositiveSmallIntegerField(
+        verbose_name='Номер верифицируемого показателя',
+        validators=[MinValueValidator(1), MaxValueValidator(20)]
+    )
+    verified_detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='q_verified',
+        verbose_name='Верифицируемый отряд'
+    )
+    action = models.CharField(
+        max_length=25,
+        choices=Action.choices,
+        verbose_name='Действие'
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата и время действия'
+    )
+
+    class Meta:
+        verbose_name = 'Лог верификации показателя'
+        verbose_name_plural = 'Логи верификаций показателей'

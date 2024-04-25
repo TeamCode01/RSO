@@ -15,6 +15,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -34,21 +35,23 @@ from api.permissions import (
     IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
     IsQ15DetachmentReportAuthor, IsCentralEventMaster
 )
-from api.utils import get_detachment_start, get_detachment_tandem, get_events_data
+from api.utils import (get_detachment_start, get_detachment_tandem,
+                       get_events_data)
 from competitions.models import (
-    Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
+    Q10, Q11, Q12, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
     Q13EventOrganization,
-    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q14Ranking, Q14TandemRanking, Q16Report,
-    Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q19Report, Q1Ranking,
-    Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking,
-    Q2TandemRanking, Q7Report, Q18DetachmentReport,
-    Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking,
+    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q14Ranking,
+    Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q19Report,
+    Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking, Q1Ranking,
+    Q2TandemRanking, Q7Report, Q18DetachmentReport, Q14TandemRanking,
+    Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking, Q16Report,
     Q19TandemRanking, Q4TandemRanking, Q4Ranking, Q3TandemRanking, Q3Ranking,
     Q5DetachmentReport, Q5TandemRanking, Q5Ranking, Q5EducatedParticipant,
     Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking,
     Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
     Q15DetachmentReport, OverallRanking, OverallTandemRanking,
+    QVerificationLog,
 )
 from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
@@ -58,17 +61,19 @@ from competitions.serializers import (
     CompetitionSerializer, CreateQ10Serializer, CreateQ11Serializer,
     CreateQ12Serializer, CreateQ7Serializer, CreateQ8Serializer,
     CreateQ9Serializer, Q10ReportSerializer, Q10Serializer,
-    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer, Q14LaborProjectSerializer,
+    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer,
     Q16ReportSerializer, Q17DetachmentReportSerializer, Q17EventLinkSerializer,
     Q19DetachmenrtReportSerializer, Q20ReportSerializer,
     Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
     Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
     ShortDetachmentCompetitionSerializer, Q13EventOrganizationSerializer,
     Q18DetachmentReportSerializer, Q15GrantWinnerSerializer,
-    Q5EducatedParticipantSerializer,
-    Q14DetachmentReportSerializer, Q6DetachmentReportSerializer, Q5DetachmentReportReadSerializer,
-    Q5DetachmentReportWriteSerializer, Q15DetachmentReportReadSerializer, Q15DetachmentReportWriteSerializer,
+    Q5EducatedParticipantSerializer, Q5DetachmentReportReadSerializer,
+    Q14DetachmentReportSerializer, Q6DetachmentReportSerializer,
+    Q5DetachmentReportWriteSerializer, Q15DetachmentReportReadSerializer,
     Q13DetachmentReportWriteSerializer, Q13DetachmentReportReadSerializer,
+    QVerificationLogSerializer, Q15DetachmentReportWriteSerializer,
+    Q14LaborProjectSerializer,
 )
 from competitions.utils import get_place_q2, tandem_or_start
 # сигналы ниже не удалять, иначе сломается
@@ -76,10 +81,9 @@ from competitions.signal_handlers import (
     create_score_q7, create_score_q8, create_score_q9, create_score_q10,
     create_score_q11, create_score_q12, create_score_q20
 )
-from api.mixins import ListRetrieveDestroyViewSet
 from api.permissions import (IsRegionalCommanderOrAdmin,
                              IsRegionalCommanderOrAdminOrAuthor)
-from competitions.filters import CompetitionParticipantsFilter
+from competitions.filters import CompetitionParticipantsFilter, QVerificationLogFilter
 from competitions.models import (CompetitionApplications,
                                  CompetitionParticipants, Competitions)
 from competitions.serializers import (CompetitionApplicationsObjectSerializer,
@@ -94,8 +98,6 @@ from competitions.swagger_schemas import (request_update_application,
                                           response_create_application,
                                           response_junior_detachments,
                                           q7schema_request, q9schema_request)
-from headquarters.models import Detachment, RegionalHeadquarter, UserDetachmentPosition
-from users.models import RSOUser
 from headquarters.serializers import ShortDetachmentSerializer
 from headquarters.models import (
     Detachment, RegionalHeadquarter, UserDetachmentPosition
@@ -263,7 +265,9 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         Доступ - все пользователи.
         """
         filename = 'Regulation_on_the_best_LSO_2024.pdf'
-        filepath = str(settings.BASE_DIR) + '/templates/competitions/' + filename
+        filepath = (
+            str(settings.BASE_DIR) + '/templates/competitions/' + filename
+        )
         return self.download_file_competitions(filepath, filename)
 
 
@@ -993,6 +997,13 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                     data={'detail': 'Верифицированный отчет нельзя удалить.'}
                 )
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=self.request.user.id,
+                q_number=2,
+                verified_detachment_id=detachment.id,
+                action='Отклонил'
+            )
             detachment_report.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         with transaction.atomic():
@@ -1003,7 +1014,13 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
             detachment_report.is_verified = True
             detachment_report.save()
-
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=self.request.user.id,
+                q_number=2,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             """Расчет мест по показателю и запись в таблицы Ranking."""
 
             is_tandem = tandem_or_start(
@@ -1223,9 +1240,24 @@ class Q7ViewSet(
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=7,
+                verified_detachment_id=event.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q7Serializer(event).data,
                             status=status.HTTP_200_OK)
         event.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=7,
+            verified_detachment_id=event.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False,
@@ -1387,9 +1419,23 @@ class Q8ViewSet(Q7ViewSet):
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=8,
+                verified_detachment_id=event.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q8Serializer(event).data,
                             status=status.HTTP_200_OK)
         event.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=8,
+            verified_detachment_id=event.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1479,9 +1525,23 @@ class Q9ViewSet(
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=9,
+                verified_detachment_id=event.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q9Serializer(event).data,
                             status=status.HTTP_200_OK)
         event.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=9,
+            verified_detachment_id=event.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1568,9 +1628,23 @@ class Q10ViewSet(
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=10,
+                verified_detachment_id=event.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q10Serializer(event).data,
                             status=status.HTTP_200_OK)
         event.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=10,
+            verified_detachment_id=event.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1660,9 +1734,23 @@ class Q11ViewSet(
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=11,
+                verified_detachment_id=event.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q11Serializer(event).data,
                             status=status.HTTP_200_OK)
         event.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=11,
+            verified_detachment_id=event.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1752,9 +1840,23 @@ class Q12ViewSet(
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=12,
+                verified_detachment_id=event.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q12Serializer(event).data,
                             status=status.HTTP_200_OK)
         event.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=12,
+            verified_detachment_id=event.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1965,11 +2067,25 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if request.method == 'POST':
             raw.is_verified = True
             raw.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=5,
+                verified_detachment_id=raw.detachment_report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(
                 {"status": "Данные по организации "
                            "мероприятия верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=5,
+            verified_detachment_id=raw.detachment_report.detachment.id,
+            action='Отклонил'
+        )
         raw.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2081,8 +2197,22 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.request.method == 'POST':
             detachment_report.is_verified = True
             detachment_report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=6,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             return Response(status=status.HTTP_201_CREATED)
         if self.request.method == 'DELETE':
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=6,
+                verified_detachment_id=detachment.id,
+                action='Отклонил'
+            )
             detachment_report.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2385,11 +2515,25 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if request.method == 'POST':
             raw.is_verified = True
             raw.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=15,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             return Response(
                 {"status": "Данные по организации "
                            "мероприятия верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=15,
+            verified_detachment_id=detachment.id,
+            action='Отклонил'
+        )
         raw.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2691,6 +2835,13 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if request.method == 'POST':
             event.is_verified = True
             event.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=13,
+                verified_detachment_id=report.detachment.id,
+                action='Верифицировал'
+            )
             participants_entry = CompetitionParticipants.objects.filter(
                 junior_detachment=report.detachment,
                 competition_id=competition_id
@@ -2783,6 +2934,13 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                            "мероприятия верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=13,
+            verified_detachment_id=report.detachment.id,
+            action='Отклонил'
+        )
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -3085,6 +3243,13 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     data={'detail': 'Верифицированный отчет нельзя удалить.'}
                 )
             q14_labor_project.delete()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=14,
+                verified_detachment_id=detachment_report.detachment.id,
+                action='Отклонил'
+            )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if q14_labor_project.is_verified:
@@ -3094,6 +3259,13 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         q14_labor_project.is_verified = True
         q14_labor_project.save()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=14,
+            verified_detachment_id=detachment_report.detachment.id,
+            action='Верифицировал'
+        )
         return Response(status=status.HTTP_200_OK)
 
 
@@ -3324,10 +3496,24 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         if self.request.method == 'DELETE':
             source_data.delete()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=17,
+                verified_detachment_id=detachment_report.detachment.id,
+                action='Отклонил'
+            )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         source_data.is_verified = True
         source_data.save()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=17,
+            verified_detachment_id=detachment_report.detachment.id,
+            action='Верифицировал'
+        )
         return Response(status=status.HTTP_200_OK)
 
 
@@ -3443,8 +3629,22 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         if self.request.method == 'POST':
             detachment_report.is_verified = True
             detachment_report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=18,
+                verified_detachment_id=detachment.id,
+                action='Верифицировал'
+            )
             return Response(status=status.HTTP_201_CREATED)
         if self.request.method == 'DELETE':
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=18,
+                verified_detachment_id=detachment.id,
+                action='Отклонил'
+            )
             detachment_report.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -3599,6 +3799,13 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         if request.method == 'POST':
             report.is_verified = True
             report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=19,
+                verified_detachment_id=report.detachment.id,
+                action='Верифицировал'
+            )
             participants_entry = CompetitionParticipants.objects.filter(
                 competition_id=settings.COMPETITION_ID,
                 junior_detachment=report.detachment
@@ -3662,6 +3869,13 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                            "Успешно верифицированы"},
                 status=status.HTTP_200_OK
             )
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=19,
+            verified_detachment_id=report.detachment.id,
+            action='Отклонил'
+        )
         report.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -3834,9 +4048,23 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         if request.method == 'POST':
             report.is_verified = True
             report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=20,
+                verified_detachment_id=report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q20ReportSerializer(report).data,
                             status=status.HTTP_200_OK)
         report.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=20,
+            verified_detachment_id=report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False,
@@ -4162,9 +4390,23 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         if request.method == 'POST':
             report.is_verified = True
             report.save()
+            QVerificationLog.objects.create(
+                competition_id=self.kwargs.get('competition_pk'),
+                verifier_id=request.user.id,
+                q_number=16,
+                verified_detachment_id=report.detachment.id,
+                action='Верифицировал'
+            )
             return Response(Q16ReportSerializer(report).data,
                             status=status.HTTP_200_OK)
         report.delete()
+        QVerificationLog.objects.create(
+            competition_id=self.kwargs.get('competition_pk'),
+            verifier_id=request.user.id,
+            q_number=16,
+            verified_detachment_id=report.detachment.id,
+            action='Отклонил'
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False,
@@ -4276,8 +4518,12 @@ def get_place_overall(request, competition_pk=None):
             {
                 "place": tandem_ranking.place,
                 "partner_detachment": (
-                    ShortDetachmentSerializer(tandem_ranking.detachment).data if is_older_detachment else
-                    ShortDetachmentSerializer(tandem_ranking.junior_detachment).data
+                    ShortDetachmentSerializer(
+                        tandem_ranking.detachment
+                    ).data if is_older_detachment else
+                    ShortDetachmentSerializer(
+                        tandem_ranking.junior_detachment
+                    ).data
                 )
             },
             status=status.HTTP_200_OK
@@ -4362,7 +4608,21 @@ class DetachmentCompetitionIsTandemView(APIView):
         competition = get_object_or_404(Competitions, pk=competition_pk)
 
         try:
-            result = tandem_or_start(competition, detachment, CompetitionParticipants)
+            result = tandem_or_start(
+                competition, detachment, CompetitionParticipants
+            )
             return Response({'is_tandem': result}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class QVerificationLogByNumberView(ListAPIView):
+    serializer_class = QVerificationLogSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = QVerificationLogFilter
+
+    def get_queryset(self):
+        competition_id = self.kwargs['competition_id']
+        return QVerificationLog.objects.filter(competition_id=competition_id)

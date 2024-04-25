@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 
 from headquarters.utils import image_path
 
@@ -505,6 +505,59 @@ class Detachment(Unit):
                                                'образовательного штаба.'
                 })
 
+    def handle_headquarter_removals(self, original):
+        if self.educational_headquarter is None and original.educational_headquarter is not None:
+            UserEducationalHeadquarterPosition.objects.filter(
+                headquarter=original.educational_headquarter
+            ).delete()
+
+        if self.local_headquarter is None and original.local_headquarter is not None:
+            UserLocalHeadquarterPosition.objects.filter(
+                headquarter=original.local_headquarter
+            ).delete()
+
+    def handle_headquarter_changes(self, original):
+        if self.educational_headquarter != original.educational_headquarter:
+            if original.educational_headquarter and self.educational_headquarter:
+                for user_position in UserEducationalHeadquarterPosition.objects.filter(
+                        headquarter=original.educational_headquarter
+                ):
+                    user_position.headquarter = self.educational_headquarter
+                    user_position.save()
+
+        if self.local_headquarter != original.local_headquarter:
+            if original.local_headquarter and self.local_headquarter:
+                for user_position in UserLocalHeadquarterPosition.objects.filter(
+                        headquarter=original.local_headquarter
+                ):
+                    user_position.headquarter = self.local_headquarter
+                    user_position.save()
+
+    def handle_new_headquarters(self, original):
+        default_position, _ = Position.objects.get_or_create(
+            name=settings.DEFAULT_POSITION_NAME
+        )
+
+        if self.educational_headquarter and not original.educational_headquarter:
+            self.create_positions_for_users(self.educational_headquarter, UserEducationalHeadquarterPosition,
+                                            default_position)
+
+        if self.local_headquarter and not original.local_headquarter:
+            self.create_positions_for_users(self.local_headquarter, UserLocalHeadquarterPosition, default_position)
+
+    def create_positions_for_users(self, headquarter, position_class, default_position):
+        default_position, created = Position.objects.get_or_create(
+            name=settings.DEFAULT_POSITION_NAME
+        )
+        user_ids = UserDetachmentPosition.objects.filter(headquarter=self).values_list('user_id', flat=True)
+        for user_id in user_ids:
+            position_class.objects.create(
+                user_id=user_id,
+                headquarter=headquarter,
+                position=default_position,
+                is_trusted=False
+            )
+
     def save(self, *args, **kwargs):
         """Автоматически заполняет региональный штаб по региону."""
         self.check_headquarters_relations()
@@ -514,6 +567,18 @@ class Detachment(Unit):
             self.educational_institution = (
                 self.educational_headquarter.educational_institution
             )
+
+        if self.pk:
+            original = Detachment.objects.get(pk=self.pk)
+
+            if original.regional_headquarter != self.regional_headquarter:
+                raise ValidationError('Нельзя изменить региональный штаб отряда.')
+
+            with transaction.atomic():
+                self.handle_headquarter_removals(original)
+                self.handle_headquarter_changes(original)
+                self.handle_new_headquarters(original)
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -589,15 +654,16 @@ class UserUnitPosition(models.Model):
             class_above = kwargs.pop('class_above', None)
             if headquarter and class_above:
                 user_id = self.user_id
-                if self.__class__.objects.filter(user_id=user_id).exists():
-                    raise ValidationError(
-                        'Пользователь уже является членом одного из отрядов.'
+                print(self.__class__)
+                print(self.__class__.objects.filter(user_id=user_id).exists())
+                if not self.__class__.objects.filter(user_id=user_id).exists():
+                    class_above.objects.create(
+                        user_id=user_id,
+                        headquarter=headquarter,
+                        position=default_position
                     )
-                class_above.objects.create(
-                    user_id=user_id,
-                    headquarter=headquarter,
-                    position=default_position
-                )
+                else:
+                    return
             else:
                 raise ValueError(
                     'headquarter и class_above должны быть переданы '
