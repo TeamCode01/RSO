@@ -694,7 +694,7 @@ class QVerificationLogAdmin(admin.ModelAdmin):
         'action',
         'timestamp'
     )
-    list_filter = ('timestamp', 'action', 'q_number', 'verifier')
+    list_filter = ('timestamp', 'action', 'q_number',)
 
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
