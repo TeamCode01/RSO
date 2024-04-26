@@ -15,7 +15,7 @@ from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
     CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
-    Q16ViewSet,
+    Q16ViewSet, Q17EventLinkViewSet,
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
@@ -207,6 +207,11 @@ router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q14/(?P<report_pk>\d+)/objects',
     Q14LaborProjectViewSet,
     basename='q14laborproject'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q17/(?P<report_pk>\d+)/objects',
+    Q17EventLinkViewSet,
+    basename='q17eventlink'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q15',

@@ -20,7 +20,7 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        get_district_hq_commander_num,
                        get_central_hq_commander_num, is_central_event_master)
 from competitions.models import (
-    CompetitionParticipants, Q13DetachmentReport, Q14DetachmentReport, Q5DetachmentReport,
+    CompetitionParticipants, Q13DetachmentReport, Q14DetachmentReport, Q17DetachmentReport, Q5DetachmentReport,
     Q15DetachmentReport
 )
 from api.utils import is_competition_participant
@@ -1039,6 +1039,25 @@ class IsQ15DetachmentReportAuthor(permissions.BasePermission):
         try:
             report = Q15DetachmentReport.objects.get(pk=report_pk)
         except Q15DetachmentReport.DoesNotExist:
+            return False
+        return report.detachment_id == detachment_id
+
+
+class IsQ17DetachmentReportAuthor(permissions.BasePermission):
+    """
+    Позволяет доступ к операциям только если подразделение пользователя
+    соответствует подразделению в отчете.
+    """
+
+    def has_permission(self, request, view):
+        try:
+            detachment_id = Detachment.objects.get(commander=request.user).id
+        except Detachment.DoesNotExist:
+            return False
+        report_pk = view.kwargs.get('report_pk')
+        try:
+            report = Q17DetachmentReport.objects.get(pk=report_pk)
+        except Q17DetachmentReport.DoesNotExist:
             return False
         return report.detachment_id == detachment_id
 
