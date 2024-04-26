@@ -605,6 +605,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100
 }
 
+AUTHENTICATION_BACKENDS = [
+    'api.backends.UserModelBackend'
+]
+
 DJOSER = {
     'LOGIN_FIELD': 'username',
     'USERNAME_FIELD': 'username',
