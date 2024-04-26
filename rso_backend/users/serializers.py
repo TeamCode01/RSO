@@ -384,8 +384,8 @@ class UserIdRegionSerializer(UserRegionSerializer):
     pass_code = serializers.CharField(source='user.documents.pass_code')
     inn = serializers.CharField(source='user.documents.inn')
     snils = serializers.CharField(source='user.documents.snils')
-    reg_region_name = serializers.SerializerMethodField()
-    reg_region_code = serializers.SerializerMethodField()
+    # reg_region_name = serializers.SerializerMethodField()
+    # reg_region_code = serializers.SerializerMethodField()
     study_institution = serializers.CharField(
         source='user.education.study_institution'
     )
@@ -403,7 +403,7 @@ class UserIdRegionSerializer(UserRegionSerializer):
     is_rso_member = serializers.BooleanField(source='user.is_rso_member')
     is_verified = serializers.BooleanField(source='user.is_verified')
     membership_fee = serializers.BooleanField(source='user.membership_fee')
-    centralhq_member = serializers.SerializerMethodField()
+    # centralhq_member = serializers.SerializerMethodField()
     centralhq_member_position = serializers.CharField(
         source='user.usercentralheadquarterposition.position.name',
         allow_null=True
@@ -411,7 +411,7 @@ class UserIdRegionSerializer(UserRegionSerializer):
     centralhq_commander = serializers.BooleanField(
         source='user.centralheadquarter_commander'
     )
-    districthq_member = serializers.SerializerMethodField()
+    # districthq_member = serializers.SerializerMethodField()
     districthq_member_position = serializers.CharField(
         source='user.userdistrictheadquarterposition.position.name',
         allow_null=True
@@ -419,7 +419,7 @@ class UserIdRegionSerializer(UserRegionSerializer):
     district_commander = serializers.BooleanField(
         source='user.districtheadquarter_commander'
     )
-    regionalhq_member = serializers.SerializerMethodField()
+    # regionalhq_member = serializers.SerializerMethodField()
     regionalhq_member_position = serializers.CharField(
         source='user.userregionalheadquarterposition.position.name',
         allow_null=True
@@ -427,7 +427,7 @@ class UserIdRegionSerializer(UserRegionSerializer):
     regionalhq_commander = serializers.BooleanField(
         source='user.regionalheadquarter_commander'
     )
-    localhq_member = serializers.SerializerMethodField()
+    # localhq_member = serializers.SerializerMethodField()
     localhq_member_position = serializers.CharField(
         source='user.userlocalheadquarterposition.position.name',
         allow_null=True
@@ -435,7 +435,7 @@ class UserIdRegionSerializer(UserRegionSerializer):
     localhq_commander = serializers.BooleanField(
         source='user.localheadquarter_commander'
     )
-    eduhq_member = serializers.SerializerMethodField()
+    # eduhq_member = serializers.SerializerMethodField()
     eduhq_member_position = serializers.CharField(
         source='user.usereducationalheadquarterposition.position.name',
         allow_null=True
@@ -443,7 +443,7 @@ class UserIdRegionSerializer(UserRegionSerializer):
     eduhq_commander = serializers.BooleanField(
         source='user.educationalheadquarter_commander'
     )
-    detachment_member = serializers.SerializerMethodField()
+    # detachment_member = serializers.SerializerMethodField()
     detachment_member_area = serializers.CharField(
         source='user.userdetachmentposition.headquarter.area.name'
     )
@@ -461,8 +461,8 @@ class UserIdRegionSerializer(UserRegionSerializer):
     class Meta:
         model = UserRegion
         fields = (
-            'reg_region_code',
-            'reg_region_name',
+            # 'reg_region_code',
+            # 'reg_region_name',
             'user_id',
             'first_name',
             'last_name',
@@ -494,22 +494,22 @@ class UserIdRegionSerializer(UserRegionSerializer):
             'is_rso_member',
             'is_verified',
             'membership_fee',
-            'centralhq_member',
+            # 'centralhq_member',
             'centralhq_member_position',
             'centralhq_commander',
-            'districthq_member',
+            # 'districthq_member',
             'districthq_member_position',
             'district_commander',
-            'regionalhq_member',
+            # 'regionalhq_member',
             'regionalhq_member_position',
             'regionalhq_commander',
-            'localhq_member',
+            # 'localhq_member',
             'localhq_member_position',
             'localhq_commander',
-            'eduhq_member',
+            # 'eduhq_member',
             'eduhq_member_position',
             'eduhq_commander',
-            'detachment_member',
+            # 'detachment_member',
             'detachment_member_area',
             'deatachment_member_position',
             'detachment_commander',
