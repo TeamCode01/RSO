@@ -539,69 +539,69 @@ class UserIdRegionSerializer(UserRegionSerializer):
         )
         return queryset
 
-    def get_reg_region_name(self, obj):
-        if obj.reg_region:
-            return obj.reg_region.name
-        return None
+    # def get_reg_region_name(self, obj):
+    #     if obj.reg_region:
+    #         return obj.reg_region.name
+    #     return None
 
-    def get_reg_region_code(self, obj):
-        if obj.reg_region:
-            return obj.reg_region.code
-        return None
+    # def get_reg_region_code(self, obj):
+    #     if obj.reg_region:
+    #         return obj.reg_region.code
+    #     return None
 
-    def get_centralhq_member(self, obj):
-        try:
-            return obj.user.usercentralheadquarterposition.headquarter.name
-        except ObjectDoesNotExist:
-            try:
-                return obj.user.centralheadquarter_commander.name
-            except ObjectDoesNotExist:
-                return None
+    # def get_centralhq_member(self, obj):
+    #     try:
+    #         return obj.user.usercentralheadquarterposition.headquarter.name
+    #     except ObjectDoesNotExist:
+    #         try:
+    #             return obj.user.centralheadquarter_commander.name
+    #         except ObjectDoesNotExist:
+    #             return None
 
-    def get_districthq_member(self, obj):
-        try:
-            return obj.user.userdistrictheadquarterposition.headquarter.name
-        except ObjectDoesNotExist:
-            try:
-                return obj.user.districtheadquarter_commander.name
-            except ObjectDoesNotExist:
-                return None
+    # def get_districthq_member(self, obj):
+    #     try:
+    #         return obj.user.userdistrictheadquarterposition.headquarter.name
+    #     except ObjectDoesNotExist:
+    #         try:
+    #             return obj.user.districtheadquarter_commander.name
+    #         except ObjectDoesNotExist:
+    #             return None
     
-    def get_regionalhq_member(self, obj):
-        try:
-            return obj.user.userregionalheadquarterposition.headquarter.name
-        except ObjectDoesNotExist:
-            try:
-                return obj.user.regionalheadquarter_commander.name
-            except ObjectDoesNotExist:
-                return None
+    # def get_regionalhq_member(self, obj):
+    #     try:
+    #         return obj.user.userregionalheadquarterposition.headquarter.name
+    #     except ObjectDoesNotExist:
+    #         try:
+    #             return obj.user.regionalheadquarter_commander.name
+    #         except ObjectDoesNotExist:
+    #             return None
             
-    def get_localhq_member(self, obj):
-        try:
-            return obj.user.userlocalheadquarterposition.headquarter.name
-        except ObjectDoesNotExist:
-            try:
-                return obj.user.localheadquarter_commander.name
-            except ObjectDoesNotExist:
-                return None
+    # def get_localhq_member(self, obj):
+    #     try:
+    #         return obj.user.userlocalheadquarterposition.headquarter.name
+    #     except ObjectDoesNotExist:
+    #         try:
+    #             return obj.user.localheadquarter_commander.name
+    #         except ObjectDoesNotExist:
+    #             return None
     
-    def get_eduhq_member(self, obj):
-        try:
-            return obj.user.usereducationalheadquarterposition.headquarter.name
-        except ObjectDoesNotExist:
-            try:
-                return obj.user.educationalheadquarter_commander.name
-            except ObjectDoesNotExist:
-                return None
+    # def get_eduhq_member(self, obj):
+    #     try:
+    #         return obj.user.usereducationalheadquarterposition.headquarter.name
+    #     except ObjectDoesNotExist:
+    #         try:
+    #             return obj.user.educationalheadquarter_commander.name
+    #         except ObjectDoesNotExist:
+    #             return None
     
-    def get_detachment_member(self, obj):
-        try:
-            return obj.user.userdetachmentposition.headquarter.name
-        except ObjectDoesNotExist:
-            try:
-                return obj.user.detachment_commander.name
-            except ObjectDoesNotExist:
-                return None
+    # def get_detachment_member(self, obj):
+    #     try:
+    #         return obj.user.userdetachmentposition.headquarter.name
+    #     except ObjectDoesNotExist:
+    #         try:
+    #             return obj.user.detachment_commander.name
+    #         except ObjectDoesNotExist:
+    #             return None
 
 
 class UsersParentSerializer(serializers.ModelSerializer):
