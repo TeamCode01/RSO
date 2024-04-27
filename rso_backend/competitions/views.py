@@ -916,7 +916,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         detail=False,
         methods=['get'],
         url_path='get-place',
-        serializer_class=None
+        serializer_class=None,
     )
     def get_place(self, request, competition_pk, **kwargs):
         """Определение места по показателю.
@@ -2002,7 +2002,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2227,7 +2227,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2445,7 +2445,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2461,7 +2461,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ).first()
         if not tandem_ranking:
             tandem_ranking = Q15Rank.objects.filter(
-                junior_detachment=report.detachment,
+                detachment=report.detachment,
                 competition_id=competition_id
             ).first()
 
@@ -3767,7 +3767,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
