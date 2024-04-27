@@ -28,6 +28,8 @@ from api.permissions import (
     IsCommanderDetachmentInParameterOrRegionalCommander,
     IsCommanderDetachmentInParameterOrRegionalCommissioner,
     IsCompetitionParticipantAndCommander,
+    IsQ14DetachmentReportAuthor,
+    IsQ17DetachmentReportAuthor,
     IsRegionalCommanderOrAdmin, IsRegionalCommanderOrAdminOrAuthor,
     IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
@@ -3269,6 +3271,61 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
+class Q14LaborProjectViewSet(viewsets.ModelViewSet):
+    """
+    Редактирование и удаление объектов Q14LaborProject.
+
+    - `PUT/PATCH`: Обновляет объект Q14LaborProject, если
+                   он не был верифицирован.
+                   Ограничено для объектов, принадлежащих отчету подразделения
+                   пользователя (где является командиром).
+
+    - `DELETE`: Удаляет объект Q14LaborProject,
+                если он не был верифицирован.
+                Ограничено для объектов, принадлежащих отчету
+                подразделения пользователя (где является командиром).
+
+    Примечание: Операции обновления и удаления доступны только
+                если `is_verified` объекта равно `False`
+                и если подразделение пользователя  (где является командиром)
+                соответствует подразделению в отчете.
+    """
+
+    serializer_class = Q14LaborProjectSerializer
+    permission_classes = (IsQ14DetachmentReportAuthor,)
+
+    def get_queryset(self):
+        report_pk = self.kwargs.get('report_pk')
+        return Q14LaborProject.objects.filter(
+            detachment_report_id=report_pk
+        )
+
+    def update(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
 class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
     Количество упоминаний в СМИ о прошедших творческих, добровольческих
@@ -3471,7 +3528,6 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
                       source_id=None):
         """Верификация отчета по показателю.
 
-        
         competition_pk - id конкурса;
         id - id отчета;
         source_id - id одной публикации из привязанных к отчёту.
@@ -3516,6 +3572,60 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
         return Response(status=status.HTTP_200_OK)
 
+
+class Q17EventLinkViewSet(viewsets.ModelViewSet):
+    """
+    Редактирование и удаление объектов Q17EventLink.
+
+    - `PUT/PATCH`: Обновляет объект Q17EventLink, если
+                   он не был верифицирован.
+                   Ограничено для объектов, принадлежащих отчету подразделения
+                   пользователя (где является командиром).
+
+    - `DELETE`: Удаляет объект Q17EventLink,
+                если он не был верифицирован.
+                Ограничено для объектов, принадлежащих отчету
+                подразделения пользователя (где является командиром).
+
+    Примечание: Операции обновления и удаления доступны только
+                если `is_verified` объекта равно `False`
+                и если подразделение пользователя  (где является командиром)
+                соответствует подразделению в отчете.
+    """
+
+    serializer_class = Q17EventLinkSerializer
+    permission_classes = (IsQ17DetachmentReportAuthor,)
+
+    def get_queryset(self):
+        report_pk = self.kwargs.get('report_pk')
+        return Q17EventLink.objects.filter(
+            detachment_report_id=report_pk
+        )
+
+    def update(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
 
 class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
