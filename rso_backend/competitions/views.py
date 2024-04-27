@@ -3333,16 +3333,16 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     Пример POST-запроса:
     {
-    "source_data": [
-        {
-        "source_name": "string",
-        "link": "http://127.0.0.1:8000/swagger/"
-        },
-        {
-        "source_name": "string2",
-        "link": "http://127.0.0.1:8000/"
-        }
-    ]
+        "source_data": [
+            {
+            "source_name": "string",
+            "link": "http://127.0.0.1:8000/swagger/"
+            },
+            {
+            "source_name": "string2",
+            "link": "http://127.0.0.1:8000/"
+            }
+        ]
     }
 
     Оба поля ввода обязательные. При нажатии на “Добавить источник”
@@ -4627,6 +4627,7 @@ def get_place_overall(request, competition_pk=None):
         return Response(
             {
                 "place": tandem_ranking.place,
+                "places_sum": tandem_ranking.places_sum,
                 "partner_detachment": (
                     ShortDetachmentSerializer(
                         tandem_ranking.detachment
@@ -4649,7 +4650,11 @@ def get_place_overall(request, competition_pk=None):
     ).first()
     if ranking and ranking.place is not None:
         return Response(
-            {"place": ranking.place}, status=status.HTTP_200_OK
+            {
+                "place": ranking.place,
+                "places_sum": ranking.places_sum,
+
+            }, status=status.HTTP_200_OK
         )
 
     return Response(
