@@ -14,8 +14,8 @@ from api.views import (AreaViewSet, EducationalInstitutionViewSet,
 from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q17DetachmentReportViewSet,
-    Q16ViewSet,
+    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
+    Q16ViewSet, Q17EventLinkViewSet,
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
@@ -194,14 +194,24 @@ router.register(
     basename='q13'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q13/(?P<report_pk>\d+)/events',
+    r'competitions/(?P<competition_pk>\d+)/reports/q13/(?P<report_pk>\d+)/objects',
     Q13EventOrganizationViewSet,
     basename='q13eventorganization'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/participants',
+    r'competitions/(?P<competition_pk>\d+)/reports/q5/(?P<report_pk>\d+)/objects',
     Q5EducatedParticipantViewSet,
     basename='q5educatedparticipant'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q14/(?P<report_pk>\d+)/objects',
+    Q14LaborProjectViewSet,
+    basename='q14laborproject'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q17/(?P<report_pk>\d+)/objects',
+    Q17EventLinkViewSet,
+    basename='q17eventlink'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q15',
@@ -209,8 +219,8 @@ router.register(
     basename='q15'
 )
 router.register(
-    r'competitions/(?P<competition_pk>\d+)/reports/q15/(?P<report_pk>\d+)/grants',
-    Q15DetachmentReportViewSet,
+    r'competitions/(?P<competition_pk>\d+)/reports/q15/(?P<report_pk>\d+)/objects',
+    Q15GrantDataViewSet,
     basename='q15grants'
 )
 router.register(
@@ -491,7 +501,7 @@ user_nested_urls = [
         name='get-place-q4'
     ),
     path(
-        'competitions/<int:q_number>/verification_logs/',
+        'competitions/<int:competition_pk>/verification_logs/<int:q_number>/',
         QVerificationLogByNumberView.as_view(),
         name='get-verification-log',
     ),

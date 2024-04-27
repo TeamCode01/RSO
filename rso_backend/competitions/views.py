@@ -28,6 +28,8 @@ from api.permissions import (
     IsCommanderDetachmentInParameterOrRegionalCommander,
     IsCommanderDetachmentInParameterOrRegionalCommissioner,
     IsCompetitionParticipantAndCommander,
+    IsQ14DetachmentReportAuthor,
+    IsQ17DetachmentReportAuthor,
     IsRegionalCommanderOrAdmin, IsRegionalCommanderOrAdminOrAuthor,
     IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
@@ -914,7 +916,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         detail=False,
         methods=['get'],
         url_path='get-place',
-        serializer_class=None
+        serializer_class=None,
     )
     def get_place(self, request, competition_pk, **kwargs):
         """Определение места по показателю.
@@ -2000,7 +2002,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2225,7 +2227,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2443,7 +2445,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -2459,7 +2461,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ).first()
         if not tandem_ranking:
             tandem_ranking = Q15Rank.objects.filter(
-                junior_detachment=report.detachment,
+                detachment=report.detachment,
                 competition_id=competition_id
             ).first()
 
@@ -3269,6 +3271,61 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
+class Q14LaborProjectViewSet(viewsets.ModelViewSet):
+    """
+    Редактирование и удаление объектов Q14LaborProject.
+
+    - `PUT/PATCH`: Обновляет объект Q14LaborProject, если
+                   он не был верифицирован.
+                   Ограничено для объектов, принадлежащих отчету подразделения
+                   пользователя (где является командиром).
+
+    - `DELETE`: Удаляет объект Q14LaborProject,
+                если он не был верифицирован.
+                Ограничено для объектов, принадлежащих отчету
+                подразделения пользователя (где является командиром).
+
+    Примечание: Операции обновления и удаления доступны только
+                если `is_verified` объекта равно `False`
+                и если подразделение пользователя  (где является командиром)
+                соответствует подразделению в отчете.
+    """
+
+    serializer_class = Q14LaborProjectSerializer
+    permission_classes = (IsQ14DetachmentReportAuthor,)
+
+    def get_queryset(self):
+        report_pk = self.kwargs.get('report_pk')
+        return Q14LaborProject.objects.filter(
+            detachment_report_id=report_pk
+        )
+
+    def update(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
 class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
     Количество упоминаний в СМИ о прошедших творческих, добровольческих
@@ -3276,16 +3333,16 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     Пример POST-запроса:
     {
-    "source_data": [
-        {
-        "source_name": "string",
-        "link": "http://127.0.0.1:8000/swagger/"
-        },
-        {
-        "source_name": "string2",
-        "link": "http://127.0.0.1:8000/"
-        }
-    ]
+        "source_data": [
+            {
+            "source_name": "string",
+            "link": "http://127.0.0.1:8000/swagger/"
+            },
+            {
+            "source_name": "string2",
+            "link": "http://127.0.0.1:8000/"
+            }
+        ]
     }
 
     Оба поля ввода обязательные. При нажатии на “Добавить источник”
@@ -3471,7 +3528,6 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
                       source_id=None):
         """Верификация отчета по показателю.
 
-        
         competition_pk - id конкурса;
         id - id отчета;
         source_id - id одной публикации из привязанных к отчёту.
@@ -3516,6 +3572,60 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
         return Response(status=status.HTTP_200_OK)
 
+
+class Q17EventLinkViewSet(viewsets.ModelViewSet):
+    """
+    Редактирование и удаление объектов Q17EventLink.
+
+    - `PUT/PATCH`: Обновляет объект Q17EventLink, если
+                   он не был верифицирован.
+                   Ограничено для объектов, принадлежащих отчету подразделения
+                   пользователя (где является командиром).
+
+    - `DELETE`: Удаляет объект Q17EventLink,
+                если он не был верифицирован.
+                Ограничено для объектов, принадлежащих отчету
+                подразделения пользователя (где является командиром).
+
+    Примечание: Операции обновления и удаления доступны только
+                если `is_verified` объекта равно `False`
+                и если подразделение пользователя  (где является командиром)
+                соответствует подразделению в отчете.
+    """
+
+    serializer_class = Q17EventLinkSerializer
+    permission_classes = (IsQ17DetachmentReportAuthor,)
+
+    def get_queryset(self):
+        report_pk = self.kwargs.get('report_pk')
+        return Q17EventLink.objects.filter(
+            detachment_report_id=report_pk
+        )
+
+    def update(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        event_org = self.get_object()
+        if event_org.is_verified:
+            return Response(
+                {
+                    'detail': 'Нельзя редактировать/удалять верифицированные '
+                              'записи.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
 
 class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
@@ -3657,7 +3767,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return obj.detachment
 
     @action(detail=False, methods=['get'], url_path='get-place',
-            permission_classes=(IsCompetitionParticipantAndCommander,))
+            permission_classes=(permissions.IsAuthenticated, IsCompetitionParticipantAndCommander,))
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
@@ -4517,6 +4627,7 @@ def get_place_overall(request, competition_pk=None):
         return Response(
             {
                 "place": tandem_ranking.place,
+                "places_sum": tandem_ranking.places_sum,
                 "partner_detachment": (
                     ShortDetachmentSerializer(
                         tandem_ranking.detachment
@@ -4539,7 +4650,11 @@ def get_place_overall(request, competition_pk=None):
     ).first()
     if ranking and ranking.place is not None:
         return Response(
-            {"place": ranking.place}, status=status.HTTP_200_OK
+            {
+                "place": ranking.place,
+                "places_sum": ranking.places_sum,
+
+            }, status=status.HTTP_200_OK
         )
 
     return Response(
@@ -4624,5 +4739,9 @@ class QVerificationLogByNumberView(ListAPIView):
     filterset_class = QVerificationLogFilter
 
     def get_queryset(self):
-        competition_id = self.kwargs['competition_id']
-        return QVerificationLog.objects.filter(competition_id=competition_id)
+        competition_id = self.kwargs['competition_pk']
+        q_number = self.kwargs['q_number']
+        return QVerificationLog.objects.filter(
+            competition_id=competition_id,
+            q_number=q_number
+        )
