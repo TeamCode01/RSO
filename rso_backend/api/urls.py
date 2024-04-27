@@ -501,7 +501,7 @@ user_nested_urls = [
         name='get-place-q4'
     ),
     path(
-        'competitions/<int:q_number>/verification_logs/',
+        'competitions/<int:competition_pk>/verification_logs/<int:q_number>/',
         QVerificationLogByNumberView.as_view(),
         name='get-verification-log',
     ),

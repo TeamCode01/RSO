@@ -4739,5 +4739,9 @@ class QVerificationLogByNumberView(ListAPIView):
     filterset_class = QVerificationLogFilter
 
     def get_queryset(self):
-        competition_id = self.kwargs['competition_id']
-        return QVerificationLog.objects.filter(competition_id=competition_id)
+        competition_id = self.kwargs['competition_pk']
+        q_number = self.kwargs['q_number']
+        return QVerificationLog.objects.filter(
+            competition_id=competition_id,
+            q_number=q_number
+        )
