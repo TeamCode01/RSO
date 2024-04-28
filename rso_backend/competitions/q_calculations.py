@@ -983,7 +983,7 @@ def calculate_q3_q4_place(competition_id: int):
             Q4Ranking.objects.create(
                 competition_id=competition_id,
                 detachment=entry.junior_detachment,
-                place=q3_place,
+                place=q4_place,
             )
     for tandem_entry in tandem_entries:
         q3_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'university')
@@ -1300,6 +1300,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         user=detachment.commander,
         category=category
     ).aggregate(Max('score'))['score__max'] or 0
+    logger.info(f'у командира {detachment} {detachment.commander} очков - {commander_score}')
     logger.info(f'Command score for entry {CompetitionParticipants} is {commander_score}')
 
     if category == 'university':
@@ -1328,16 +1329,22 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         participants = UserDetachmentPosition.objects.filter(
             headquarter=detachment
         )
+        logger.info(f'{participants.count()} участников для отряда {detachment}')
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
                 user=participant.user,
                 category=category
             ).aggregate(Max('score'))['score__max']
+            logger.info(f'у участника {participant} очков - {participant_max_score}')
             if participant_max_score:
                 score += participant_max_score
 
         # Рассчитываем средний балл
         average_score = (commander_score + score) / (len(participants) + 1)
+        logger.info(
+            f'Средний балл отряда - {average_score}. '
+            f'Рассчитано по формуле {commander_score + score} / {len(participants)+1}'
+        )
 
     # Определяем место
     place = determine_q3_q4_place(average_score)
