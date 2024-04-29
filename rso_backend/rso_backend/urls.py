@@ -40,7 +40,7 @@ else:
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('auth/', include('rest_framework_social_oauth2.urls', namespace='authorize')),
+    path('auth/', include('rest_framework_social_oauth2.urls', namespace='authorize')),
     path('api/v1/', include('api.urls')),
     path('api/v1/', include('djoser.urls')),
     path('api/v1/', include('djoser.urls.authtoken')),
