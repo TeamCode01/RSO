@@ -618,11 +618,11 @@ if DEBUG:
 DRFSO2_URL_NAMESPACE='authorize'
 
 
-AUTHENTICATION_BACKENDS = [
-    'api.backends.UserModelBackend',
-    'social_core.backends.vk.VKOAuth2',
-    'rest_framework_social_oauth2.backends.DjangoOAuth2',
-]
+# AUTHENTICATION_BACKENDS = [
+#     'api.backends.UserModelBackend',
+#     'social_core.backends.vk.VKOAuth2',
+#     'rest_framework_social_oauth2.backends.DjangoOAuth2',
+# ]
 
 DJOSER = {
     'LOGIN_FIELD': 'username',
