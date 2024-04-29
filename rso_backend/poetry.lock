@@ -555,6 +555,23 @@ Django = ">=3.2"
 tablib = {version = "3.5.0", extras = ["html", "ods", "xls", "xlsx", "yaml"]}
 
 [[package]]
+name = "django-oauth-toolkit"
+version = "2.3.0"
+description = "OAuth2 Provider for Django"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-oauth-toolkit-2.3.0.tar.gz", hash = "sha256:cf1cb1a5744672e6bd7d66b4a110a463bcef9cf5ed4f27e29682cc6a4d0df1ed"},
+    {file = "django_oauth_toolkit-2.3.0-py3-none-any.whl", hash = "sha256:47dfeab97ec21496f307c2cf3468e64ca08897fa499bf3104366d32005c9111d"},
+]
+
+[package.dependencies]
+django = ">=2.2,<4.0.0 || >4.0.0"
+jwcrypto = ">=0.8.0"
+oauthlib = ">=3.1.0"
+requests = ">=2.13.0"
+
+[[package]]
 name = "django-redis"
 version = "5.4.0"
 description = "Full featured redis cache backend for Django."
@@ -571,6 +588,22 @@ redis = ">=3,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1"
 
 [package.extras]
 hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
+
+[[package]]
+name = "django-rest-framework-social-oauth2"
+version = "1.2.0"
+description = "python-social-auth and oauth2 support for django-rest-framework"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-rest-framework-social-oauth2-1.2.0.tar.gz", hash = "sha256:c5ca63bbb7d5530deedc243cdbea77c74b1b3739480ae3a4f2f61d1cb7ad8c2b"},
+    {file = "django_rest_framework_social_oauth2-1.2.0-py3-none-any.whl", hash = "sha256:5314a6897ce43844ac476f4311998b1f450d4d08bae0224ee835065c89f45c7b"},
+]
+
+[package.dependencies]
+django-oauth-toolkit = ">=0.12.0"
+djangorestframework = ">=3.10.3"
+social-auth-app-django = ">=3.1.0"
 
 [[package]]
 name = "django-templated-mail"
@@ -896,6 +929,21 @@ files = [
 
 [package.extras]
 colors = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "jwcrypto"
+version = "1.5.6"
+description = "Implementation of JOSE Web standards"
+optional = false
+python-versions = ">= 3.8"
+files = [
+    {file = "jwcrypto-1.5.6-py3-none-any.whl", hash = "sha256:150d2b0ebbdb8f40b77f543fb44ffd2baeff48788be71f67f03566692fd55789"},
+    {file = "jwcrypto-1.5.6.tar.gz", hash = "sha256:771a87762a0c081ae6166958a954f80848820b2ab066937dc8b8379d65b1b039"},
+]
+
+[package.dependencies]
+cryptography = ">=3.4"
+typing-extensions = ">=4.5.0"
 
 [[package]]
 name = "kombu"
@@ -1747,4 +1795,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "287f29a6fc3be81457815dc15d2a47f97b8de2559246c8fb27348d20de2197e4"
+content-hash = "46ed5d4c1800cb35b1263a76bfe70771854535cfd0442ba0ef875f5c1f31d747"
