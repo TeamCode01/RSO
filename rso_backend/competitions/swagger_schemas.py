@@ -213,3 +213,47 @@ q9schema_request = openapi.Schema(
         )
     }
 )
+
+
+q7schema_request_update = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'number_of_participants': openapi.Schema(
+            type=openapi.TYPE_INTEGER,
+            title='Количество участников',
+            required='false',
+            minimum=1,
+            maximum=1000
+        ),
+        'links': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            description='Ссылки на публикации',
+            required='true',
+            items=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                required=['link'],
+                properties={
+                    'link': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        title='Ссылка на публикацию о мероприятии',
+                        format='url',
+                        maxLength=300
+                    )
+                }
+            )
+        )
+    }
+)
+
+
+q9schema_request_update = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        "prize_place": openapi.Schema(
+            type=openapi.TYPE_INTEGER,
+            required="true",
+            minimum=1,
+            maximum=3
+        ),
+    },
+)

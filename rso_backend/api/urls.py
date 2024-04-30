@@ -14,12 +14,12 @@ from api.views import (AreaViewSet, EducationalInstitutionViewSet,
 from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10ViewSet, Q11ViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
+    CompetitionViewSet, Q10UpdateDestroyViewSet, Q10ViewSet, Q11UpdateDestroyViewSet, Q11ViewSet, Q12UpdateDestroyViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
     Q16ViewSet, Q17EventLinkViewSet,
-    Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet,
+    Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet, Q7UpdateDestroyViewSet,
     Q7ViewSet,
     Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
-    Q18DetachmentReportViewSet, Q8ViewSet, Q9ViewSet, get_place_q1,
+    Q18DetachmentReportViewSet, Q8UpdateDestroyViewSet, Q8ViewSet, Q9UpdateDestroyViewSet, Q9ViewSet, get_place_q1,
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
     Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place,
@@ -134,9 +134,19 @@ router.register(
     basename='q7'
 )
 router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q7/(?P<report_pk>\d+)/objects',
+    Q7UpdateDestroyViewSet,
+    basename='q7_update_destroy'
+)
+router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q8',
     Q8ViewSet,
     basename='q8'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q8/(?P<report_pk>\d+)/objects',
+    Q8UpdateDestroyViewSet,
+    basename='q8_update_destroy'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q9',
@@ -144,9 +154,19 @@ router.register(
     basename='q9'
 )
 router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q9/(?P<report_pk>\d+)/objects',
+    Q9UpdateDestroyViewSet,
+    basename='q9_update_destroy'
+)
+router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q10',
     Q10ViewSet,
     basename='q10'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q10/(?P<report_pk>\d+)/objects',
+    Q10UpdateDestroyViewSet,
+    basename='q10_update_destroy'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q11',
@@ -154,9 +174,19 @@ router.register(
     basename='q11'
 )
 router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q11/(?P<report_pk>\d+)/objects',
+    Q11UpdateDestroyViewSet,
+    basename='q11_update_destroy'
+)
+router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q12',
     Q12ViewSet,
     basename='q12'
+)
+router.register(
+    r'competitions/(?P<competition_pk>\d+)/reports/q12/(?P<report_pk>\d+)/objects',
+    Q12UpdateDestroyViewSet,
+    basename='q12_update_destroy'
 )
 router.register(
     r'competitions/(?P<competition_pk>\d+)/reports/q14',
@@ -514,6 +544,7 @@ user_nested_urls = [
 ]
 
 urlpatterns = [
+
     path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
     path(
         'reset_password/',
