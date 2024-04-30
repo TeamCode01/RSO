@@ -230,7 +230,7 @@ class Q7Serializer(
     links = LinksQ7Serializer(
         many=True
     )
-    detachment_report = ShortQ7ReportSerializer()
+    detachment_report = ShortQ7ReportSerializer(read_only=True)
 
     class Meta:
         model = Q7
@@ -413,7 +413,7 @@ class Q8Serializer(
     links = LinksQ8Serializer(
         many=True
     )
-    detachment_report = ShortQ8ReportSerializer()
+    detachment_report = ShortQ8ReportSerializer(read_only=True)
 
     class Meta:
         model = Q8
@@ -582,7 +582,7 @@ class ShortQ9ReportSerializer(
 class Q9Serializer(
     serializers.ModelSerializer
 ):
-    detachment_report = ShortQ9ReportSerializer()
+    detachment_report = ShortQ9ReportSerializer(read_only=True)
 
     class Meta:
         model = Q9
@@ -676,7 +676,7 @@ class ShortQ10ReportSerializer(
 class Q10Serializer(
     serializers.ModelSerializer
 ):
-    detachment_report = ShortQ10ReportSerializer()
+    detachment_report = ShortQ10ReportSerializer(read_only=True)
 
     class Meta:
         model = Q10
@@ -770,7 +770,7 @@ class ShortQ11ReportSerializer(
 class Q11Serializer(
     serializers.ModelSerializer
 ):
-    detachment_report = ShortQ11ReportSerializer()
+    detachment_report = ShortQ11ReportSerializer(read_only=True)
 
     class Meta:
         model = Q11
@@ -864,7 +864,7 @@ class ShortQ12ReportSerializer(
 class Q12Serializer(
     serializers.ModelSerializer
 ):
-    detachment_report = ShortQ12ReportSerializer()
+    detachment_report = ShortQ12ReportSerializer(read_only=True)
 
     class Meta:
         model = Q12
