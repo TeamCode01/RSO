@@ -952,7 +952,7 @@ def calculate_q1_score(competition_id):
     # score по дефолту 1, иначе в таске как False проходит, не считается
     for data in detachments_data:
         score = 1
-        if data[1] >= 10:
+        if data[1] <= 10:
             score = data[2] * 1 + 1
         elif data[1] > 10 and data[1] <= 20:
             score = data[2] * 0.75 + 1
