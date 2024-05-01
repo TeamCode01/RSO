@@ -1167,3 +1167,13 @@ class OnlyStuffOrCentralCommander(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return is_stuff_or_central_commander(request)
+
+
+class PersonalDataPermissionForGET(PersonalDataPermission):
+    """Пермишен для персональных данных.
+
+    При GET-запросе проверяет является ди юзер командиром РШ.
+    """
+
+    def has_permission(self, request, view):
+        return is_regional_commander(request.user)

@@ -21,10 +21,10 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere, IsStuffOrAuthor,
+from api.permissions import (IsCommanderOrTrustedAnywhere, IsRegionalCommanderOrAuthor, IsStuffOrAuthor,
                              PersonalDataPermission,
                              IsForeignAdditionalDocsAuthor,
-                             OnlyStuffOrCentralCommander,)
+                             OnlyStuffOrCentralCommander, PersonalDataPermissionForGET,)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
 from users.filters import RSOUserFilter
@@ -465,11 +465,16 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
         ]
         }
 
+        GET-запрос на /api/v1/rsousers/foreign_parent_docsuments/{id}/:
+        id - ID юзера, чьи документы необходимо получить.
     """
 
-    queryset = UserForeignParentDocs.objects.all()
     serializer_class = UserForeignParentDocsSerializer
-    permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+    permission_classes = (permissions.IsAuthenticated, PersonalDataPermissionForGET)
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        return UserForeignParentDocs.objects.filter(user=user_id)
 
     def get_object(self):
         return get_object_or_404(UserForeignParentDocs, user=self.request.user)

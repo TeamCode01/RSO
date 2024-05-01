@@ -264,6 +264,7 @@ ForeignUserDocsVS = ForeignUserDocumentsViewSet.as_view(
 ForeignParentDocsVS = UserForeignParentDocsViewSet.as_view(
     RETRIEVE_CREATE | DELETE
 )
+ForeignParentDocsListVS = UserForeignParentDocsViewSet.as_view(LIST)
 AdditionalDocsVS = AdditionalForeignDocsViewSet.as_view(
     DELETE
 )
@@ -303,6 +304,11 @@ user_nested_urls = [
         'rsousers/me/foreign_parent_documents/',
         ForeignParentDocsVS,
         name='foreign-parent-documents'
+    ),
+    path(
+        'rsousers/foreign_parent_docsuments/<int:pk>/',
+        ForeignParentDocsListVS,
+        name='foreign-parent-documents-list'
     ),
     path(
         'rsousers/me/foreign_parent_additional_documents/<int:pk>/',
