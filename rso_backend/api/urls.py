@@ -291,6 +291,7 @@ UserStatementDownloadAllVS = UserStatementDocumentsViewSet.as_view(
 ForeignUserDocsVS = ForeignUserDocumentsViewSet.as_view(
     UPDATE_RETRIEVE
 )
+ForeignUserDocsListVS = ForeignUserDocumentsViewSet.as_view(LIST)
 ForeignParentDocsVS = UserForeignParentDocsViewSet.as_view(
     RETRIEVE_CREATE | DELETE
 )
@@ -329,6 +330,11 @@ user_nested_urls = [
         'rsousers/me/foreign_documents/',
         ForeignUserDocsVS,
         name='foreign-documents'
+    ),
+    path(
+        'rsousers/foreign_documents/<int:pk>/',
+        ForeignUserDocsListVS,
+        name='foreign-documents-list'
     ),
     path(
         'rsousers/me/foreign_parent_documents/',
