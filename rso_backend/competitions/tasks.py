@@ -26,31 +26,36 @@ logger = logging.getLogger('tasks')
 
 
 @shared_task
-def calculate_q14_places_task():
-    logger.info('Начинаем считать места по 14 показателю')
-    calculate_q14_place(competition_id=settings.COMPETITION_ID)
-    logger.info(
-        'Посчитали.'
-    )
-
+def calculate_q1_score_task():
+    """Считает очки по 1 показателю."""
+    calculate_q1_score(competition_id=settings.COMPETITION_ID)
 
 
 @shared_task
-def calculate_q17_places_task():
-    logger.info('Начинаем считать места по 17 показателю')
-    calculate_q17_place(competition_id=settings.COMPETITION_ID)
-    logger.info(
-        'Посчитали.'
-    )
+def calculate_q1_places_task():
+    """Считает места по 1 показателю."""
+    calculate_place(competition_id=settings.COMPETITION_ID,
+                    model_report=Q1Report,
+                    model_ranking=Q1Ranking,
+                    model_tandem_ranking=Q1TandemRanking)
 
 
 @shared_task
-def calculate_q18_places_task():
-    logger.info('Начинаем считать места по 18 показателю')
-    calculate_q18_place(competition_id=settings.COMPETITION_ID)
-    logger.info(
-        'Посчитали.'
-    )
+def calculate_q3_q4_places_task():
+    """Считает места по 3-4 показателям."""
+    calculate_q3_q4_place(competition_id=settings.COMPETITION_ID)
+
+
+@shared_task
+def calculate_q5_places_task():
+    """Считает места по 3-4 показателям."""
+    calculate_q5_place(competition_id=settings.COMPETITION_ID)
+
+
+@shared_task
+def calculate_q6_places_task():
+    """Считает места по 6 показателю."""
+    calculate_q6_place(competition_id=settings.COMPETITION_ID)
 
 
 @shared_task
@@ -113,39 +118,18 @@ def calculate_q12_places_task():
 
 
 @shared_task
-def calculate_q1_score_task():
-    """Считает очки по 1 показателю."""
-    calculate_q1_score(competition_id=settings.COMPETITION_ID)
+def calculate_q14_places_task():
+    logger.info('Начинаем считать места по 14 показателю')
+    calculate_q14_place(competition_id=settings.COMPETITION_ID)
+    logger.info(
+        'Посчитали.'
+    )
 
 
 @shared_task
-def calculate_q1_places_task():
-    """Считает места по 1 показателю."""
-    calculate_place(competition_id=settings.COMPETITION_ID,
-                    model_report=Q1Report,
-                    model_ranking=Q1Ranking,
-                    model_tandem_ranking=Q1TandemRanking)
-
-
-@shared_task
-def calculate_q20_places_task():
-    """Считает места по 20 показателю."""
-    calculate_place(competition_id=settings.COMPETITION_ID,
-                    model_report=Q20Report,
-                    model_ranking=Q20Ranking,
-                    model_tandem_ranking=Q20TandemRanking)
-
-
-@shared_task
-def calculate_q3_q4_places_task():
-    """Считает места по 3-4 показателям."""
-    calculate_q3_q4_place(competition_id=settings.COMPETITION_ID)
-
-
-@shared_task
-def calculate_q5_places_task():
-    """Считает места по 3-4 показателям."""
-    calculate_q5_place(competition_id=settings.COMPETITION_ID)
+def calculate_q15_places_task():
+    """Считает места по 15 показателю."""
+    calculate_q15_place(competition_id=settings.COMPETITION_ID)
 
 
 @shared_task
@@ -162,16 +146,32 @@ def calculate_q16_places_task():
                     model_tandem_ranking=Q16TandemRanking)
 
 
+
 @shared_task
-def calculate_q6_places_task():
-    """Считает места по 6 показателю."""
-    calculate_q6_place(competition_id=settings.COMPETITION_ID)
+def calculate_q17_places_task():
+    logger.info('Начинаем считать места по 17 показателю')
+    calculate_q17_place(competition_id=settings.COMPETITION_ID)
+    logger.info(
+        'Посчитали.'
+    )
 
 
 @shared_task
-def calculate_q15_places_task():
-    """Считает места по 15 показателю."""
-    calculate_q15_place(competition_id=settings.COMPETITION_ID)
+def calculate_q18_places_task():
+    logger.info('Начинаем считать места по 18 показателю')
+    calculate_q18_place(competition_id=settings.COMPETITION_ID)
+    logger.info(
+        'Посчитали.'
+    )
+
+
+@shared_task
+def calculate_q20_places_task():
+    """Считает места по 20 показателю."""
+    calculate_place(competition_id=settings.COMPETITION_ID,
+                    model_report=Q20Report,
+                    model_ranking=Q20Ranking,
+                    model_tandem_ranking=Q20TandemRanking)
 
 
 @shared_task

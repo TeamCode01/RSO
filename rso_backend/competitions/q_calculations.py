@@ -763,7 +763,7 @@ def calculate_place(
         reverse=True
 ):
     """
-    Таска для расчета рейтингов Q7 - Q12 и Q20.
+    Таска для расчета рейтингов Q1, Q7 - Q12 и Q20.
 
     Для celery-beat, считает вплоть до 15 октября 2024 года.
     :param competition_id: id конкурса
@@ -803,11 +803,16 @@ def calculate_place(
     )
 
     to_create_entries = []
-    for index, report in enumerate(sorted_by_score_start_reports):
+    place = 0
+    score = 0
+    for report in sorted_by_score_start_reports:
+        if report.score != score:
+            place += 1
+            score = report.score
         to_create_entries.append(
             model_ranking(competition=report.competition,
                           detachment=report.detachment,
-                          place=index + 1)
+                          place=place)
         )
 
     model_ranking.objects.filter(
@@ -824,29 +829,46 @@ def calculate_place(
         for ids in tandem_ids
     ]
 
+    # сортируем по сумме очков обоих отрядов
+    # если у одного отряда нет отчета, то к очкам добавляем ноль или максимум
+    # в зависимости от reverse, т.к. в разных показателях,
+    # чем больше очков или чем меньше очков, тем выше место
+    max_score = len(tandem_ids)
     sorted_by_score_tandem_reports = sorted(
         tandem_reports,
         key=lambda x: ((x[0].score + x[1].score) if (x[0] and x[1])
-                       else (x[0].score if x[0] is not None
-                             else (x[1].score if x[1] is not None
-                                   else (0 if reverse else len(tandem_ids))))),
+                       else (x[0].score + (
+                           0 if reverse else max_score
+                        ) if x[0] is not None
+                             else (x[1].score + (
+                                 0 if reverse else max_score
+                             ) if x[1] is not None
+                                   else (0 if reverse else max_score)))),
         reverse=reverse
     )
-
+    logger.error(max_score)
     to_create_entries = []
-    for index, report in enumerate(sorted_by_score_tandem_reports):
+    place = 0
+    score = 0
+    for report in sorted_by_score_tandem_reports:
         if report[0] is None and report[1] is None:
             continue
 
         if report[0] is not None and report[1] is not None:
+            if report[0].score + report[1].score != score:
+                place += 1
+                score = report[0].score + report[1].score
             to_create_entries.append(
                 model_tandem_ranking(competition=report[0].competition,
                                      junior_detachment=report[0].detachment,
                                      detachment=report[1].detachment,
-                                     place=index + 1)
+                                     place=place)
             )
 
         elif report[0] is not None:
+            if report[0].score + max_score != score:
+                place += 1
+                score = report[0].score + max_score
             detachment = participants.get(
                 junior_detachment=report[0].detachment,
             ).detachment
@@ -854,10 +876,13 @@ def calculate_place(
                 model_tandem_ranking(competition=report[0].competition,
                                      junior_detachment=report[0].detachment,
                                      detachment=detachment,
-                                     place=index + 1)
+                                     place=place)
             )
 
         elif report[1] is not None:
+            if report[1].score + max_score != score:
+                place += 1
+                score = report[1].score + max_score
             junior_detachment = participants.get(
                 detachment=report[1].detachment,
             ).junior_detachment
@@ -865,7 +890,7 @@ def calculate_place(
                 model_tandem_ranking(competition=report[1].competition,
                                      junior_detachment=junior_detachment,
                                      detachment=report[1].detachment,
-                                     place=index + 1)
+                                     place=place)
             )
     model_tandem_ranking.objects.filter(
         competition_id=competition_id).delete()  # шестой запрос к бд
@@ -880,7 +905,7 @@ def calculate_q1_score(competition_id):
     Выполняется только 15.04.2024.
     """
     today = date.today()
-    start_date = date(2024, 4, 15)
+    start_date = date(2024, 5, 1)
 
     if today != start_date:
         return
@@ -926,8 +951,8 @@ def calculate_q1_score(competition_id):
 
     # score по дефолту 1, иначе в таске как False проходит, не считается
     for data in detachments_data:
-        score = 1  # TODO: Если в отряде меньше 10 человек - то score = 1 УТОЧНИТЬ
-        if data[1] == 10:
+        score = 1
+        if data[1] <= 10:
             score = data[2] * 1 + 1
         elif data[1] > 10 and data[1] <= 20:
             score = data[2] * 0.75 + 1

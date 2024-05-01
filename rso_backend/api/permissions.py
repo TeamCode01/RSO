@@ -962,9 +962,26 @@ class IsRegionalCommissionerOrCommanderDetachmentWithVerif(
         detachment = view.get_detachment(obj)
         return (
             is_regional_commissioner(request.user) or
-            is_commander_this_detachment(request.user,
-                                         detachment)
+            is_commander_this_detachment(request.user, detachment)
         )
+
+
+class IsCommanderDetachmentWithVerif(
+    BasePermission
+):
+    """
+    Для операций с одиночным объектом.
+    Если заявка верифицирована, возращает False.
+    Если заявка не верифицирована, проверяет, является ли пользователь
+    командиром отряда из заявки.
+    Пермишен для 'update', 'partial_update', 'destroy' отчетов конкурса.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if obj.is_verified:
+            return False
+        detachment = view.get_detachment(obj)
+        return is_commander_this_detachment(request.user, detachment)
 
 
 class IsQ13DetachmentReportAuthor(permissions.BasePermission):

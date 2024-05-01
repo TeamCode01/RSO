@@ -419,15 +419,15 @@ else:
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
             'schedule': crontab(
-                hour=3,
-                minute=17,
+                hour=12,
+                minute=10,
             )
         },
         'calculate_q1': {
             'task': 'competitions.tasks.calculate_q1_places_task',
             'schedule': crontab(
-                hour=3,
-                minute=19,
+                hour=12,
+                minute=15,
             )
         },
         'calculate_q3_q4': {

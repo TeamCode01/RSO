@@ -27,6 +27,7 @@ from api.permissions import (
     IsCommanderAndCompetitionParticipant,
     IsCommanderDetachmentInParameterOrRegionalCommander,
     IsCommanderDetachmentInParameterOrRegionalCommissioner,
+    IsCommanderDetachmentWithVerif,
     IsCompetitionParticipantAndCommander,
     IsQ14DetachmentReportAuthor,
     IsQ17DetachmentReportAuthor,
@@ -94,7 +95,9 @@ from competitions.serializers import (CompetitionApplicationsObjectSerializer,
                                       CompetitionParticipantsSerializer,
                                       CompetitionSerializer,
                                       ShortDetachmentCompetitionSerializer)
-from competitions.swagger_schemas import (request_update_application,
+from competitions.swagger_schemas import (q7schema_request_update,
+                                          q9schema_request_update,
+                                          request_update_application,
                                           response_competitions_applications,
                                           response_competitions_participants,
                                           response_create_application,
@@ -1112,9 +1115,53 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 )
 
 
-class Q7ViewSet(
-    viewsets.ModelViewSet
-):
+class Q7UpdateDestroyViewSet(UpdateDestroyViewSet):
+    """Методы редактирования и удаления для показателя
+    'Участие членов студенческого отряда в окружных и
+    межрегиональных мероприятиях'.
+
+    Доступ:
+        - изменение: командир отряда из инстанса объекта который изменяют.
+        - удаление: командир отряда из инстанса объекта который удаляют.
+
+    ! При редактировании нельзя изменять event_name.
+    ! Если заявка подтверждена, то доступ запрещен.
+    """
+
+    serializer_class = Q7Serializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+        IsCommanderDetachmentWithVerif
+    )
+
+    def get_queryset(self):
+        return self.serializer_class.Meta.model.objects.filter(
+            detachment_report__competition_id=self.kwargs.get('competition_pk')
+        )
+
+    def get_detachment(self, obj):
+        return obj.detachment_report.detachment
+
+    @swagger_auto_schema(
+        request_body=q7schema_request_update,
+        responses={
+            status.HTTP_200_OK: Q7Serializer
+        }
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=q7schema_request_update,
+        responses={
+            status.HTTP_200_OK: Q7Serializer
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+
+class Q7ViewSet(ListRetrieveCreateViewSet):
     """Вью сет для показателя 'Участие членов студенческого отряда в
     окружных и межрегиональных мероприятиях.'.
 
@@ -1123,15 +1170,6 @@ class Q7ViewSet(
                   нужен доступ, а также комиссары региональных штабов.
         - чтение(list): только комиссары региональных штабов.
                         Выводятся заявки только его рег штаба.
-        - изменение: Если заявка не подтверждена - командир отряда из
-                     инстанса объекта который изменяют,
-                     а также комиссары региональных штабов.
-                     Если подтверждена - только комиссар регионального штаба.
-        - удаление: Если заявка не подтверждена - командир отряда из
-                    инстанса объекта который удаляют,
-                    а также комиссары региональных штабов.
-                    Если подтверждена - только комиссар регионального штаба.
-    ! При редактировании нельзя изменять event_name.
     """
     serializer_class = Q7Serializer
     permission_classes = (
@@ -1163,9 +1201,6 @@ class Q7ViewSet(
                     IsCommanderAndCompetitionParticipant()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(), IsRegionalCommissioner()]
-        if self.action in ['update', 'partial_update', 'destroy']:
-            return [permissions.IsAuthenticated(),
-                    IsRegionalCommissionerOrCommanderDetachmentWithVerif()]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -1199,8 +1234,7 @@ class Q7ViewSet(
         if not events_data:
             return Response(
                 {
-                    'non_field_errors': f'Присланный реквест: {request.data}'
-                                        f'файлы: {request.FILES}',
+                    'non_field_errors': f'Невалидные файлы: {request.FILES}',
                     'events_data': events_data
                 },
                 status=status.HTTP_400_BAD_REQUEST
@@ -1343,6 +1377,40 @@ class Q7ViewSet(
         )
 
 
+class Q8UpdateDestroyViewSet(Q7UpdateDestroyViewSet):
+    """Методы редактирования и удаления для показателя
+    'Участие членов студенческого отряда во
+    всероссийских мероприятиях.'
+
+    Доступ:
+        - изменение: командир отряда из инстанса объекта который изменяют.
+        - удаление: командир отряда из инстанса объекта который удаляют.
+
+    ! При редактировании нельзя изменять event_name.
+    ! Если заявка подтверждена, то доступ запрещен.
+    """
+
+    serializer_class = Q8Serializer
+
+    @swagger_auto_schema(
+        request_body=q7schema_request_update,
+        responses={
+            status.HTTP_200_OK: Q8Serializer
+        }
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=q7schema_request_update,
+        responses={
+            status.HTTP_200_OK: Q8Serializer
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+
 class Q8ViewSet(Q7ViewSet):
     """Вью сет для показателя 'Участие членов студенческого отряда во
     всероссийских мероприятиях.'.
@@ -1352,15 +1420,6 @@ class Q8ViewSet(Q7ViewSet):
                   нужен доступ, а также комиссары региональных штабов.
         - чтение(list): только комиссары региональных штабов.
                         Выводятся заявки только его рег штаба.
-        - изменение: Если заявка не подтверждена - командир отряда из
-                     инстанса объекта который изменяют,
-                     а также комиссары региональных штабов.
-                     Если подтверждена - только комиссар регионального штаба.
-        - удаление: Если заявка не подтверждена - командир отряда из
-                    инстанса объекта который удаляют,
-                    а также комиссары региональных штабов.
-                    Если подтверждена - только комиссар регионального штаба.
-    ! При редактировании нельзя изменять event_name.
     """
     queryset = Q8.objects.all()
     serializer_class = Q8Serializer
@@ -1441,9 +1500,36 @@ class Q8ViewSet(Q7ViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class Q9ViewSet(
-    Q7ViewSet
-):
+class Q9UpdateDestroyViewSet(Q7UpdateDestroyViewSet):
+    """Методы редактирования и удаления для показателя
+    'Призовые места отряда в
+    окружных и межрегиональных мероприятиях и конкурсах РСО.'.
+
+    Доступ:
+        - изменение: командир отряда из инстанса объекта который изменяют.
+        - удаление: командир отряда из инстанса объекта который удаляют.
+
+    ! При редактировании нельзя изменять event_name.
+    ! Если заявка подтверждена, то доступ запрещен.
+    """
+    serializer_class = Q9Serializer
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q9Serializer},
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q9Serializer},
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+
+class Q9ViewSet(Q7ViewSet):
     """Вью сет для показателя 'Призовые места отряда в
     окружных и межрегиональных мероприятиях и конкурсах РСО.'.
 
@@ -1452,15 +1538,6 @@ class Q9ViewSet(
                   нужен доступ, а также комиссары региональных штабов.
         - чтение(list): только комиссары региональных штабов.
                         Выводятся заявки только его рег штаба.
-        - изменение: Если заявка не подтверждена - командир отряда из
-                     инстанса объекта который изменяют,
-                     а также комиссары региональных штабов.
-                     Если подтверждена - только комиссар регионального штаба.
-        - удаление: Если заявка не подтверждена - командир отряда из
-                    инстанса объекта который удаляют,
-                    а также комиссары региональных штабов.
-                    Если подтверждена - только комиссар регионального штаба.
-    ! При редактировании нельзя изменять event_name.
     """
     queryset = Q9.objects.all()
     serializer_class = Q9Serializer
@@ -1547,6 +1624,35 @@ class Q9ViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class Q10UpdateDestroyViewSet(Q7UpdateDestroyViewSet):
+    """Методы редактирования и удаления для показателя
+    'Призовые места отряда во
+    всероссийских мероприятиях и конкурсах РСО.'.
+
+    Доступ:
+        - изменение: командир отряда из инстанса объекта который изменяют.
+        - удаление: командир отряда из инстанса объекта который удаляют.
+
+    ! При редактировании нельзя изменять event_name.
+    ! Если заявка подтверждена, то доступ запрещен.
+    """
+    serializer_class = Q10Serializer
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q10Serializer},
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q10Serializer},
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+
 class Q10ViewSet(
     Q7ViewSet
 ):
@@ -1558,15 +1664,6 @@ class Q10ViewSet(
                   нужен доступ, а также комиссары региональных штабов.
         - чтение(list): только комиссары региональных штабов.
                         Выводятся заявки только его рег штаба.
-        - изменение: Если заявка не подтверждена - командир отряда из
-                     инстанса объекта который изменяют,
-                     а также комиссары региональных штабов.
-                     Если подтверждена - только комиссар регионального штаба.
-        - удаление: Если заявка не подтверждена - командир отряда из
-                    инстанса объекта который удаляют,
-                    а также комиссары региональных штабов.
-                    Если подтверждена - только комиссар регионального штаба.
-    ! При редактировании нельзя изменять event_name.
     """
     queryset = Q10.objects.all()
     serializer_class = Q10Serializer
@@ -1650,6 +1747,35 @@ class Q10ViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class Q11UpdateDestroyViewSet(Q7UpdateDestroyViewSet):
+    """Методы редактирования и удаления для показателя
+    'Призовые места отряда в
+    окружных и межрегиональных трудовых проектах'.
+
+    Доступ:
+        - изменение: командир отряда из инстанса объекта который изменяют.
+        - удаление: командир отряда из инстанса объекта который удаляют.
+
+    ! При редактировании нельзя изменять event_name.
+    ! Если заявка подтверждена, то доступ запрещен.
+    """
+    serializer_class = Q11Serializer
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q11Serializer},
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q11Serializer},
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+
 class Q11ViewSet(
     Q7ViewSet
 ):
@@ -1661,15 +1787,6 @@ class Q11ViewSet(
                   нужен доступ, а также комиссары региональных штабов.
         - чтение(list): только комиссары региональных штабов.
                         Выводятся заявки только его рег штаба.
-        - изменение: Если заявка не подтверждена - командир отряда из
-                     инстанса объекта который изменяют,
-                     а также комиссары региональных штабов.
-                     Если подтверждена - только комиссар регионального штаба.
-        - удаление: Если заявка не подтверждена - командир отряда из
-                    инстанса объекта который удаляют,
-                    а также комиссары региональных штабов.
-                    Если подтверждена - только комиссар регионального штаба.
-    ! При редактировании нельзя изменять event_name.
     """
     queryset = Q11.objects.all()
     serializer_class = Q11Serializer
@@ -1756,6 +1873,35 @@ class Q11ViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class Q12UpdateDestroyViewSet(Q7UpdateDestroyViewSet):
+    """Методы редактирования и удаления для показателя
+    'Призовые места отряда во
+    всероссийских трудовых проектах'.
+
+    Доступ:
+        - изменение: командир отряда из инстанса объекта который изменяют.
+        - удаление: командир отряда из инстанса объекта который удаляют.
+
+    ! При редактировании нельзя изменять event_name.
+    ! Если заявка подтверждена, то доступ запрещен.
+    """
+    serializer_class = Q12Serializer
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q12Serializer},
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=q9schema_request_update,
+        responses={200: Q12Serializer},
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+
 class Q12ViewSet(
     Q7ViewSet
 ):
@@ -1767,15 +1913,6 @@ class Q12ViewSet(
                   нужен доступ, а также комиссары региональных штабов.
         - чтение(list): только комиссары региональных штабов.
                         Выводятся заявки только его рег штаба.
-        - изменение: Если заявка не подтверждена - командир отряда из
-                     инстанса объекта который изменяют,
-                     а также комиссары региональных штабов.
-                     Если подтверждена - только комиссар регионального штаба.
-        - удаление: Если заявка не подтверждена - командир отряда из
-                    инстанса объекта который удаляют,
-                    а также комиссары региональных штабов.
-                    Если подтверждена - только комиссар регионального штаба.
-    ! При редактировании нельзя изменять event_name.
     """
     queryset = Q12.objects.all()
     serializer_class = Q12Serializer
