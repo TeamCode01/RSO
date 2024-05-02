@@ -1193,4 +1193,13 @@ class PersonalDataPermissionForGET(PersonalDataPermission):
     """
 
     def has_permission(self, request, view):
-        return is_regional_commander(request.user)
+        return (
+            is_regional_commander(request.user)
+            or view.get_object().user == request.user
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return (
+            super().has_object_permission(request, view, obj)
+            or view.get_object().user == request.user
+        )

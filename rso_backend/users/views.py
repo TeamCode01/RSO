@@ -471,9 +471,6 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
     """
 
     serializer_class = UserForeignParentDocsSerializer
-    permission_classes = (
-        permissions.IsAuthenticated, PersonalDataPermissionForGET
-    )
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
@@ -481,6 +478,15 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
 
     def get_object(self):
         return get_object_or_404(UserForeignParentDocs, user=self.request.user)
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [
+                permissions.IsAuthenticated(), PersonalDataPermissionForGET()
+            ]
+        else:
+            return [permissions.IsAuthenticated(), IsStuffOrAuthor()]
+
 
     @swagger_auto_schema(
                 request_body=openapi.Schema(
@@ -545,7 +551,6 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
         snils = request.data.get('snils', None)
         inn = request.data.get('inn', None)
         work_book_num = request.data.get('work_book_num', None)
-
         try:
             UserForeignParentDocs.objects.get(
                 user=user,

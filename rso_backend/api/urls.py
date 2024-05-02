@@ -342,7 +342,7 @@ user_nested_urls = [
         name='foreign-parent-documents'
     ),
     path(
-        'rsousers/foreign_parent_docsuments/<int:pk>/',
+        'rsousers/foreign_parent_documents/<int:pk>/',
         ForeignParentDocsListVS,
         name='foreign-parent-documents-list'
     ),
