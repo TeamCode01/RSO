@@ -471,6 +471,7 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
     """
 
     serializer_class = UserForeignParentDocsSerializer
+    pagination_class = None
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
@@ -631,6 +632,7 @@ class ForeignUserDocumentsViewSet(BaseUserViewSet):
     permission_classes = (
         permissions.IsAuthenticated, PersonalDataPermissionForGET,
     )
+    pagination_class = None
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
