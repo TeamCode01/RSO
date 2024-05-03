@@ -40,7 +40,9 @@ class EventAdditionalIssuesInline(admin.TabularInline):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'format', 'direction', 'status', 'author', 'created_at')
+    list_display = (
+        'id', 'name', 'format', 'direction', 'status', 'application_type', 'available_structural_units', 'author', 'created_at'
+    )
     list_filter = ('format', 'direction', 'status', 'created_at')
     search_fields = ('name',)
     inlines = [

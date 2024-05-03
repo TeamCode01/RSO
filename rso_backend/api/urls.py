@@ -32,7 +32,7 @@ from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventViewSet, MultiEventViewSet,
                           GroupEventApplicationViewSet,
                           create_answers, group_applications,
-                          group_applications_me)
+                          group_applications_me, is_participant_or_applicant)
 from headquarters.views import (CentralPositionViewSet, CentralViewSet,
                                 DetachmentAcceptViewSet,
                                 DetachmentApplicationViewSet,
@@ -526,6 +526,11 @@ user_nested_urls = [
         'events/<int:event_pk>/group_applications/me/',
         group_applications_me,
         name='get-group-applications-me'
+    ),
+    path(
+        'events/<int:event_pk>/user_status/<int:user_pk>/',
+        is_participant_or_applicant,
+        name='is-participant-or-applicant'
     ),
     path(
         'competitions/<int:competition_pk>/reports/q1/get-place/',
