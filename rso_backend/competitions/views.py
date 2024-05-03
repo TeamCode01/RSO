@@ -2990,16 +2990,17 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
             # Подсчет места для индивидуальных и тандем участников:
             if participants_entry and not participants_entry.detachment:
-                Q13Ranking.objects.get_or_create(
+                solo_ranking = Q13Ranking.objects.get_or_create(
                     competition_id=competition_id,
                     detachment=report.detachment,
-                    place=calculate_q13_place(
+                )
+                solo_ranking.place = calculate_q13_place(
                         Q13EventOrganization.objects.filter(
                             detachment_report=report,
                             is_verified=True
                         )
                     )
-                )
+                solo_ranking.save()
             else:
                 if participants_entry:
                     tandem_ranking, _ = Q13TandemRanking.objects.get_or_create(
