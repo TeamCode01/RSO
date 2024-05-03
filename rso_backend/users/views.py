@@ -470,8 +470,11 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
         id - ID юзера, чьи документы необходимо получить.
     """
 
-    queryset = UserForeignParentDocs.objects.all()
     serializer_class = UserForeignParentDocsSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        return UserForeignParentDocs.objects.filter(user=user_id)
 
     def get_object(self):
         return get_object_or_404(UserForeignParentDocs, user=self.request.user)
@@ -624,11 +627,14 @@ class AdditionalForeignDocsViewSet(BaseUserViewSet):
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""
 
-    queryset = UserForeignDocuments.objects.all()
     serializer_class = ForeignUserDocumentsSerializer
     permission_classes = (
         permissions.IsAuthenticated, PersonalDataPermissionForGET,
     )
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        return UserForeignDocuments.objects.filter(user=user_id)
 
     def get_object(self):
         return get_object_or_404(UserForeignDocuments, user=self.request.user)
