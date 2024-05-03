@@ -1230,11 +1230,12 @@ def calculate_q5_place(competition_id: int):
             )
             calculate_june_detachment_members(entry_report)
         educated_participants_count = Q5EducatedParticipant.objects.filter(is_verified=True, detachment_report=entry_report).count()
-        Q5Ranking.objects.create(
-            competition_id=competition_id,
-            detachment=entry_report.detachment,
-            place=get_q5_place(educated_participants_count, entry_report.june_15_detachment_members)
-        )
+        if educated_participants_count > 0:
+            Q5Ranking.objects.create(
+                competition_id=competition_id,
+                detachment=entry_report.detachment,
+                place=get_q5_place(educated_participants_count, entry_report.june_15_detachment_members)
+            )
     for tandem_entry in tandem_entries:
         try:
             tandem_entry_report = tandem_entry.detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
@@ -1266,13 +1267,13 @@ def calculate_q5_place(competition_id: int):
             get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
             get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
         ) / 2)
-
-        Q5TandemRanking.objects.create(
-            competition_id=competition_id,
-            detachment=tandem_entry.detachment,
-            junior_detachment=tandem_entry.junior_detachment,
-            place=final_place
-        )
+        if educated_participants_count_junior + educated_participants_count_detachment > 0:
+            Q5TandemRanking.objects.create(
+                competition_id=competition_id,
+                detachment=tandem_entry.detachment,
+                junior_detachment=tandem_entry.junior_detachment,
+                place=final_place
+            )
 
 
 def get_q5_place(participants_count: int, june_15_detachment_members: int) -> int:
