@@ -2286,8 +2286,13 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         report, created = Q6DetachmentReport.objects.get_or_create(
             competition=competition,
             detachment_id=detachment_id,
-            defaults=request.data
         )
+
+        model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
+        extra_fields = set(request.data.keys()) - model_fields
+        if extra_fields:
+            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Если отчет уже существовал, обновляем его данными из запроса
         if not created:
