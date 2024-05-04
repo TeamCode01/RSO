@@ -89,12 +89,15 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
     solo_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     previous_places_sum = None
+    count_same_place = 1
 
     for solo_ranking_entry in solo_rankings:
         if solo_ranking_entry['place'] == previous_places_sum:
-            pass
+            count_same_place += 1
         else:
-            current_place += 1
+            if previous_places_sum is not None:
+                current_place += count_same_place
+            count_same_place = 1
 
         OverallRanking.objects.create(
             competition_id=competition_id,
@@ -107,12 +110,15 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
     tandem_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     previous_places_sum = None
+    count_same_place = 1
 
     for tandem_ranking_entry in tandem_rankings:
         if tandem_ranking_entry['place'] == previous_places_sum:
-            pass
+            count_same_place += 1
         else:
-            current_place += 1
+            if previous_places_sum is not None:
+                current_place += count_same_place
+            count_same_place = 1
 
         OverallTandemRanking.objects.create(
             competition_id=competition_id,
@@ -505,11 +511,11 @@ def calculate_q18_place(competition_id):
         solo_entries.sort(key=lambda entry: entry[1])
         place = 1
         previous_score = None
+        previous_place = 0
 
         for entry in solo_entries:
             if entry[1] != previous_score:
-                place = len(solo_entries) - solo_entries.index(entry)
-
+                place = previous_place + 1
             logger.info(f'Отчет {entry[0]} занимает {place} место')
             Q18Ranking.objects.create(
                 detachment=entry[0].detachment,
@@ -517,6 +523,7 @@ def calculate_q18_place(competition_id):
                 competition_id=competition_id
             )
             previous_score = entry[1]
+            previous_place = place
 
     if tandem_entries:
         logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
@@ -525,11 +532,11 @@ def calculate_q18_place(competition_id):
         tandem_entries.sort(key=lambda entry: entry[2])
         place = 1
         previous_score = None
+        previous_place = 0
 
         for entry in tandem_entries:
             if entry[2] != previous_score:
-                place = len(tandem_entries) - tandem_entries.index(entry)
-
+                place = previous_place + 1
             logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {place} место')
             Q18TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
@@ -538,6 +545,7 @@ def calculate_q18_place(competition_id):
                 competition_id=competition_id
             )
             previous_score = entry[2]
+            previous_place = place
 
 
 def calculate_q6_place(competition_id):
@@ -1123,12 +1131,13 @@ def calculate_q15_place(competition_id: int):
         Q15Rank.objects.all().delete()
         solo_entries.sort(key=lambda entry: entry[1], reverse=True)
         last_score = None
-        last_place = 1
+        last_place = 0
+        actual_place = 1
 
         for entry in solo_entries:
             if entry[1] != last_score:
-                last_place = len(solo_entries) - solo_entries.index(entry)
-
+                last_place = actual_place
+                last_score = entry[1]
             logger.info(
                 f'Отчет {entry[0]} занимает {last_place} место'
             )
@@ -1137,7 +1146,7 @@ def calculate_q15_place(competition_id: int):
                 place=last_place,
                 competition_id=competition_id
             )
-            last_score = entry[1]
+            actual_place += 1
 
     if tandem_entries:
         logger.info(
@@ -1146,12 +1155,13 @@ def calculate_q15_place(competition_id: int):
         Q15TandemRank.objects.all().delete()
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_score = None
-        last_place = 1
+        last_place = 0
+        actual_place = 1
 
         for entry in tandem_entries:
             if entry[2] != last_score:
-                last_place = len(tandem_entries) - tandem_entries.index(entry)
-
+                last_place = actual_place
+                last_score = entry[2]
             logger.info(
                 f'Отчеты {entry[0]} и {entry[1]} занимают {last_place} место'
             )
@@ -1161,7 +1171,7 @@ def calculate_q15_place(competition_id: int):
                 place=last_place,
                 competition_id=competition_id
             )
-            last_score = entry[2]
+            actual_place += 1
 
 
 def calculate_q15_score(grant_winners_data: List[Q15GrantWinner]):
