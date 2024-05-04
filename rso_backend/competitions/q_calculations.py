@@ -89,17 +89,10 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
     solo_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     previous_places_sum = None
-    count_same_place = 1
 
     for index, solo_ranking_entry in enumerate(solo_rankings):
-        if solo_ranking_entry['place'] == previous_places_sum:
-            count_same_place += 1
-        else:
-            if previous_places_sum is not None:
-                current_place += count_same_place
-            else:
-                current_place = 1
-            count_same_place = 1
+        if solo_ranking_entry['place'] != previous_places_sum:
+            current_place = index + 1
 
         OverallRanking.objects.create(
             competition_id=competition_id,
@@ -109,21 +102,13 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
         )
         previous_places_sum = solo_ranking_entry['place']
 
-    # Adjusting tandem rankings
     tandem_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     previous_places_sum = None
-    count_same_place = 1
 
     for index, tandem_ranking_entry in enumerate(tandem_rankings):
-        if tandem_ranking_entry['place'] == previous_places_sum:
-            count_same_place += 1
-        else:
-            if previous_places_sum is not None:
-                current_place += count_same_place
-            else:
-                current_place = 1
-            count_same_place = 1
+        if tandem_ranking_entry['place'] != previous_places_sum:
+            current_place = index + 1
 
         OverallTandemRanking.objects.create(
             competition_id=competition_id,
