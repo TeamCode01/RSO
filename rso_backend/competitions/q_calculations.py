@@ -1125,13 +1125,13 @@ def calculate_q15_place(competition_id: int):
         for entry in solo_entries:
             if entry[1] != last_score:
                 last_place = current_place
+                current_place += 1
             logger.info(f'Отчет {entry[0]} занимает {last_place} место')
             Q15Rank.objects.create(
                 detachment=entry[0].detachment,
                 place=last_place,
                 competition_id=competition_id
             )
-            current_place += 1
             last_score = entry[1]
 
     if tandem_entries:
@@ -1145,6 +1145,7 @@ def calculate_q15_place(competition_id: int):
         for entry in tandem_entries:
             if entry[2] != last_score:
                 last_place = current_place
+                current_place += 1
             logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {last_place} место')
             Q15TandemRank.objects.create(
                 junior_detachment=entry[0].detachment,
@@ -1152,7 +1153,6 @@ def calculate_q15_place(competition_id: int):
                 place=last_place,
                 competition_id=competition_id
             )
-            current_place += 1
             last_score = entry[2]
 
 def calculate_q15_score(grant_winners_data: List[Q15GrantWinner]):
