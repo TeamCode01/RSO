@@ -135,15 +135,17 @@ def assign_ranks(scores) -> list:
 
     # Переменные для отслеживания текущего ранга и предыдущего результата
     current_rank = 1
+    last_rank = 0
     previous_score = None
     ranked_scores = []
 
     # Проходим по отсортированному списку
-    for index, (id, score) in enumerate(sorted_scores):
+    for id, score in sorted_scores:
         if score != previous_score:
             # Если очки не совпадают с предыдущими, обновляем текущий ранг
-            current_rank = index + 1
+            current_rank = last_rank + 1
         ranked_scores.append((id, current_rank))
+        last_rank = current_rank
         previous_score = score
 
     # Сортируем результат обратно по ID
