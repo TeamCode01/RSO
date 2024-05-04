@@ -89,12 +89,17 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
     solo_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     previous_places_sum = None
+    count_same_place = 1
 
-    for solo_ranking_entry in solo_rankings:
+    for index, solo_ranking_entry in enumerate(solo_rankings):
         if solo_ranking_entry['place'] == previous_places_sum:
-            pass
+            count_same_place += 1
         else:
-            current_place += 1
+            if previous_places_sum is not None:
+                current_place += count_same_place
+            else:
+                current_place = 1
+            count_same_place = 1
 
         OverallRanking.objects.create(
             competition_id=competition_id,
@@ -104,15 +109,21 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
         )
         previous_places_sum = solo_ranking_entry['place']
 
+    # Adjusting tandem rankings
     tandem_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     previous_places_sum = None
+    count_same_place = 1
 
-    for tandem_ranking_entry in tandem_rankings:
+    for index, tandem_ranking_entry in enumerate(tandem_rankings):
         if tandem_ranking_entry['place'] == previous_places_sum:
-            pass
+            count_same_place += 1
         else:
-            current_place += 1
+            if previous_places_sum is not None:
+                current_place += count_same_place
+            else:
+                current_place = 1
+            count_same_place = 1
 
         OverallTandemRanking.objects.create(
             competition_id=competition_id,
@@ -499,39 +510,47 @@ def calculate_q18_place(competition_id):
             category.append((entry, entry.score))
 
     if solo_entries:
-        logger.info(
-            'Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
+        logger.info('Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
         Q18Ranking.objects.all().delete()
+
         solo_entries.sort(key=lambda entry: entry[1])
-        place = len(solo_entries)
+        place = 1
+        previous_score = None
+        previous_place = 0
+
         for entry in solo_entries:
-            logger.info(
-                f'Отчет {entry[0]} занимает {place} место'
-            )
+            if entry[1] != previous_score:
+                place = previous_place + 1
+            logger.info(f'Отчет {entry[0]} занимает {place} место')
             Q18Ranking.objects.create(
                 detachment=entry[0].detachment,
                 place=place,
                 competition_id=competition_id
             )
-            place -= 1
+            previous_score = entry[1]
+            previous_place = place
 
     if tandem_entries:
-        logger.info(
-            'Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
+        logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
         Q18TandemRanking.objects.all().delete()
+
         tandem_entries.sort(key=lambda entry: entry[2])
-        place = len(tandem_entries)
+        place = 1
+        previous_score = None
+        previous_place = 0
+
         for entry in tandem_entries:
-            logger.info(
-                f'Отчеты {entry[0]} и {entry[1]} занимают {place} место'
-            )
+            if entry[2] != previous_score:
+                place = previous_place + 1
+            logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {place} место')
             Q18TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
                 detachment=entry[1].detachment,
                 place=place,
                 competition_id=competition_id
             )
-            place -= 1
+            previous_score = entry[2]
+            previous_place = place
 
 
 def calculate_q6_place(competition_id):
@@ -1118,21 +1137,22 @@ def calculate_q15_place(competition_id: int):
         solo_entries.sort(key=lambda entry: entry[1], reverse=True)
         last_score = None
         last_place = 0
-        actual_place = 1
+        entries_to_tie = 1
 
         for entry in solo_entries:
             if entry[1] != last_score:
-                last_place = actual_place
-                last_score = entry[1]
-            logger.info(
-                f'Отчет {entry[0]} занимает {last_place} место'
-            )
+                last_place += entries_to_tie
+                entries_to_ttie = 1
+            else:
+                entries_to_tie += 1
+
+            logger.info(f'Отчет {entry[0]} занимает {last_place} место')
             Q15Rank.objects.create(
                 detachment=entry[0].detachment,
                 place=last_place,
                 competition_id=competition_id
             )
-            actual_place += 1
+            last_score = entry[1]
 
     if tandem_entries:
         logger.info(
@@ -1142,23 +1162,23 @@ def calculate_q15_place(competition_id: int):
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_score = None
         last_place = 0
-        actual_place = 1
+        entries_to_tie = 1
 
         for entry in tandem_entries:
             if entry[2] != last_score:
-                last_place = actual_place
-                last_score = entry[2]
-            logger.info(
-                f'Отчеты {entry[0]} и {entry[1]} занимают {last_place} место'
-            )
+                last_place += entries_to_tie
+                entries_to_tie = 1
+            else:
+                entries_to_tie += 1
+
+            logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {last_place} место')
             Q15TandemRank.objects.create(
                 junior_detachment=entry[0].detachment,
                 detachment=entry[1].detachment,
                 place=last_place,
                 competition_id=competition_id
             )
-            actual_place += 1
-
+            last_score = entry[2]
 
 def calculate_q15_score(grant_winners_data: List[Q15GrantWinner]):
     status_scores_mapping = {
