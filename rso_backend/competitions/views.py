@@ -4897,11 +4897,9 @@ class QVerificationLogByNumberView(ListAPIView):
 @api_view(['GET'])
 @permission_classes((IsRegionalCommanderOrCommissionerOfDetachment,))
 def get_detachment_places(request, competition_pk, detachment_pk):
-    """
-    Представляет места переданного отряда в конкурсе по всем показателям.
+    """Представляет места переданного отряда в конкурсе по всем показателям.
 
-    Доступ: комиссары и командиры РШ подвластных отрядов.
-    Response:
+    Доступно комиссарам и командирам РШ подвластных отрядов. Ответ:
     ```
         {
             "is_tandem": bool,
