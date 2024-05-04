@@ -499,39 +499,45 @@ def calculate_q18_place(competition_id):
             category.append((entry, entry.score))
 
     if solo_entries:
-        logger.info(
-            'Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
+        logger.info('Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
         Q18Ranking.objects.all().delete()
+
         solo_entries.sort(key=lambda entry: entry[1])
-        place = len(solo_entries)
+        place = 1
+        previous_score = None
+
         for entry in solo_entries:
-            logger.info(
-                f'Отчет {entry[0]} занимает {place} место'
-            )
+            if entry[1] != previous_score:
+                place = len(solo_entries) - solo_entries.index(entry)
+
+            logger.info(f'Отчет {entry[0]} занимает {place} место')
             Q18Ranking.objects.create(
                 detachment=entry[0].detachment,
                 place=place,
                 competition_id=competition_id
             )
-            place -= 1
+            previous_score = entry[1]
 
     if tandem_entries:
-        logger.info(
-            'Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
+        logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
         Q18TandemRanking.objects.all().delete()
+
         tandem_entries.sort(key=lambda entry: entry[2])
-        place = len(tandem_entries)
+        place = 1
+        previous_score = None
+
         for entry in tandem_entries:
-            logger.info(
-                f'Отчеты {entry[0]} и {entry[1]} занимают {place} место'
-            )
+            if entry[2] != previous_score:
+                place = len(tandem_entries) - tandem_entries.index(entry)
+
+            logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {place} место')
             Q18TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
                 detachment=entry[1].detachment,
                 place=place,
                 competition_id=competition_id
             )
-            place -= 1
+            previous_score = entry[2]
 
 
 def calculate_q6_place(competition_id):
