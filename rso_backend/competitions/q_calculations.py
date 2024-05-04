@@ -1115,47 +1115,36 @@ def calculate_q15_place(competition_id: int):
             category.append((entry, entry.score))
 
     if solo_entries:
-        logger.info(
-            'Есть записи для соло-участников. Удаляем записи из таблицы Q15 Ranking'
-        )
+        logger.info('Есть записи для соло-участников. Удаляем записи из таблицы Q15 Ranking')
         Q15Rank.objects.all().delete()
         solo_entries.sort(key=lambda entry: entry[1], reverse=True)
         last_score = None
         last_place = 0
-        entries_to_tie = 1
+        current_place = 1
 
         for entry in solo_entries:
             if entry[1] != last_score:
-                last_place += entries_to_tie
-                entries_to_ttie = 1
-            else:
-                entries_to_tie += 1
-
+                last_place = current_place
             logger.info(f'Отчет {entry[0]} занимает {last_place} место')
             Q15Rank.objects.create(
                 detachment=entry[0].detachment,
                 place=last_place,
                 competition_id=competition_id
             )
+            current_place += 1
             last_score = entry[1]
 
     if tandem_entries:
-        logger.info(
-            'Есть записи для тандем-участников. Удаляем записи из таблицы Q15 TandemRanking'
-        )
+        logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q15 TandemRanking')
         Q15TandemRank.objects.all().delete()
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_score = None
         last_place = 0
-        entries_to_tie = 1
+        current_place = 1
 
         for entry in tandem_entries:
             if entry[2] != last_score:
-                last_place += entries_to_tie
-                entries_to_tie = 1
-            else:
-                entries_to_tie += 1
-
+                last_place = current_place
             logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {last_place} место')
             Q15TandemRank.objects.create(
                 junior_detachment=entry[0].detachment,
@@ -1163,6 +1152,7 @@ def calculate_q15_place(competition_id: int):
                 place=last_place,
                 competition_id=competition_id
             )
+            current_place += 1
             last_score = entry[2]
 
 def calculate_q15_score(grant_winners_data: List[Q15GrantWinner]):
