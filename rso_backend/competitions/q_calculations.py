@@ -1123,13 +1123,12 @@ def calculate_q15_place(competition_id: int):
         Q15Rank.objects.all().delete()
         solo_entries.sort(key=lambda entry: entry[1], reverse=True)
         last_score = None
-        last_place = 0
-        actual_place = 1
+        last_place = 1
 
         for entry in solo_entries:
             if entry[1] != last_score:
-                last_place = actual_place
-                last_score = entry[1]
+                last_place = len(solo_entries) - solo_entries.index(entry)
+
             logger.info(
                 f'Отчет {entry[0]} занимает {last_place} место'
             )
@@ -1138,7 +1137,7 @@ def calculate_q15_place(competition_id: int):
                 place=last_place,
                 competition_id=competition_id
             )
-            actual_place += 1
+            last_score = entry[1]
 
     if tandem_entries:
         logger.info(
@@ -1147,13 +1146,12 @@ def calculate_q15_place(competition_id: int):
         Q15TandemRank.objects.all().delete()
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_score = None
-        last_place = 0
-        actual_place = 1
+        last_place = 1
 
         for entry in tandem_entries:
             if entry[2] != last_score:
-                last_place = actual_place
-                last_score = entry[2]
+                last_place = len(tandem_entries) - tandem_entries.index(entry)
+
             logger.info(
                 f'Отчеты {entry[0]} и {entry[1]} занимают {last_place} место'
             )
@@ -1163,7 +1161,7 @@ def calculate_q15_place(competition_id: int):
                 place=last_place,
                 competition_id=competition_id
             )
-            actual_place += 1
+            last_score = entry[2]
 
 
 def calculate_q15_score(grant_winners_data: List[Q15GrantWinner]):
