@@ -502,22 +502,18 @@ def calculate_q18_place(competition_id):
         place = 1
         previous_score = None
         previous_place = 0
-        tie_count = 0
 
         for entry in solo_entries:
             if entry[1] != previous_score:
-                place += tie_count
-                previous_place = place
-                tie_count = 1
-            else:
-                tie_count += 1
-            logger.info(f'Отчет {entry[0]} занимает {previous_place} место')
+                place = previous_place + 1
+            logger.info(f'Отчет {entry[0]} занимает {place} место')
             Q18Ranking.objects.create(
                 detachment=entry[0].detachment,
-                place=previous_place,
+                place=place,
                 competition_id=competition_id
             )
             previous_score = entry[1]
+            previous_place = place
 
     if tandem_entries:
         logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
@@ -527,23 +523,19 @@ def calculate_q18_place(competition_id):
         place = 1
         previous_score = None
         previous_place = 0
-        tie_count = 0
 
         for entry in tandem_entries:
             if entry[2] != previous_score:
-                place += tie_count
-                previous_place = place
-                tie_count = 1
-            else:
-                tie_count += 1
-            logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {previous_place} место')
+                place = previous_place + 1
+            logger.info(f'Отчеты {entry[0]} и {entry[1]} занимают {place} место')
             Q18TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
                 detachment=entry[1].detachment,
-                place=previous_place,
+                place=place,
                 competition_id=competition_id
             )
             previous_score = entry[2]
+            previous_place = place
 
 
 def calculate_q6_place(competition_id):
