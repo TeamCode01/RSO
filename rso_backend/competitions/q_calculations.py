@@ -482,7 +482,8 @@ def calculate_q18_place(competition_id):
                 f'cutoff date: {cutoff_date}. '
                 f'Обновляем кол-во участников.'
             )
-            calculate_june_detachment_members(entry, partner_entry)
+            if entry:
+                calculate_june_detachment_members(entry, partner_entry)
 
         if entry:
             entry.score = entry.participants_number / entry.june_15_detachment_members
