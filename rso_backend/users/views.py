@@ -24,7 +24,8 @@ from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
 from api.permissions import (IsCommanderOrTrustedAnywhere, IsStuffOrAuthor,
                              PersonalDataPermission,
                              IsForeignAdditionalDocsAuthor,
-                             OnlyStuffOrCentralCommander,)
+                             OnlyStuffOrCentralCommander,
+                             PersonalDataPermissionForGET,)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
 from users.filters import RSOUserFilter
@@ -465,14 +466,27 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
         ]
         }
 
+        GET-запрос на /api/v1/rsousers/foreign_parent_docsuments/{id}/:
+        id - ID юзера, чьи документы необходимо получить.
     """
 
-    queryset = UserForeignParentDocs.objects.all()
     serializer_class = UserForeignParentDocsSerializer
-    permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        return UserForeignParentDocs.objects.filter(user=user_id)
 
     def get_object(self):
         return get_object_or_404(UserForeignParentDocs, user=self.request.user)
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [
+                permissions.IsAuthenticated(), PersonalDataPermissionForGET()
+            ]
+        else:
+            return [permissions.IsAuthenticated(), IsStuffOrAuthor()]
+
 
     @swagger_auto_schema(
                 request_body=openapi.Schema(
@@ -537,7 +551,6 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
         snils = request.data.get('snils', None)
         inn = request.data.get('inn', None)
         work_book_num = request.data.get('work_book_num', None)
-
         try:
             UserForeignParentDocs.objects.get(
                 user=user,
@@ -599,6 +612,9 @@ class AdditionalForeignDocsViewSet(BaseUserViewSet):
     """Дополнительные документы иностранного пользователя.
 
     DELETE-запрос при передаче id удаляет отдельные записи.
+
+    GET-запрос на /api/v1/rsousers/foreign_docsuments/{id}/:
+    id - ID юзера, чьи документы необходимо получить.
     """
 
     queryset = AdditionalForeignDocs.objects.all()
@@ -611,9 +627,14 @@ class AdditionalForeignDocsViewSet(BaseUserViewSet):
 class ForeignUserDocumentsViewSet(BaseUserViewSet):
     """Представляет документы иностранного пользователя."""
 
-    # queryset = UserForeignDocuments.objects.all()
     serializer_class = ForeignUserDocumentsSerializer
-    permission_classes = (permissions.IsAuthenticated, IsStuffOrAuthor,)
+    permission_classes = (
+        permissions.IsAuthenticated, PersonalDataPermissionForGET,
+    )
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        return UserForeignDocuments.objects.filter(user=user_id)
 
     def get_object(self):
         return get_object_or_404(UserForeignDocuments, user=self.request.user)

@@ -105,7 +105,7 @@ from competitions.swagger_schemas import (q7schema_request_update,
                                           q7schema_request, q9schema_request)
 from headquarters.serializers import ShortDetachmentSerializer
 from headquarters.models import (
-    Detachment, RegionalHeadquarter, UserDetachmentPosition
+    Detachment, RegionalHeadquarter, UserDetachmentPosition, UserRegionalHeadquarterPosition
 )
 from rso_backend.settings import BASE_DIR
 
@@ -2286,8 +2286,13 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         report, created = Q6DetachmentReport.objects.get_or_create(
             competition=competition,
             detachment_id=detachment_id,
-            defaults=request.data
         )
+
+        model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
+        extra_fields = set(request.data.keys()) - model_fields
+        if extra_fields:
+            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Если отчет уже существовал, обновляем его данными из запроса
         if not created:
@@ -2324,9 +2329,11 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
-        if detachment.regional_headquarter.commander != request.user:
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
             return Response({
-                'detail': 'Только командир РШ из иерархии может '
+                'detail': 'Только командир/комиссар РШ из иерархии может '
                           'верифицировать отчеты по данному показателю'
             }, status=status.HTTP_403_FORBIDDEN)
         if detachment_report.is_verified:
@@ -2988,16 +2995,17 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
             # Подсчет места для индивидуальных и тандем участников:
             if participants_entry and not participants_entry.detachment:
-                Q13Ranking.objects.get_or_create(
+                solo_ranking = Q13Ranking.objects.get_or_create(
                     competition_id=competition_id,
                     detachment=report.detachment,
-                    place=calculate_q13_place(
+                )
+                solo_ranking.place = calculate_q13_place(
                         Q13EventOrganization.objects.filter(
                             detachment_report=report,
                             is_verified=True
                         )
                     )
-                )
+                solo_ranking.save()
             else:
                 if participants_entry:
                     tandem_ranking, _ = Q13TandemRanking.objects.get_or_create(

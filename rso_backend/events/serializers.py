@@ -246,6 +246,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class EventApplicationsSerializer(serializers.ModelSerializer):
+    position = serializers.SerializerMethodField()
     answers = serializers.SerializerMethodField()
     documents = serializers.SerializerMethodField()
     user = ShortUserSerializer(read_only=True)
@@ -256,6 +257,7 @@ class EventApplicationsSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'user',
+            'position',
             'event',
             'answers',
             'documents',
@@ -279,10 +281,27 @@ class EventApplicationsSerializer(serializers.ModelSerializer):
             many=True
         ).data
 
+    def get_position(self, instance):
+        event = instance.event
+        user_id = instance.organizer.id
+        if event.scale == 'Отрядное':
+            return get_user_position_at_level(Detachment, UserDetachmentPosition, user_id)
+        if event.scale == 'Образовательное':
+            return get_user_position_at_level(EducationalHeadquarter, UserEducationalHeadquarterPosition, user_id)
+        elif event.scale == 'Городское':
+            return get_user_position_at_level(LocalHeadquarter, UserLocalHeadquarterPosition, user_id)
+        elif event.scale == 'Региональное':
+            return get_user_position_at_level(RegionalHeadquarter, UserRegionalHeadquarterPosition, user_id)
+        elif event.scale == 'Окружное':
+            return get_user_position_at_level(DistrictHeadquarter, UserDistrictHeadquarterPosition, user_id)
+        elif event.scale == 'Всероссийское':
+            return get_user_position_at_level(CentralHeadquarter, UserCentralHeadquarterPosition, user_id)
+
 
 class EventParticipantsSerializer(serializers.ModelSerializer):
     answers = serializers.SerializerMethodField()
     documents = serializers.SerializerMethodField()
+    position = serializers.SerializerMethodField()
     user = ShortUserSerializer(read_only=True)
     event = ShortEventSerializer(read_only=True)
 
@@ -291,6 +310,7 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'user',
+            'position',
             'event',
             'answers',
             'documents'
@@ -327,6 +347,22 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
             EventUserDocument.objects.filter(event=obj.event, user=obj.user),
             many=True
         ).data
+
+    def get_position(self, instance):
+        event = instance.event
+        user_id = instance.organizer.id
+        if event.scale == 'Отрядное':
+            return get_user_position_at_level(Detachment, UserDetachmentPosition, user_id)
+        if event.scale == 'Образовательное':
+            return get_user_position_at_level(EducationalHeadquarter, UserEducationalHeadquarterPosition, user_id)
+        elif event.scale == 'Городское':
+            return get_user_position_at_level(LocalHeadquarter, UserLocalHeadquarterPosition, user_id)
+        elif event.scale == 'Региональное':
+            return get_user_position_at_level(RegionalHeadquarter, UserRegionalHeadquarterPosition, user_id)
+        elif event.scale == 'Окружное':
+            return get_user_position_at_level(DistrictHeadquarter, UserDistrictHeadquarterPosition, user_id)
+        elif event.scale == 'Всероссийское':
+            return get_user_position_at_level(CentralHeadquarter, UserCentralHeadquarterPosition, user_id)
 
 
 class EventUserDocumentSerializer(serializers.ModelSerializer):

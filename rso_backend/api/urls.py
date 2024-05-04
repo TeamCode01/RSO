@@ -32,7 +32,7 @@ from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventViewSet, MultiEventViewSet,
                           GroupEventApplicationViewSet,
                           create_answers, group_applications,
-                          group_applications_me)
+                          group_applications_me, is_participant_or_applicant)
 from headquarters.views import (CentralPositionViewSet, CentralViewSet,
                                 DetachmentAcceptViewSet,
                                 DetachmentApplicationViewSet,
@@ -291,9 +291,11 @@ UserStatementDownloadAllVS = UserStatementDocumentsViewSet.as_view(
 ForeignUserDocsVS = ForeignUserDocumentsViewSet.as_view(
     UPDATE_RETRIEVE
 )
+ForeignUserDocsListVS = ForeignUserDocumentsViewSet.as_view(LIST)
 ForeignParentDocsVS = UserForeignParentDocsViewSet.as_view(
     RETRIEVE_CREATE | DELETE
 )
+ForeignParentDocsListVS = UserForeignParentDocsViewSet.as_view(LIST)
 AdditionalDocsVS = AdditionalForeignDocsViewSet.as_view(
     DELETE
 )
@@ -330,9 +332,19 @@ user_nested_urls = [
         name='foreign-documents'
     ),
     path(
+        'rsousers/foreign_documents/<int:pk>/',
+        ForeignUserDocsListVS,
+        name='foreign-documents-list'
+    ),
+    path(
         'rsousers/me/foreign_parent_documents/',
         ForeignParentDocsVS,
         name='foreign-parent-documents'
+    ),
+    path(
+        'rsousers/foreign_parent_documents/<int:pk>/',
+        ForeignParentDocsListVS,
+        name='foreign-parent-documents-list'
     ),
     path(
         'rsousers/me/foreign_parent_additional_documents/<int:pk>/',
@@ -514,6 +526,11 @@ user_nested_urls = [
         'events/<int:event_pk>/group_applications/me/',
         group_applications_me,
         name='get-group-applications-me'
+    ),
+    path(
+        'events/<int:event_pk>/user_status/<int:user_pk>/',
+        is_participant_or_applicant,
+        name='is-participant-or-applicant'
     ),
     path(
         'competitions/<int:competition_pk>/reports/q1/get-place/',

@@ -18,7 +18,7 @@ from rest_framework.response import Response
 from api.constants import HEADQUARTERS_MODELS_MAPPING
 from api.mixins import (CreateListRetrieveDestroyViewSet,
                         ListRetrieveDestroyViewSet,
-                        RetrieveUpdateDestroyViewSet,)
+                        RetrieveUpdateDestroyViewSet, )
 from api.permissions import (IsApplicantOrOrganizer,
                              IsAuthorMultiEventApplication,
                              IsCommander, IsDetachmentCommander,
@@ -27,6 +27,7 @@ from api.permissions import (IsApplicantOrOrganizer,
                              IsEventOrganizerOrAuthor, IsLocalCommander,
                              IsRegionalCommander, IsStuffOrCentralCommander,
                              IsVerifiedPermission)
+from events.constants import EVENT_APPLICATIONS_MODEL
 from events.filters import EventFilter
 from events.models import (Event, EventAdditionalIssue, EventApplications,
                            EventDocumentData, EventIssueAnswer,
@@ -1353,3 +1354,25 @@ class EventAutoComplete(autocomplete.Select2QuerySetView):
 
     def get_ordering(self):
         pass
+
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def is_participant_or_applicant(request, event_pk, user_pk):
+    event = get_object_or_404(Event, pk=event_pk)
+    user = get_object_or_404(RSOUser, pk=user_pk)
+
+    applications_model = EVENT_APPLICATIONS_MODEL[event.application_type]
+
+    try:
+        is_applicant = applications_model.objects.filter(user=user).exists()
+    except Exception:
+        is_applicant = False
+
+    return Response(
+        {
+            'is_applicant': is_applicant,
+            'is_participant': EventParticipants.objects.filter(event=event, user=user).exists()
+        },
+        status=status.HTTP_200_OK
+    )
