@@ -283,7 +283,7 @@ class EventApplicationsSerializer(serializers.ModelSerializer):
 
     def get_position(self, instance):
         event = instance.event
-        user_id = instance.organizer.id
+        user_id = instance.user.id
         if event.scale == 'Отрядное':
             return get_user_position_at_level(Detachment, UserDetachmentPosition, user_id)
         if event.scale == 'Образовательное':
@@ -350,7 +350,7 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
 
     def get_position(self, instance):
         event = instance.event
-        user_id = instance.organizer.id
+        user_id = instance.user.id
         if event.scale == 'Отрядное':
             return get_user_position_at_level(Detachment, UserDetachmentPosition, user_id)
         if event.scale == 'Образовательное':

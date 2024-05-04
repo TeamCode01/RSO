@@ -588,9 +588,8 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         default=False, blank=True, null=True
     )
     first_may_demonstration_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)],
-        blank=True,
-        null=True
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+        default=0
     )
     creative_festival = models.BooleanField(
         default=False,
@@ -603,9 +602,8 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         null=True
     )
     patriotic_action_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)],
-        blank=True,
-        null=True
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+        default=0
     )
     safety_work_week = models.BooleanField(
         default=False, blank=True, null=True
@@ -621,9 +619,8 @@ class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
         null=True
     )
     working_semester_opening_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)],
-        blank=True,
-        null=True
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
+        default=0
     )
     spartakiad = models.BooleanField(default=False, blank=True, null=True)
     professional_competition = models.BooleanField(
