@@ -4902,7 +4902,27 @@ def get_detachment_places(request, competition_pk, detachment_pk):
 
     Доступ: комиссары и командиры РШ подвластных отрядов
 
+    Response:
+    ```
+        {
+            "is_tandem": bool,
+            "is_junior_detachment": bool,
+            "overall_place": int,
+            "places_sum": int,
+            "q1_place": int,
+            "q2_place": int,
+            ...
+            "q20_place": int
+        }
+    ```
+
     Note:
+        - is_tandem (bool): True, если отряд участвует в конкурсе в составе тандема.
+        - is_junior_detachment (bool): True, если отряд является младшим отрядом в тандеме.
+        - overall_place (int): Общее место отряда в конкурсе или сообщение об отсутствии рейтинга.
+        - places_sum (int): Суммарное количество баллов отряда или сообщение об отсутствии рейтинга.
+        - qX_place (int or float): Место отряда в X-ом показателе конкурса или сообщение об отсутствии рейтинга.
+
         400 Bad Request:
         - Отряд не участвует в конкурсе.
     """
