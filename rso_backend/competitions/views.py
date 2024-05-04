@@ -40,6 +40,7 @@ from api.permissions import (
 )
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (
     Q10, Q11, Q12, Q8, Q9, CompetitionApplications,
     CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
@@ -54,8 +55,9 @@ from competitions.models import (
     Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking,
     Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
     Q15DetachmentReport, OverallRanking, OverallTandemRanking,
-    QVerificationLog,
+    QVerificationLog, Q20TandemRanking,
 )
+from competitions.permissions import IsRegionalCommanderOrCommissionerOfDetachment
 from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
 from competitions.serializers import (
@@ -4890,3 +4892,99 @@ class QVerificationLogByNumberView(ListAPIView):
             competition_id=competition_id,
             q_number=q_number
         )
+
+
+@api_view(['GET'])
+@permission_classes((IsRegionalCommanderOrCommissionerOfDetachment,))
+def get_detachment_places(request, competition_pk, detachment_pk):
+    """
+    Представляет места переданного отряда в конкурсе по всем показателям.
+
+    Доступ: комиссары и командиры РШ подвластных отрядов
+
+    Note:
+        400 Bad Request:
+        - Отряд не участвует в конкурсе.
+    """
+    response = {}
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    detachment = get_object_or_404(Detachment, pk=detachment_pk)
+
+    is_solo = CompetitionParticipants.objects.filter(
+        junior_detachment=detachment,
+        detachment__isnull=True
+    ).exists()
+    if is_solo:
+        response['is_tandem'] = False
+        response['is_junior_detachment'] = True
+        try:
+            response['overall_place'] = OverallRanking.objects.get(
+                detachment=detachment, competition=competition
+            ).place
+            response['places_sum'] = OverallRanking.objects.get(
+                detachment=detachment, competition=competition
+            ).places_sum
+        except OverallRanking.DoesNotExist:
+            response['overall_place'] = 'Рейтинг ещё не сформирован'
+            response['places_sum'] = 'Рейтинг ещё не сформирован'
+        for q_number, q_ranking in enumerate(SOLO_RANKING_MODELS, start=1):
+            try:
+                response[f'q{q_number}_place'] = q_ranking.objects.get(
+                    detachment=detachment, competition=competition
+                ).place
+            except q_ranking.DoesNotExist:
+                response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+    if not is_solo:
+        is_tandem_junior = CompetitionParticipants.objects.filter(
+            junior_detachment=detachment,
+            detachment__isnull=False,
+            competition=competition
+        ).exists()
+        if is_tandem_junior:
+            response['is_tandem'] = True
+            response['is_junior_detachment'] = True
+            try:
+                response['overall_place'] = OverallTandemRanking.objects.get(
+                    junior_detachment=detachment, competition=competition
+                ).place
+                response['places_sum'] = OverallTandemRanking.objects.get(
+                    junior_detachment=detachment, competition=competition
+                ).places_sum
+            except OverallTandemRanking.DoesNotExist:
+                response['overall_place'] = 'Рейтинг ещё не сформирован'
+                response['places_sum'] = 'Рейтинг ещё не сформирован'
+            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+                try:
+                    response[f'q{q_number}_place'] = q_ranking.objects.get(
+                        junior_detachment=detachment, competition=competition
+                    ).place
+                except q_ranking.DoesNotExist:
+                    response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+
+        is_older_detachment = CompetitionParticipants.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).exists()
+        if is_older_detachment:
+            response['is_tandem'] = True
+            response['is_junior_detachment'] = False
+            try:
+                response['overall_place'] = OverallTandemRanking.objects.get(
+                    detachment=detachment, competition=competition
+                ).place
+                response['places_sum'] = OverallTandemRanking.objects.get(
+                    detachment=detachment, competition=competition
+                ).places_sum
+            except OverallTandemRanking.DoesNotExist:
+                response['overall_place'] = 'Рейтинг ещё не сформирован'
+                response['places_sum'] = 'Рейтинг ещё не сформирован'
+            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+                try:
+                    response[f'q{q_number}_place'] = q_ranking.objects.get(
+                        detachment=detachment, competition=competition
+                    ).place
+                except q_ranking.DoesNotExist:
+                    response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+        else:
+            return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(response, status=status.HTTP_200_OK)
