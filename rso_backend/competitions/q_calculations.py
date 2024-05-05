@@ -503,7 +503,7 @@ def calculate_q18_place(competition_id):
         logger.info('Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
         Q18Ranking.objects.all().delete()
 
-        solo_entries.sort(key=lambda entry: entry[1])
+        solo_entries.sort(key=lambda entry: entry[1], reverse=True)
         place = 1
         previous_score = None
         previous_place = 0
@@ -524,7 +524,7 @@ def calculate_q18_place(competition_id):
         logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
         Q18TandemRanking.objects.all().delete()
 
-        tandem_entries.sort(key=lambda entry: entry[2])
+        tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         place = 1
         previous_score = None
         previous_place = 0
