@@ -638,9 +638,12 @@ def calculate_q6_place(competition_id):
         place = 0
         previous_score = None
         for entry in solo_entries:
+            additional_place = calculate_q6_boolean_scores(entry[0])
+            if not additional_place:
+                continue
             if entry[1] != previous_score:
                 place = last_place + 1
-            updated_place = place + calculate_q6_boolean_scores(entry[0])
+            updated_place = place + additional_place
             logger.info(
                 f'Отчет {entry[0]} занимает {updated_place} место'
             )
@@ -662,10 +665,14 @@ def calculate_q6_place(competition_id):
         place = 0
         previous_score = None
         for entry in tandem_entries:
+            additional_place_junior = calculate_q6_boolean_scores(entry[0])
+            additional_place_detachment = calculate_q6_boolean_scores(entry[1])
+            if not additional_place_junior or not additional_place_detachment:
+                continue
             if entry[2] != previous_score:
                 place = last_place + 1
             updated_place = place + (
-                round(calculate_q6_boolean_scores(entry[0]) + calculate_q6_boolean_scores(entry[1]) / 2)
+                round(additional_place_junior + additional_place_detachment / 2)
             )
             logger.info(
                 f'Отчет {entry[0]} и {entry[1]} занимает {updated_place} место'
@@ -680,7 +687,7 @@ def calculate_q6_place(competition_id):
             previous_score = entry[2]
 
 
-def calculate_q6_boolean_scores(entry: Q6DetachmentReport):
+def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
     score = 0
     if entry.first_may_demonstration:
         score += 1
@@ -698,7 +705,18 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport):
         score += 1
     if entry.professional_competition:
         score += 1
-    return score
+    place = None
+    if score == 8:
+        place = 1
+    elif score == 7:
+        place = 2
+    elif score == 6:
+        place = 3
+    elif score == 5:
+        place = 4
+    elif score == 4:
+        place = 3
+    return place
 
 
 def calculate_june_detachment_members(entry, partner_entry=None):
