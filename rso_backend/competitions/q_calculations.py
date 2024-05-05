@@ -640,7 +640,7 @@ def calculate_q6_place(competition_id):
         for entry in solo_entries:
             if entry[1] != previous_score:
                 place = last_place + 1
-            updated_place = place + calculate_q6_boolean_scores(entry)
+            updated_place = place + calculate_q6_boolean_scores(entry[0])
             logger.info(
                 f'Отчет {entry[0]} занимает {updated_place} место'
             )
