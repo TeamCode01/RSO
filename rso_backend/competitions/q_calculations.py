@@ -503,7 +503,7 @@ def calculate_q18_place(competition_id):
         logger.info('Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
         Q18Ranking.objects.all().delete()
 
-        solo_entries.sort(key=lambda entry: entry[1])
+        solo_entries.sort(key=lambda entry: entry[1], reverse=True)
         place = 1
         previous_score = None
         previous_place = 0
@@ -524,7 +524,7 @@ def calculate_q18_place(competition_id):
         logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q18 TandemRanking')
         Q18TandemRanking.objects.all().delete()
 
-        tandem_entries.sort(key=lambda entry: entry[2])
+        tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         place = 1
         previous_score = None
         previous_place = 0
@@ -609,7 +609,7 @@ def calculate_q6_place(competition_id):
                     entry.patriotic_action_participants +
                     entry.first_may_demonstration_participants
             )
-            entry.score = (entry_participants_number / entry.april_1_detachment_members) + calculate_q6_boolean_scores(entry)
+            entry.score = (entry_participants_number / entry.april_1_detachment_members)
             entry.save()
 
         if partner_entry and entry:
@@ -618,7 +618,7 @@ def calculate_q6_place(competition_id):
                     entry.patriotic_action_participants +
                     entry.first_may_demonstration_participants
             )
-            partner_entry.score = (partner_entry_participants_number / partner_entry.april_1_detachment_members) + calculate_q6_boolean_scores(partner_entry)
+            partner_entry.score = (partner_entry_participants_number / partner_entry.april_1_detachment_members)
             partner_entry.save()
             tuple_to_append = (
                 entry, partner_entry, entry.score + partner_entry.score
@@ -630,41 +630,64 @@ def calculate_q6_place(competition_id):
 
     if solo_entries:
         logger.info(
-            'Есть записи для соло-участников. Удаляем записи из таблицы Q6 Ranking')
+            'Есть записи для соло-участников. Удаляем записи из таблицы Q6 Ranking'
+        )
         Q6Ranking.objects.all().delete()
-        solo_entries.sort(key=lambda entry: entry[1])
-        place = len(solo_entries)
+        solo_entries.sort(key=lambda entry: entry[1], reverse=True)
+        last_place = 0
+        place = 0
+        previous_score = None
         for entry in solo_entries:
+            additional_place = calculate_q6_boolean_scores(entry[0])
+            if not additional_place:
+                continue
+            if entry[1] != previous_score:
+                place = last_place + 1
+            updated_place = place + additional_place
             logger.info(
-                f'Отчет {entry[0]} занимает {place} место'
+                f'Отчет {entry[0]} занимает {updated_place} место'
             )
             Q6Ranking.objects.create(
                 detachment=entry[0].detachment,
-                place=place,
+                place=updated_place,
                 competition_id=competition_id
             )
-            place -= 1
+            last_place = place
+            previous_score = entry[1]
 
     if tandem_entries:
         logger.info(
-            'Есть записи для тандем-участников. Удаляем записи из таблицы Q6 TandemRanking')
+            'Есть записи для тандем-участников. Удаляем записи из таблицы Q6 TandemRanking'
+        )
         Q6TandemRanking.objects.all().delete()
-        tandem_entries.sort(key=lambda entry: entry[2])
-        place = len(tandem_entries)
+        tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
+        last_place = 0
+        place = 0
+        previous_score = None
         for entry in tandem_entries:
+            additional_place_junior = calculate_q6_boolean_scores(entry[0])
+            additional_place_detachment = calculate_q6_boolean_scores(entry[1])
+            if not additional_place_junior or not additional_place_detachment:
+                continue
+            if entry[2] != previous_score:
+                place = last_place + 1
+            updated_place = place + (
+                round(additional_place_junior + additional_place_detachment / 2)
+            )
             logger.info(
-                f'Отчеты {entry[0]} и {entry[1]} занимают {place} место'
+                f'Отчет {entry[0]} и {entry[1]} занимает {updated_place} место'
             )
             Q6TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
-                detachment=entry[1].detachment,
-                place=place,
+                detached=entry[1].detachment,
+                place=updated_place,
                 competition_id=competition_id
             )
-            place -= 1
+            last_place = place
+            previous_score = entry[2]
 
 
-def calculate_q6_boolean_scores(entry: Q6DetachmentReport):
+def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
     score = 0
     if entry.first_may_demonstration:
         score += 1
@@ -682,7 +705,18 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport):
         score += 1
     if entry.professional_competition:
         score += 1
-    return score
+    place = None
+    if score == 8:
+        place = 1
+    elif score == 7:
+        place = 2
+    elif score == 6:
+        place = 3
+    elif score == 5:
+        place = 4
+    elif score == 4:
+        place = 3
+    return place
 
 
 def calculate_june_detachment_members(entry, partner_entry=None):

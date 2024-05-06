@@ -2,6 +2,8 @@ import logging
 
 from celery import shared_task
 from django.conf import settings
+
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (
     Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking,
     Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
@@ -177,52 +179,8 @@ def calculate_q20_places_task():
 @shared_task
 def calculate_overall_places_task():
     """Считает общие места для соло и тандемов."""
-    solo_ranking_models = [
-        Q1Ranking,
-        Q2Ranking,
-        Q3Ranking,
-        Q4Ranking,
-        Q5Ranking,
-        Q6Ranking,
-        Q7Ranking,
-        Q8Ranking,
-        Q9Ranking,
-        Q10Ranking,
-        Q11Ranking,
-        Q12Ranking,
-        Q13Ranking,
-        Q14Ranking,
-        Q15Rank,
-        Q16Ranking,
-        Q17Ranking,
-        Q18Ranking,
-        Q19Ranking,
-        Q20Ranking
-    ]
-    tandem_ranking_models = [
-        Q1TandemRanking,
-        Q2TandemRanking,
-        Q3TandemRanking,
-        Q4TandemRanking,
-        Q5TandemRanking,
-        Q6TandemRanking,
-        Q7TandemRanking,
-        Q8TandemRanking,
-        Q9TandemRanking,
-        Q10TandemRanking,
-        Q11TandemRanking,
-        Q12TandemRanking,
-        Q13TandemRanking,
-        Q14TandemRanking,
-        Q15TandemRank,
-        Q16TandemRanking,
-        Q17TandemRanking,
-        Q18TandemRanking,
-        Q19TandemRanking,
-        Q20TandemRanking
-    ]
     calculate_overall_rankings(
-        solo_ranking_models=solo_ranking_models,
-        tandem_ranking_models=tandem_ranking_models,
+        solo_ranking_models=SOLO_RANKING_MODELS,
+        tandem_ranking_models=TANDEM_RANKING_MODELS,
         competition_id=settings.COMPETITION_ID
     )

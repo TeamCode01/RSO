@@ -14,7 +14,8 @@ from api.views import (AreaViewSet, EducationalInstitutionViewSet,
 from competitions.models import Q5EducatedParticipant
 from competitions.views import (
     CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10UpdateDestroyViewSet, Q10ViewSet, Q11UpdateDestroyViewSet, Q11ViewSet, Q12UpdateDestroyViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
+    CompetitionViewSet, Q10UpdateDestroyViewSet, Q10ViewSet, Q11UpdateDestroyViewSet, Q11ViewSet,
+    Q12UpdateDestroyViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
     Q16ViewSet, Q17EventLinkViewSet,
     Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet, Q7UpdateDestroyViewSet,
     Q7ViewSet,
@@ -23,7 +24,7 @@ from competitions.views import (
     get_place_q3, get_place_q4,
     Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
     Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place,
-    DetachmentCompetitionIsTandemView, QVerificationLogByNumberView
+    DetachmentCompetitionIsTandemView, QVerificationLogByNumberView, get_detachment_places
 )
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
@@ -557,11 +558,15 @@ user_nested_urls = [
         get_place_overall,
         name='get-place-overall'
     ),
+    path(
+        'competitions/<int:competition_pk>/get-detachment-places/<int:detachment_pk>/',
+        get_detachment_places,
+        name='get-detachment-places'
+    ),
     path('', include('djoser.urls')),
 ]
 
 urlpatterns = [
-
     path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
     path(
         'reset_password/',

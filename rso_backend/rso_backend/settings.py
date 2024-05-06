@@ -342,7 +342,7 @@ if DEBUG:
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(minutes=5, seconds=22)
+            'schedule': timedelta(minutes=1, seconds=22)
         },
         'calculate_q7': {
             'task': 'competitions.tasks.calculate_q7_places_task',
@@ -390,7 +390,7 @@ if DEBUG:
         },
         'calculate_q18': {
             'task': 'competitions.tasks.calculate_q18_places_task',
-            'schedule': timedelta(minutes=1, seconds=18)
+            'schedule': timedelta(minutes=4, seconds=18)
         },
         'calculate_q19': {
             'task': 'competitions.tasks.calculate_q19',

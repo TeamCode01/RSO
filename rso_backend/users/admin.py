@@ -330,7 +330,6 @@ class UserRegionAdmin(admin.ModelAdmin):
 admin.site.register(UserRegion, UserRegionAdmin)
 
 
-admin.site.unregister(Group)
 admin.site.unregister(PeriodicTask)
 admin.site.unregister(IntervalSchedule)
 admin.site.unregister(CrontabSchedule)
