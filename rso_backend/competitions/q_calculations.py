@@ -942,7 +942,7 @@ def calculate_q1_score(competition_id):
     Выполняется только 15.04.2024.
     """
     today = date.today()
-    start_date = date(2024, 5, 1)
+    start_date = date(2024, 5, 7)
 
     if today != start_date:
         return
