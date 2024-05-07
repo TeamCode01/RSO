@@ -801,7 +801,7 @@ def calculate_place(
         reverse=True
 ):
     """
-    Таска для расчета рейтингов Q1, Q7 - Q12 и Q20.
+    Таска для расчета рейтингов Q1, Q7 - Q12, Q16 и Q20.
 
     Для celery-beat, считает вплоть до 15 октября 2024 года.
     :param competition_id: id конкурса
@@ -884,7 +884,6 @@ def calculate_place(
                                    else (0 if reverse else max_score)))),
         reverse=reverse
     )
-    logger.error(max_score)
     to_create_entries = []
     place = 0
     score = 0
@@ -981,7 +980,7 @@ def calculate_q1_score(competition_id):
             ])
 
     # Создаем отчеты каждому отряду с посчитанными score
-    #       10 человек в отряде  – за каждого уплатившего 1 балл
+    #       10 и менее человек в отряде  – за каждого уплатившего 1 балл
     #       11-20 человек – за каждого уплатившего 0.75 балла
     #       21 и более человек – за каждого уплатившего 0.5 балла
 
