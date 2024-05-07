@@ -1,0 +1,44 @@
+{% extends 'reports/base.html' %}
+{% load static %}
+
+{% block content %}
+    {% include 'reports/header.html' %}
+    <div class="container">
+        <h2>Привет, {{ user.get_full_name }}!</h2>
+        <h1>Доступные отчеты:</h1>
+        <div class="search-container">
+            <input type="text" id="reportSearch" placeholder="Поиск отчетов...">
+        </div>
+        <div class="grid-container" id="buttonContainer">
+            <a href="/report1" class="button">Отчет 1</a>
+            <a href="/report2" class="button">Отчет 2</a>
+            <a href="/report3" class="button">Отчет 3</a>
+            <a href="/report1" class="button">Отчет 1</a>
+            <a href="/report2" class="button">Отчет 2</a>
+            <a href="/report3" class="button">Отчет 3</a>
+            <a href="/report1" class="button">Отчет 1</a>
+            <a href="/report2" class="button">Отчет 2</a>
+            <a href="/report3" class="button">Отчет 3</a>
+            <a href="/report1" class="button">Отчет 1</a>
+            <a href="/report2" class="button">Отчет 2</a>
+            <a href="/report3" class="button">Отчет 3</a>
+            <a href="/report1" class="button">Отчет 1</a>
+            <a href="/report2" class="button">Отчет 2</a>
+            <a href="/report3" class="button">Отчет 3</a>
+            <!-- отчеты размещать здесь -->
+        </div>
+    </div>
+    <script>
+        const searchInput = document.getElementById('reportSearch');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const buttons = buttonContainer.getElementsByTagName('a');
+
+        searchInput.addEventListener('input', function() {
+            const filter = searchInput.value.toLowerCase();
+            for (const button of buttons) {
+                const text = button.textContent || button.innerText;
+                button.style.display = text.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+            }
+        });
+    </script>
+{% endblock %}

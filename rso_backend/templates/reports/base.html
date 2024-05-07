@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}РСО - Отчеты{% endblock %}</title>
+    <style>
+        body {
+            background-color: #f0f8ff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        header {
+            background-color: #005ea0;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h2 {
+            margin: 0;
+        }
+
+        header .subtext {
+            font-size: 0.8em;
+            color: #b0d4f1;
+            margin-left: 10px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .search-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            width: 100%;
+        }
+
+        .button {
+            background-color: #007acc;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .button:hover {
+            background-color: #005ea0;
+        }
+
+        h1 {
+            color: #007acc;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+    <script>
+        const searchInput = document.getElementById('reportSearch');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const buttons = buttonContainer.getElementsByTagName('a');
+
+        searchInput.addEventListener('input', function() {
+            const filter = searchInput.value.toLowerCase();
+            for (const button of buttons) {
+                const text = button.textContent || button.innerText;
+                button.style.display = text.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>
