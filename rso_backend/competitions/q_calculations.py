@@ -185,7 +185,8 @@ def calculate_q14_place(competition_id):
 
     detachment_reports = Q14DetachmentReport.objects.filter(
         competition_id=competition_id,
-    )
+        q14_labor_project__is_verified=True
+    ).distinct()
 
     start_list = []
     tandem_list = []
@@ -1087,7 +1088,9 @@ def calculate_q15_place(competition_id: int):
     )
     Q15TandemRank.objects.all().delete()
     Q15Rank.objects.all().delete()
-    verified_entries = Q15DetachmentReport.objects.filter()
+    verified_entries = Q15DetachmentReport.objects.filter(
+        q15grantwinner__is_verified=True
+    ).distinct()
     logger.info(
         f'Получили отчеты: {verified_entries.count()}'
     )
