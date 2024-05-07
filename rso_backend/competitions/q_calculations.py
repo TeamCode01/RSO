@@ -680,7 +680,7 @@ def calculate_q6_place(competition_id):
             )
             Q6TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
-                detached=entry[1].detachment,
+                detachment=entry[1].detachment,
                 place=updated_place,
                 competition_id=competition_id
             )
