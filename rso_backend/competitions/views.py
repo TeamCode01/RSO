@@ -109,7 +109,6 @@ from headquarters.serializers import ShortDetachmentSerializer
 from headquarters.models import (
     Detachment, RegionalHeadquarter, UserDetachmentPosition, UserRegionalHeadquarterPosition
 )
-from rso_backend.settings import BASE_DIR
 
 
 class CompetitionViewSet(viewsets.ModelViewSet):
@@ -3217,8 +3216,8 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
     def get_permissions(self):
-        if self.action == 'list':
-            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(), ]
+        if self.action == 'list' or self.action == 'retrieve':
+            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(),]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -3533,7 +3532,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
 
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action == 'list' or self.action == 'retrieve':
             return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin()]
         return super().get_permissions()
 

@@ -1,0 +1,69 @@
+{% extends 'reports/base.html' %}
+{% load i18n %}
+{% block title %}Результаты тестирования по безопасности{% endblock %}
+{% block header %}
+{% include 'reports/header.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Общая выгрузка участников конкурса</h1>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #007acc;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f0f8ff;
+            color: #007acc;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+
+    <table>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Регион</th>
+                <th>ФИО</th>
+                <th>Отряд</th>
+                <th>Статус отряда</th>
+                <th>Номинация</th>
+                <th>Должность</th>
+                <th>Верификация</th>
+                <th>Членский взнос</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for detachment, users in sample_results %}
+            {% for user in users %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ detachment.region }}</td>
+                <td>{{ user.last_name }} {{ user.first_name }} {{ user.patronymic_name }}</td>
+                <td>{{ detachment.name }}</td>
+                <td>{{ detachment.status }}</td>
+                <td>{{ detachment.nomination }}</td>
+                <td>{{ user.position }}</td>
+                <td>{{ user.is_verified|yesno:"Да,Нет" }}</td>
+                <td>{{ user.membership_fee|yesno:"Да,Нет" }}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'export_competition_participants_results' %}" class="button">Скачать все результаты в Excel</a>
+</div>
+{% endblock %}
