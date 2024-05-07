@@ -79,7 +79,7 @@ class Attempt(models.Model):
     def __str__(self):
         return (
             f"{self.user.last_name} {self.user.first_name} id {self.user_id} "
-            f"получил(а) вопросы от {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+            f"получил(а) вопросы от {self.timestamp.strftime('%Y-%m-%d %H:%M') if self.timestamp else '-'}"
         )
 
     class Meta:
