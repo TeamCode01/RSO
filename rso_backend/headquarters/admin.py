@@ -212,6 +212,7 @@ class UserEducationalHeadquarterPositionAdmin(BaseCentralPositionAdmin):
 
 @admin.register(UserDetachmentPosition)
 class UserDetachmentPositionAdmin(BaseCentralPositionAdmin):
+    list_display = ('user', 'position', 'headquarter', 'membership_fee', 'date_membership_fee')
     form = DetachmentPositionForm
     add_form = DetachmentPositionAddForm
 
@@ -228,6 +229,18 @@ class UserDetachmentPositionAdmin(BaseCentralPositionAdmin):
             defaults['form'] = self.add_form
         defaults.update(kwargs)
         return super().get_form(request, obj, **defaults)
+
+    @admin.display(description='Оплата членского взноса')
+    def membership_fee(self, obj):
+        return 'Да' if obj.user.membership_fee else 'Нет'
+
+    @admin.display(description='Дата оплаты членского взноса')
+    def date_membership_fee(self, obj):
+        user = obj.user
+        logs = user.membership_logs.all()
+        if logs.count() == 0 or logs.last().status == 'Изменен на "не оплачен"':
+            return None
+        return logs.last().date
 
 
 @admin.register(EducationalInstitution)

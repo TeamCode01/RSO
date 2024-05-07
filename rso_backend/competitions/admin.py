@@ -20,7 +20,6 @@ from competitions.forms import (CompetitionApplicationsForm,
 
 @admin.register(Competitions)
 class CompetitionsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'created_at')
     list_display = ('id',
                     'name',
                     'count_tandem_applications',
@@ -112,7 +111,6 @@ class CompetitionParticipantsAdmin(admin.ModelAdmin):
         return 'Тандем' if obj.detachment is not None else 'Старт'
 
 
-
 class QBaseRankingAdmin(admin.ModelAdmin):
     list_display = ('id', 'competition_id', 'detachment', 'place')
     search_fields = ('detachment__name', 'place')
@@ -142,6 +140,7 @@ class OverallTandemRankingAdmin(admin.ModelAdmin):
 @admin.register(Q1Report)
 class Q1ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name', 'score')
 
 
 @admin.register(Q1Ranking)
@@ -300,6 +299,7 @@ class Q7Inline(admin.TabularInline):
 @admin.register(Q7Report)
 class Q7ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name',)
 
     inlines = [Q7Inline]
 
@@ -340,6 +340,7 @@ class Q8Inline(admin.TabularInline):
 @admin.register(Q8Report)
 class Q8ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name',)
 
     inlines = [Q8Inline]
 
@@ -370,6 +371,7 @@ class Q9Inline(admin.TabularInline):
 @admin.register(Q9Report)
 class Q9ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name',)
 
     inlines = [Q9Inline]
 
@@ -398,6 +400,7 @@ class Q10Inline(admin.TabularInline):
 @admin.register(Q10Report)
 class Q10ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name',)
 
     inlines = [Q10Inline]
 
@@ -426,6 +429,7 @@ class Q11Inline(admin.TabularInline):
 @admin.register(Q11Report)
 class Q11ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name',)
 
     inlines = [Q11Inline]
 
@@ -454,6 +458,7 @@ class Q12Inline(admin.TabularInline):
 @admin.register(Q12Report)
 class Q12ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
+    search_fields = ('detachment__name',)
 
     inlines = [Q12Inline]
 
@@ -568,6 +573,7 @@ class Q15TandemRankingAdmin(QBaseTandemRankingAdmin):
 @admin.register(Q16Report)
 class Q16ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'is_verified', 'score')
+    search_fields = ('detachment__name',)
 
 
 @admin.register(Q16Ranking)
@@ -647,6 +653,7 @@ class Q18TandemRankingAdmin(QBaseTandemRankingAdmin):
 @admin.register(Q19Report)
 class Q19ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'is_verified', 'safety_violations')
+    search_fields = ('detachment__name',)
 
 
 @admin.register(Q19Ranking)
@@ -662,6 +669,7 @@ class Q19TandemRankingAdmin(QBaseTandemRankingAdmin):
 @admin.register(Q20Report)
 class Q20ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'is_verified', 'score')
+    search_fields = ('detachment__name',)
 
 
 @admin.register(Q20Ranking)

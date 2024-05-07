@@ -185,7 +185,8 @@ def calculate_q14_place(competition_id):
 
     detachment_reports = Q14DetachmentReport.objects.filter(
         competition_id=competition_id,
-    )
+        q14_labor_project__is_verified=True
+    ).distinct()
 
     start_list = []
     tandem_list = []
@@ -800,7 +801,7 @@ def calculate_place(
         reverse=True
 ):
     """
-    Таска для расчета рейтингов Q1, Q7 - Q12 и Q20.
+    Таска для расчета рейтингов Q1, Q7 - Q12, Q16 и Q20.
 
     Для celery-beat, считает вплоть до 15 октября 2024 года.
     :param competition_id: id конкурса
@@ -883,7 +884,6 @@ def calculate_place(
                                    else (0 if reverse else max_score)))),
         reverse=reverse
     )
-    logger.error(max_score)
     to_create_entries = []
     place = 0
     score = 0
@@ -942,7 +942,7 @@ def calculate_q1_score(competition_id):
     Выполняется только 15.04.2024.
     """
     today = date.today()
-    start_date = date(2024, 5, 1)
+    start_date = date(2024, 5, 7)
 
     if today != start_date:
         return
@@ -980,7 +980,7 @@ def calculate_q1_score(competition_id):
             ])
 
     # Создаем отчеты каждому отряду с посчитанными score
-    #       10 человек в отряде  – за каждого уплатившего 1 балл
+    #       10 и менее человек в отряде  – за каждого уплатившего 1 балл
     #       11-20 человек – за каждого уплатившего 0.75 балла
     #       21 и более человек – за каждого уплатившего 0.5 балла
 
@@ -1087,7 +1087,9 @@ def calculate_q15_place(competition_id: int):
     )
     Q15TandemRank.objects.all().delete()
     Q15Rank.objects.all().delete()
-    verified_entries = Q15DetachmentReport.objects.filter()
+    verified_entries = Q15DetachmentReport.objects.filter(
+        q15grantwinner__is_verified=True
+    ).distinct()
     logger.info(
         f'Получили отчеты: {verified_entries.count()}'
     )
