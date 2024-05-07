@@ -1214,7 +1214,6 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         return obj.detachment_report.detachment
 
     @swagger_auto_schema(
-        # request_body=ListSerializer(child=CreateQ7Serializer()), # работает.
         request_body=q7schema_request,
         responses={201: Q7ReportSerializer}
     )
@@ -1337,6 +1336,11 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         if not report:
             # Отряд участник, но еще не подал отчет по данному показателю.
             return Response(status=status.HTTP_404_NOT_FOUND)
+        if not report.is_verified:
+            return Response(
+                {"place": "Показатель в обработке"},
+                status=status.HTTP_200_OK
+            )
         class_name = self.serializer_class.Meta.model.__name__  # Q7
         ranking_fk = f'{class_name.lower()}ranking'  # q7ranking
         # Если есть FK на стартовый рейтинг
@@ -3774,6 +3778,7 @@ class Q17EventLinkViewSet(viewsets.ModelViewSet):
             )
         return super().destroy(request, *args, **kwargs)
 
+
 class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     """
     Показатель "Охват бойцов, принявших участие во Всероссийском
@@ -4159,6 +4164,11 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         ).first()
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        if not report.is_verified:
+            return Response(
+                {"place": "Показатель в обработке"},
+                status=status.HTTP_200_OK
+            )
         ranking = getattr(
             detachment, 'q19ranking'
         ).filter(competition_id=competition_pk).first()
@@ -4347,6 +4357,11 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         ).first()
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        if not report.is_verified:
+            return Response(
+                {"place": "Показатель в обработке"},
+                status=status.HTTP_200_OK
+            )
         ranking = getattr(
             detachment, 'q20ranking'
         ).filter(competition_id=competition_pk).first()
@@ -4689,6 +4704,11 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         ).first()
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        if not report.is_verified:
+            return Response(
+                {"place": "Показатель в обработке"},
+                status=status.HTTP_200_OK
+            )
         ranking = getattr(
             detachment, 'q16ranking'
         ).filter(competition_id=competition_pk).first()

@@ -170,6 +170,7 @@ class UserMembershipLogsAdmin(admin.ModelAdmin):
         'user', 'status_changed_by', 'date', 'period', 'status', 'description'
     )
     list_filter = ('date', 'period', 'status')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name')
 
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
@@ -183,6 +184,7 @@ class UserMemberCertLogsAdmin(admin.ModelAdmin):
         'user', 'cert_issued_by', 'date', 'cert_type', 'description'
     )
     list_filter = ('date', 'cert_type')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name')
 
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
@@ -196,6 +198,7 @@ class UserVerificationLogsAdmin(admin.ModelAdmin):
     list_display = ('user', 'date', 'description', 'verification_by')
     readonly_fields = ('user', 'date', 'description', 'verification_by')
     list_filter = ('date', 'description')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name')
 
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
