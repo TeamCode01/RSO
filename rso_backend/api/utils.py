@@ -1,5 +1,4 @@
 import io
-import logging
 import mimetypes
 import os
 import re
@@ -24,7 +23,7 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition,
-                                 DistrictHeadquarter)
+                                 DistrictHeadquarter,)
 from users.models import RSOUser
 
 
