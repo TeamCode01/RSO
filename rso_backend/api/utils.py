@@ -818,3 +818,25 @@ def get_user_position_at_level(headquarter_model, position_model, user_id: int) 
                 'headquarter_id': user_headquarter_position.headquarter.id,
                 'position': user_headquarter_position.position.name
             }
+
+
+def get_user_detachment_position(user):
+    if Detachment.objects.filter(commander=user).exists():
+        return "Командир"
+    else:
+        user_detachment_position = getattr(user, 'userdetachmentposition', None)
+        return user_detachment_position.position.name if user_detachment_position and hasattr(
+            user_detachment_position, 'position'
+        ) else "-"
+
+
+def get_user_detachment(user):
+    detachment = Detachment.objects.filter(commander=user).first()
+    if detachment:
+        return detachment.name
+    else:
+        detachment_position = getattr(user, 'userdetachmentposition', None)
+        return detachment_position.headquarter.name if detachment_position and hasattr(
+            detachment_position,
+            'headquarter'
+        ) else None
