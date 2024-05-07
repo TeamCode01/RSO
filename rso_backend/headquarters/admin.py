@@ -232,13 +232,15 @@ class UserDetachmentPositionAdmin(BaseCentralPositionAdmin):
 
     @admin.display(description='Оплата членского взноса')
     def membership_fee(self, obj):
-        return obj.user.membership_fee
+        return 'Да' if obj.user.membership_fee else 'Нет'
 
     @admin.display(description='Дата оплаты членского взноса')
     def date_membership_fee(self, obj):
-        if getattr(obj, 'membership_fee', None) is None:
+        user = obj.user
+        logs = user.membership_logs.all()
+        if logs.count() == 0 or logs.last().status == 'Изменен на "не оплачен"':
             return None
-        return obj.user.membership_logs.last().date
+        return logs.last().date
 
 
 @admin.register(EducationalInstitution)

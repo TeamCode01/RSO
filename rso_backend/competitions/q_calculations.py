@@ -939,17 +939,17 @@ def calculate_q1_score(competition_id):
     """
     Функция для расчета очков по 1 показателю.
 
-    Выполняется только 15.04.2024.
+    Выполняется только 7.05.2024.
     """
     today = date.today()
-    start_date = date(2024, 5, 1)
+    start_date = date(2024, 5, 7)
 
     if today != start_date:
         return
 
     participants = CompetitionParticipants.objects.filter(
         competition_id=competition_id
-    ).all()  # мб добавить select_related('junior_detachment__members', 'detachment__members')
+    ).all()
 
     if not participants:
         logger.info('Нет участников')
@@ -968,7 +968,7 @@ def calculate_q1_score(competition_id):
             entry.junior_detachment.members.count() + 1,
             entry.junior_detachment.members.filter(
                 user__membership_fee=True
-            ).count() + 1 if entry.junior_detachment.commander.membership_fee else 0
+            ).count() + (1 if entry.junior_detachment.commander.membership_fee else 0)
         ])
         if entry.detachment:
             detachments_data.append([
@@ -976,7 +976,7 @@ def calculate_q1_score(competition_id):
                 entry.detachment.members.count() + 1,
                 entry.detachment.members.filter(
                     user__membership_fee=True
-                ).count() + 1 if entry.detachment.commander.membership_fee else 0
+                ).count() + (1 if entry.detachment.commander.membership_fee else 0)
             ])
 
     # Создаем отчеты каждому отряду с посчитанными score
