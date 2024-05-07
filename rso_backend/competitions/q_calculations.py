@@ -968,7 +968,7 @@ def calculate_q1_score(competition_id):
             entry.junior_detachment.members.count() + 1,
             entry.junior_detachment.members.filter(
                 user__membership_fee=True
-            ).count() + 1 if entry.junior_detachment.commander.membership_fee else 0
+            ).count() + (1 if entry.junior_detachment.commander.membership_fee else 0)
         ])
         if entry.detachment:
             detachments_data.append([
@@ -976,7 +976,7 @@ def calculate_q1_score(competition_id):
                 entry.detachment.members.count() + 1,
                 entry.detachment.members.filter(
                     user__membership_fee=True
-                ).count() + 1 if entry.detachment.commander.membership_fee else 0
+                ).count() + (1 if entry.detachment.commander.membership_fee else 0)
             ])
 
     # Создаем отчеты каждому отряду с посчитанными score
