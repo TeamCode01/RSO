@@ -4497,7 +4497,7 @@ def get_place_q3(request, competition_pk=None):
         )
     elif tandem_ranking:
         return Response(
-            {"error": "Рейтинг еще не сформирован"},
+            {"error": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
         )
     ranking = Q3Ranking.objects.filter(
@@ -4510,7 +4510,7 @@ def get_place_q3(request, competition_pk=None):
         )
 
     return Response(
-        {"place": "Рейтинг еще не сформирован"},
+        {"place": "Показатель в обработке"},
         status=status.HTTP_404_NOT_FOUND
     )
 
@@ -4548,7 +4548,7 @@ def get_place_q4(request, competition_pk=None):
         )
     elif tandem_ranking:
         return Response(
-            {"error": "Рейтинг еще не сформирован"},
+            {"error": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
         )
     ranking = Q4Ranking.objects.filter(
@@ -4561,7 +4561,7 @@ def get_place_q4(request, competition_pk=None):
         )
 
     return Response(
-        {"place": "Рейтинг еще не сформирован"},
+        {"place": "Показатель в обработке"},
         status=status.HTTP_404_NOT_FOUND
     )
 
