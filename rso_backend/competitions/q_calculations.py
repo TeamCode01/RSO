@@ -942,9 +942,9 @@ def calculate_q1_score(competition_id):
     Выполняется только 7.05.2024.
     """
     today = date.today()
-    start_date = date(2024, 5, 7)
+    end_date = date(2024, 6, 12)
 
-    if today != start_date:
+    if today > end_date:
         return
 
     participants = CompetitionParticipants.objects.filter(
