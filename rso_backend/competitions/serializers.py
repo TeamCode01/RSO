@@ -1,21 +1,27 @@
 from datetime import date
 
-from django.db import transaction
 from django.conf import settings
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from competitions.models import (
-    Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications,
-    CompetitionParticipants, Competitions,
-    LinksQ7, LinksQ8, Q10Report, Q11Report, Q12Report,
-    Q13EventOrganization, Q13DetachmentReport, Q16Report, Q17DetachmentReport,
-    Q17EventLink, Q14LaborProject, Q14Ranking, Q14TandemRanking,
-    Q18DetachmentReport, Q19Report, Q20Report, Q2DetachmentReport, Q7Report,
-    Q8Report, Q9Report, Q5EducatedParticipant, Q5DetachmentReport,
-    Q14DetachmentReport, Q6DetachmentReport, Q15GrantWinner, Q15DetachmentReport, QVerificationLog)
+from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
+                                 CompetitionApplications,
+                                 CompetitionParticipants, Competitions,
+                                 LinksQ7, LinksQ8, Q2DetachmentReport,
+                                 Q5DetachmentReport, Q5EducatedParticipant,
+                                 Q6DetachmentReport, Q7Report, Q8Report,
+                                 Q9Report, Q10Report, Q11Report, Q12Report,
+                                 Q13DetachmentReport, Q13EventOrganization,
+                                 Q14DetachmentReport, Q14LaborProject,
+                                 Q14Ranking, Q14TandemRanking,
+                                 Q15DetachmentReport, Q15GrantWinner,
+                                 Q16Report, Q17DetachmentReport, Q17EventLink,
+                                 Q18DetachmentReport, Q19Report, Q20Report,
+                                 QVerificationLog)
 from headquarters.models import Detachment
-from headquarters.serializers import BaseShortUnitSerializer, ShortDetachmentSerializer
+from headquarters.serializers import (BaseShortUnitSerializer,
+                                      ShortDetachmentSerializer)
 from users.short_serializers import ShortUserSerializer
 
 

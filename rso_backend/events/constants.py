@@ -1,7 +1,8 @@
 from events.models import (EventApplications, GroupEventApplication,
                            MultiEventApplication)
-from headquarters.models import Detachment, EducationalHeadquarter, LocalHeadquarter, RegionalHeadquarter, \
-        DistrictHeadquarter, CentralHeadquarter
+from headquarters.models import (CentralHeadquarter, Detachment,
+                                 DistrictHeadquarter, EducationalHeadquarter,
+                                 LocalHeadquarter, RegionalHeadquarter)
 
 EVENT_TIME_DATA_RAW_EXISTS = (
         'Информация о времени проведения данного мероприятия уже существует'

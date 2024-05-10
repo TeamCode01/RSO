@@ -1,17 +1,17 @@
 import datetime
 
-from competitions.models import (
-    Q10, Q11, Q12, Q7, Q8, Q9, CompetitionApplications, 
-    CompetitionParticipants, Competitions, LinksQ7, LinksQ8,
-    Q10Report, Q11Report, Q12Report, Q19Report, Q7Report, Q8Report, Q9Report
-)
 import pytest
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
-from headquarters.models import (
-    Detachment, Position, RegionalHeadquarter,
-    UserRegionalHeadquarterPosition
-)
+
+from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
+                                 CompetitionApplications,
+                                 CompetitionParticipants, Competitions,
+                                 LinksQ7, LinksQ8, Q7Report, Q8Report,
+                                 Q9Report, Q10Report, Q11Report, Q12Report,
+                                 Q19Report)
+from headquarters.models import (Detachment, Position, RegionalHeadquarter,
+                                 UserRegionalHeadquarterPosition)
 from users.models import RSOUser
 
 

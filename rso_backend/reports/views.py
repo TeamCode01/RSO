@@ -1,16 +1,23 @@
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
+import datetime
 
-from django.views import View
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views import View
 from openpyxl import Workbook
 
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
-from reports.utils import enumerate_attempts, get_competition_users, get_detachment_q_results
-import datetime
+from reports.constants import (COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY,
+                               COMPETITION_PARTICIPANTS_DATA_HEADERS,
+                               DETACHMENT_Q_RESULTS_HEADERS,
+                               OPENXML_CONTENT_TYPE,
+                               SAFETY_TEST_RESULTS_HEADERS)
+from reports.utils import (enumerate_attempts, get_competition_users,
+                           get_detachment_q_results)
 
 
 class SafetyTestResultsView(View):
@@ -26,7 +33,6 @@ class SafetyTestResultsView(View):
 
 
 class ExportSafetyTestResultsView(View):
-
     def get(self, request):
         results = Attempt.objects.filter(
             category=Attempt.Category.SAFETY, is_valid=True, score__gt=0
@@ -34,9 +40,8 @@ class ExportSafetyTestResultsView(View):
         enumerated_results = enumerate_attempts(results)
         workbook = Workbook()
         worksheet = workbook.active
-        worksheet.title = "Safety Test Results"
-        headers = ['№', 'Регион', 'ФИО', 'Отряд', 'Должность', 'Попытка', 'Валидность попытки', 'Очки']
-        worksheet.append(headers)
+        worksheet.title = 'Результаты тестирования по безопасности'
+        worksheet.append(SAFETY_TEST_RESULTS_HEADERS)
 
         for index, result in enumerate(enumerated_results, start=1):
             row = [
@@ -53,9 +58,9 @@ class ExportSafetyTestResultsView(View):
             worksheet.append(row)
 
         response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content_type=OPENXML_CONTENT_TYPE
         )
-        response['Content-Disposition'] = 'attachment; filename=safety_test_results_{}.xlsx'.format(
+        response['Content-Disposition'] = 'attachment; filename=тестирование_безопасность_{}.xlsx'.format(
             datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         )
         workbook.save(response)
@@ -72,20 +77,15 @@ class CompetitionParticipantView(View):
         return render(request, self.template_name, context)
 
 
-class ExportCompetitionParticipantsResultsView(View):
-
+class ExportCompetitionParticipantsDataView(View):
     def get(self, request):
         competition_participants = CompetitionParticipants.objects.all()
         competition_members_data = get_competition_users(list(competition_participants))
 
         workbook = Workbook()
         worksheet = workbook.active
-        worksheet.title = "Competition Participants Results"
-        headers = [
-            '№', 'Регион', 'ФИО', 'Отряд', 'Статус отряда',
-            'Номинация', 'Должность', 'Верификация', 'Членский взнос'
-        ]
-        worksheet.append(headers)
+        worksheet.title = "Данные по участникам конкурсам"
+        worksheet.append(COMPETITION_PARTICIPANTS_DATA_HEADERS)
 
         for detachment, users in competition_members_data:
             for index, user in enumerate(users, start=1):
@@ -104,9 +104,9 @@ class ExportCompetitionParticipantsResultsView(View):
                 worksheet.append(row)
 
         response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content_type=OPENXML_CONTENT_TYPE
         )
-        response['Content-Disposition'] = 'attachment; filename=competition_participants_results_{}.xlsx'.format(
+        response['Content-Disposition'] = 'attachment; filename=участники_данные_{}.xlsx'.format(
             datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         )
         workbook.save(response)
@@ -128,38 +128,9 @@ class ExportDetachmentQResultsView(View):
 
         workbook = Workbook()
         worksheet = workbook.active
-        worksheet.title = "Detachment Results"
-        headers = [
-            '№',
-            'Регион',
-            'Отряд',
-            'Статус отряда',
-            'Номинация',
-            'Количество участников',
-            'Итоговое место',
-            'Сумма мест',
-            'Численность членов линейного студенческого отряда в соответствии с объемом уплаченных членских взносов',
-            'Прохождение Командиром и Комиссаром студенческого отряда региональной школы командного состава',
-            'Получение командным составом отряда образования в корпоративном университете РСО',
-            'Прохождение обучение по охране труда и пожарной безопасности в рамках недели охраны труда РСО',
-            'Процент членов студенческого отряда, прошедших профессиональное обучение',
-            'Участие членов студенческого отряда в обязательных общесистемных мероприятиях на региональном уровне',
-            'Участие членов студенческого отряда в окружных и межрегиональных мероприятиях РСО',
-            'Участие членов студенческого отряда во всероссийских мероприятиях РСО',
-            'Призовые места отряда в окружных и межрегиональных мероприятиях и конкурсах РСО',
-            'Призовые места отряда во Всероссийских мероприятиях и конкурсах РСО',
-            'Призовые места отряда на окружных и межрегиональных трудовых проектах',
-            'Призовые места отряда на всероссийских трудовых проектах',
-            'Организация собственных мероприятий отряда',
-            'Отношение количества бойцов, отработавших в летнем трудовом семестре, к общему числу членов отряда',
-            'Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах, направленных на развитие студенческих отрядов',
-            'Активность отряда в социальных сетях',
-            'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда',
-            'Охват бойцов, принявших участие во Всероссийском дне ударного труда',
-            'Отсутствие нарушении техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре',
-            'Соответствие требованиями положения символики и атрибутике форменной одежды и символики отрядов'
-        ]
-        worksheet.append(headers)
+        worksheet.title = 'Результаты отрядов, показатели'
+ 
+        worksheet.append(DETACHMENT_Q_RESULTS_HEADERS)
 
         for index, detachment in enumerate(detachments, start=1):
             row = [
@@ -176,9 +147,33 @@ class ExportDetachmentQResultsView(View):
             worksheet.append(row)
 
         response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content_type=OPENXML_CONTENT_TYPE
         )
-        response['Content-Disposition'] = 'attachment; filename=detachment_results_{}.xlsx'.format(
+        response['Content-Disposition'] = 'attachment; filename=показатели_конкурс_{}.xlsx'.format(
+            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        )
+        workbook.save(response)
+        return response
+
+
+class ExportCompetitionParticipantsContactData(View):
+    def get(self, request):
+        with connection.cursor() as cursor:
+            cursor.execute(COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY)
+            rows = cursor.fetchall()
+
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Контакты участников конкурса'
+        worksheet.append(SAFETY_TEST_RESULTS_HEADERS)
+
+        for row in rows:
+            worksheet.append(row)
+
+        response = HttpResponse(
+            content_type=OPENXML_CONTENT_TYPE
+        )
+        response['Content-Disposition'] = 'attachment; filename=контакты_конкурс_{}.xlsx'.format(
             datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         )
         workbook.save(response)

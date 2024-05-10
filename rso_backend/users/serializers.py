@@ -32,10 +32,11 @@ from users.constants import (DOCUMENTS_RAW_EXISTS, EDUCATION_RAW_EXISTS,
                              REGION_RAW_EXISTS, STATEMENT_RAW_EXISTS,
                              TOO_MANY_EDUCATIONS)
 from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
-                          UserForeignDocuments, UserForeignParentDocs,
+                          UserEducation, UserForeignDocuments,
+                          UserForeignParentDocs, UserMedia, UserParent,
                           UserPrivacySettings, UserProfessionalEducation,
-                          UserRegion, UserStatementDocuments, UserEducation,
-                          UserVerificationRequest, UserMedia, UserParent,)
+                          UserRegion, UserStatementDocuments,
+                          UserVerificationRequest)
 from users.short_serializers import ShortUserSerializer
 
 

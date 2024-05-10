@@ -1,4 +1,4 @@
-from django.db.models import QuerySet, Q
+from django.db.models import Q, QuerySet
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.permissions import BasePermission
@@ -11,19 +11,17 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        check_trusted_for_eduhead, check_trusted_for_localhead,
                        check_trusted_for_regionalhead,
                        check_trusted_in_headquarters, check_trusted_user,
-                       is_commander_this_detachment,
-                       is_regional_commander, is_regional_commissioner,
-                       is_safe_method,
-                       get_detachment_commander_num, is_regional_commander,
-                       get_regional_hq_commander_num, is_safe_method,
-                       is_stuff_or_central_commander,
+                       get_central_hq_commander_num,
+                       get_detachment_commander_num,
                        get_district_hq_commander_num,
-                       get_central_hq_commander_num, is_central_event_master)
-from competitions.models import (
-    CompetitionParticipants, Q13DetachmentReport, Q14DetachmentReport, Q17DetachmentReport, Q5DetachmentReport,
-    Q15DetachmentReport
-)
-from api.utils import is_competition_participant
+                       get_regional_hq_commander_num, is_central_event_master,
+                       is_commander_this_detachment,
+                       is_competition_participant, is_regional_commander,
+                       is_regional_commissioner, is_safe_method,
+                       is_stuff_or_central_commander)
+from competitions.models import (CompetitionParticipants, Q5DetachmentReport,
+                                 Q13DetachmentReport, Q14DetachmentReport,
+                                 Q15DetachmentReport, Q17DetachmentReport)
 from events.models import Event, EventOrganizationData
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
