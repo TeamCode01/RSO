@@ -2292,6 +2292,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             competition=competition,
             detachment_id=detachment_id,
         )
+        print(f'report created: {report}')
 
         model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
         extra_fields = set(request.data.keys()) - model_fields
@@ -2299,11 +2300,9 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Если отчет уже существовал, обновляем его данными из запроса
-        if not created:
-            for field, value in request.data.items():
-                setattr(report, field, value)
-            report.save()
+        for field, value in request.data.items():
+            setattr(report, field, value)
+        report.save()
 
         serializer = self.get_serializer(report)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
@@ -4470,7 +4469,7 @@ def get_place_q3(request, competition_pk=None):
     """
     Action для получения рейтинга по данному показателю.
 
-    Возвращает место в формате {'place': int}
+    Возвращает место в формате {'place': int}В
 
     Для тандем заявки место для обоих участников будет одинаковым.
 
