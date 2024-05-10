@@ -68,6 +68,7 @@ COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY = (
 
 # Headers
 COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS = [
+    '№',
     'ID Отряда',
     'Название Отряда',
     'Направление',

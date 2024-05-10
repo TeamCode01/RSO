@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from openpyxl import Workbook
+from urllib.parse import quote
 
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
@@ -15,9 +16,52 @@ from reports.constants import (COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY,
                                COMPETITION_PARTICIPANTS_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
                                OPENXML_CONTENT_TYPE,
-                               SAFETY_TEST_RESULTS_HEADERS)
+                               SAFETY_TEST_RESULTS_HEADERS, COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS)
 from reports.utils import (enumerate_attempts, get_competition_users,
                            get_detachment_q_results)
+
+
+class BaseExcelExportView(View):
+    def get_data(self):
+        """К переопределению."""
+        raise NotImplementedError('Определите метод для получения данных для Excel-файла.')
+
+    def get_headers(self):
+        """К переопределению."""
+        raise NotImplementedError('Определите метод для получения хедеров для Excel-файла.')
+
+    def get_filename(self):
+        """К переопределению."""
+        raise NotImplementedError('Определите метод для получения названия для Excel-файла.')
+
+    def get_worksheet_title(self):
+        """К переопределению."""
+        raise NotImplementedError('Определите метод для получения названия Worksheet Excel-файла.')
+
+    def process_row(self, index, row):
+        """По умолчанию возвращает запись as is. Может быть переопределено в саб-классе."""
+        return [index] + list(row)
+
+    def get(self, request):
+        data = self.get_data()
+        headers = self.get_headers()
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = self.get_worksheet_title()
+        worksheet.append(headers)
+
+        for index, row in enumerate(data, start=1):
+            processed_row = self.process_row(index, row)
+            worksheet.append(processed_row)
+
+        response = HttpResponse(
+            content_type=OPENXML_CONTENT_TYPE
+        )
+        filename = self.get_filename()
+        safe_filename = quote(filename)  # Кодирование имени файла для безопасной передачи в HTTP заголовке
+        response['Content-Disposition'] = f'attachment; filename={safe_filename}'
+        workbook.save(response)
+        return response
 
 
 class SafetyTestResultsView(View):
@@ -32,39 +76,34 @@ class SafetyTestResultsView(View):
         return render(request, self.template_name, context)
 
 
-class ExportSafetyTestResultsView(View):
-    def get(self, request):
+class ExportSafetyTestResultsView(BaseExcelExportView):
+    def get_data(self):
         results = Attempt.objects.filter(
             category=Attempt.Category.SAFETY, is_valid=True, score__gt=0
         ).order_by('-timestamp', 'user')
-        enumerated_results = enumerate_attempts(results)
-        workbook = Workbook()
-        worksheet = workbook.active
-        worksheet.title = 'Результаты тестирования по безопасности'
-        worksheet.append(SAFETY_TEST_RESULTS_HEADERS)
+        return enumerate_attempts(results)
 
-        for index, result in enumerate(enumerated_results, start=1):
-            row = [
-                index,
-                result.user.region.name if result.user.region else '-',
-                f'{result.user.last_name} {result.user.first_name} '
-                f'{result.user.patronymic_name if result.user.patronymic_name else "(без отчества)"}',
-                result.detachment if result.detachment else '-',
-                result.detachment_position if result.detachment_position else '-',
-                result.attempt_number,
-                "Да" if result.is_valid else "Нет",
-                result.score,
-            ]
-            worksheet.append(row)
+    def get_headers(self):
+        return SAFETY_TEST_RESULTS_HEADERS
 
-        response = HttpResponse(
-            content_type=OPENXML_CONTENT_TYPE
-        )
-        response['Content-Disposition'] = 'attachment; filename=тестирование_безопасность_{}.xlsx'.format(
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        )
-        workbook.save(response)
-        return response
+    def get_filename(self):
+        return f'тестирование_безопасность_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Тестирование - безопасность'
+
+    def process_row(self, index, row):
+        return [
+            index,
+            row.user.region.name if row.user.region else '-',
+            f'{row.user.last_name} {row.user.first_name} '
+            f'{row.user.patronymic_name if row.user.patronymic_name else "(без отчества)"}',
+            row.detachment if row.detachment else '-',
+            row.detachment_position if row.detachment_position else '-',
+            row.attempt_number,
+            "Да" if row.is_valid else "Нет",
+            row.score,
+        ]
 
 
 class CompetitionParticipantView(View):
@@ -77,20 +116,16 @@ class CompetitionParticipantView(View):
         return render(request, self.template_name, context)
 
 
-class ExportCompetitionParticipantsDataView(View):
-    def get(self, request):
+class ExportCompetitionParticipantsDataView(BaseExcelExportView):
+
+    def get_data(self):
         competition_participants = CompetitionParticipants.objects.all()
         competition_members_data = get_competition_users(list(competition_participants))
 
-        workbook = Workbook()
-        worksheet = workbook.active
-        worksheet.title = "Данные по участникам конкурсам"
-        worksheet.append(COMPETITION_PARTICIPANTS_DATA_HEADERS)
-
+        rows = []
         for detachment, users in competition_members_data:
-            for index, user in enumerate(users, start=1):
-                row = [
-                    index,
+            for user in users:
+                row = (
                     detachment.region.name if detachment.region else '-',
                     f'{user.last_name} {user.first_name} '
                     f'{user.patronymic_name if user.patronymic_name else "(без отчества)"}',
@@ -98,19 +133,20 @@ class ExportCompetitionParticipantsDataView(View):
                     detachment.status if detachment else '-',
                     detachment.nomination if detachment else '-',
                     user.position if user.position else '-',
-                    "Да" if user.is_verified else "Нет",
-                    "Да" if user.membership_fee else "Нет",
-                ]
-                worksheet.append(row)
+                    'Да' if user.is_verified else 'Нет',
+                    'Да' if user.membership_fee else 'Нет',
+                )
+                rows.append(row)
+        return rows
 
-        response = HttpResponse(
-            content_type=OPENXML_CONTENT_TYPE
-        )
-        response['Content-Disposition'] = 'attachment; filename=участники_данные_{}.xlsx'.format(
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        )
-        workbook.save(response)
-        return response
+    def get_headers(self):
+        return COMPETITION_PARTICIPANTS_DATA_HEADERS
+
+    def get_filename(self):
+        return f'участники_данные_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Данные участников'
 
 
 class DetachmentQResultsView(View):
@@ -122,62 +158,48 @@ class DetachmentQResultsView(View):
         return render(request, self.template_name, context)
 
 
-class ExportDetachmentQResultsView(View):
-    def get(self, request):
-        detachments = get_detachment_q_results(settings.COMPETITION_ID)
+class ExportDetachmentQResultsView(BaseExcelExportView):
+    def get_data(self):
+        return get_detachment_q_results(settings.COMPETITION_ID)
 
-        workbook = Workbook()
-        worksheet = workbook.active
-        worksheet.title = 'Результаты отрядов, показатели'
- 
-        worksheet.append(DETACHMENT_Q_RESULTS_HEADERS)
+    def get_headers(self):
+        return DETACHMENT_Q_RESULTS_HEADERS
 
-        for index, detachment in enumerate(detachments, start=1):
-            row = [
-                index,
-                detachment.region.name,
-                detachment.name,
-                detachment.status,
-                detachment.nomination,
-                detachment.participants_count,
-                detachment.overall_ranking,
-                detachment.places_sum,
-            ]
-            row.extend(detachment.places)
-            worksheet.append(row)
+    def get_filename(self):
+        return f'показатели_конкурс_результаты_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
-        response = HttpResponse(
-            content_type=OPENXML_CONTENT_TYPE
-        )
-        response['Content-Disposition'] = 'attachment; filename=показатели_конкурс_{}.xlsx'.format(
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        )
-        workbook.save(response)
-        return response
+    def get_worksheet_title(self):
+        return 'Результаты отрядов, показатели'
+
+    def process_row(self, index, row):
+        return [
+            index,
+            row.region.name,
+            row.name,
+            row.status,
+            row.nomination,
+            row.participants_count,
+            row.overall_ranking,
+            row.places_sum,
+            *row.places
+        ]
 
 
-class ExportCompetitionParticipantsContactData(View):
-    def get(self, request):
+class ExportCompetitionParticipantsContactData(BaseExcelExportView):
+    def get_data(self):
         with connection.cursor() as cursor:
             cursor.execute(COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY)
             rows = cursor.fetchall()
+            return rows
 
-        workbook = Workbook()
-        worksheet = workbook.active
-        worksheet.title = 'Контакты участников конкурса'
-        worksheet.append(SAFETY_TEST_RESULTS_HEADERS)
+    def get_headers(self):
+        return COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS
 
-        for row in rows:
-            worksheet.append(row)
+    def get_filename(self):
+        return f'контакты_конкурс_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
-        response = HttpResponse(
-            content_type=OPENXML_CONTENT_TYPE
-        )
-        response['Content-Disposition'] = 'attachment; filename=контакты_конкурс_{}.xlsx'.format(
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        )
-        workbook.save(response)
-        return response
+    def get_worksheet_title(self):
+        return 'Контакты участников конкурса'
 
 
 @method_decorator(login_required, name='dispatch')
