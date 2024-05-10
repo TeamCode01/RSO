@@ -1,7 +1,7 @@
 import datetime
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -21,6 +21,12 @@ from reports.utils import (enumerate_attempts, get_competition_users,
                            get_detachment_q_results)
 
 
+def has_reports_access(user):
+    return user.is_authenticated and getattr(user, 'reports_access', False)
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
 class BaseExcelExportView(View):
     def get_data(self):
         """К переопределению."""
@@ -64,6 +70,8 @@ class BaseExcelExportView(View):
         return response
 
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
 class SafetyTestResultsView(View):
     template_name = 'reports/safety_test_results.html'
 
@@ -106,6 +114,8 @@ class ExportSafetyTestResultsView(BaseExcelExportView):
         ]
 
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
 class CompetitionParticipantView(View):
     template_name = 'reports/competition_participants.html'
 
@@ -149,6 +159,8 @@ class ExportCompetitionParticipantsDataView(BaseExcelExportView):
         return 'Данные участников'
 
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
 class DetachmentQResultsView(View):
     template_name = 'reports/detachment_q_results.html'
 
@@ -203,6 +215,7 @@ class ExportCompetitionParticipantsContactData(BaseExcelExportView):
 
 
 @method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
 class ReportView(View):
     template_name = 'reports/reports.html'
 
