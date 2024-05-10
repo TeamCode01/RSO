@@ -140,6 +140,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         'is_verified',
         'membership_fee',
         'is_staff',
+        'reports_access',
         'region',
         'detachment_name',
         'get_user_position',
