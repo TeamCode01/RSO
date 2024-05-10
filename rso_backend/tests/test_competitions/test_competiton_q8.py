@@ -1,4 +1,5 @@
 from http import HTTPStatus
+
 import pytest
 
 from competitions.models import Q8, Q8Report

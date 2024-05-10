@@ -112,6 +112,10 @@ class RSOUser(AbstractUser):
         default=False,
         verbose_name='Членский взнос оплачен'
     )
+    reports_access = models.BooleanField(
+        default=False,
+        verbose_name='Доступ к странице с отчетами'
+    )
 
     class Meta:
         verbose_name_plural = 'Пользователи'

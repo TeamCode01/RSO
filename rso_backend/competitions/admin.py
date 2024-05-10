@@ -1,21 +1,36 @@
 from django.contrib import admin
 
-from competitions.models import (
-    Q10, Q11, Q12, Q8, Q9, CompetitionApplications, CompetitionParticipants, Competitions,
-    Q7, LinksQ7, LinksQ8, Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking, Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
-    Q12TandemRanking, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q17DetachmentReport, Q16Ranking, Q16Report,
-    Q16TandemRanking, Q17EventLink, Q18Ranking, Q19Ranking,
-    Q19Report, Q19TandemRanking, Q1Ranking, Q1Report, Q1TandemRanking,
-    Q20Ranking, Q20Report, Q20TandemRanking, Q2DetachmentReport, Q2Ranking,
-    Q7Ranking, Q7Report, Q13TandemRanking, Q18TandemRanking, Q13Ranking,
-    Q7TandemRanking, Q8Ranking, Q8Report, Q8TandemRanking, Q9Ranking, Q9Report, Q9TandemRanking, Q2TandemRanking,
-    Q17Ranking, Q17TandemRanking, Q5Ranking, Q5TandemRanking, Q15Rank, Q15TandemRank,
-    Q5DetachmentReport, Q15DetachmentReport, Q6DetachmentReport, Q6Ranking, Q6TandemRanking,
-    Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, Q13DetachmentReport, Q5EducatedParticipant,
-    Q13EventOrganization, Q15GrantWinner, Q18DetachmentReport, OverallTandemRanking, OverallRanking, QVerificationLog
-)
 from competitions.forms import (CompetitionApplicationsForm,
                                 CompetitionParticipantsForm)
+from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
+                                 CompetitionApplications,
+                                 CompetitionParticipants, Competitions,
+                                 LinksQ7, LinksQ8, OverallRanking,
+                                 OverallTandemRanking, Q1Ranking, Q1Report,
+                                 Q1TandemRanking, Q2DetachmentReport,
+                                 Q2Ranking, Q2TandemRanking, Q3Ranking,
+                                 Q3TandemRanking, Q4Ranking, Q4TandemRanking,
+                                 Q5DetachmentReport, Q5EducatedParticipant,
+                                 Q5Ranking, Q5TandemRanking,
+                                 Q6DetachmentReport, Q6Ranking,
+                                 Q6TandemRanking, Q7Ranking, Q7Report,
+                                 Q7TandemRanking, Q8Ranking, Q8Report,
+                                 Q8TandemRanking, Q9Ranking, Q9Report,
+                                 Q9TandemRanking, Q10Ranking, Q10Report,
+                                 Q10TandemRanking, Q11Ranking, Q11Report,
+                                 Q11TandemRanking, Q12Ranking, Q12Report,
+                                 Q12TandemRanking, Q13DetachmentReport,
+                                 Q13EventOrganization, Q13Ranking,
+                                 Q13TandemRanking, Q14DetachmentReport,
+                                 Q14LaborProject, Q14Ranking, Q14TandemRanking,
+                                 Q15DetachmentReport, Q15GrantWinner, Q15Rank,
+                                 Q15TandemRank, Q16Ranking, Q16Report,
+                                 Q16TandemRanking, Q17DetachmentReport,
+                                 Q17EventLink, Q17Ranking, Q17TandemRanking,
+                                 Q18DetachmentReport, Q18Ranking,
+                                 Q18TandemRanking, Q19Ranking, Q19Report,
+                                 Q19TandemRanking, Q20Ranking, Q20Report,
+                                 Q20TandemRanking, QVerificationLog)
 
 
 @admin.register(Competitions)

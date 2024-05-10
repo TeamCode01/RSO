@@ -8,9 +8,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
 from django.http import QueryDict
-from django_filters.rest_framework import DjangoFilterBackend
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
@@ -19,96 +19,107 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.mixins import (
-    CreateListRetrieveUpdateViewSet, ListRetrieveDestroyViewSet,
-    ListRetrieveCreateViewSet, UpdateDestroyViewSet
-)
+from api.mixins import (CreateListRetrieveUpdateViewSet,
+                        ListRetrieveCreateViewSet, ListRetrieveDestroyViewSet,
+                        UpdateDestroyViewSet)
 from api.permissions import (
-    IsCommanderAndCompetitionParticipant,
+    IsCentralEventMaster, IsCommanderAndCompetitionParticipant,
     IsCommanderDetachmentInParameterOrRegionalCommander,
     IsCommanderDetachmentInParameterOrRegionalCommissioner,
-    IsCommanderDetachmentWithVerif,
-    IsCompetitionParticipantAndCommander,
-    IsQ14DetachmentReportAuthor,
-    IsQ17DetachmentReportAuthor,
-    IsRegionalCommanderOrAdmin, IsRegionalCommanderOrAdminOrAuthor,
-    IsRegionalCommanderOrAuthor,
+    IsCommanderDetachmentWithVerif, IsCompetitionParticipantAndCommander,
+    IsQ5DetachmentReportAuthor, IsQ13DetachmentReportAuthor,
+    IsQ14DetachmentReportAuthor, IsQ15DetachmentReportAuthor,
+    IsQ17DetachmentReportAuthor, IsRegionalCommanderOrAdmin,
+    IsRegionalCommanderOrAdminOrAuthor, IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
-    IsRegionalCommissionerOrCommanderDetachmentWithVerif,
-    IsQ13DetachmentReportAuthor, IsQ5DetachmentReportAuthor,
-    IsQ15DetachmentReportAuthor, IsCentralEventMaster
-)
+    IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
-from competitions.models import (
-    Q10, Q11, Q12, Q8, Q9, CompetitionApplications,
-    CompetitionParticipants, Competitions, Q10Report, Q11Report, Q12Report,
-    Q13EventOrganization,
-    Q13DetachmentReport, Q13Ranking, Q13TandemRanking, Q14Ranking,
-    Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q19Report,
-    Q1TandemRanking, Q20Report, Q2DetachmentReport, Q2Ranking, Q1Ranking,
-    Q2TandemRanking, Q7Report, Q18DetachmentReport, Q14TandemRanking,
-    Q18TandemRanking, Q18Ranking, Q8Report, Q9Report, Q19Ranking, Q16Report,
-    Q19TandemRanking, Q4TandemRanking, Q4Ranking, Q3TandemRanking, Q3Ranking,
-    Q5DetachmentReport, Q5TandemRanking, Q5Ranking, Q5EducatedParticipant,
-    Q14LaborProject, Q14DetachmentReport, Q6DetachmentReport, Q6Ranking,
-    Q15TandemRank, Q15Rank, Q15GrantWinner, Q6TandemRanking,
-    Q15DetachmentReport, OverallRanking, OverallTandemRanking,
-    QVerificationLog, Q20TandemRanking,
-)
-from competitions.permissions import IsRegionalCommanderOrCommissionerOfDetachment
+from competitions.filters import (CompetitionParticipantsFilter,
+                                  QVerificationLogFilter)
+from competitions.models import (Q8, Q9, Q10, Q11, Q12,
+                                 CompetitionApplications,
+                                 CompetitionParticipants, Competitions,
+                                 OverallRanking, OverallTandemRanking,
+                                 Q1Ranking, Q1TandemRanking,
+                                 Q2DetachmentReport, Q2Ranking,
+                                 Q2TandemRanking, Q3Ranking, Q3TandemRanking,
+                                 Q4Ranking, Q4TandemRanking,
+                                 Q5DetachmentReport, Q5EducatedParticipant,
+                                 Q5Ranking, Q5TandemRanking,
+                                 Q6DetachmentReport, Q6Ranking,
+                                 Q6TandemRanking, Q7Report, Q8Report, Q9Report,
+                                 Q10Report, Q11Report, Q12Report,
+                                 Q13DetachmentReport, Q13EventOrganization,
+                                 Q13Ranking, Q13TandemRanking,
+                                 Q14DetachmentReport, Q14LaborProject,
+                                 Q14Ranking, Q14TandemRanking,
+                                 Q15DetachmentReport, Q15GrantWinner, Q15Rank,
+                                 Q15TandemRank, Q16Report, Q17DetachmentReport,
+                                 Q17EventLink, Q17Ranking, Q17TandemRanking,
+                                 Q18DetachmentReport, Q18Ranking,
+                                 Q18TandemRanking, Q19Ranking, Q19Report,
+                                 Q19TandemRanking, Q20Report, Q20TandemRanking,
+                                 QVerificationLog)
+from competitions.permissions import \
+    IsRegionalCommanderOrCommissionerOfDetachment
 from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
-from competitions.serializers import (
-    CompetitionApplicationsObjectSerializer, CompetitionApplicationsSerializer,
-    CompetitionParticipantsObjectSerializer, CompetitionParticipantsSerializer,
-    CompetitionSerializer, CreateQ10Serializer, CreateQ11Serializer,
-    CreateQ12Serializer, CreateQ7Serializer, CreateQ8Serializer,
-    CreateQ9Serializer, Q10ReportSerializer, Q10Serializer,
-    Q11ReportSerializer, Q11Serializer, Q12ReportSerializer, Q12Serializer,
-    Q16ReportSerializer, Q17DetachmentReportSerializer, Q17EventLinkSerializer,
-    Q19DetachmenrtReportSerializer, Q20ReportSerializer,
-    Q2DetachmentReportSerializer, Q7ReportSerializer, Q7Serializer,
-    Q8ReportSerializer, Q8Serializer, Q9ReportSerializer, Q9Serializer,
-    ShortDetachmentCompetitionSerializer, Q13EventOrganizationSerializer,
-    Q18DetachmentReportSerializer, Q15GrantWinnerSerializer,
-    Q5EducatedParticipantSerializer, Q5DetachmentReportReadSerializer,
-    Q14DetachmentReportSerializer, Q6DetachmentReportSerializer,
-    Q5DetachmentReportWriteSerializer, Q15DetachmentReportReadSerializer,
-    Q13DetachmentReportWriteSerializer, Q13DetachmentReportReadSerializer,
-    QVerificationLogSerializer, Q15DetachmentReportWriteSerializer,
-    Q14LaborProjectSerializer,
-)
-from competitions.utils import get_place_q2, tandem_or_start
-# сигналы ниже не удалять, иначе сломается
-from competitions.signal_handlers import (
-    create_score_q7, create_score_q8, create_score_q9, create_score_q10,
-    create_score_q11, create_score_q12, create_score_q20
-)
-from api.permissions import (IsRegionalCommanderOrAdmin,
-                             IsRegionalCommanderOrAdminOrAuthor)
-from competitions.filters import CompetitionParticipantsFilter, QVerificationLogFilter
-from competitions.models import (CompetitionApplications,
-                                 CompetitionParticipants, Competitions)
 from competitions.serializers import (CompetitionApplicationsObjectSerializer,
                                       CompetitionApplicationsSerializer,
                                       CompetitionParticipantsObjectSerializer,
                                       CompetitionParticipantsSerializer,
                                       CompetitionSerializer,
+                                      CreateQ7Serializer, CreateQ8Serializer,
+                                      CreateQ9Serializer, CreateQ10Serializer,
+                                      CreateQ11Serializer, CreateQ12Serializer,
+                                      Q2DetachmentReportSerializer,
+                                      Q5DetachmentReportReadSerializer,
+                                      Q5DetachmentReportWriteSerializer,
+                                      Q5EducatedParticipantSerializer,
+                                      Q6DetachmentReportSerializer,
+                                      Q7ReportSerializer, Q7Serializer,
+                                      Q8ReportSerializer, Q8Serializer,
+                                      Q9ReportSerializer, Q9Serializer,
+                                      Q10ReportSerializer, Q10Serializer,
+                                      Q11ReportSerializer, Q11Serializer,
+                                      Q12ReportSerializer, Q12Serializer,
+                                      Q13DetachmentReportReadSerializer,
+                                      Q13DetachmentReportWriteSerializer,
+                                      Q13EventOrganizationSerializer,
+                                      Q14DetachmentReportSerializer,
+                                      Q14LaborProjectSerializer,
+                                      Q15DetachmentReportReadSerializer,
+                                      Q15DetachmentReportWriteSerializer,
+                                      Q15GrantWinnerSerializer,
+                                      Q16ReportSerializer,
+                                      Q17DetachmentReportSerializer,
+                                      Q17EventLinkSerializer,
+                                      Q18DetachmentReportSerializer,
+                                      Q19DetachmenrtReportSerializer,
+                                      Q20ReportSerializer,
+                                      QVerificationLogSerializer,
                                       ShortDetachmentCompetitionSerializer)
-from competitions.swagger_schemas import (q7schema_request_update,
+# сигналы ниже не удалять, иначе сломается
+from competitions.signal_handlers import (create_score_q7, create_score_q8,
+                                          create_score_q9, create_score_q10,
+                                          create_score_q11, create_score_q12,
+                                          create_score_q20)
+from competitions.swagger_schemas import (q7schema_request,
+                                          q7schema_request_update,
+                                          q9schema_request,
                                           q9schema_request_update,
                                           request_update_application,
                                           response_competitions_applications,
                                           response_competitions_participants,
                                           response_create_application,
-                                          response_junior_detachments,
-                                          q7schema_request, q9schema_request)
+                                          response_junior_detachments)
+from competitions.utils import get_place_q2, tandem_or_start
+from headquarters.models import (Detachment, RegionalHeadquarter,
+                                 UserDetachmentPosition,
+                                 UserRegionalHeadquarterPosition)
 from headquarters.serializers import ShortDetachmentSerializer
-from headquarters.models import (
-    Detachment, RegionalHeadquarter, UserDetachmentPosition, UserRegionalHeadquarterPosition
-)
 
 
 class CompetitionViewSet(viewsets.ModelViewSet):
@@ -2292,6 +2303,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             competition=competition,
             detachment_id=detachment_id,
         )
+        print(f'report created: {report}')
 
         model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
         extra_fields = set(request.data.keys()) - model_fields
@@ -2299,11 +2311,9 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Если отчет уже существовал, обновляем его данными из запроса
-        if not created:
-            for field, value in request.data.items():
-                setattr(report, field, value)
-            report.save()
+        for field, value in request.data.items():
+            setattr(report, field, value)
+        report.save()
 
         serializer = self.get_serializer(report)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
@@ -4470,7 +4480,7 @@ def get_place_q3(request, competition_pk=None):
     """
     Action для получения рейтинга по данному показателю.
 
-    Возвращает место в формате {'place': int}
+    Возвращает место в формате {'place': int}В
 
     Для тандем заявки место для обоих участников будет одинаковым.
 
@@ -4497,7 +4507,7 @@ def get_place_q3(request, competition_pk=None):
         )
     elif tandem_ranking:
         return Response(
-            {"error": "Рейтинг еще не сформирован"},
+            {"error": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
         )
     ranking = Q3Ranking.objects.filter(
@@ -4510,7 +4520,7 @@ def get_place_q3(request, competition_pk=None):
         )
 
     return Response(
-        {"place": "Рейтинг еще не сформирован"},
+        {"place": "Показатель в обработке"},
         status=status.HTTP_404_NOT_FOUND
     )
 
@@ -4548,7 +4558,7 @@ def get_place_q4(request, competition_pk=None):
         )
     elif tandem_ranking:
         return Response(
-            {"error": "Рейтинг еще не сформирован"},
+            {"error": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
         )
     ranking = Q4Ranking.objects.filter(
@@ -4561,7 +4571,7 @@ def get_place_q4(request, competition_pk=None):
         )
 
     return Response(
-        {"place": "Рейтинг еще не сформирован"},
+        {"place": "Показатель в обработке"},
         status=status.HTTP_404_NOT_FOUND
     )
 

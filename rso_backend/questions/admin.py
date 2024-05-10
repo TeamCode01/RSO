@@ -1,8 +1,9 @@
-from django.utils.safestring import mark_safe
 from django.contrib import admin
-from questions.models import Question, AnswerOption, Attempt, UserAnswer
+from django.utils.safestring import mark_safe
 from import_export.admin import ExportActionModelAdmin
-from headquarters.models import UserDetachmentPosition, Detachment
+
+from headquarters.models import Detachment, UserDetachmentPosition
+from questions.models import AnswerOption, Attempt, Question, UserAnswer
 
 
 class AnswerOptionInline(admin.TabularInline):

@@ -1,6 +1,11 @@
 from django.urls import path
-from reports.views import (ReportView, SafetyTestResultsView, ExportSafetyTestResultsView, CompetitionParticipantView,
-                           ExportCompetitionParticipantsResultsView)
+
+from reports.views import (CompetitionParticipantView, DetachmentQResultsView,
+                           ExportCompetitionParticipantsContactData,
+                           ExportCompetitionParticipantsDataView,
+                           ExportDetachmentQResultsView,
+                           ExportSafetyTestResultsView, ReportView,
+                           SafetyTestResultsView)
 
 urlpatterns = [
     path('', ReportView.as_view(), name='reports'),
@@ -20,9 +25,23 @@ urlpatterns = [
         name='competition_participants'
     ),
     path(
-        'competition_participants/export',
-        ExportCompetitionParticipantsResultsView.as_view(),
+        'competition_participants/export/',
+        ExportCompetitionParticipantsDataView.as_view(),
         name='export_competition_participants_results'
+    ),
+    path(
+        'detachment_q_results/',
+        DetachmentQResultsView.as_view(),
+        name='detachment_q_results'
+    ),
+    path(
+        'detachment_q_results/export/',
+        ExportDetachmentQResultsView.as_view(),
+        name='export_detachment_q_results'
+    ),
+    path(
+        'competition_participants/contact_data/export/',
+        ExportCompetitionParticipantsContactData.as_view(),
+        name='competition_participants_contact_data'
     )
-
 ]
