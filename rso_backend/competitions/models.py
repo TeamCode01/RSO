@@ -1,5 +1,5 @@
 
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from competitions.utils import get_certificate_scans_path

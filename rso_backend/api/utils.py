@@ -1,5 +1,4 @@
 import io
-import logging
 import mimetypes
 import os
 import re
@@ -14,17 +13,16 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
-from competitions.models import CompetitionParticipants
 
+from competitions.models import CompetitionParticipants
 from headquarters.models import (CentralHeadquarter, Detachment,
-                                 RegionalHeadquarter,
+                                 DistrictHeadquarter, RegionalHeadquarter,
                                  UserCentralHeadquarterPosition,
                                  UserDetachmentPosition,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition,
-                                 DistrictHeadquarter)
+                                 UserRegionalHeadquarterPosition)
 from users.models import RSOUser
 
 
@@ -818,3 +816,25 @@ def get_user_position_at_level(headquarter_model, position_model, user_id: int) 
                 'headquarter_id': user_headquarter_position.headquarter.id,
                 'position': user_headquarter_position.position.name
             }
+
+
+def get_user_detachment_position(user):
+    if Detachment.objects.filter(commander=user).exists():
+        return "Командир"
+    else:
+        user_detachment_position = getattr(user, 'userdetachmentposition', None)
+        return user_detachment_position.position.name if user_detachment_position and hasattr(
+            user_detachment_position, 'position'
+        ) else "-"
+
+
+def get_user_detachment(user):
+    detachment = Detachment.objects.filter(commander=user).first()
+    if detachment:
+        return detachment.name
+    else:
+        detachment_position = getattr(user, 'userdetachmentposition', None)
+        return detachment_position.headquarter.name if detachment_position and hasattr(
+            detachment_position,
+            'headquarter'
+        ) else None

@@ -1,8 +1,8 @@
-from django.utils.safestring import mark_safe
 from django.contrib import admin
-from questions.models import Question, AnswerOption, Attempt, UserAnswer
-from import_export.admin import ExportActionModelAdmin
-from headquarters.models import UserDetachmentPosition, Detachment
+from django.utils.safestring import mark_safe
+
+from questions.models import AnswerOption, Attempt, Question, UserAnswer
+from headquarters.models import Detachment
 import io
 from openpyxl import Workbook
 from django.http.response import HttpResponse
@@ -45,7 +45,7 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Attempt)
-class AttemptAdmin(admin.ModelAdmin):  
+class AttemptAdmin(admin.ModelAdmin):
     FIRST_ROW = 1
     FIRST_ROW_HEIGHT = 55
     ROW_FILTER_CELLS = 'A1:BZ1'

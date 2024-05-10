@@ -2,7 +2,6 @@ from django.contrib.auth.backends import ModelBackend, get_user_model
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Q
 
-
 UserModel = get_user_model()
 
 

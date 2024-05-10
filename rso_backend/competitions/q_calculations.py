@@ -1,22 +1,34 @@
+import logging
 from collections import Counter
+from datetime import date
 from typing import List
 
-from datetime import date
-from django.db.models import Max
 from django.conf import settings
-import logging
-from competitions.models import Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q16Report, \
-    Q17DetachmentReport, Q17EventLink, Q17Ranking, Q17TandemRanking, Q18Ranking, \
-    Q18DetachmentReport, CompetitionParticipants, Q18TandemRanking, Q19Ranking, \
-    Q19Report, Q19TandemRanking, Q1Report, Q2DetachmentReport, Q2Ranking, Q2TandemRanking, Q7Ranking, Q7Report, \
-    Q7TandemRanking, Q3Ranking, Q3TandemRanking, Q4Ranking, Q4TandemRanking, \
-    Q5TandemRanking, Q5Ranking, \
-    Q5EducatedParticipant, Q5DetachmentReport, Q15TandemRank, Q15Rank, Q15DetachmentReport, Q15GrantWinner, \
-    Q6DetachmentReport, Q6Ranking, Q6TandemRanking, Q1Ranking, OverallTandemRanking, OverallRanking
-from competitions.utils import assign_ranks, find_second_element_by_first, get_place_q2, tandem_or_start, is_main_detachment
-from headquarters.models import UserDetachmentPosition, Detachment
-from questions.models import Attempt
+from django.db.models import Max
 
+from competitions.models import (CompetitionParticipants, OverallRanking,
+                                 OverallTandemRanking, Q1Ranking, Q1Report,
+                                 Q2DetachmentReport, Q2Ranking,
+                                 Q2TandemRanking, Q3Ranking, Q3TandemRanking,
+                                 Q4Ranking, Q4TandemRanking,
+                                 Q5DetachmentReport, Q5EducatedParticipant,
+                                 Q5Ranking, Q5TandemRanking,
+                                 Q6DetachmentReport, Q6Ranking,
+                                 Q6TandemRanking, Q7Ranking, Q7Report,
+                                 Q7TandemRanking, Q13EventOrganization,
+                                 Q14DetachmentReport, Q14LaborProject,
+                                 Q14Ranking, Q14TandemRanking,
+                                 Q15DetachmentReport, Q15GrantWinner, Q15Rank,
+                                 Q15TandemRank, Q16Report, Q17DetachmentReport,
+                                 Q17EventLink, Q17Ranking, Q17TandemRanking,
+                                 Q18DetachmentReport, Q18Ranking,
+                                 Q18TandemRanking, Q19Ranking, Q19Report,
+                                 Q19TandemRanking)
+from competitions.utils import (assign_ranks, find_second_element_by_first,
+                                get_place_q2, is_main_detachment,
+                                tandem_or_start)
+from headquarters.models import Detachment, UserDetachmentPosition
+from questions.models import Attempt
 
 logger = logging.getLogger('tasks')
 
@@ -185,7 +197,8 @@ def calculate_q14_place(competition_id):
 
     detachment_reports = Q14DetachmentReport.objects.filter(
         competition_id=competition_id,
-    )
+        q14_labor_project__is_verified=True
+    ).distinct()
 
     start_list = []
     tandem_list = []
@@ -679,7 +692,7 @@ def calculate_q6_place(competition_id):
             )
             Q6TandemRanking.objects.create(
                 junior_detachment=entry[0].detachment,
-                detached=entry[1].detachment,
+                detachment=entry[1].detachment,
                 place=updated_place,
                 competition_id=competition_id
             )
@@ -800,7 +813,7 @@ def calculate_place(
         reverse=True
 ):
     """
-    Таска для расчета рейтингов Q1, Q7 - Q12 и Q20.
+    Таска для расчета рейтингов Q1, Q7 - Q12, Q16 и Q20.
 
     Для celery-beat, считает вплоть до 15 октября 2024 года.
     :param competition_id: id конкурса
@@ -883,7 +896,6 @@ def calculate_place(
                                    else (0 if reverse else max_score)))),
         reverse=reverse
     )
-    logger.error(max_score)
     to_create_entries = []
     place = 0
     score = 0
@@ -939,17 +951,17 @@ def calculate_q1_score(competition_id):
     """
     Функция для расчета очков по 1 показателю.
 
-    Выполняется только 15.04.2024.
+    Выполняется только 7.05.2024.
     """
     today = date.today()
-    start_date = date(2024, 5, 1)
+    end_date = date(2024, 6, 12)
 
-    if today != start_date:
+    if today > end_date:
         return
 
     participants = CompetitionParticipants.objects.filter(
         competition_id=competition_id
-    ).all()  # мб добавить select_related('junior_detachment__members', 'detachment__members')
+    ).all()
 
     if not participants:
         logger.info('Нет участников')
@@ -968,7 +980,7 @@ def calculate_q1_score(competition_id):
             entry.junior_detachment.members.count() + 1,
             entry.junior_detachment.members.filter(
                 user__membership_fee=True
-            ).count() + 1 if entry.junior_detachment.commander.membership_fee else 0
+            ).count() + (1 if entry.junior_detachment.commander.membership_fee else 0)
         ])
         if entry.detachment:
             detachments_data.append([
@@ -976,11 +988,11 @@ def calculate_q1_score(competition_id):
                 entry.detachment.members.count() + 1,
                 entry.detachment.members.filter(
                     user__membership_fee=True
-                ).count() + 1 if entry.detachment.commander.membership_fee else 0
+                ).count() + (1 if entry.detachment.commander.membership_fee else 0)
             ])
 
     # Создаем отчеты каждому отряду с посчитанными score
-    #       10 человек в отряде  – за каждого уплатившего 1 балл
+    #       10 и менее человек в отряде  – за каждого уплатившего 1 балл
     #       11-20 человек – за каждого уплатившего 0.75 балла
     #       21 и более человек – за каждого уплатившего 0.5 балла
 
@@ -1087,7 +1099,9 @@ def calculate_q15_place(competition_id: int):
     )
     Q15TandemRank.objects.all().delete()
     Q15Rank.objects.all().delete()
-    verified_entries = Q15DetachmentReport.objects.filter()
+    verified_entries = Q15DetachmentReport.objects.filter(
+        q15grantwinner__is_verified=True
+    ).distinct()
     logger.info(
         f'Получили отчеты: {verified_entries.count()}'
     )

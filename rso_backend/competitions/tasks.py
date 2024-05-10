@@ -4,25 +4,34 @@ from celery import shared_task
 from django.conf import settings
 
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
-from competitions.models import (
-    Q10Ranking, Q10Report, Q10TandemRanking, Q11Ranking,
-    Q11Report, Q11TandemRanking, Q12Ranking, Q12Report,
-    Q12TandemRanking, Q16Ranking, Q16Report, Q16TandemRanking, Q1Ranking,
-    Q20Report, Q20TandemRanking, Q7Ranking, Q7Report, Q7TandemRanking,
-    Q8Ranking, Q8Report, Q8TandemRanking, Q9Ranking, Q9Report,
-    Q9TandemRanking, Q1Report, Q1TandemRanking, Q20Ranking, Q2Ranking, Q3Ranking, Q4Ranking, Q5Ranking, Q6Ranking,
-    Q13Ranking, Q14Ranking, Q15Rank, Q17Ranking, Q18Ranking, Q19Ranking, Q2TandemRanking, Q3TandemRanking,
-    Q4TandemRanking, Q5TandemRanking, Q6TandemRanking, Q13TandemRanking, Q14TandemRanking, Q15TandemRank,
-    Q17TandemRanking, Q18TandemRanking, Q19TandemRanking,
-)
-
-from competitions.q_calculations import (
-    calculate_q17_place,
-    calculate_q18_place,
-    calculate_place,
-    calculate_q1_score, calculate_q3_q4_place, calculate_q5_place,
-    calculate_score_q16, calculate_q15_place, calculate_q14_place, calculate_q6_place, calculate_overall_rankings
-)
+from competitions.models import (Q1Ranking, Q1Report, Q1TandemRanking,
+                                 Q2Ranking, Q2TandemRanking, Q3Ranking,
+                                 Q3TandemRanking, Q4Ranking, Q4TandemRanking,
+                                 Q5Ranking, Q5TandemRanking, Q6Ranking,
+                                 Q6TandemRanking, Q7Ranking, Q7Report,
+                                 Q7TandemRanking, Q8Ranking, Q8Report,
+                                 Q8TandemRanking, Q9Ranking, Q9Report,
+                                 Q9TandemRanking, Q10Ranking, Q10Report,
+                                 Q10TandemRanking, Q11Ranking, Q11Report,
+                                 Q11TandemRanking, Q12Ranking, Q12Report,
+                                 Q12TandemRanking, Q13Ranking,
+                                 Q13TandemRanking, Q14Ranking,
+                                 Q14TandemRanking, Q15Rank, Q15TandemRank,
+                                 Q16Ranking, Q16Report, Q16TandemRanking,
+                                 Q17Ranking, Q17TandemRanking, Q18Ranking,
+                                 Q18TandemRanking, Q19Ranking,
+                                 Q19TandemRanking, Q20Ranking, Q20Report,
+                                 Q20TandemRanking)
+from competitions.q_calculations import (calculate_overall_rankings,
+                                         calculate_place, calculate_q1_score,
+                                         calculate_q3_q4_place,
+                                         calculate_q5_place,
+                                         calculate_q6_place,
+                                         calculate_q14_place,
+                                         calculate_q15_place,
+                                         calculate_q17_place,
+                                         calculate_q18_place,
+                                         calculate_score_q16)
 
 logger = logging.getLogger('tasks')
 

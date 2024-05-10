@@ -1,16 +1,16 @@
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from datetime import datetime
-from django.db import transaction
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import permissions
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from questions.models import Question, Attempt, UserAnswer, AnswerOption
-from questions.serializers import QuestionSerializer
 import random
+from datetime import datetime
 
+from django.db import transaction
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import permissions, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from questions.models import AnswerOption, Attempt, Question, UserAnswer
+from questions.serializers import QuestionSerializer
 from questions.swagger_schemas import answers_request_body
 
 
