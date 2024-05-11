@@ -847,6 +847,10 @@ def calculate_place(
         if report.score != score:
             place += 1
             score = report.score
+        # если отчеты в рейтинге есть, но пустые, без элементов (удалили),
+        # либо не верифицированы все, чтобы не попадали в рейтинг
+        if place == 0:
+            continue
         to_create_entries.append(
             model_ranking(competition=report.competition,
                           detachment=report.detachment,
@@ -895,6 +899,10 @@ def calculate_place(
             if report[0].score + report[1].score != score:
                 place += 1
                 score = report[0].score + report[1].score
+            # если отчеты в рейтинге есть, но пустые, без элементов (удалили),
+            # либо не верифицированы все, чтобы не попадали в рейтинг
+            if place == 0:
+                continue
             to_create_entries.append(
                 model_tandem_ranking(competition=report[0].competition,
                                      junior_detachment=report[0].detachment,
@@ -906,6 +914,8 @@ def calculate_place(
             if report[0].score + max_score != score:
                 place += 1
                 score = report[0].score + max_score
+            if place == 0:
+                continue
             detachment = participants.get(
                 junior_detachment=report[0].detachment,
             ).detachment
@@ -920,6 +930,8 @@ def calculate_place(
             if report[1].score + max_score != score:
                 place += 1
                 score = report[1].score + max_score
+            if place == 0:
+                continue
             junior_detachment = participants.get(
                 detachment=report[1].detachment,
             ).junior_detachment
