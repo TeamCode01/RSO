@@ -14,10 +14,13 @@ from events.models import (Event, EventAdditionalIssue, EventApplications,
                            MultiEventApplication)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
-                                 LocalHeadquarter, RegionalHeadquarter, UserDetachmentPosition,
-                                 UserRegionalHeadquarterPosition, UserCentralHeadquarterPosition,
-                                 UserEducationalHeadquarterPosition, UserDistrictHeadquarterPosition,
-                                 UserLocalHeadquarterPosition)
+                                 LocalHeadquarter, RegionalHeadquarter,
+                                 UserCentralHeadquarterPosition,
+                                 UserDetachmentPosition,
+                                 UserDistrictHeadquarterPosition,
+                                 UserEducationalHeadquarterPosition,
+                                 UserLocalHeadquarterPosition,
+                                 UserRegionalHeadquarterPosition)
 from users.models import RSOUser
 from users.serializers import ShortUserSerializer
 

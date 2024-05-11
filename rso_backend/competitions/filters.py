@@ -1,6 +1,6 @@
 from django.db.models import Q
-from django_filters.rest_framework import FilterSet
 from django_filters.filters import BooleanFilter, CharFilter, NumberFilter
+from django_filters.rest_framework import FilterSet
 
 from .models import CompetitionParticipants, QVerificationLog
 

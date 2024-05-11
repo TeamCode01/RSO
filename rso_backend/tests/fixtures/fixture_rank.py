@@ -1,9 +1,8 @@
 import pytest
 
-from competitions.models import (
-    Q19Ranking, Q19TandemRanking, Q7TandemRanking, Q7Ranking, Q8Ranking, Q8TandemRanking,
-    Q9Ranking, Q9TandemRanking
-)
+from competitions.models import (Q7Ranking, Q7TandemRanking, Q8Ranking,
+                                 Q8TandemRanking, Q9Ranking, Q9TandemRanking,
+                                 Q19Ranking, Q19TandemRanking)
 
 
 @pytest.fixture

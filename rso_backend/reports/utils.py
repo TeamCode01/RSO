@@ -1,16 +1,18 @@
 from __future__ import annotations
+
 from collections import defaultdict
-from api.utils import get_user_detachment_position, get_user_detachment
 from typing import TYPE_CHECKING, List, Tuple
 
+from api.utils import get_user_detachment, get_user_detachment_position
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
-from headquarters.models import UserDetachmentPosition
-from competitions.models import CompetitionParticipants, OverallRanking, OverallTandemRanking
+from competitions.models import (CompetitionParticipants, OverallRanking,
+                                 OverallTandemRanking)
 from headquarters.count_hq_members import count_headquarter_participants
+from headquarters.models import UserDetachmentPosition
 
 if TYPE_CHECKING:
-    from questions.models import Attempt
     from headquarters.models import Detachment
+    from questions.models import Attempt
     from users.models import RSOUser
 
 

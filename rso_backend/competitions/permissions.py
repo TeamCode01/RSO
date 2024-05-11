@@ -1,5 +1,6 @@
-from rest_framework.permissions import BasePermission
 from django.conf import settings
+from rest_framework.permissions import BasePermission
+
 from headquarters.models import Detachment, UserRegionalHeadquarterPosition
 
 

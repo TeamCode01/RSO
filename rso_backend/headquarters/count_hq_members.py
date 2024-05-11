@@ -1,7 +1,12 @@
-from headquarters.models import CentralHeadquarter, UserCentralHeadquarterPosition, DistrictHeadquarter, \
-    UserDistrictHeadquarterPosition, RegionalHeadquarter, UserRegionalHeadquarterPosition, LocalHeadquarter, \
-    UserLocalHeadquarterPosition, EducationalHeadquarter, UserEducationalHeadquarterPosition, Detachment, \
-    UserDetachmentPosition
+from headquarters.models import (CentralHeadquarter, Detachment,
+                                 DistrictHeadquarter, EducationalHeadquarter,
+                                 LocalHeadquarter, RegionalHeadquarter,
+                                 UserCentralHeadquarterPosition,
+                                 UserDetachmentPosition,
+                                 UserDistrictHeadquarterPosition,
+                                 UserEducationalHeadquarterPosition,
+                                 UserLocalHeadquarterPosition,
+                                 UserRegionalHeadquarterPosition)
 
 
 def count_headquarter_participants(headquarter):

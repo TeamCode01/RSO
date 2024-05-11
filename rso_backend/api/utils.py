@@ -13,17 +13,16 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
-from competitions.models import CompetitionParticipants
 
+from competitions.models import CompetitionParticipants
 from headquarters.models import (CentralHeadquarter, Detachment,
-                                 RegionalHeadquarter,
+                                 DistrictHeadquarter, RegionalHeadquarter,
                                  UserCentralHeadquarterPosition,
                                  UserDetachmentPosition,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition,
-                                 DistrictHeadquarter,)
+                                 UserRegionalHeadquarterPosition)
 from users.models import RSOUser
 
 

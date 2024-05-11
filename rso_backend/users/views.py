@@ -1,56 +1,56 @@
+import io
 import mimetypes
 import os
 import zipfile
-import io
 
 from dal import autocomplete
-from django.db.models import Q
 from django.conf import settings
 from django.db import transaction
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from django.db.models import Q
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from openpyxl import Workbook
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from api.mixins import RetrieveUpdateViewSet, RetrieveViewSet
-from api.permissions import (IsCommanderOrTrustedAnywhere, IsStuffOrAuthor,
-                             PersonalDataPermission,
-                             IsForeignAdditionalDocsAuthor,
+from api.permissions import (IsCommanderOrTrustedAnywhere,
+                             IsForeignAdditionalDocsAuthor, IsStuffOrAuthor,
                              OnlyStuffOrCentralCommander,
-                             PersonalDataPermissionForGET,)
+                             PersonalDataPermission,
+                             PersonalDataPermissionForGET)
 from api.tasks import send_reset_password_email_without_user
 from api.utils import download_file, get_user
 from users.filters import RSOUserFilter
 from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
-                          UserForeignDocuments, UserForeignParentDocs,
+                          UserEducation, UserForeignDocuments,
+                          UserForeignParentDocs, UserMedia, UserParent,
                           UserPrivacySettings, UserProfessionalEducation,
-                          UserRegion, UserStatementDocuments, UserEducation,
-                          UserVerificationRequest, UserMedia, UserParent)
-from users.serializers import (EmailSerializer, ForeignUserDocumentsSerializer,
+                          UserRegion, UserStatementDocuments,
+                          UserVerificationRequest)
+from users.serializers import (AdditionalForeignDocsSerializer,
+                               EmailSerializer, ForeignUserDocumentsSerializer,
                                ProfessionalEductionSerializer,
                                RSOUserSerializer, SafeUserSerializer,
                                UserCommanderSerializer,
                                UserDocumentsSerializer,
                                UserEducationSerializer,
+                               UserForeignParentDocsSerializer,
                                UserHeadquarterPositionSerializer,
-                               UserMediaSerializer,
+                               UserIdRegionSerializer, UserMediaSerializer,
                                UserNotificationsCountSerializer,
                                UserPrivacySettingsSerializer,
                                UserProfessionalEducationSerializer,
                                UserRegionSerializer, UsersParentSerializer,
                                UserStatementDocumentsSerializer,
-                               UserTrustedSerializer,
-                               AdditionalForeignDocsSerializer,
-                               UserForeignParentDocsSerializer,
-                               UserIdRegionSerializer,)
+                               UserTrustedSerializer)
 
 
 class CustomUserViewSet(UserViewSet):

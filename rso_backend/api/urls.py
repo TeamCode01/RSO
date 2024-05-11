@@ -3,37 +3,51 @@ from djoser.views import UserViewSet
 from rest_framework.routers import DefaultRouter
 
 from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
-                           DOWNLOAD_ALL_FORMS, DOWNLOAD_CONSENT_PD,
-                           DOWNLOAD_MEMBERSHIP_FILE,
+                           DELETE_UPDATE_RETRIEVE, DOWNLOAD_ALL_FORMS,
+                           DOWNLOAD_CONSENT_PD, DOWNLOAD_MEMBERSHIP_FILE,
                            DOWNLOAD_PARENT_CONSENT_PD, LIST, LIST_CREATE,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
-                           UPDATE_RETRIEVE, DELETE_UPDATE_RETRIEVE)
+                           UPDATE_RETRIEVE)
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
                        change_membership_fee_status, verify_user)
 from competitions.models import Q5EducatedParticipant
-from competitions.views import (
-    CompetitionApplicationsViewSet, CompetitionParticipantsViewSet,
-    CompetitionViewSet, Q10UpdateDestroyViewSet, Q10ViewSet, Q11UpdateDestroyViewSet, Q11ViewSet,
-    Q12UpdateDestroyViewSet, Q12ViewSet, Q14DetachmentReportViewSet, Q14LaborProjectViewSet, Q17DetachmentReportViewSet,
-    Q16ViewSet, Q17EventLinkViewSet,
-    Q19DetachmentReportViewset, Q20ViewSet, Q2DetachmentReportViewSet, Q7UpdateDestroyViewSet,
-    Q7ViewSet,
-    Q13DetachmentReportViewSet, Q13EventOrganizationViewSet,
-    Q18DetachmentReportViewSet, Q8UpdateDestroyViewSet, Q8ViewSet, Q9UpdateDestroyViewSet, Q9ViewSet, get_place_q1,
-    get_place_q3, get_place_q4, get_q1_info,
-    Q5DetachmentReport, Q5DetachmentReportViewSet, Q5EducatedParticipantViewSet,
-    Q6DetachmentReportViewSet, Q15DetachmentReportViewSet, Q15GrantDataViewSet, get_place_overall, get_detachment_place,
-    DetachmentCompetitionIsTandemView, QVerificationLogByNumberView, get_detachment_places
-)
+from competitions.views import (CompetitionApplicationsViewSet,
+                                CompetitionParticipantsViewSet,
+                                CompetitionViewSet,
+                                DetachmentCompetitionIsTandemView,
+                                Q2DetachmentReportViewSet, Q5DetachmentReport,
+                                Q5DetachmentReportViewSet,
+                                Q5EducatedParticipantViewSet,
+                                Q6DetachmentReportViewSet,
+                                Q7UpdateDestroyViewSet, Q7ViewSet,
+                                Q8UpdateDestroyViewSet, Q8ViewSet,
+                                Q9UpdateDestroyViewSet, Q9ViewSet,
+                                Q10UpdateDestroyViewSet, Q10ViewSet,
+                                Q11UpdateDestroyViewSet, Q11ViewSet,
+                                Q12UpdateDestroyViewSet, Q12ViewSet,
+                                Q13DetachmentReportViewSet,
+                                Q13EventOrganizationViewSet,
+                                Q14DetachmentReportViewSet,
+                                Q14LaborProjectViewSet,
+                                Q15DetachmentReportViewSet,
+                                Q15GrantDataViewSet, Q16ViewSet,
+                                Q17DetachmentReportViewSet,
+                                Q17EventLinkViewSet,
+                                Q18DetachmentReportViewSet,
+                                Q19DetachmentReportViewset, Q20ViewSet,
+                                QVerificationLogByNumberView,
+                                get_detachment_place, get_detachment_places,
+                                get_place_overall, get_place_q1, get_place_q3,
+                                get_place_q4, get_q1_info)
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
                           EventOrganizationDataViewSet,
                           EventParticipantsViewSet, EventUserDocumentViewSet,
-                          EventViewSet, MultiEventViewSet,
-                          GroupEventApplicationViewSet,
-                          create_answers, group_applications,
-                          group_applications_me, is_participant_or_applicant)
+                          EventViewSet, GroupEventApplicationViewSet,
+                          MultiEventViewSet, create_answers,
+                          group_applications, group_applications_me,
+                          is_participant_or_applicant)
 from headquarters.views import (CentralPositionViewSet, CentralViewSet,
                                 DetachmentAcceptViewSet,
                                 DetachmentApplicationViewSet,
@@ -43,14 +57,15 @@ from headquarters.views import (CentralPositionViewSet, CentralViewSet,
                                 LocalPositionViewSet, LocalViewSet,
                                 PositionViewSet, RegionalPositionViewSet,
                                 RegionalViewSet, get_structural_units)
-from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet, ForeignUserDocumentsViewSet,
-                         RSOUserViewSet, SafeUserViewSet, UserDocumentsViewSet,
-                         UserEducationViewSet, UserForeignParentDocsViewSet, UserMediaViewSet,
-                         UserPrivacySettingsViewSet,
+from questions.views import QuestionsView, get_attempts_status, submit_answers
+from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
+                         ForeignUserDocumentsViewSet, RSOUserViewSet,
+                         SafeUserViewSet, UserDocumentsViewSet,
+                         UserEducationViewSet, UserForeignParentDocsViewSet,
+                         UserMediaViewSet, UserPrivacySettingsViewSet,
                          UserProfessionalEducationViewSet, UserRegionViewSet,
                          UsersParentViewSet, UserStatementDocumentsViewSet,
                          apply_for_verification)
-from questions.views import QuestionsView, submit_answers, get_attempts_status
 
 app_name = 'api'
 

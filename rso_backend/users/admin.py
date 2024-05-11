@@ -1,24 +1,28 @@
 import io
+
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
                                        IntervalSchedule, PeriodicTask,
                                        SolarSchedule)
-from django.http.response import HttpResponse
 from import_export.admin import ImportExportModelAdmin
-from rest_framework.authtoken.models import TokenProxy
 from openpyxl import Workbook
-from headquarters.models import UserDetachmentPosition, Detachment
-from users.serializers import UserIdRegionSerializer
+from rest_framework.authtoken.models import TokenProxy
+
+from headquarters.models import Detachment, UserDetachmentPosition
 from users.forms import RSOUserForm
-from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments, UserEducation, UserForeignDocuments, UserForeignParentDocs, UserMedia,
-                          UserMemberCertLogs, UserMembershipLogs, UserParent,
-                          UserPrivacySettings, UserRegion,
-                          UserStatementDocuments, UserVerificationLogs)
+from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
+                          UserEducation, UserForeignDocuments,
+                          UserForeignParentDocs, UserMedia, UserMemberCertLogs,
+                          UserMembershipLogs, UserParent, UserPrivacySettings,
+                          UserRegion, UserStatementDocuments,
+                          UserVerificationLogs)
 from users.resources import RSOUserResource
+from users.serializers import UserIdRegionSerializer
 
 
 class UserRegionInline(admin.StackedInline):
@@ -136,6 +140,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         'is_verified',
         'membership_fee',
         'is_staff',
+        'reports_access',
         'region',
         'detachment_name',
         'get_user_position',

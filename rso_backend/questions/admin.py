@@ -1,8 +1,11 @@
-from django.utils.safestring import mark_safe
 from django.contrib import admin
-from questions.models import Question, AnswerOption, Attempt, UserAnswer
-from import_export.admin import ExportActionModelAdmin
-from headquarters.models import UserDetachmentPosition, Detachment
+from django.utils.safestring import mark_safe
+
+from questions.models import AnswerOption, Attempt, Question, UserAnswer
+from headquarters.models import Detachment
+import io
+from openpyxl import Workbook
+from django.http.response import HttpResponse
 
 
 class AnswerOptionInline(admin.TabularInline):
@@ -42,9 +45,27 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Attempt)
-class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
-    list_display = ('id', 'user', 'timestamp', 'category', 'score', 'is_valid',
-                    'get_user_region', 'get_user_position', 'get_user_detachment')
+class AttemptAdmin(admin.ModelAdmin):
+    FIRST_ROW = 1
+    FIRST_ROW_HEIGHT = 55
+    ROW_FILTER_CELLS = 'A1:BZ1'
+    FREEZE_HEADERS_ROW = 'D2'
+    ZOOM_SCALE = 80
+    EXCEL_HEADERS = [
+        'ID',
+        'Пользователь',
+        'Время',
+        'Категория',
+        'Баллы',
+        'Валидность',
+        'Регион',
+        'Должность',
+        'Отряд',
+    ]
+    actions = ['download_xlsx_users_data']
+    list_display = (
+        'id', 'user', 'timestamp', 'category', 'score', 'is_valid', 'get_user_region', 'get_user_position', 'get_user_detachment'
+        )
     search_fields = ('user__last_name', 'user__first_name', 'category')
     list_filter = ('timestamp', 'category', 'user__region')
     readonly_fields = ('user', 'timestamp', 'score', 'category', 'questions')
@@ -81,6 +102,53 @@ class AttemptAdmin(ExportActionModelAdmin, admin.ModelAdmin):
 
     get_user_position.admin_order_field = 'user__userdetachmentposition'
     get_user_position.short_description = 'Должность'
+
+    def download_xlsx_users_data(self, request, queryset):
+        file_stream = io.BytesIO()
+        workbook = Workbook()
+        worksheet = workbook.active
+
+        """Настройка формата отображения листа."""
+
+        worksheet.auto_filter.ref = self.ROW_FILTER_CELLS
+        worksheet.append(self.EXCEL_HEADERS)
+        worksheet.row_dimensions[self.FIRST_ROW].height = self.FIRST_ROW_HEIGHT
+        worksheet.sheet_view.zoomScale = self.ZOOM_SCALE
+        worksheet.freeze_panes = self.FREEZE_HEADERS_ROW
+
+        for obj in queryset:
+            region_name = obj.user.region.name if obj.user.region else None
+            worksheet.append([
+                obj.id,
+                obj.user.get_full_name(),
+                obj.timestamp,
+                obj.category,
+                obj.score,
+                obj.is_valid,
+                region_name,
+                self.get_user_position(obj),
+                self.get_user_detachment(obj)
+            ])
+
+        workbook.save(file_stream)
+
+        file_stream.seek(0)
+        response = HttpResponse(
+            file_stream.getvalue(),
+            content_type=(
+                'application/'
+                'vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="%s.xlsx"' % 'users_data'
+        )
+
+        return response
+
+    download_xlsx_users_data.short_description = (
+        'Скачать попытки пользователей в формате xlsx'
+    )
 
     def has_add_permission(self, request, obj=None):
         return False
