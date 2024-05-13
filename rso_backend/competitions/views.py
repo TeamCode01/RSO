@@ -60,7 +60,7 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q17EventLink, Q17Ranking, Q17TandemRanking,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
-                                 Q19TandemRanking, Q20Report, Q20TandemRanking,
+                                 Q19TandemRanking, Q20Report,
                                  QVerificationLog)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
@@ -4492,7 +4492,8 @@ def get_q1_info(request, competition_pk):
     competition = get_object_or_404(Competitions, pk=competition_pk)
     detachment = get_object_or_404(Detachment, commander=request.user)
     if not competition.competition_participants.filter(
-            detachment=detachment).exists():
+            Q(detachment=detachment) | Q(junior_detachment=detachment)
+            ).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response({
         'number_of_members': detachment.members.count() + 1,
