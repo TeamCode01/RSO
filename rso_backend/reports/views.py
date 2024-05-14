@@ -2,20 +2,21 @@ import datetime
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.files.storage import default_storage
 from django.db import connection
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
-from openpyxl import Workbook
+from celery.result import AsyncResult
 from urllib.parse import quote
 
+from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
 from reports.constants import (COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY,
                                COMPETITION_PARTICIPANTS_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
-                               OPENXML_CONTENT_TYPE,
                                SAFETY_TEST_RESULTS_HEADERS, COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS)
 from reports.utils import (enumerate_attempts, get_competition_users,
                            get_detachment_q_results)
@@ -23,6 +24,18 @@ from reports.utils import (enumerate_attempts, get_competition_users,
 
 def has_reports_access(user):
     return user.is_authenticated and getattr(user, 'reports_access', False)
+
+
+class TaskStatusView(View):
+    def get(self, request, task_id):
+        task = AsyncResult(task_id)
+        if task.state == 'SUCCESS':
+            file_path = task.result
+            download_url = default_storage.url(file_path)
+            return JsonResponse({'status': 'SUCCESS', 'download_url': download_url})
+        elif task.state == 'FAILURE':
+            return JsonResponse({'status': 'FAILURE'})
+        return JsonResponse({'status': task.state})
 
 
 @method_decorator(login_required, name='dispatch')
@@ -44,30 +57,27 @@ class BaseExcelExportView(View):
         """К переопределению."""
         raise NotImplementedError('Определите метод для получения названия Worksheet Excel-файла.')
 
+    def process_row_type(self):
+        """Тип обработки строк для селери-задачи. Может быть переопределено в саб-классе."""
+        return 'default'
+
+    def prepare_data(self, data):
+        """Для обработки данных, в которых есть несериализуемые объекты. Может быть переопределено в саб-классе."""
+        return data
+
     def process_row(self, index, row):
-        """По умолчанию возвращает запись as is. Может быть переопределено в саб-классе."""
         return [index] + list(row)
 
     def get(self, request):
-        data = self.get_data()
+        data = self.prepare_data(self.get_data())
         headers = self.get_headers()
-        workbook = Workbook()
-        worksheet = workbook.active
-        worksheet.title = self.get_worksheet_title()
-        worksheet.append(headers)
-
-        for index, row in enumerate(data, start=1):
-            processed_row = self.process_row(index, row)
-            worksheet.append(processed_row)
-
-        response = HttpResponse(
-            content_type=OPENXML_CONTENT_TYPE
-        )
+        worksheet_title = self.get_worksheet_title()
         filename = self.get_filename()
-        safe_filename = quote(filename)  # Кодирование имени файла для безопасной передачи в HTTP заголовке
-        response['Content-Disposition'] = f'attachment; filename={safe_filename}'
-        workbook.save(response)
-        return response
+        safe_filename = quote(filename)
+        process_row_type = self.process_row_type()
+        task = generate_excel_file.delay(data, headers, worksheet_title, safe_filename, process_row_type)
+
+        return JsonResponse({'task_id': task.id})
 
 
 @method_decorator(login_required, name='dispatch')
@@ -100,18 +110,24 @@ class ExportSafetyTestResultsView(BaseExcelExportView):
     def get_worksheet_title(self):
         return 'Тестирование - безопасность'
 
-    def process_row(self, index, row):
-        return [
-            index,
-            row.user.region.name if row.user.region else '-',
-            f'{row.user.last_name} {row.user.first_name} '
-            f'{row.user.patronymic_name if row.user.patronymic_name else "(без отчества)"}',
-            row.detachment if row.detachment else '-',
-            row.detachment_position if row.detachment_position else '-',
-            row.attempt_number,
-            "Да" if row.is_valid else "Нет",
-            row.score,
-        ]
+    def process_row_type(self):
+        return 'safety_test_results'
+
+    def prepare_data(self, data):
+        prepared_data = []
+        for row in data:
+            prepared_data.append({
+                'region_name': row.user.region.name if row.user.region else '-',
+                'last_name': row.user.last_name,
+                'first_name': row.user.first_name,
+                'patronymic_name': row.user.patronymic_name,
+                'detachment': row.detachment if row.detachment else '-',
+                'detachment_position': row.detachment_position if row.detachment_position else '-',
+                'attempt_number': row.attempt_number,
+                'is_valid': row.is_valid,
+                'score': row.score,
+            })
+        return prepared_data
 
 
 @method_decorator(login_required, name='dispatch')
@@ -183,18 +199,23 @@ class ExportDetachmentQResultsView(BaseExcelExportView):
     def get_worksheet_title(self):
         return 'Результаты отрядов, показатели'
 
-    def process_row(self, index, row):
-        return [
-            index,
-            row.region.name,
-            row.name,
-            row.status,
-            row.nomination,
-            row.participants_count,
-            row.overall_ranking,
-            row.places_sum,
-            *row.places
-        ]
+    def process_row_type(self):
+        return 'detachment_q_results'
+
+    def prepare_data(self, data):
+        prepared_data = []
+        for row in data:
+            prepared_data.append({
+                'region_name': row.region.name,
+                'name': row.name,
+                'status': row.status,
+                'nomination': row.nomination,
+                'participants_count': row.participants_count,
+                'overall_ranking': row.overall_ranking,
+                'places_sum': row.places_sum,
+                'places': row.places,
+            })
+        return prepared_data
 
 
 class ExportCompetitionParticipantsContactData(BaseExcelExportView):
