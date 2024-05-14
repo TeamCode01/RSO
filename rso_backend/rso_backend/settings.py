@@ -584,7 +584,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8080',
     'http://localhost:80',
     'http://127.0.0.1:8080',
-    'http://localhost'
+    'http://localhost',
     'https://127.0.0.1',
     'https://rso.sprint.1t.ru',
     'https://лк.трудкрут.рф',
