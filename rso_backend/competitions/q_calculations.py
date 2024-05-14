@@ -1262,7 +1262,7 @@ def calculate_q5_place(competition_id: int):
     от 0% до 5% - 20 место
     """
     today = date.today()
-    cutoff_date = date(2024, 6, 15)
+    cutoff_date = date(2024, 6, 30)
 
     logger.info(
         'Удаляем все записи из Q5Ranking, Q5TandemRanking'
