@@ -62,9 +62,9 @@ services:
     command: celery -A rso_backend beat -l info
     volumes:
       - ./logs:/app/logs
+      - media:/app/media
     depends_on:
       - celery_worker
-      - media:/app/media
     networks:
       - internal
   frontend:
