@@ -60,7 +60,7 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q17EventLink, Q17Ranking, Q17TandemRanking,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
-                                 Q19TandemRanking, Q20Report, Q20TandemRanking,
+                                 Q19TandemRanking, Q20Report,
                                  QVerificationLog)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
@@ -4354,7 +4354,7 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
 
         Доступ: командиры отрядов, которые участвуют в конкурсе.
         Если отчета еще не подан, вернется ошибка 404. (данные не отправлены)
-        Если отчет подан, но еще не верифицировн - вернется
+        Если отчет подан, но еще не верифицирован - вернется
         {"place": "Показатель в обработке"}.
         Если отчет подан и верифицирован - вернется место в рейтинге:
         {"place": int}
@@ -4472,6 +4472,35 @@ def get_place_q1(request, competition_pk):
     # Если отряд является участником конкурса, но нет рейтинга
     return Response({'error': 'Рейтинг еще не сформирован'},
                     status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_q1_info(request, competition_pk):
+    """
+    Информация для показателя q1.
+
+    Возвращает следующую информацию:
+    'number_of_members': int - число участников отряда
+    'number_of_payments': int - количество участников отряда
+    оплативших членские взносы
+
+    Доступ: все авторизованные пользователи.
+    Если пользователь не командир, либо не участвует в мероприятии -
+    выводится ошибка 404.
+    """
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    if not competition.competition_participants.filter(
+            Q(detachment=detachment) | Q(junior_detachment=detachment)
+            ).exists():
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response({
+        'number_of_members': detachment.members.count() + 1,
+        'number_of_payments': detachment.members.filter(
+                user__membership_fee=True
+            ).count() + (1 if detachment.commander.membership_fee else 0)
+    })
 
 
 @api_view(['GET'])
