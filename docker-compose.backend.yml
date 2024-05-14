@@ -47,6 +47,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./rso_backend:/app
+      - media:/app/media
     depends_on:
       - backend
     networks:
@@ -58,6 +59,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./rso_backend:/app
+      - media:/app/media
     depends_on:
       - celery_worker
     networks:

@@ -50,6 +50,7 @@ services:
     command: celery -A rso_backend worker --loglevel=info
     volumes:
       - ./logs:/app/logs
+      - media:/app/media
     depends_on:
       - backend
     networks:
@@ -63,6 +64,7 @@ services:
       - ./logs:/app/logs
     depends_on:
       - celery_worker
+      - media:/app/media
     networks:
       - internal
   frontend:
