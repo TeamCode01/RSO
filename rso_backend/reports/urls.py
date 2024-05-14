@@ -5,10 +5,11 @@ from reports.views import (CompetitionParticipantView, DetachmentQResultsView,
                            ExportCompetitionParticipantsDataView,
                            ExportDetachmentQResultsView,
                            ExportSafetyTestResultsView, ReportView,
-                           SafetyTestResultsView)
+                           SafetyTestResultsView, TaskStatusView)
 
 urlpatterns = [
     path('', ReportView.as_view(), name='reports'),
+    path('task-status/<str:task_id>/', TaskStatusView.as_view(), name='task_status'),
     path(
         'safety_test_results/',
         SafetyTestResultsView.as_view(),

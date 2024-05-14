@@ -1,6 +1,6 @@
 {% extends 'reports/base.html' %}
 {% load i18n %}
-{% block title %}Результаты тестирования по безопасности{% endblock %}
+{% block title %}Общая выгрузка участников конкурса по всем показателям{% endblock %}
 {% block header %}
 {% include 'reports/header.html' %}
 {% endblock %}
@@ -8,7 +8,7 @@
 {% block content %}
 {% include 'reports/header.html' %}
 <div class="container">
-    <h1>Общая выгрузка участников конкурса</h1>
+    <h1>Общая выгрузка участников конкурса по всем показателям</h1>
     <p>Если таблица вне экрана, уменьшайте масштаб браузера (одновременным нажатием клавиш "Ctrl" + "-").</p>
     <p>Не влияет на выгрузку в Excel.</p>
     <style>
@@ -86,6 +86,37 @@
         </tbody>
     </table>
 
-    <a href="{% url 'export_detachment_q_results' %}" class="button">Скачать все результаты в Excel</a>
+    <button id="downloadButton" class="button">Скачать все результаты в Excel</button>
 </div>
+
+<script>
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        const button = this;
+        button.disabled = true;
+        button.textContent = 'Подождите, файл готовится...';
+
+        fetch('{% url "export_detachment_q_results" %}')
+            .then(response => response.json())
+            .then(data => {
+                const taskId = data.task_id;
+                const intervalId = setInterval(() => {
+                    fetch(`/reports/task-status/${taskId}/`)
+                        .then(response => response.json())
+                        .then(statusData => {
+                            if (statusData.status === 'SUCCESS') {
+                                clearInterval(intervalId);
+                                window.location.href = statusData.download_url;
+                                button.disabled = false;
+                                button.textContent = 'Скачать все результаты в Excel';
+                            } else if (statusData.status === 'FAILURE') {
+                                clearInterval(intervalId);
+                                button.disabled = false;
+                                button.textContent = 'Ошибка при подготовке файла. Попробуйте снова.';
+                            }
+                        });
+                }, 2000);
+            });
+    });
+</script>
+
 {% endblock %}
