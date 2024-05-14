@@ -13,7 +13,7 @@
             <a href="{% url 'safety_test_results' %}" class="button">Результаты тестирования по безопасности</a>
             <a href="{% url 'competition_participants' %}" class="button">Общая выгрузка участников конкурса</a>
             <a href="{% url 'detachment_q_results' %}" class="button">Общая выгрузка участников конкурса по всем показателям</a>
-            <a href="{% url 'competition_participants_contact_data' %}" class="button">Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)</a>
+            <button class="button" id="downloadContactDataButton">Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)</button>
 {#            <a href="/report2" class="button">Отчет 2</a>#}
 {#            <a href="/report3" class="button">Отчет 3</a>#}
 {#            <a href="/report1" class="button">Отчет 1</a>#}
@@ -29,9 +29,37 @@
         </div>
     </div>
     <script>
+        document.getElementById('downloadContactDataButton').addEventListener('click', function() {
+            const button = this;
+            button.disabled = true;
+            button.textContent = 'Подождите, файл готовится...';
+
+            fetch('{% url "competition_participants_contact_data" %}')
+                .then(response => response.json())
+                .then(data => {
+                    const taskId = data.task_id;
+                    const intervalId = setInterval(() => {
+                        fetch(`/reports/task-status/${taskId}/`)
+                            .then(response => response.json())
+                            .then(statusData => {
+                                if (statusData.status === 'SUCCESS') {
+                                    clearInterval(intervalId);
+                                    window.location.href = statusData.download_url;
+                                    button.disabled = false;
+                                    button.textContent = 'Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)';
+                                } else if (statusData.status === 'FAILURE') {
+                                    clearInterval(intervalId);
+                                    button.disabled = false;
+                                    button.textContent = 'Ошибка при подготовке файла. Попробуйте снова.';
+                                }
+                            });
+                    }, 2000);
+                });
+        });
+
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');
-        const buttons = buttonContainer.getElementsByTagName('a');
+        const buttons = buttonContainer.getElementsByTagName('button');
 
         searchInput.addEventListener('input', function() {
             const filter = searchInput.value.toLowerCase();
