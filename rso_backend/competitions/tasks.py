@@ -1,4 +1,5 @@
 import logging
+from datetime import date, timedelta
 
 from celery import shared_task
 from django.conf import settings
@@ -54,13 +55,27 @@ def calculate_q1_places_task():
 @shared_task
 def calculate_q3_q4_places_task():
     """Считает места по 3-4 показателям."""
+    today = date.today()
+    cutoff_date = date(2024, 5, 15)
+
+    if today <= cutoff_date + timedelta(days=1):
+        calculate_q5_place(competition_id=settings.COMPETITION_ID)
+    else:
+        logger.warning('Истек срок выполнения подсчета по 3-4 показателям')
+
     calculate_q3_q4_place(competition_id=settings.COMPETITION_ID)
 
 
 @shared_task
 def calculate_q5_places_task():
-    """Считает места по 3-4 показателям."""
-    calculate_q5_place(competition_id=settings.COMPETITION_ID)
+    """Считает места по 5 показателю."""
+    today = date.today()
+    cutoff_date = date(2024, 6, 30)
+
+    if today <= cutoff_date + timedelta(days=1):
+        calculate_q5_place(competition_id=settings.COMPETITION_ID)
+    else:
+        logger.warning('Истек срок выполнения подсчета по 5 показателю')
 
 
 @shared_task
