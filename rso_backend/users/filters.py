@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-
+from django.db.models import Q
 from users.models import RSOUser
 
 
@@ -58,3 +58,44 @@ class RSOUserFilter(filters.FilterSet):
             'membership_fee',
             'region',
         )
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        district_name = self.data.get('district_headquarter__name')
+        regional_name = self.data.get('regional_headquarter__name')
+        local_name = self.data.get('local_headquarter__name')
+        educational_name = self.data.get('educational_headquarter__name')
+        detachment_name = self.data.get('detachment__name')
+
+        if district_name:
+            queryset = queryset.filter(
+                Q(userdistrictheadquarterposition__headquarter__name__icontains=district_name) |
+                Q(userdistrictheadquarterposition__headquarter__commander__name__icontains=district_name)
+            )
+
+        if regional_name:
+            queryset = queryset.filter(
+                Q(userregionalheadquarterposition__headquarter__name__icontains=regional_name) |
+                Q(userregionalheadquarterposition__headquarter__commander__name__icontains=regional_name)
+            )
+
+        if local_name:
+            queryset = queryset.filter(
+                Q(userlocalheadquarterposition__headquarter__name__icontains=local_name) |
+                Q(userlocalheadquarterposition__headquarter__commander__name__icontains=local_name)
+            )
+
+        if educational_name:
+            queryset = queryset.filter(
+                Q(usereducationalheadquarterposition__headquarter__name__icontains=educational_name) |
+                Q(usereducationalheadquarterposition__headquarter__commander__name__icontains=educational_name)
+            )
+
+        if detachment_name:
+            queryset = queryset.filter(
+                Q(userdetachmentposition__headquarter__name__icontains=detachment_name) |
+                Q(userdetachmentposition__headquarter__commander__name__icontains=detachment_name)
+            )
+
+        return queryset
