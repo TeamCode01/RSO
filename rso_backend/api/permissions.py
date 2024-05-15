@@ -784,7 +784,7 @@ class IsCommanderOrTrustedAnywhere(BasePermission):
         return False
 
 
-class IsRegionalCommanderOrAdmin(BasePermission):
+class IsRegionalCommanderForCompetition(BasePermission):
     """
     Проверяет, является ли пользователь командиром
     регионального штаба или администратором.
