@@ -100,7 +100,7 @@ def check_commander_or_not(request, headquarters):
         try:
             # поменять на get когда добавим валидацию на 1 командира на уровень
             if headquarter.objects.filter(
-                commander_id=request.user.id
+                    commander_id=request.user.id
             ).first() is not None:
                 result = True
                 break
@@ -127,7 +127,7 @@ def check_role_get(request, model, position_in_quarter):
     except (model.DoesNotExist, AttributeError):
         return False
     return (
-        request.user.is_authenticated and position_name == position_in_quarter
+            request.user.is_authenticated and position_name == position_in_quarter
     )
 
 
@@ -142,7 +142,7 @@ def search_trusted_in_list(user_id, tables_list):
     while index < number_of_tables:
         try:
             if tables_list[index].objects.get(
-                user_id=user_id
+                    user_id=user_id
             ).is_trusted:
                 return True
             index += 1
@@ -169,7 +169,7 @@ def check_trusted_user(request, model, obj):
     except AttributeError:
         return False
     return (
-        request.user.is_authenticated and is_trusted
+            request.user.is_authenticated and is_trusted
     )
 
 
@@ -206,7 +206,7 @@ def check_trusted_for_detachments(request, obj=None):
                 user_id=user_id
             ).is_trusted
         except (
-            UserEducationalHeadquarterPosition.DoesNotExist, AttributeError
+                UserEducationalHeadquarterPosition.DoesNotExist, AttributeError
         ):
             edu_trusted = False
         try:
@@ -267,7 +267,7 @@ def check_trusted_for_eduhead(request, obj=None):
                 user_id=user_id
             ).is_trusted
         except (
-            UserEducationalHeadquarterPosition.DoesNotExist, AttributeError
+                UserEducationalHeadquarterPosition.DoesNotExist, AttributeError
         ):
             edu_trusted = False
         try:
@@ -284,7 +284,7 @@ def check_trusted_for_eduhead(request, obj=None):
                 user_id=user_id
             ).is_trusted
         except (
-            UserRegionalHeadquarterPosition.DoesNotExist, AttributeError
+                UserRegionalHeadquarterPosition.DoesNotExist, AttributeError
         ):
             regional_trusted = False
         try:
@@ -294,7 +294,7 @@ def check_trusted_for_eduhead(request, obj=None):
                 user_id=user_id
             ).is_trusted
         except (
-            UserDistrictHeadquarterPosition.DoesNotExist, AttributeError
+                UserDistrictHeadquarterPosition.DoesNotExist, AttributeError
         ):
             district_trusted = False
         return any([
@@ -441,8 +441,8 @@ def check_trusted_for_centralhead(request):
             user_id=request_user_id
         ).is_trusted
     except (
-        UserCentralHeadquarterPosition.DoesNotExist,
-        AttributeError
+            UserCentralHeadquarterPosition.DoesNotExist,
+            AttributeError
     ):
         return False
 
@@ -600,9 +600,7 @@ def is_regional_commander(user):
     регионального штаба или администратором.
     """
     check_regional_commander = get_regional_headquarters_if_commander(user)
-    return (user.is_authenticated and
-            (check_regional_commander or
-             user.is_staff))
+    return user.is_authenticated and check_regional_commander
 
 
 def get_detachment_commander_num(user) -> int | None:
@@ -613,8 +611,8 @@ def get_detachment_commander_num(user) -> int | None:
             commander=user
         ).id
     except (
-        Detachment.DoesNotExist, AttributeError, ValueError,
-        Detachment.MultipleObjectsReturned
+            Detachment.DoesNotExist, AttributeError, ValueError,
+            Detachment.MultipleObjectsReturned
     ):
         return None
     return detachment_commander_num
@@ -628,8 +626,8 @@ def get_regional_hq_commander_num(user) -> int | None:
             commander=user
         ).id
     except (
-        RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
-        RegionalHeadquarter.MultipleObjectsReturned
+            RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
+            RegionalHeadquarter.MultipleObjectsReturned
     ):
         return None
     return reghq_commander_num
@@ -643,8 +641,8 @@ def get_district_hq_commander_num(user) -> int | None:
             commander=user
         ).id
     except (
-        DistrictHeadquarter.DoesNotExist, AttributeError, ValueError,
-        DistrictHeadquarter.MultipleObjectsReturned
+            DistrictHeadquarter.DoesNotExist, AttributeError, ValueError,
+            DistrictHeadquarter.MultipleObjectsReturned
     ):
         return None
     return district_headquarter_commander_num
@@ -658,8 +656,8 @@ def get_central_hq_commander_num(user) -> int | None:
             commander=user
         ).id
     except (
-        CentralHeadquarter.DoesNotExist, AttributeError, ValueError,
-        CentralHeadquarter.MultipleObjectsReturned
+            CentralHeadquarter.DoesNotExist, AttributeError, ValueError,
+            CentralHeadquarter.MultipleObjectsReturned
     ):
         return None
     return central_headquarter_commander_num
@@ -673,8 +671,8 @@ def get_regional_hq_commander_num(user) -> int | None:
             commander=user
         ).id
     except (
-        RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
-        RegionalHeadquarter.MultipleObjectsReturned
+            RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
+            RegionalHeadquarter.MultipleObjectsReturned
     ):
         return None
     return reghq_commander_num
@@ -730,9 +728,9 @@ def get_detachment_tandem(user, competition_id):
         commander=user
     )
     if CompetitionParticipants.objects.filter(
-        Q(detachment=detachment) | Q(junior_detachment=detachment) &
-        Q(detachment__isnull=False) &
-        Q(competition_id=competition_id)
+            Q(detachment=detachment) | Q(junior_detachment=detachment) &
+            Q(detachment__isnull=False) &
+            Q(competition_id=competition_id)
     ).exists():
         return detachment
 
@@ -752,9 +750,9 @@ def get_detachment_start(user, competition_id):
         commander=user
     )
     if CompetitionParticipants.objects.filter(
-        Q(junior_detachment=detachment) &
-        Q(detachment__isnull=True) &
-        Q(competition_id=competition_id)
+            Q(junior_detachment=detachment) &
+            Q(detachment__isnull=True) &
+            Q(competition_id=competition_id)
     ).exists():
         return detachment
 
