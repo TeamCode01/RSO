@@ -29,7 +29,7 @@ from api.permissions import (
     IsCommanderDetachmentWithVerif, IsCompetitionParticipantAndCommander,
     IsQ5DetachmentReportAuthor, IsQ13DetachmentReportAuthor,
     IsQ14DetachmentReportAuthor, IsQ15DetachmentReportAuthor,
-    IsQ17DetachmentReportAuthor, IsRegionalCommanderOrAdmin,
+    IsQ17DetachmentReportAuthor, IsRegionalCommanderForCompetition,
     IsRegionalCommanderOrAdminOrAuthor, IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
@@ -336,7 +336,7 @@ class CompetitionApplicationsViewSet(viewsets.ModelViewSet):
                     IsRegionalCommanderOrAdminOrAuthor()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     def get_detachment(self, user):
@@ -482,7 +482,7 @@ class CompetitionApplicationsViewSet(viewsets.ModelViewSet):
             methods=['post'],
             url_path='confirm',
             permission_classes=(permissions.IsAuthenticated,
-                                IsRegionalCommanderOrAdmin,))
+                                IsRegionalCommanderForCompetition,))
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
     ))
@@ -587,7 +587,7 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
     def get_permissions(self):
         if self.action == 'destroy':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     def get_detachment(self, user):
@@ -827,7 +827,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     IsCommanderDetachmentInParameterOrRegionalCommander(), ]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         if self.action in ['update', 'partial_update']:
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAuthor()]
@@ -993,7 +993,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         url_path='accept',
         # serializer_class=None,
         permission_classes=(permissions.IsAuthenticated,
-                            IsRegionalCommanderOrAdmin),
+                            IsRegionalCommanderForCompetition),
     )
     def verify(self, *args, **kwargs):
         """Верификация отчета по показателю.
@@ -2534,7 +2534,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
             return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     @action(detail=False,
@@ -3227,7 +3227,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
-            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(),]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderForCompetition(), ]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -3374,7 +3374,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='accept/(?P<labor_project_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
+            permissions.IsAuthenticated, IsRegionalCommanderForCompetition,
         ],
     )
     def verify(self, request, competition_pk=None, pk=None,
@@ -3543,7 +3543,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
-            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin()]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -3681,7 +3681,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='accept/(?P<source_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
+            permissions.IsAuthenticated, IsRegionalCommanderForCompetition,
         ]
     )
     def verify_source(self, request, competition_pk=None, pk=None,
@@ -3829,7 +3829,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
             return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     @action(detail=False,
@@ -4016,7 +4016,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                     IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         if self.action in ['update', 'partial_update']:
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAuthor()]
@@ -4049,7 +4049,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
             methods=['post', 'delete'],
             url_path='accept',
             permission_classes=(permissions.IsAuthenticated,
-                                IsRegionalCommanderOrAdmin,)
+                                IsRegionalCommanderForCompetition,)
             )
     @swagger_auto_schema(
         request_body=openapi.Schema(type=openapi.TYPE_OBJECT, properties={}, ),
