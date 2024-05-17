@@ -890,6 +890,12 @@ class DetachmentSerializer(BaseUnitSerializer):
             'tandem_partner',
         )
 
+    def create(self, validated_data):
+        """
+        Создает и возвращает новый экземпляр Detachment.
+        """
+        return Detachment.objects.create(**validated_data)
+
     def to_representation(self, instance):
         """
         Вызывает родительский метод to_representation,
