@@ -1449,7 +1449,8 @@ def get_q5_place(participants_count: int, june_15_detachment_members: int) -> in
 def get_q3_q4_place(detachment: Detachment, category: str):
     commander_score = Attempt.objects.filter(
         user=detachment.commander,
-        category=category
+        category=category,
+        timestamp__lt=date(2024, 5, 16)
     ).aggregate(Max('score'))['score__max'] or 0
     logger.info(f'у командира {detachment} {detachment.commander} очков - {commander_score}')
     logger.info(f'Command score for entry {CompetitionParticipants} is {commander_score}')
@@ -1464,7 +1465,8 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         for commissioner in commissioners:
             commissioner_max_score = Attempt.objects.filter(
                 user=commissioner.user,
-                category=category
+                category=category,
+                timestamp__lt=date(2024, 5, 16)
             ).aggregate(Max('score'))['score__max']
             if commissioner_max_score:
                 commissioner_score = max(commissioner_score,
@@ -1484,7 +1486,8 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
                 user=participant.user,
-                category=category
+                category=category,
+                timestamp__lt=date(2024, 5, 16)
             ).aggregate(Max('score'))['score__max']
             logger.info(f'у участника {participant} очков - {participant_max_score}')
             if participant_max_score:
