@@ -1360,12 +1360,24 @@ def calculate_q5_place(competition_id: int):
                 place=get_q5_place(educated_participants_count, entry_report.june_15_detachment_members)
             )
     for tandem_entry in tandem_entries:
+        tandem_entry_report = None
+        junior_tandem_entry_report = None
+        is_tandem_entry_report = False
+        is_junior_tandem_entry_report = False
         try:
             tandem_entry_report = tandem_entry.detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
             junior_tandem_entry_report = tandem_entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
             logger.info(f'detachment reports for tandem entries: {tandem_entry_report}, {junior_tandem_entry_report}')
         except Q5DetachmentReport.DoesNotExist:
-            continue
+            if not tandem_entry_report and not junior_tandem_entry_report:
+                continue
+            elif tandem_entry_report and not junior_tandem_entry_report:
+                is_tandem_entry_report = True
+            elif junior_tandem_entry_report and not tandem_entry_report:
+                is_junior_tandem_entry_report = True
+            elif junior_tandem_entry_report and tandem_entry_report:
+                is_tandem_entry_report = True
+                is_junior_tandem_entry_report = True
         if not tandem_entry_report or not junior_tandem_entry_report:
             continue
 
@@ -1385,11 +1397,21 @@ def calculate_q5_place(competition_id: int):
             is_verified=True,
             detachment_report=tandem_entry_report
         ).count()
-
-        final_place = round_math((
-            get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
-            get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
-        ) / 2)
+        if is_junior_tandem_entry_report and not is_tandem_entry_report:
+            final_place = round_math((
+                get_q5_place(0, 1) +
+                get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members)
+            ) / 2)
+        elif not junior_tandem_entry_report and not is_junior_tandem_entry_report:
+            final_place = round_math((
+                get_q5_place(0, 1) +
+                get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
+            ) / 2)
+        else:
+            final_place = round_math((
+                get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
+                get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
+            ) / 2)
         if educated_participants_count_junior + educated_participants_count_detachment > 0:
             Q5TandemRanking.objects.create(
                 competition_id=competition_id,
