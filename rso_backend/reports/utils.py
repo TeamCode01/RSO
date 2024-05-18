@@ -192,6 +192,7 @@ def get_safety_results():
             row.attempt_number,
             row.is_valid,
             row.score,
+            row.timestamp
         ))
     return prepared_data
 
