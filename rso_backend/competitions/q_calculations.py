@@ -688,7 +688,7 @@ def calculate_q6_place(competition_id):
             )
             if tuple_to_append not in category:
                 category.append(tuple_to_append)
-        elif entry and not partner_entry:
+        elif (entry and not partner_entry) and category == solo_entries:
             category.append((entry, entry.score))
 
     if solo_entries:
