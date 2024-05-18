@@ -117,7 +117,7 @@ from competitions.swagger_schemas import (q7schema_request,
                                           response_competitions_participants,
                                           response_create_application,
                                           response_junior_detachments)
-from competitions.utils import get_place_q2, tandem_or_start
+from competitions.utils import get_place_q2, tandem_or_start, round_math
 from headquarters.models import (Detachment, RegionalHeadquarter,
                                  UserDetachmentPosition,
                                  UserRegionalHeadquarterPosition)
@@ -1091,7 +1091,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                             partner_detahcment_report.commissioner_achievement
                         )
                     )
-                result_place = round((place_1 + place_2) / 2, 2)
+                result_place = round_math((place_1 + place_2) / 2, 2)
                 if partner_is_junior:
                     tandem_ranking, _ = Q2TandemRanking.objects.get_or_create(
                         competition=competition,
@@ -3307,7 +3307,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                                 is_verified=True
                             )
                         )
-                tandem_ranking.place = round(tandem_ranking.place / 2, 2)
+                tandem_ranking.place = round_math(tandem_ranking.place / 2, 2)
                 tandem_ranking.save()
             return Response(
                 {"status": "Данные по организации "
@@ -4351,7 +4351,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         tandem_ranking.place += self.MAX_PLACE
                     if junior_detachment_report:
                         tandem_ranking.place += calculate_q19_place(report)
-                tandem_ranking.place = round(tandem_ranking.place / 2, 2)
+                tandem_ranking.place = round_math(tandem_ranking.place / 2, 2)
                 tandem_ranking.save()
             return Response(
                 {"status": "Данные "

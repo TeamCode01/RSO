@@ -27,7 +27,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q19TandemRanking)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
-                                tandem_or_start)
+                                tandem_or_start, round_math)
 from headquarters.models import Detachment, UserDetachmentPosition
 from questions.models import Attempt
 
@@ -735,7 +735,7 @@ def calculate_q6_place(competition_id):
             if entry[2] != previous_score:
                 place = last_place + 1
             updated_place = place + (
-                round(additional_place_junior + additional_place_detachment / 2)
+                round_math(additional_place_junior + additional_place_detachment / 2)
             )
             logger.info(
                 f'Отчет {entry[0]} и {entry[1]} занимает {updated_place} место'
@@ -1136,7 +1136,7 @@ def calculate_q3_q4_place(competition_id: int):
         q4_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'safety')
         q4_place_2 = get_q3_q4_place(tandem_entry.detachment, 'safety')
         if q3_place_1 and q3_place_2:
-            final_place = round((q3_place_1 + q3_place_2) / 2)
+            final_place = round_math((q3_place_1 + q3_place_2) / 2)
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q3 место - {final_place}')
             Q3TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -1145,7 +1145,7 @@ def calculate_q3_q4_place(competition_id: int):
                 place=final_place
             )
         if q4_place_1 and q4_place_2:
-            final_place = round((q4_place_1 + q4_place_2) / 2)
+            final_place = round_math((q4_place_1 + q4_place_2) / 2)
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q4 место - {final_place}')
             Q4TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -1388,7 +1388,7 @@ def calculate_q5_place(competition_id: int):
             detachment_report=tandem_entry_report
         ).count()
 
-        final_place = round((
+        final_place = round_math((
             get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
             get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
         ) / 2)
