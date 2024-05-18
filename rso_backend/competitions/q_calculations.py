@@ -750,31 +750,52 @@ def calculate_q6_place(competition_id):
 
 def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
     score = 0
-    if entry.demonstration_block.first_may_demonstration and entry.demonstration_block.is_verified:
-        score += 1
-    if entry.creative_festival_block.creative_festival and entry.creative_festival_block.is_verified:
-        score += 1
-    if entry.patriotic_action_block.patriotic_action and entry.patriotic_action_block.is_verified:
-        score += 1
-    if entry.safety_work_week_block.safety_work_week and entry.safety_work_week_block.is_verified:
-        score += 1
-    if (
-            entry.commander_commissioner_school_block.commander_commissioner_school and
-            entry.commander_commissioner_school_block.is_verified
-    ):
-        score += 1
-    if (
-            entry.working_semester_opening_block.working_semester_opening and
-            entry.working_semester_opening_block.is_verified
-    ):
-        score += 1
-    if entry.spartakiad_block.spartakiad and entry.spartakiad_block.is_verified:
-        score += 1
-    if (
-            entry.professional_competition_block.professional_competition and
-            entry.professional_competition_block.is_verified
-    ):
-        score += 1
+    try:
+        if entry.demonstration_block.first_may_demonstration and entry.demonstration_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.creative_festival_block.creative_festival and entry.creative_festival_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.patriotic_action_block.patriotic_action and entry.patriotic_action_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.safety_work_week_block.safety_work_week and entry.safety_work_week_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if (
+                entry.commander_commissioner_school_block.commander_commissioner_school and
+                entry.commander_commissioner_school_block.is_verified
+        ):
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if (
+                entry.working_semester_opening_block.working_semester_opening and
+                entry.working_semester_opening_block.is_verified
+        ):
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.spartakiad_block.spartakiad and entry.spartakiad_block.is_verified:
+            score += 1
+        if (
+                entry.professional_competition_block.professional_competition and
+                entry.professional_competition_block.is_verified
+        ):
+            score += 1
+    except ObjectDoesNotExist:
+        pass
     place = 6
     if score == 8:
         place = 1
