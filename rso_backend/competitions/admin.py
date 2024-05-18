@@ -132,6 +132,9 @@ class QBaseRankingAdmin(admin.ModelAdmin):
     list_display = ('id', 'competition_id', 'detachment', 'place')
     search_fields = ('detachment__name', 'place')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class QBaseTandemRankingAdmin(admin.ModelAdmin):
     list_display = (
@@ -139,11 +142,17 @@ class QBaseTandemRankingAdmin(admin.ModelAdmin):
     )
     search_fields = ('detachment__name', 'junior_detachment__name', 'place')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(OverallRanking)
 class OverallRankingAdmin(admin.ModelAdmin):
     list_display = ('id', 'competition_id', 'detachment', 'places_sum', 'place')
     search_fields = ('detachment__name', 'place')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(OverallTandemRanking)
@@ -153,11 +162,17 @@ class OverallTandemRankingAdmin(admin.ModelAdmin):
     )
     search_fields = ('detachment__name', 'junior_detachment__name', 'place')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Q1Report)
 class Q1ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name', 'score')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q1Ranking)
@@ -184,6 +199,10 @@ class Q2DetachmentReportAdmin(admin.ModelAdmin):
         return obj.detachment.name
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Q2Ranking)
 class Q2RankingAdmin(QBaseRankingAdmin):
@@ -242,6 +261,9 @@ class Q5DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Q5TandemRanking)
 class Q5TandemRankingAdmin(QBaseTandemRankingAdmin):
@@ -252,40 +274,64 @@ class Q5TandemRankingAdmin(QBaseTandemRankingAdmin):
 class DemonstrationBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'first_may_demonstration', 'first_may_demonstration_participants', 'is_verified')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(PatrioticActionBlock)
 class PatrioticActionBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'patriotic_action', 'patriotic_action_participants', 'is_verified')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(SafetyWorkWeekBlock)
 class SafetyWorkWeekBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'safety_work_week', 'is_verified')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(CommanderCommissionerSchoolBlock)
 class CommanderCommissionerSchoolBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'commander_commissioner_school', 'is_verified')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(WorkingSemesterOpeningBlock)
 class WorkingSemesterOpeningBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'working_semester_opening', 'working_semester_opening_participants', 'is_verified')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(CreativeFestivalBlock)
 class CreativeFestivalBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'creative_festival', 'is_verified')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(ProfessionalCompetitionBlock)
 class ProfessionalCompetitionBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'professional_competition', 'is_verified')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(SpartakiadBlock)
 class SpartakiadBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'spartakiad', 'is_verified')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q6DetachmentReport)
@@ -419,6 +465,10 @@ class Q6DetachmentReportAdmin(admin.ModelAdmin):
     get_professional_competition_verification_status.short_description = 'Верификация Конкурса профессионального мастерства'
     get_professional_competition_verification_status.boolean = True
 
+    def has_add_permission(self, request, obj=None):
+        """Запрещаем добавление записи через админку."""
+        return False
+
 
 @admin.register(Q6Ranking)
 class Q6RankingAdmin(QBaseRankingAdmin):
@@ -448,6 +498,9 @@ class Q7Admin(admin.ModelAdmin):
     def links(self, obj):
         return LinksQ7.objects.filter(event=obj).count()
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class Q7Inline(admin.TabularInline):
     model = Q7
@@ -460,6 +513,9 @@ class Q7ReportAdmin(admin.ModelAdmin):
     search_fields = ('detachment__name',)
 
     inlines = [Q7Inline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q7Ranking)
@@ -485,6 +541,9 @@ class Q8Admin(admin.ModelAdmin):
 
     inlines = [Q8LinksInline]
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
     @admin.display(description='Ссылки')
     def links(self, obj):
         return LinksQ8.objects.filter(event=obj).count()
@@ -501,6 +560,9 @@ class Q8ReportAdmin(admin.ModelAdmin):
     search_fields = ('detachment__name',)
 
     inlines = [Q8Inline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q8Ranking)
@@ -520,6 +582,9 @@ class Q9Admin(admin.ModelAdmin):
         'prize_place'
     )
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class Q9Inline(admin.TabularInline):
     model = Q9
@@ -532,6 +597,9 @@ class Q9ReportAdmin(admin.ModelAdmin):
     search_fields = ('detachment__name',)
 
     inlines = [Q9Inline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q9Ranking)
@@ -549,6 +617,9 @@ class Q10Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class Q10Inline(admin.TabularInline):
     model = Q10
@@ -561,6 +632,9 @@ class Q10ReportAdmin(admin.ModelAdmin):
     search_fields = ('detachment__name',)
 
     inlines = [Q10Inline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q10Ranking)
@@ -578,6 +652,10 @@ class Q11Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 
 class Q11Inline(admin.TabularInline):
     model = Q11
@@ -590,6 +668,9 @@ class Q11ReportAdmin(admin.ModelAdmin):
     search_fields = ('detachment__name',)
 
     inlines = [Q11Inline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q11Ranking)
@@ -607,6 +688,9 @@ class Q12Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class Q12Inline(admin.TabularInline):
     model = Q12
@@ -619,6 +703,9 @@ class Q12ReportAdmin(admin.ModelAdmin):
     search_fields = ('detachment__name',)
 
     inlines = [Q12Inline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q12Ranking)
@@ -652,6 +739,9 @@ class Q13DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Q13Ranking)
 class Q13RankingAdmin(QBaseRankingAdmin):
@@ -682,6 +772,9 @@ class Q14DetachmentReportAdmin(admin.ModelAdmin):
         return obj.detachment.name
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q14Ranking)
@@ -721,6 +814,8 @@ class Q15DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q15TandemRank)
@@ -732,6 +827,9 @@ class Q15TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q16ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'is_verified', 'score')
     search_fields = ('detachment__name',)
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q16Ranking)
@@ -775,6 +873,9 @@ class Q17DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Q18Ranking)
 class Q18RankingAdmin(QBaseRankingAdmin):
@@ -801,6 +902,8 @@ class Q18DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q18TandemRanking)
@@ -812,6 +915,9 @@ class Q18TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q19ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'is_verified', 'safety_violations')
     search_fields = ('detachment__name',)
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q19Ranking)
@@ -828,6 +934,9 @@ class Q19TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q20ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'is_verified', 'score')
     search_fields = ('detachment__name',)
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Q20Ranking)
