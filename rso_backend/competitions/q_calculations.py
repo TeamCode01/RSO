@@ -4,6 +4,7 @@ from datetime import date
 from typing import List
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 
 from competitions.models import (CompetitionParticipants, OverallRanking,
@@ -26,7 +27,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q19TandemRanking)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
-                                tandem_or_start)
+                                tandem_or_start, round_math)
 from headquarters.models import Detachment, UserDetachmentPosition
 from questions.models import Attempt
 
@@ -562,9 +563,10 @@ def calculate_q6_place(competition_id):
 
     logger.info(f'Сегодняшняя дата: {today}')
 
-    verified_entries = Q6DetachmentReport.objects.filter(is_verified=True, competition_id=competition_id)
+    verified_entries = Q6DetachmentReport.objects.filter(competition_id=competition_id)
     logger.info(
-        f'Получили верифицированные отчеты: {verified_entries.count()}')
+        f'Получили отчеты: {verified_entries.count()}'
+    )
 
     solo_entries = []
     tandem_entries = []
@@ -584,7 +586,6 @@ def calculate_q6_place(competition_id):
                 partner_entry = Q6DetachmentReport.objects.filter(
                     detachment=participants_entry.detachment,
                     competition_id=competition_id,
-                    is_verified=True
                 ).first()
                 if partner_entry:
                     logger.info(
@@ -601,7 +602,6 @@ def calculate_q6_place(competition_id):
                 entry = Q6DetachmentReport.objects.filter(
                     detachment=participants_entry.junior_detachment,
                     competition_id=competition_id,
-                    is_verified=True
                 ).first()
                 if entry:
                     logger.info(
@@ -616,20 +616,70 @@ def calculate_q6_place(competition_id):
             )
             calculate_april_detachment_members(entry, partner_entry)
 
+        working_semester_opening_participants = 0
+        patriotic_action_participants = 0
+        first_may_demonstration_participants = 0
         if entry:
+            try:
+                if entry.working_semester_opening_block.is_verified:
+                    working_semester_opening_participants = (
+                        entry.working_semester_opening_block.working_semester_opening_participants
+                    )
+            except ObjectDoesNotExist:
+                working_semester_opening_participants = 0
+            try:
+                if entry.patriotic_action_block.is_verified:
+                    patriotic_action_participants = (
+                        entry.patriotic_action_block.patriotic_action_participants
+                    )
+            except ObjectDoesNotExist:
+                patriotic_action_participants = 0
+            try:
+                if entry.demonstration_block.is_verified:
+                    first_may_demonstration_participants = (
+                        entry.demonstration_block.first_may_demonstration_participants
+                    )
+            except ObjectDoesNotExist:
+                first_may_demonstration_participants = 0
             entry_participants_number = (
-                    entry.working_semester_opening_participants +
-                    entry.patriotic_action_participants +
-                    entry.first_may_demonstration_participants
+                    working_semester_opening_participants +
+                    patriotic_action_participants +
+                    first_may_demonstration_participants
             )
             entry.score = (entry_participants_number / entry.april_1_detachment_members)
             entry.save()
 
         if partner_entry and entry:
+            working_semester_opening_participants = 0
+            patriotic_action_participants = 0
+            first_may_demonstration_participants = 0
+            if entry:
+                try:
+                    if partner_entry.working_semester_opening_block.is_verified:
+                        working_semester_opening_participants = (
+                            partner_entry.working_semester_opening_block.working_semester_opening_participants
+                        )
+                except ObjectDoesNotExist:
+                    working_semester_opening_participants = 0
+                try:
+                    if partner_entry.patriotic_action_block.is_verified:
+                        patriotic_action_participants = (
+                            partner_entry.patriotic_action_block.patriotic_action_participants
+                        )
+                except ObjectDoesNotExist:
+                    patriotic_action_participants = 0
+                try:
+                    if partner_entry.demonstration_block.is_verified:
+                        first_may_demonstration_participants = (
+                            partner_entry.demonstration_block.first_may_demonstration_participants
+                        )
+                except ObjectDoesNotExist:
+                    first_may_demonstration_participants = 0
+
             partner_entry_participants_number = (
-                    entry.working_semester_opening_participants +
-                    entry.patriotic_action_participants +
-                    entry.first_may_demonstration_participants
+                    working_semester_opening_participants +
+                    patriotic_action_participants +
+                    first_may_demonstration_participants
             )
             partner_entry.score = (partner_entry_participants_number / partner_entry.april_1_detachment_members)
             partner_entry.save()
@@ -638,7 +688,7 @@ def calculate_q6_place(competition_id):
             )
             if tuple_to_append not in category:
                 category.append(tuple_to_append)
-        elif entry and not partner_entry:
+        elif (entry and not partner_entry) and category == solo_entries:
             category.append((entry, entry.score))
 
     if solo_entries:
@@ -652,7 +702,7 @@ def calculate_q6_place(competition_id):
         previous_score = None
         for entry in solo_entries:
             additional_place = calculate_q6_boolean_scores(entry[0])
-            if not additional_place:
+            if additional_place > 5:
                 continue
             if entry[1] != previous_score:
                 place = last_place + 1
@@ -680,12 +730,10 @@ def calculate_q6_place(competition_id):
         for entry in tandem_entries:
             additional_place_junior = calculate_q6_boolean_scores(entry[0])
             additional_place_detachment = calculate_q6_boolean_scores(entry[1])
-            if not additional_place_junior or not additional_place_detachment:
-                continue
             if entry[2] != previous_score:
                 place = last_place + 1
             updated_place = place + (
-                round(additional_place_junior + additional_place_detachment / 2)
+                round_math(additional_place_junior + additional_place_detachment / 2)
             )
             logger.info(
                 f'Отчет {entry[0]} и {entry[1]} занимает {updated_place} место'
@@ -700,25 +748,55 @@ def calculate_q6_place(competition_id):
             previous_score = entry[2]
 
 
-def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
+def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
     score = 0
-    if entry.first_may_demonstration:
-        score += 1
-    if entry.creative_festival:
-        score += 1
-    if entry.patriotic_action:
-        score += 1
-    if entry.safety_work_week:
-        score += 1
-    if entry.commander_commissioner_school:
-        score += 1
-    if entry.working_semester_opening:
-        score += 1
-    if entry.spartakiad:
-        score += 1
-    if entry.professional_competition:
-        score += 1
-    place = None
+    try:
+        if entry.demonstration_block.first_may_demonstration and entry.demonstration_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.creative_festival_block.creative_festival and entry.creative_festival_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.patriotic_action_block.patriotic_action and entry.patriotic_action_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.safety_work_week_block.safety_work_week and entry.safety_work_week_block.is_verified:
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if (
+                entry.commander_commissioner_school_block.commander_commissioner_school and
+                entry.commander_commissioner_school_block.is_verified
+        ):
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if (
+                entry.working_semester_opening_block.working_semester_opening and
+                entry.working_semester_opening_block.is_verified
+        ):
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    try:
+        if entry.spartakiad_block.spartakiad and entry.spartakiad_block.is_verified:
+            score += 1
+        if (
+                entry.professional_competition_block.professional_competition and
+                entry.professional_competition_block.is_verified
+        ):
+            score += 1
+    except ObjectDoesNotExist:
+        pass
+    place = 6
     if score == 8:
         place = 1
     elif score == 7:
@@ -728,7 +806,7 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
     elif score == 5:
         place = 4
     elif score == 4:
-        place = 3
+        place = 5
     return place
 
 
@@ -1077,7 +1155,7 @@ def calculate_q3_q4_place(competition_id: int):
         q4_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'safety')
         q4_place_2 = get_q3_q4_place(tandem_entry.detachment, 'safety')
         if q3_place_1 and q3_place_2:
-            final_place = round((q3_place_1 + q3_place_2) / 2)
+            final_place = round_math((q3_place_1 + q3_place_2) / 2)
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q3 место - {final_place}')
             Q3TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -1086,7 +1164,7 @@ def calculate_q3_q4_place(competition_id: int):
                 place=final_place
             )
         if q4_place_1 and q4_place_2:
-            final_place = round((q4_place_1 + q4_place_2) / 2)
+            final_place = round_math((q4_place_1 + q4_place_2) / 2)
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q4 место - {final_place}')
             Q4TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -1303,12 +1381,24 @@ def calculate_q5_place(competition_id: int):
                 place=get_q5_place(educated_participants_count, entry_report.june_15_detachment_members)
             )
     for tandem_entry in tandem_entries:
+        tandem_entry_report = None
+        junior_tandem_entry_report = None
+        is_tandem_entry_report = False
+        is_junior_tandem_entry_report = False
         try:
             tandem_entry_report = tandem_entry.detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
             junior_tandem_entry_report = tandem_entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
             logger.info(f'detachment reports for tandem entries: {tandem_entry_report}, {junior_tandem_entry_report}')
         except Q5DetachmentReport.DoesNotExist:
-            continue
+            if not tandem_entry_report and not junior_tandem_entry_report:
+                continue
+            elif tandem_entry_report and not junior_tandem_entry_report:
+                is_tandem_entry_report = True
+            elif junior_tandem_entry_report and not tandem_entry_report:
+                is_junior_tandem_entry_report = True
+            elif junior_tandem_entry_report and tandem_entry_report:
+                is_tandem_entry_report = True
+                is_junior_tandem_entry_report = True
         if not tandem_entry_report or not junior_tandem_entry_report:
             continue
 
@@ -1328,11 +1418,21 @@ def calculate_q5_place(competition_id: int):
             is_verified=True,
             detachment_report=tandem_entry_report
         ).count()
-
-        final_place = round((
-            get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
-            get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
-        ) / 2)
+        if is_junior_tandem_entry_report and not is_tandem_entry_report:
+            final_place = round_math((
+                get_q5_place(0, 1) +
+                get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members)
+            ) / 2)
+        elif not junior_tandem_entry_report and not is_junior_tandem_entry_report:
+            final_place = round_math((
+                get_q5_place(0, 1) +
+                get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
+            ) / 2)
+        else:
+            final_place = round_math((
+                get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
+                get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
+            ) / 2)
         if educated_participants_count_junior + educated_participants_count_detachment > 0:
             Q5TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -1390,7 +1490,8 @@ def get_q5_place(participants_count: int, june_15_detachment_members: int) -> in
 def get_q3_q4_place(detachment: Detachment, category: str):
     commander_score = Attempt.objects.filter(
         user=detachment.commander,
-        category=category
+        category=category,
+        timestamp__lt=date(2024, 5, 16)
     ).aggregate(Max('score'))['score__max'] or 0
     logger.info(f'у командира {detachment} {detachment.commander} очков - {commander_score}')
     logger.info(f'Command score for entry {CompetitionParticipants} is {commander_score}')
@@ -1405,7 +1506,8 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         for commissioner in commissioners:
             commissioner_max_score = Attempt.objects.filter(
                 user=commissioner.user,
-                category=category
+                category=category,
+                timestamp__lt=date(2024, 5, 16)
             ).aggregate(Max('score'))['score__max']
             if commissioner_max_score:
                 commissioner_score = max(commissioner_score,
@@ -1425,7 +1527,8 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
                 user=participant.user,
-                category=category
+                category=category,
+                timestamp__lt=date(2024, 5, 16)
             ).aggregate(Max('score'))['score__max']
             logger.info(f'у участника {participant} очков - {participant_max_score}')
             if participant_max_score:
