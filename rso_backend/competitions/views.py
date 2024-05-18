@@ -2330,7 +2330,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             for field in block_fields[block_name]:
                 if field in request.data.get(block_name, {}):
                     setattr(block_instance, field, request.data[block_name][field])
-            block_instance.is_verified = False
+                    block_instance.is_verified = False
             block_instance.save()
 
         # Обновление полей основного отчета
