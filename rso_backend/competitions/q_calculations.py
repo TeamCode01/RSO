@@ -702,7 +702,7 @@ def calculate_q6_place(competition_id):
         previous_score = None
         for entry in solo_entries:
             additional_place = calculate_q6_boolean_scores(entry[0])
-            if not additional_place:
+            if additional_place > 5:
                 continue
             if entry[1] != previous_score:
                 place = last_place + 1
@@ -730,8 +730,6 @@ def calculate_q6_place(competition_id):
         for entry in tandem_entries:
             additional_place_junior = calculate_q6_boolean_scores(entry[0])
             additional_place_detachment = calculate_q6_boolean_scores(entry[1])
-            if not additional_place_junior or not additional_place_detachment:
-                continue
             if entry[2] != previous_score:
                 place = last_place + 1
             updated_place = place + (
@@ -750,7 +748,7 @@ def calculate_q6_place(competition_id):
             previous_score = entry[2]
 
 
-def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
+def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
     score = 0
     if entry.demonstration_block.first_may_demonstration and entry.demonstration_block.is_verified:
         score += 1
@@ -777,7 +775,7 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
             entry.professional_competition_block.is_verified
     ):
         score += 1
-    place = None
+    place = 6
     if score == 8:
         place = 1
     elif score == 7:
