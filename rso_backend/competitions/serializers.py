@@ -18,7 +18,9 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
                                  Q15DetachmentReport, Q15GrantWinner,
                                  Q16Report, Q17DetachmentReport, Q17EventLink,
                                  Q18DetachmentReport, Q19Report, Q20Report,
-                                 QVerificationLog)
+                                 QVerificationLog, ProfessionalCompetitionBlock, CreativeFestivalBlock,
+                                 WorkingSemesterOpeningBlock, CommanderCommissionerSchoolBlock, SafetyWorkWeekBlock,
+                                 PatrioticActionBlock, DemonstrationBlock, SpartakiadBlock)
 from headquarters.models import Detachment
 from headquarters.serializers import (BaseShortUnitSerializer,
                                       ShortDetachmentSerializer)
@@ -1051,7 +1053,98 @@ class Q15DetachmentReportReadSerializer(serializers.ModelSerializer):
         return Q15GrantWinnerSerializer(grants_data, many=True).data
 
 
+class DemonstrationBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DemonstrationBlock
+        fields = (
+            'first_may_demonstration',
+            'first_may_demonstration_participants',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class PatrioticActionBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatrioticActionBlock
+        fields = (
+            'patriotic_action',
+            'patriotic_action_participants',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class SafetyWorkWeekBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SafetyWorkWeekBlock
+        fields = (
+            'safety_work_week',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class CommanderCommissionerSchoolBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommanderCommissionerSchoolBlock
+        fields = (
+            'commander_commissioner_school',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class WorkingSemesterOpeningBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkingSemesterOpeningBlock
+        fields = (
+            'working_semester_opening',
+            'working_semester_opening_participants',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class CreativeFestivalBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CreativeFestivalBlock
+        fields = (
+            'creative_festival',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class ProfessionalCompetitionBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfessionalCompetitionBlock
+        fields = (
+            'professional_competition',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
+class SpartakiadBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpartakiadBlock
+        fields = (
+            'spartakiad',
+            'is_verified'
+        )
+        read_only_fields = ('is_verified',)
+
+
 class Q6DetachmentReportSerializer(serializers.ModelSerializer):
+    demonstration_block = DemonstrationBlockSerializer()
+    patriotic_action_block = PatrioticActionBlockSerializer()
+    safety_work_week_block = SafetyWorkWeekBlockSerializer()
+    commander_commissioner_school_block = CommanderCommissionerSchoolBlockSerializer()
+    working_semester_opening_block = WorkingSemesterOpeningBlockSerializer()
+    creative_festival_block = CreativeFestivalBlockSerializer()
+    professional_competition_block = ProfessionalCompetitionBlockSerializer()
+    spartakiad_block = SpartakiadBlockSerializer()
 
     class Meta:
         model = Q6DetachmentReport
@@ -1059,20 +1152,16 @@ class Q6DetachmentReportSerializer(serializers.ModelSerializer):
             'id',
             'competition',
             'detachment',
-            'first_may_demonstration',
-            'creative_festival',
-            'first_may_demonstration_participants',
-            'patriotic_action',
-            'patriotic_action_participants',
-            'safety_work_week',
-            'commander_commissioner_school',
-            'working_semester_opening',
-            'working_semester_opening_participants',
-            'spartakiad',
-            'professional_competition',
-            'is_verified',
+            'spartakiad_block',
+            'demonstration_block',
+            'patriotic_action_block',
+            'safety_work_week_block',
+            'commander_commissioner_school_block',
+            'working_semester_opening_block',
+            'creative_festival_block',
+            'professional_competition_block'
         )
-        read_only_fields = ('competition', 'detachment', 'is_verified')
+        read_only_fields = ('competition', 'detachment')
 
 
 class Q13EventOrganizationSerializer(serializers.ModelSerializer):

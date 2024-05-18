@@ -4,6 +4,7 @@ from datetime import date
 from typing import List
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 
 from competitions.models import (CompetitionParticipants, OverallRanking,
@@ -562,9 +563,10 @@ def calculate_q6_place(competition_id):
 
     logger.info(f'Сегодняшняя дата: {today}')
 
-    verified_entries = Q6DetachmentReport.objects.filter(is_verified=True, competition_id=competition_id)
+    verified_entries = Q6DetachmentReport.objects.filter(competition_id=competition_id)
     logger.info(
-        f'Получили верифицированные отчеты: {verified_entries.count()}')
+        f'Получили отчеты: {verified_entries.count()}'
+    )
 
     solo_entries = []
     tandem_entries = []
@@ -584,7 +586,6 @@ def calculate_q6_place(competition_id):
                 partner_entry = Q6DetachmentReport.objects.filter(
                     detachment=participants_entry.detachment,
                     competition_id=competition_id,
-                    is_verified=True
                 ).first()
                 if partner_entry:
                     logger.info(
@@ -601,7 +602,6 @@ def calculate_q6_place(competition_id):
                 entry = Q6DetachmentReport.objects.filter(
                     detachment=participants_entry.junior_detachment,
                     competition_id=competition_id,
-                    is_verified=True
                 ).first()
                 if entry:
                     logger.info(
@@ -616,20 +616,70 @@ def calculate_q6_place(competition_id):
             )
             calculate_april_detachment_members(entry, partner_entry)
 
+        working_semester_opening_participants = 0
+        patriotic_action_participants = 0
+        first_may_demonstration_participants = 0
         if entry:
+            try:
+                if entry.working_semester_opening_block.is_verified:
+                    working_semester_opening_participants = (
+                        entry.working_semester_opening_block.working_semester_opening_participants
+                    )
+            except ObjectDoesNotExist:
+                working_semester_opening_participants = 0
+            try:
+                if entry.patriotic_action_block.is_verified:
+                    patriotic_action_participants = (
+                        entry.patriotic_action_block.patriotic_action_participants
+                    )
+            except ObjectDoesNotExist:
+                patriotic_action_participants = 0
+            try:
+                if entry.demonstration_block.is_verified:
+                    first_may_demonstration_participants = (
+                        entry.demonstration_block.first_may_demonstration_participants
+                    )
+            except ObjectDoesNotExist:
+                first_may_demonstration_participants = 0
             entry_participants_number = (
-                    entry.working_semester_opening_participants +
-                    entry.patriotic_action_participants +
-                    entry.first_may_demonstration_participants
+                    working_semester_opening_participants +
+                    patriotic_action_participants +
+                    first_may_demonstration_participants
             )
             entry.score = (entry_participants_number / entry.april_1_detachment_members)
             entry.save()
 
         if partner_entry and entry:
+            working_semester_opening_participants = 0
+            patriotic_action_participants = 0
+            first_may_demonstration_participants = 0
+            if entry:
+                try:
+                    if partner_entry.working_semester_opening_block.is_verified:
+                        working_semester_opening_participants = (
+                            partner_entry.working_semester_opening_block.working_semester_opening_participants
+                        )
+                except ObjectDoesNotExist:
+                    working_semester_opening_participants = 0
+                try:
+                    if partner_entry.patriotic_action_block.is_verified:
+                        patriotic_action_participants = (
+                            partner_entry.patriotic_action_block.patriotic_action_participants
+                        )
+                except ObjectDoesNotExist:
+                    patriotic_action_participants = 0
+                try:
+                    if partner_entry.demonstration_block.is_verified:
+                        first_may_demonstration_participants = (
+                            partner_entry.demonstration_block.first_may_demonstration_participants
+                        )
+                except ObjectDoesNotExist:
+                    first_may_demonstration_participants = 0
+
             partner_entry_participants_number = (
-                    entry.working_semester_opening_participants +
-                    entry.patriotic_action_participants +
-                    entry.first_may_demonstration_participants
+                    working_semester_opening_participants +
+                    patriotic_action_participants +
+                    first_may_demonstration_participants
             )
             partner_entry.score = (partner_entry_participants_number / partner_entry.april_1_detachment_members)
             partner_entry.save()
@@ -702,21 +752,30 @@ def calculate_q6_place(competition_id):
 
 def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
     score = 0
-    if entry.first_may_demonstration:
+    if entry.demonstration_block.first_may_demonstration and entry.demonstration_block.is_verified:
         score += 1
-    if entry.creative_festival:
+    if entry.creative_festival_block.creative_festival and entry.creative_festival_block.is_verified:
         score += 1
-    if entry.patriotic_action:
+    if entry.patriotic_action_block.patriotic_action and entry.patriotic_action_block.is_verified:
         score += 1
-    if entry.safety_work_week:
+    if entry.safety_work_week_block.safety_work_week and entry.safety_work_week_block.is_verified:
         score += 1
-    if entry.commander_commissioner_school:
+    if (
+            entry.commander_commissioner_school_block.commander_commissioner_school and
+            entry.commander_commissioner_school_block.is_verified
+    ):
         score += 1
-    if entry.working_semester_opening:
+    if (
+            entry.working_semester_opening_block.working_semester_opening and
+            entry.working_semester_opening_block.is_verified
+    ):
         score += 1
-    if entry.spartakiad:
+    if entry.spartakiad_block.spartakiad and entry.spartakiad_block.is_verified:
         score += 1
-    if entry.professional_competition:
+    if (
+            entry.professional_competition_block.professional_competition and
+            entry.professional_competition_block.is_verified
+    ):
         score += 1
     place = None
     if score == 8:
@@ -728,7 +787,7 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int | None:
     elif score == 5:
         place = 4
     elif score == 4:
-        place = 3
+        place = 5
     return place
 
 
