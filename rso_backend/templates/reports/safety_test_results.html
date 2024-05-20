@@ -43,6 +43,7 @@
                 <th>Попытка</th>
                 <th>Валидность попытки</th>
                 <th>Очки</th>
+                <th>Дата</th>
             </tr>
         </thead>
         <tbody>
@@ -56,6 +57,7 @@
                 <td>{{ result.attempt_number }}</td>
                 <td>{{ result.is_valid|yesno:"Да,Нет" }}</td>
                 <td>{{ result.score }}</td>
+                <td>{{ result.timestamp }}</td>
             </tr>
             {% endfor %}
         </tbody>

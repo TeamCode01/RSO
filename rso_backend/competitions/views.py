@@ -29,7 +29,7 @@ from api.permissions import (
     IsCommanderDetachmentWithVerif, IsCompetitionParticipantAndCommander,
     IsQ5DetachmentReportAuthor, IsQ13DetachmentReportAuthor,
     IsQ14DetachmentReportAuthor, IsQ15DetachmentReportAuthor,
-    IsQ17DetachmentReportAuthor, IsRegionalCommanderOrAdmin,
+    IsQ17DetachmentReportAuthor, IsRegionalCommanderForCompetition,
     IsRegionalCommanderOrAdminOrAuthor, IsRegionalCommanderOrAuthor,
     IsRegionalCommissioner,
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
@@ -61,7 +61,9 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, Q20Report,
-                                 QVerificationLog)
+                                 QVerificationLog, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
+                                 CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 ProfessionalCompetitionBlock, SpartakiadBlock)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
 from competitions.q_calculations import (calculate_q13_place,
@@ -115,7 +117,7 @@ from competitions.swagger_schemas import (q7schema_request,
                                           response_competitions_participants,
                                           response_create_application,
                                           response_junior_detachments)
-from competitions.utils import get_place_q2, tandem_or_start
+from competitions.utils import get_place_q2, tandem_or_start, round_math
 from headquarters.models import (Detachment, RegionalHeadquarter,
                                  UserDetachmentPosition,
                                  UserRegionalHeadquarterPosition)
@@ -336,7 +338,7 @@ class CompetitionApplicationsViewSet(viewsets.ModelViewSet):
                     IsRegionalCommanderOrAdminOrAuthor()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     def get_detachment(self, user):
@@ -482,7 +484,7 @@ class CompetitionApplicationsViewSet(viewsets.ModelViewSet):
             methods=['post'],
             url_path='confirm',
             permission_classes=(permissions.IsAuthenticated,
-                                IsRegionalCommanderOrAdmin,))
+                                IsRegionalCommanderForCompetition,))
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
     ))
@@ -587,7 +589,7 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
     def get_permissions(self):
         if self.action == 'destroy':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     def get_detachment(self, user):
@@ -827,7 +829,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     IsCommanderDetachmentInParameterOrRegionalCommander(), ]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         if self.action in ['update', 'partial_update']:
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAuthor()]
@@ -993,7 +995,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         url_path='accept',
         # serializer_class=None,
         permission_classes=(permissions.IsAuthenticated,
-                            IsRegionalCommanderOrAdmin),
+                            IsRegionalCommanderForCompetition),
     )
     def verify(self, *args, **kwargs):
         """Верификация отчета по показателю.
@@ -1089,7 +1091,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
                             partner_detahcment_report.commissioner_achievement
                         )
                     )
-                result_place = round((place_1 + place_2) / 2, 2)
+                result_place = round_math((place_1 + place_2) / 2, 2)
                 if partner_is_junior:
                     tandem_ranking, _ = Q2TandemRanking.objects.get_or_create(
                         competition=competition,
@@ -2290,29 +2292,56 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def me(self, request, competition_pk, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @swagger_auto_schema(request_body=Q6DetachmentReportSerializer)
     def create(self, request, *args, **kwargs):
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
         try:
             detachment_id = request.user.detachment_commander.id
         except Detachment.DoesNotExist:
-            return Response({"detail": "У пользователя нет командируемого отряда."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "У пользователя нет командируемого отряда."}, status=status.HTTP_400_BAD_REQUEST)
 
-        report, created = Q6DetachmentReport.objects.get_or_create(
-            competition=competition,
-            detachment_id=detachment_id,
-        )
-        print(f'report created: {report}')
+        report, created = Q6DetachmentReport.objects.get_or_create(competition=competition, detachment_id=detachment_id)
 
+        # Подготовка полей для обновления отчета и подблоков
+        block_models = {
+            'demonstration_block': DemonstrationBlock,
+            'patriotic_action_block': PatrioticActionBlock,
+            'safety_work_week_block': SafetyWorkWeekBlock,
+            'commander_commissioner_school_block': CommanderCommissionerSchoolBlock,
+            'working_semester_opening_block': WorkingSemesterOpeningBlock,
+            'creative_festival_block': CreativeFestivalBlock,
+            'professional_competition_block': ProfessionalCompetitionBlock,
+            'spartakiad_block': SpartakiadBlock,
+        }
+
+        block_fields = {
+            'demonstration_block': ['first_may_demonstration', 'first_may_demonstration_participants'],
+            'patriotic_action_block': ['patriotic_action', 'patriotic_action_participants'],
+            'safety_work_week_block': ['safety_work_week'],
+            'commander_commissioner_school_block': ['commander_commissioner_school'],
+            'working_semester_opening_block': ['working_semester_opening', 'working_semester_opening_participants'],
+            'creative_festival_block': ['creative_festival'],
+            'professional_competition_block': ['professional_competition'],
+            'spartakiad_block': ['spartakiad'],
+        }
+
+        # Создание или обновление подблоков
+        for block_name, block_model in block_models.items():
+            block_instance, _ = block_model.objects.get_or_create(report=report)
+            for field in block_fields[block_name]:
+                if field in request.data.get(block_name, {}):
+                    setattr(block_instance, field, request.data[block_name][field])
+                    block_instance.is_verified = False
+            block_instance.save()
+
+        # Обновление полей основного отчета
         model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
-        extra_fields = set(request.data.keys()) - model_fields
+        extra_fields = set(request.data.keys()) - model_fields - set(block_models.keys())
         if extra_fields:
-            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
         for field, value in request.data.items():
-            setattr(report, field, value)
+            if field in model_fields:
+                setattr(report, field, value)
         report.save()
 
         serializer = self.get_serializer(report)
@@ -2327,21 +2356,9 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
         serializer.save(competition=competition, detachment=detachment)
 
-    @action(
-        detail=True,
-        url_path='accept',
-        methods=(['POST', 'DELETE']),
-        permission_classes=[
-            permissions.IsAuthenticated
-        ]
-    )
-    def verify(self, request, *args, **kwargs):
-        """Верификация отчета по показателю.
-
-        Доступно только командиру РШ связанного с отрядом.
-        Если отчет уже верифицирован, возвращается 400 Bad Request с описанием
-        ошибки `{"detail": "Данный отчет уже верифицирован"}`.
-        """
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-demonstration-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_demonstration_block(self, request, *args, **kwargs):
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2351,31 +2368,232 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 'detail': 'Только командир/комиссар РШ из иерархии может '
                           'верифицировать отчеты по данному показателю'
             }, status=status.HTTP_403_FORBIDDEN)
-        if detachment_report.is_verified:
+        try:
+            block = self.get_object().demonstration_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-patriotic-action-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_patriotic_action_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
             return Response({
-                'detail': 'Данный отчет уже верифицирован'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        if self.request.method == 'POST':
-            detachment_report.is_verified = True
-            detachment_report.save()
-            QVerificationLog.objects.create(
-                competition_id=self.kwargs.get('competition_pk'),
-                verifier_id=request.user.id,
-                q_number=6,
-                verified_detachment_id=detachment.id,
-                action='Верифицировал'
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = self.get_object().patriotic_action_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-            return Response(status=status.HTTP_201_CREATED)
-        if self.request.method == 'DELETE':
-            QVerificationLog.objects.create(
-                competition_id=self.kwargs.get('competition_pk'),
-                verifier_id=request.user.id,
-                q_number=6,
-                verified_detachment_id=detachment.id,
-                action='Отклонил'
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-safety-work-week-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_safety_work_week_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
+            return Response({
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = self.get_object().safety_work_week_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-            detachment_report.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-commander-commissioner-school-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_commander_commissioner_school_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
+            return Response({
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = detachment_report.commander_commissioner_school_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-working-semester-opening-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_working_semester_opening_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
+            return Response({
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = self.get_object().working_semester_opening_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-creative-festival-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_creative_festival_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
+            return Response({
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = self.get_object().creative_festival_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-professional-competition-block',
+            permission_classes=[permissions.IsAuthenticated])
+    def verify_professional_competition_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
+            return Response({
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = self.get_object().professional_competition_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block', permission_classes=[permissions.IsAuthenticated,])
+    def verify_spartakiad_block(self, request, *args, **kwargs):
+        detachment_report = self.get_object()
+        detachment = detachment_report.detachment
+        reg_hq = detachment.regional_headquarter
+        is_commissioner = UserRegionalHeadquarterPosition.objects.filter(headquarter=reg_hq).exists()
+        if detachment.regional_headquarter.commander != request.user and not is_commissioner:
+            return Response({
+                'detail': 'Только командир/комиссар РШ из иерархии может '
+                          'верифицировать отчеты по данному показателю'
+            }, status=status.HTTP_403_FORBIDDEN)
+        try:
+            block = self.get_object().spartakiad_block
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'Данные отряда по данному блоку не предоставлены'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if request.method == 'POST':
+            if block.is_verified:
+                return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = True
+        elif request.method == 'DELETE':
+            if not block.is_verified:
+                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
+            block.is_verified = False
+        block.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_competitions(self):
         return get_object_or_404(
@@ -2534,7 +2752,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
             return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     @action(detail=False,
@@ -3089,7 +3307,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                                 is_verified=True
                             )
                         )
-                tandem_ranking.place = round(tandem_ranking.place / 2, 2)
+                tandem_ranking.place = round_math(tandem_ranking.place / 2, 2)
                 tandem_ranking.save()
             return Response(
                 {"status": "Данные по организации "
@@ -3227,7 +3445,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
-            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin(),]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderForCompetition(), ]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -3374,7 +3592,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='accept/(?P<labor_project_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
+            permissions.IsAuthenticated, IsRegionalCommanderForCompetition,
         ],
     )
     def verify(self, request, competition_pk=None, pk=None,
@@ -3543,7 +3761,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
-            return [permissions.IsAuthenticated(), IsRegionalCommanderOrAdmin()]
+            return [permissions.IsAuthenticated(), IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     def get_competitions(self):
@@ -3681,7 +3899,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         methods=['post', 'delete'],
         url_path='accept/(?P<source_id>\d+)',
         permission_classes=[
-            permissions.IsAuthenticated, IsRegionalCommanderOrAdmin,
+            permissions.IsAuthenticated, IsRegionalCommanderForCompetition,
         ]
     )
     def verify_source(self, request, competition_pk=None, pk=None,
@@ -3829,7 +4047,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
             return [permissions.IsAuthenticated()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         return super().get_permissions()
 
     @action(detail=False,
@@ -4016,7 +4234,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                     IsCommanderDetachmentInParameterOrRegionalCommander()]
         if self.action == 'list':
             return [permissions.IsAuthenticated(),
-                    IsRegionalCommanderOrAdmin()]
+                    IsRegionalCommanderForCompetition()]
         if self.action in ['update', 'partial_update']:
             return [permissions.IsAuthenticated(),
                     IsRegionalCommanderOrAuthor()]
@@ -4049,7 +4267,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
             methods=['post', 'delete'],
             url_path='accept',
             permission_classes=(permissions.IsAuthenticated,
-                                IsRegionalCommanderOrAdmin,)
+                                IsRegionalCommanderForCompetition,)
             )
     @swagger_auto_schema(
         request_body=openapi.Schema(type=openapi.TYPE_OBJECT, properties={}, ),
@@ -4133,7 +4351,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         tandem_ranking.place += self.MAX_PLACE
                     if junior_detachment_report:
                         tandem_ranking.place += calculate_q19_place(report)
-                tandem_ranking.place = round(tandem_ranking.place / 2, 2)
+                tandem_ranking.place = round_math(tandem_ranking.place / 2, 2)
                 tandem_ranking.save()
             return Response(
                 {"status": "Данные "

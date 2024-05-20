@@ -583,61 +583,99 @@ class Q6Ranking(QBaseRanking):
         verbose_name_plural = 'Места по 6 показателю'
 
 
-class Q6DetachmentReport(QBaseReport, QBaseReportIsVerified):
-    first_may_demonstration = models.BooleanField(
-        default=False, blank=True, null=True
-    )
-    first_may_demonstration_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(1000)],
-        default=0
-    )
-    creative_festival = models.BooleanField(
-        default=False,
-        blank=True,
-        null=True
-    )
-    patriotic_action = models.BooleanField(
-        default=False,
-        blank=True,
-        null=True
-    )
-    patriotic_action_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(1000)],
-        default=0
-    )
-    safety_work_week = models.BooleanField(
-        default=False, blank=True, null=True
-    )
-    commander_commissioner_school = models.BooleanField(
-        default=False,
-        blank=True,
-        null=True
-    )
-    working_semester_opening = models.BooleanField(
-        default=False,
-        blank=True,
-        null=True
-    )
-    working_semester_opening_participants = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(1000)],
-        default=0
-    )
-    spartakiad = models.BooleanField(default=False, blank=True, null=True)
-    professional_competition = models.BooleanField(
-        default=False, blank=True, null=True
-    )
-    april_1_detachment_members = models.PositiveSmallIntegerField(
-        default=1,
-        blank=True,
-        null=True
-    )
-    score = models.FloatField(
-        default=0
-    )
+class Q6DetachmentReport(QBaseReport):
+    april_1_detachment_members = models.PositiveSmallIntegerField(default=1, blank=True, null=True)
+    score = models.FloatField(default=0)
+
+    def __str__(self):
+        return f'Отчет отряда {self.detachment.name}, id {self.detachment.id}'
 
     class Meta:
         verbose_name = 'Отчет по 6 показателю'
         verbose_name_plural = 'Отчеты по 6 показателю'
+
+
+class SpartakiadBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='spartakiad_block')
+    spartakiad = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по спартакиаде'
+        verbose_name_plural = '6 показатель - отчеты по спартакиаде'
+
+
+class DemonstrationBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='demonstration_block')
+    first_may_demonstration = models.BooleanField(default=False)
+    first_may_demonstration_participants = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(1000)], default=0)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по первомайской демонстрации'
+        verbose_name_plural = '6 показатель - отчеты по первомайской демонстрации'
+
+
+class PatrioticActionBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='patriotic_action_block')
+    patriotic_action = models.BooleanField(default=False)
+    patriotic_action_participants = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(1000)], default=0)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по патриотическому блоку'
+        verbose_name_plural = '6 показатель - отчеты по патриотическому блоку'
+
+
+class SafetyWorkWeekBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='safety_work_week_block')
+    safety_work_week = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по блоку охраны труда'
+        verbose_name_plural = '6 показатель - отчеты по блоку охраны труда'
+
+
+class CommanderCommissionerSchoolBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='commander_commissioner_school_block')
+    commander_commissioner_school = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по блоку университета командира и комиссара'
+        verbose_name_plural = '6 показатель - отчеты по блоку университета командира и комиссара'
+
+
+class WorkingSemesterOpeningBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='working_semester_opening_block')
+    working_semester_opening = models.BooleanField(default=False)
+    working_semester_opening_participants = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(1000)], default=0)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по блоку трудовой недели'
+        verbose_name_plural = '6 показатель - отчеты по блоку трудовой недели'
+
+
+class CreativeFestivalBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='creative_festival_block')
+    creative_festival = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по блоку трудовой недели'
+        verbose_name_plural = '6 показатель - отчеты по блоку трудовой недели'
+
+
+class ProfessionalCompetitionBlock(models.Model):
+    report = models.OneToOneField(Q6DetachmentReport, on_delete=models.CASCADE, related_name='professional_competition_block')
+    professional_competition = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = '6 показатель - отчет по блоку профессионального конкурса'
+        verbose_name_plural = '6 показатель - отчеты по блоку профессионального конкурса'
 
 
 class Q7TandemRanking(QBaseTandemRanking):

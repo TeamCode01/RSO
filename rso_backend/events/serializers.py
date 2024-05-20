@@ -869,3 +869,11 @@ class GroupEventApplicationSerializer(serializers.ModelSerializer):
         headquarter = model.objects.get(commander=author)
         serializer = SHORT_HEADQUARTERS_SERIALIZERS_MAPPING[headquarters_level]
         return serializer(headquarter).data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        instance_event = representation['event']
+        if instance_event:
+            event = get_object_or_404(Event, id=instance_event)
+            representation['event'] = EventSerializer(event).data
+        return representation

@@ -97,7 +97,8 @@ SAFETY_TEST_RESULTS_HEADERS = [
     'Должность',
     'Попытка',
     'Валидность попытки',
-    'Очки'
+    'Очки',
+    'Дата'
 ]
 DETACHMENT_Q_RESULTS_HEADERS = [
     '№',

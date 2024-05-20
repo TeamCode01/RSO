@@ -76,7 +76,7 @@ class QuestionsView(APIView):
 
         current_date = datetime.now().date()
         university_deadline = datetime(2024, 4, 10).date()
-        safety_deadline = datetime(2024, 6, 15).date()
+        safety_deadline = datetime(2024, 5, 15).date()
 
         attempts_count = Attempt.objects.filter(
             user=user, category=category, is_valid=True
@@ -95,7 +95,7 @@ class QuestionsView(APIView):
             )
 
         if category == 'university':
-            if current_date > university_deadline and user.region.code != 90:
+            if current_date > university_deadline:
                 return Response(
                     {"error": "Срок получения вопросов по "
                               "категории 'university' истек."},
