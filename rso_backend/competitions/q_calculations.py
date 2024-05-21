@@ -1410,6 +1410,7 @@ def calculate_q5_place(competition_id: int):
                 place=get_q5_place(educated_participants_count, entry_report.june_15_detachment_members)
             )
     for tandem_entry in tandem_entries:
+        logger.info(f'Q5 Tandem Entries: {tandem_entries}')
         tandem_entry_report = None
         junior_tandem_entry_report = None
         is_tandem_entry_report = False
@@ -1420,15 +1421,30 @@ def calculate_q5_place(competition_id: int):
             logger.info(f'detachment reports for tandem entries: {tandem_entry_report}, {junior_tandem_entry_report}')
         except Q5DetachmentReport.DoesNotExist:
             if not tandem_entry_report and not junior_tandem_entry_report:
+                logger.info(
+                    f'Для {tandem_entry.detachment} и {tandem_entry.junior_detachment} не найдены отчеты'
+                )
                 continue
             elif tandem_entry_report and not junior_tandem_entry_report:
+                logger.info(
+                    f'Для {tandem_entry.detachment} найден отчет, но не найден для {tandem_entry.junior_detachment}'
+                )
                 is_tandem_entry_report = True
             elif junior_tandem_entry_report and not tandem_entry_report:
+                logger.info(
+                    f'Для {tandem_entry.junior_detachment} найден отчет, но не найден для {tandem_entry.detachment}'
+                )
                 is_junior_tandem_entry_report = True
             elif junior_tandem_entry_report and tandem_entry_report:
+                logger.info(
+                    f'Для {tandem_entry.detachment} и {tandem_entry.junior_detachment} найдены отчеты'
+                )
                 is_tandem_entry_report = True
                 is_junior_tandem_entry_report = True
         if not tandem_entry_report or not junior_tandem_entry_report:
+            logger.info(
+                f'Скип (для обоих не найдены отчеты)'
+            )
             continue
 
         if today <= cutoff_date:
@@ -1462,6 +1478,8 @@ def calculate_q5_place(competition_id: int):
                 get_q5_place(educated_participants_count_junior, junior_tandem_entry_report.june_15_detachment_members) +
                 get_q5_place(educated_participants_count_detachment, tandem_entry_report.june_15_detachment_members)
             ) / 2)
+        logger.info(f'Q5 Final Place for {tandem_entry}')
+        logger.info(f'educated_participants_count_junior + educated_participants_count_detachment = {educated_participants_count_junior + educated_participants_count_detachment}')
         if educated_participants_count_junior + educated_participants_count_detachment > 0:
             Q5TandemRanking.objects.create(
                 competition_id=competition_id,
