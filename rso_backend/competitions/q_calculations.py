@@ -1446,7 +1446,7 @@ def calculate_q5_place(competition_id: int):
                 )
                 is_junior_tandem_entry_report = True
 
-        if not tandem_entry_report or not junior_tandem_entry_report:
+        if not tandem_entry_report and not junior_tandem_entry_report:
             logger.info(
                 f'Скип (для обоих не найдены отчеты)'
             )
