@@ -840,8 +840,9 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
 
 
 def calculate_june_detachment_members(entry, partner_entry=None):
-    entry.june_15_detachment_members = entry.detachment.members.count() + 1
-    entry.save()
+    if entry:
+        entry.june_15_detachment_members = entry.detachment.members.count() + 1
+        entry.save()
     if partner_entry:
         partner_entry.june_15_detachment_members = (
             partner_entry.detachment.members.count() + 1
