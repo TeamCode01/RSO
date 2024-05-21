@@ -1415,32 +1415,37 @@ def calculate_q5_place(competition_id: int):
         junior_tandem_entry_report = None
         is_tandem_entry_report = False
         is_junior_tandem_entry_report = False
+        logger.info(f'Проверяем тандем Q5: {tandem_entry_report.detachment}, {junior_tandem_entry_report.detachment}')
+        try:
+            junior_tandem_entry_report = tandem_entry.junior_detachment.q5detachmentreport_detachment_reports.get(
+                competition_id=competition_id)
+        except Q5DetachmentReport.DoesNotExist:
+            pass
         try:
             tandem_entry_report = tandem_entry.detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
-            junior_tandem_entry_report = tandem_entry.junior_detachment.q5detachmentreport_detachment_reports.get(competition_id=competition_id)
-            logger.info(f'Проверяем тандем Q5: {tandem_entry_report.detachment}, {junior_tandem_entry_report.detachment}')
-        except Q5DetachmentReport.DoesNotExist:
-            if not tandem_entry_report and not junior_tandem_entry_report:
-                logger.info(
-                    f'Для {tandem_entry.detachment} и {tandem_entry.junior_detachment} не найдены отчеты'
-                )
-                continue
-            elif tandem_entry_report and not junior_tandem_entry_report:
+            if tandem_entry_report and not junior_tandem_entry_report:
                 logger.info(
                     f'Для {tandem_entry.detachment} найден отчет, но не найден для {tandem_entry.junior_detachment}'
                 )
                 is_tandem_entry_report = True
-            elif junior_tandem_entry_report and not tandem_entry_report:
-                logger.info(
-                    f'Для {tandem_entry.junior_detachment} найден отчет, но не найден для {tandem_entry.detachment}'
-                )
-                is_junior_tandem_entry_report = True
             elif junior_tandem_entry_report and tandem_entry_report:
                 logger.info(
                     f'Для {tandem_entry.detachment} и {tandem_entry.junior_detachment} найдены отчеты'
                 )
                 is_tandem_entry_report = True
                 is_junior_tandem_entry_report = True
+        except Q5DetachmentReport.DoesNotExist:
+            if not tandem_entry_report and not junior_tandem_entry_report:
+                logger.info(
+                    f'Для {tandem_entry.detachment} и {tandem_entry.junior_detachment} не найдены отчеты'
+                )
+                continue
+            elif junior_tandem_entry_report and not tandem_entry_report:
+                logger.info(
+                    f'Для {tandem_entry.junior_detachment} найден отчет, но не найден для {tandem_entry.detachment}'
+                )
+                is_junior_tandem_entry_report = True
+
         if not tandem_entry_report or not junior_tandem_entry_report:
             logger.info(
                 f'Скип (для обоих не найдены отчеты)'
