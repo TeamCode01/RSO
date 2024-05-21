@@ -723,6 +723,7 @@ def calculate_q6_place(competition_id):
             'Есть записи для тандем-участников. Удаляем записи из таблицы Q6 TandemRanking'
         )
         Q6TandemRanking.objects.all().delete()
+        print(f'Tandem Entries: {tandem_entries}')
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_place = 0
         place = 0
