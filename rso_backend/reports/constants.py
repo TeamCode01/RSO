@@ -92,7 +92,9 @@ COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS = [
 SAFETY_TEST_RESULTS_HEADERS = [
     '№',
     'Регион',
-    'ФИО',
+    'Фамилия',
+    'Имя',
+    'Отчество'
     'Отряд',
     'Должность',
     'Попытка',

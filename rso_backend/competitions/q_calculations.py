@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 
+from api.constants import Q6_BLOCK_MODELS
 from competitions.models import (CompetitionParticipants, OverallRanking,
                                  OverallTandemRanking, Q1Ranking, Q1Report,
                                  Q2DetachmentReport, Q2Ranking,
@@ -24,7 +25,9 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q17EventLink, Q17Ranking, Q17TandemRanking,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
-                                 Q19TandemRanking)
+                                 Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
+                                 CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 ProfessionalCompetitionBlock, SpartakiadBlock)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
                                 tandem_or_start, round_math)
@@ -592,6 +595,18 @@ def calculate_q6_place(competition_id):
                         f'Для отчета {entry} найден '
                         f'партнерский отчет: {partner_entry}'
                     )
+                else:
+                    partner_entry = Q6DetachmentReport.objects.create(
+                        competition_id=settings.COMPETITION_ID,
+                        detachment=participants_entry.detachment
+                    )
+                    for block_name, block_model in Q6_BLOCK_MODELS.items():
+                        block_instance, _ = block_model.objects.get_or_create(report=partner_entry)
+                        block_instance.save()
+                    logger.info(
+                        f'Для отчета {entry} НЕ найден '
+                        f'партнерский отчет. Создали дефолтный: {partner_entry}'
+                    )
         elif not participants_entry:
             participants_entry = CompetitionParticipants.objects.filter(
                 detachment=entry.detachment
@@ -608,6 +623,19 @@ def calculate_q6_place(competition_id):
                         f'Для отчета {partner_entry} найден '
                         f'партнерский отчет: {entry}'
                     )
+                else:
+                    partner_entry = Q6DetachmentReport.objects.create(
+                        competition_id=settings.COMPETITION_ID,
+                        detachment=participants_entry.junior_detachment
+                    )
+                    for block_name, block_model in Q6_BLOCK_MODELS.items():
+                        block_instance, _ = block_model.objects.get_or_create(report=partner_entry)
+                        block_instance.save()
+                    logger.info(
+                        f'Для отчета {entry} НЕ найден '
+                        f'партнерский отчет. Создали дефолтный: {partner_entry}'
+                    )
+
         if today <= cutoff_date:
             logger.info(
                 f'Сегодняшняя дата {today} меньше '
@@ -723,6 +751,7 @@ def calculate_q6_place(competition_id):
             'Есть записи для тандем-участников. Удаляем записи из таблицы Q6 TandemRanking'
         )
         Q6TandemRanking.objects.all().delete()
+        print(f'Tandem Entries: {tandem_entries}')
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_place = 0
         place = 0

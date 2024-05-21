@@ -182,6 +182,9 @@ def get_safety_results():
     results = adapt_attempts(results)
     prepared_data = []
     for row in results:
+        timestamp = row.timestamp
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.replace(tzinfo=None)
         prepared_data.append((
             row.user.region.name if row.user.region else '-',
             row.user.last_name,
@@ -192,7 +195,7 @@ def get_safety_results():
             row.attempt_number,
             row.is_valid,
             row.score,
-            row.timestamp
+            timestamp
         ))
     return prepared_data
 

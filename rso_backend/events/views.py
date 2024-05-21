@@ -297,8 +297,10 @@ class EventApplicationsViewSet(CreateListRetrieveDestroyViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [permissions.IsAuthenticated(), IsVerifiedPermission()]
-        elif self.action in ['retrieve', 'destroy']:
+        elif self.action in ['destroy']:
             return [permissions.IsAuthenticated(), IsApplicantOrOrganizer()]
+        elif self.action in ['retrieve', 'list']:
+            return [permissions.IsAuthenticated()]
         else:
             return super().get_permissions()
 
@@ -1014,6 +1016,7 @@ class GroupEventApplicationViewSet(viewsets.ReadOnlyModelViewSet):
     """Представляет групповые заявки, поданные на мероприятие."""
     queryset = GroupEventApplication.objects.all()
     serializer_class = GroupEventApplicationSerializer
+    permission_classes = (permissions.AllowAny,)
 
     def get_queryset(self):
         """Возвращает заявки на участие в мероприятии,
