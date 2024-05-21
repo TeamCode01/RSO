@@ -338,11 +338,11 @@ if DEBUG:
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
-            'schedule': timedelta(minutes=3, seconds=40)
+            'schedule': timedelta(seconds=40)
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(seconds=46)
+            'schedule': timedelta(minutes=4, seconds=46)
         },
         'calculate_q7': {
             'task': 'competitions.tasks.calculate_q7_places_task',
