@@ -1415,7 +1415,7 @@ def calculate_q5_place(competition_id: int):
         junior_tandem_entry_report = None
         is_tandem_entry_report = False
         is_junior_tandem_entry_report = False
-        logger.info(f'Проверяем тандем Q5: {tandem_entry_report.detachment}, {junior_tandem_entry_report.detachment}')
+        logger.info(f'Проверяем тандем Q5: {tandem_entry.detachment}, {tandem_entry.junior_detachment}')
         try:
             junior_tandem_entry_report = tandem_entry.junior_detachment.q5detachmentreport_detachment_reports.get(
                 competition_id=competition_id)
