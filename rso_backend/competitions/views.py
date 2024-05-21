@@ -2380,8 +2380,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2410,8 +2408,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2440,8 +2436,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2470,8 +2464,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2500,8 +2492,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2530,8 +2520,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2560,8 +2548,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -2589,8 +2575,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
                 return Response({'detail': 'Этот блок уже верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = True
         elif request.method == 'DELETE':
-            if not block.is_verified:
-                return Response({'detail': 'Этот блок еще не верифицирован'}, status=status.HTTP_400_BAD_REQUEST)
             block.is_verified = False
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
