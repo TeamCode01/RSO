@@ -8,7 +8,6 @@ from django.utils import timezone
 def format_filename(filename):
     """Функция для форматирования имени файла."""
     current_time = str(timezone.now().strftime('%Y%m%d%H%M%S'))
-    current_time = 'ksk'
     return f"{current_time}_{filename}"
 
 
