@@ -2324,20 +2324,21 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             'spartakiad_block': ['spartakiad'],
         }
 
-        # Создание или обновление подблоков
         for block_name, block_model in block_models.items():
-            block_instance, _ = block_model.objects.get_or_create(report=report)
-            for field in block_fields[block_name]:
-                if field in request.data.get(block_name, {}):
-                    setattr(block_instance, field, request.data[block_name][field])
-                    block_instance.is_verified = False
-            block_instance.save()
+            if block_name in request.data:
+                block_data = request.data.get(block_name, {})
+                block_instance, _ = block_model.objects.get_or_create(report=report)
+                for field in block_fields[block_name]:
+                    if field in block_data:
+                        setattr(block_instance, field, block_data[field])
+                        block_instance.is_verified = False
+                block_instance.save()
 
-        # Обновление полей основного отчета
         model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
         extra_fields = set(request.data.keys()) - model_fields - set(block_models.keys())
         if extra_fields:
-            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         for field, value in request.data.items():
             if field in model_fields:

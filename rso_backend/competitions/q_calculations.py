@@ -531,7 +531,6 @@ def calculate_q18_place(competition_id):
                 )
                 print(
                     f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {dummy_entry}, {entry.score})'
-
                 )
                 category.append((entry, dummy_entry, entry.score))
             else:
@@ -630,9 +629,10 @@ def calculate_q6_place(competition_id):
                         f'партнерский отчет: {partner_entry}'
                     )
                 else:
-                    partner_entry = Q6DetachmentReport.objects.create(
+                    partner_entry = Q6DetachmentReport(
                         competition_id=settings.COMPETITION_ID,
-                        detachment=participants_entry.detachment
+                        detachment=participants_entry.detachment,
+
                     )
                     logger.info(
                         f'Для отчета {entry} НЕ найден '
@@ -655,7 +655,7 @@ def calculate_q6_place(competition_id):
                         f'партнерский отчет: {entry}'
                     )
                 else:
-                    partner_entry = Q6DetachmentReport.objects.create(
+                    partner_entry = Q6DetachmentReport(
                         competition_id=settings.COMPETITION_ID,
                         detachment=participants_entry.junior_detachment
                     )
@@ -879,8 +879,9 @@ def calculate_june_detachment_members(entry, partner_entry=None):
 
 
 def calculate_april_detachment_members(entry, partner_entry=None):
-    entry.april_1_detachment_members = entry.detachment.members.count() + 1
-    entry.save()
+    if entry:
+        entry.april_1_detachment_members = entry.detachment.members.count() + 1
+        entry.save()
     if partner_entry:
         partner_entry.april_1_detachment_members = (
             partner_entry.detachment.members.count() + 1
