@@ -449,7 +449,7 @@ def calculate_q18_place(competition_id):
 
     verified_entries = Q18DetachmentReport.objects.filter(is_verified=True, competition_id=competition_id)
     logger.info(
-        f'Получили верифицированные отчеты: {verified_entries.count()}')
+        f'Получили верифицированные отчеты: {verified_entries}')
 
     solo_entries = []
     tandem_entries = []
@@ -482,6 +482,7 @@ def calculate_q18_place(competition_id):
             ).first()
             partner_entry = entry
             if participants_entry:
+                logger.info(f'Отчет {entry} - тандем участник')
                 category = tandem_entries
                 entry = Q18DetachmentReport.objects.filter(
                     detachment=participants_entry.junior_detachment,
@@ -492,6 +493,11 @@ def calculate_q18_place(competition_id):
                     logger.info(
                         f'Для отчета {partner_entry} найден '
                         f'партнерский отчет: {entry}'
+                    )
+                else:
+                    logger.info(
+                        f'Для отчета {partner_entry} не найден '
+                        f'партнерский отчет'
                     )
         if today <= cutoff_date:
             logger.info(
@@ -512,9 +518,21 @@ def calculate_q18_place(competition_id):
             tuple_to_append = (
                 entry, partner_entry, entry.score + partner_entry.score)
             if tuple_to_append not in category:
+                print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили {tuple_to_append}')
                 category.append(tuple_to_append)
         elif entry and not partner_entry:
+            print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {entry.score})')
             category.append((entry, entry.score))
+        elif partner_entry and not entry:
+            dummy_junior_detachment = CompetitionParticipants.objects.filter(
+                detachment=partner_entry.detachment
+            ).first().junior_detachment
+            dummy_entry = Q18DetachmentReport(
+                detachment=dummy_junior_detachment,
+                score=0
+            )
+            print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({dummy_entry}, {partner_entry}, {partner_entry.score})')
+            category.append((dummy_entry, partner_entry, partner_entry.score))
 
     if solo_entries:
         logger.info('Есть записи для соло-участников. Удаляем записи из таблицы Q18 Ranking')
