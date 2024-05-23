@@ -4295,6 +4295,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         detachment=participants_entry.detachment
                     )
                     tandem_ranking.place = calculate_q19_place(report)
+                    print(f'Q19 After adding Junior Detachment Place: {tandem_ranking.place}')
                     elder_detachment_report = None
                     try:
                         elder_detachment_report = Q19Report.objects.get(
@@ -4303,8 +4304,11 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         )
                     except Q19Report.DoesNotExist:
                         tandem_ranking.place += self.MAX_PLACE
+                        print(f'Q19 After adding Elder Detachment Place: {tandem_ranking.place}')
+
                     if elder_detachment_report:
                         tandem_ranking.place += calculate_q19_place(elder_detachment_report)
+                        print(f'Q19 After adding Elder Detachment Place: {tandem_ranking.place}')
                 else:
                     participants_entry = CompetitionParticipants.objects.filter(
                         competition_id=settings.COMPETITION_ID,
@@ -4321,6 +4325,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         detachment=report.detachment
                     )
                     tandem_ranking.place = calculate_q19_place(report)
+                    print(f'Q19 After adding Elder Detachment Place: {tandem_ranking.place}')
                     junior_detachment_report = None
                     try:
                         junior_detachment_report = Q19Report.objects.get(
@@ -4329,13 +4334,16 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         )
                     except Q19Report.DoesNotExist:
                         tandem_ranking.place += self.MAX_PLACE
+                        print(f'Q19 After adding Junior Detachment Place: {tandem_ranking.place}')
                     if junior_detachment_report:
                         tandem_ranking.place += calculate_q19_place(report)
+                        print(f'Q19 After adding Junior Detachment Place: {tandem_ranking.place}')
                 tandem_ranking.place = round_math(tandem_ranking.place / 2, 2)
+                print(f'Final place: {tandem_ranking.place}')
                 tandem_ranking.save()
             return Response(
-                {"status": "Данные "
-                           "Успешно верифицированы"},
+                {"detail": "Данные "
+                           "успешно верифицированы."},
                 status=status.HTTP_200_OK
             )
         QVerificationLog.objects.create(
