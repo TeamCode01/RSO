@@ -522,6 +522,18 @@ def calculate_q18_place(competition_id):
                 category.append(tuple_to_append)
         elif entry and not partner_entry:
             print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {entry.score})')
+            if category is tandem_entries:
+                elder_detachment = CompetitionParticipants.objects.filter(
+                    junior_detachment=entry.detachment
+                ).first().detachment
+                dummy_entry = Q18DetachmentReport(
+                    detachment=elder_detachment,
+                    score=0
+                )
+                print(
+                    f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {dummy_entry}, {entry.score})')
+                category.append((entry, dummy_entry, entry.score))
+
             category.append((entry, entry.score))
         elif partner_entry and not entry:
             dummy_junior_detachment = CompetitionParticipants.objects.filter(
@@ -618,9 +630,6 @@ def calculate_q6_place(competition_id):
                         competition_id=settings.COMPETITION_ID,
                         detachment=participants_entry.detachment
                     )
-                    for block_name, block_model in Q6_BLOCK_MODELS.items():
-                        block_instance, _ = block_model.objects.get_or_create(report=partner_entry)
-                        block_instance.save()
                     logger.info(
                         f'Для отчета {entry} НЕ найден '
                         f'партнерский отчет. Создали дефолтный: {partner_entry}'
@@ -646,9 +655,6 @@ def calculate_q6_place(competition_id):
                         competition_id=settings.COMPETITION_ID,
                         detachment=participants_entry.junior_detachment
                     )
-                    for block_name, block_model in Q6_BLOCK_MODELS.items():
-                        block_instance, _ = block_model.objects.get_or_create(report=partner_entry)
-                        block_instance.save()
                     logger.info(
                         f'Для отчета {entry} НЕ найден '
                         f'партнерский отчет. Создали дефолтный: {partner_entry}'
