@@ -3232,7 +3232,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     )
                     tandem_ranking.place = calculate_q13_place(
                         Q13EventOrganization.objects.filter(
-                            competition_id=competition_id,
                             detachment_report=report,
                             is_verified=True
                         )
@@ -3248,7 +3247,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     if elder_detachment_report:
                         tandem_ranking.place += calculate_q13_place(
                             Q13EventOrganization.objects.filter(
-                                competition_id=competition_id,
                                 detachment_report=elder_detachment_report,
                                 is_verified=True
                             )
@@ -3270,7 +3268,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     )
                     tandem_ranking.place = calculate_q13_place(
                         Q13EventOrganization.objects.filter(
-                            competition_id=competition_id,
                             detachment_report=report,
                             is_verified=True
                         )
@@ -3286,7 +3283,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     if junior_detachment_report:
                         tandem_ranking.place += calculate_q13_place(
                             Q13EventOrganization.objects.filter(
-                                competition_id=competition_id,
                                 detachment_report=junior_detachment_report,
                                 is_verified=True
                             )
