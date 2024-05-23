@@ -521,7 +521,6 @@ def calculate_q18_place(competition_id):
                 print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили {tuple_to_append}')
                 category.append(tuple_to_append)
         elif entry and not partner_entry:
-            print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {entry.score})')
             if category is tandem_entries:
                 elder_detachment = CompetitionParticipants.objects.filter(
                     junior_detachment=entry.detachment
@@ -531,10 +530,15 @@ def calculate_q18_place(competition_id):
                     score=0
                 )
                 print(
-                    f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {dummy_entry}, {entry.score})')
-                category.append((entry, dummy_entry, entry.score))
+                    f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {dummy_entry}, {entry.score})'
 
-            category.append((entry, entry.score))
+                )
+                category.append((entry, dummy_entry, entry.score))
+            else:
+                print(
+                    f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили ({entry}, {entry.score})'
+                )
+                category.append((entry, entry.score))
         elif partner_entry and not entry:
             dummy_junior_detachment = CompetitionParticipants.objects.filter(
                 detachment=partner_entry.detachment
