@@ -708,6 +708,15 @@ class LocalHeadquarterSerializer(BaseUnitSerializer):
         super().__init__(*args, **kwargs)
         self._cached_units = None
 
+    def create(self, validated_data):
+        """
+        Создает и возвращает новый экземпляр LocalHeadquarter.
+        """
+        try:
+            return LocalHeadquarter.objects.create(**validated_data)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
     def to_representation(self, instance):
         """Очищаем кэш."""
         self._cached_units = None
@@ -771,6 +780,15 @@ class EducationalHeadquarterSerializer(BaseUnitSerializer):
             'detachments'
         )
         read_only_fields = ('detachments',)
+
+    def create(self, validated_data):
+        """
+        Создает и возвращает новый экземпляр EducationalHeadquarter.
+        """
+        try:
+            return EducationalHeadquarter.objects.create(**validated_data)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
 
     def to_representation(self, instance):
         """
@@ -894,7 +912,10 @@ class DetachmentSerializer(BaseUnitSerializer):
         """
         Создает и возвращает новый экземпляр Detachment.
         """
-        return Detachment.objects.create(**validated_data)
+        try:
+            return Detachment.objects.create(**validated_data)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
 
     def to_representation(self, instance):
         """

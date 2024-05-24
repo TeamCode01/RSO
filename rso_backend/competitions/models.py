@@ -1472,9 +1472,11 @@ class Q19TandemRanking(QBaseTandemRanking):
     Рейтинг для тандема-участников.
     Создается и заполняется переодической таской.
     """
-    place = models.PositiveSmallIntegerField(
+    place = models.FloatField(
         verbose_name='Итоговое место по показателю 19',
         validators=[MinValueValidator(1), MaxValueValidator(2)],
+        blank=True,
+        null=True
     )
 
     class Meta:

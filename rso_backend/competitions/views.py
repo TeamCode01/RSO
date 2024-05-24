@@ -2324,20 +2324,21 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             'spartakiad_block': ['spartakiad'],
         }
 
-        # Создание или обновление подблоков
         for block_name, block_model in block_models.items():
-            block_instance, _ = block_model.objects.get_or_create(report=report)
-            for field in block_fields[block_name]:
-                if field in request.data.get(block_name, {}):
-                    setattr(block_instance, field, request.data[block_name][field])
-                    block_instance.is_verified = False
-            block_instance.save()
+            if block_name in request.data:
+                block_data = request.data.get(block_name, {})
+                block_instance, _ = block_model.objects.get_or_create(report=report)
+                for field in block_fields[block_name]:
+                    if field in block_data:
+                        setattr(block_instance, field, block_data[field])
+                        block_instance.is_verified = False
+                block_instance.save()
 
-        # Обновление полей основного отчета
         model_fields = {f.name for f in Q6DetachmentReport._meta.fields}
         extra_fields = set(request.data.keys()) - model_fields - set(block_models.keys())
         if extra_fields:
-            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": f"Следующие поля не существуют в модели: {', '.join(extra_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         for field, value in request.data.items():
             if field in model_fields:
@@ -3232,7 +3233,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     )
                     tandem_ranking.place = calculate_q13_place(
                         Q13EventOrganization.objects.filter(
-                            competition_id=competition_id,
                             detachment_report=report,
                             is_verified=True
                         )
@@ -3248,7 +3248,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     if elder_detachment_report:
                         tandem_ranking.place += calculate_q13_place(
                             Q13EventOrganization.objects.filter(
-                                competition_id=competition_id,
                                 detachment_report=elder_detachment_report,
                                 is_verified=True
                             )
@@ -3270,7 +3269,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     )
                     tandem_ranking.place = calculate_q13_place(
                         Q13EventOrganization.objects.filter(
-                            competition_id=competition_id,
                             detachment_report=report,
                             is_verified=True
                         )
@@ -3286,7 +3284,6 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     if junior_detachment_report:
                         tandem_ranking.place += calculate_q13_place(
                             Q13EventOrganization.objects.filter(
-                                competition_id=competition_id,
                                 detachment_report=junior_detachment_report,
                                 is_verified=True
                             )
@@ -4299,6 +4296,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         detachment=participants_entry.detachment
                     )
                     tandem_ranking.place = calculate_q19_place(report)
+                    print(f'Q19 After adding Junior Detachment Place: {tandem_ranking.place}')
                     elder_detachment_report = None
                     try:
                         elder_detachment_report = Q19Report.objects.get(
@@ -4307,8 +4305,11 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         )
                     except Q19Report.DoesNotExist:
                         tandem_ranking.place += self.MAX_PLACE
+                        print(f'Q19 After adding Elder Detachment Place: {tandem_ranking.place}')
+
                     if elder_detachment_report:
                         tandem_ranking.place += calculate_q19_place(elder_detachment_report)
+                        print(f'Q19 After adding Elder Detachment Place: {tandem_ranking.place}')
                 else:
                     participants_entry = CompetitionParticipants.objects.filter(
                         competition_id=settings.COMPETITION_ID,
@@ -4325,6 +4326,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         detachment=report.detachment
                     )
                     tandem_ranking.place = calculate_q19_place(report)
+                    print(f'Q19 After adding Elder Detachment Place: {tandem_ranking.place}')
                     junior_detachment_report = None
                     try:
                         junior_detachment_report = Q19Report.objects.get(
@@ -4333,13 +4335,16 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
                         )
                     except Q19Report.DoesNotExist:
                         tandem_ranking.place += self.MAX_PLACE
+                        print(f'Q19 After adding Junior Detachment Place: {tandem_ranking.place}')
                     if junior_detachment_report:
                         tandem_ranking.place += calculate_q19_place(report)
+                        print(f'Q19 After adding Junior Detachment Place: {tandem_ranking.place}')
                 tandem_ranking.place = round_math(tandem_ranking.place / 2, 2)
+                print(f'Final place: {tandem_ranking.place}')
                 tandem_ranking.save()
             return Response(
-                {"status": "Данные "
-                           "Успешно верифицированы"},
+                {"detail": "Данные "
+                           "успешно верифицированы."},
                 status=status.HTTP_200_OK
             )
         QVerificationLog.objects.create(
