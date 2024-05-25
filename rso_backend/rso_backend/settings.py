@@ -605,6 +605,7 @@ if DEBUG:
     SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET')
     SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
     SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
+    VK_API_VERSION = '5.131'
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
