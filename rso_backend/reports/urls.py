@@ -3,7 +3,7 @@ from django.urls import path
 from reports.views import (CompetitionParticipantView, DetachmentQResultsView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
-                           ExportDetachmentQResultsView,
+                           ExportDetachmentQResultsView, ExportRegionsUserDataView,
                            ExportSafetyTestResultsView, ReportView,
                            SafetyTestResultsView, TaskStatusView)
 
@@ -44,5 +44,10 @@ urlpatterns = [
         'competition_participants/contact_data/export/',
         ExportCompetitionParticipantsContactData.as_view(),
         name='competition_participants_contact_data'
-    )
+    ),
+    path(
+        'users_data_by_regions/',
+        ExportRegionsUserDataView.as_view(),
+        name='regions_users_data'
+    ),
 ]

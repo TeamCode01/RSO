@@ -10,8 +10,9 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
-from users.models import RSOUser
+from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
+from users.serializers import UserIdRegionSerializer
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -227,3 +228,16 @@ def get_competition_participants_contact_data():
         cursor.execute(COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY)
         rows = cursor.fetchall()
         return rows
+    
+
+def get_regions_users_data():
+    queryset = UserRegion.objects.all()
+    queryset = queryset.order_by('reg_region')
+    serializer = UserIdRegionSerializer(queryset, many=True)
+    
+    rows = []
+    for item in serializer.data:
+        row = (list(dict(item).values()))
+        rows.append(row)
+    return rows
+

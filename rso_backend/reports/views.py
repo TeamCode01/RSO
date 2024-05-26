@@ -14,7 +14,7 @@ from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
 from reports.constants import (COMPETITION_PARTICIPANTS_DATA_HEADERS,
-                               DETACHMENT_Q_RESULTS_HEADERS,
+                               DETACHMENT_Q_RESULTS_HEADERS, REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS, COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS)
 from reports.utils import (get_competition_users, get_detachment_q_results, adapt_attempts)
 
@@ -167,3 +167,18 @@ class ReportView(View):
 
     def get(self, request):
         return render(request, self.template_name)
+
+
+class ExportRegionsUserDataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return REGION_USERS_DATA_HEADERS
+
+    def get_filename(self):
+        return f'юзеры_по_регионам_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Данные пользователей по регионам'
+
+    def get_data_func(self):
+        return 'regions_users_data'
