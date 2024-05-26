@@ -36,7 +36,7 @@ services:
     volumes:
       - ./rso_backend:/app
       - ./logs:/app/logs
-      - static:/backend_static/static
+      - static:/app/collected_static
       - media:/app/media
     networks:
       - internal
