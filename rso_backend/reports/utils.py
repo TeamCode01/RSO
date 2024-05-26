@@ -333,7 +333,7 @@ def get_commander_school_data(competition_id: int) -> list:
             'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
             data.get('detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
             data.get('detachment__q2detachmentreport_detachment_reports__commissioner_link', '-') or '-',
-            data.get('junior_detachment__q2ranking__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+            data.get('junior_detachment__q2ranking__place', 'Ещё нет в рейтинге') or 'Ещё нет в рейтинге'
         ) for data in individual_data
     ])
     return rows
