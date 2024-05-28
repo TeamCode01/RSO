@@ -186,7 +186,7 @@ USE_TZ = True
 
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'collected_static'
+STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -338,11 +338,11 @@ if DEBUG:
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
-            'schedule': timedelta(seconds=40)
+            'schedule': timedelta(minutes=4, seconds=40)
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(minutes=4, seconds=46)
+            'schedule': timedelta(seconds=46)
         },
         'calculate_q7': {
             'task': 'competitions.tasks.calculate_q7_places_task',
@@ -434,14 +434,14 @@ else:
             'task': 'competitions.tasks.calculate_q5_places_task',
             'schedule': crontab(
                 hour=3,
-                minute=26,
+                minute=28
             )
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=29,
+            'schedule': timedelta(
+                minutes=3,
+                seconds=20
             )
         },
         'calculate_q7': {
@@ -605,6 +605,7 @@ if DEBUG:
     SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET')
     SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
     SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
+    VK_API_VERSION = '5.131'
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',

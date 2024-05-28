@@ -8,8 +8,12 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from urllib.parse import unquote
 
-from reports.utils import get_detachment_q_results, get_safety_results, get_competition_participants_contact_data, \
+from reports.utils import (
+    get_commander_school_data, get_detachment_q_results,
+    get_regions_users_data, get_safety_results,
+    get_competition_participants_contact_data,
     get_competition_participants_data
+)
 
 
 logger = logging.getLogger('tasks')
@@ -35,9 +39,15 @@ def generate_excel_file(headers, worksheet_title, filename, data_func):
             data = get_competition_participants_contact_data()
         case 'competition_participants':
             data = get_competition_participants_data()
+        case 'commander_school':
+            data = get_commander_school_data(
+                competition_id=settings.COMPETITION_ID)
+        case 'regions_users_data':
+            data = get_regions_users_data()
 
     if not data:
-        logger.warning('Вызов функции не соответствующей кейсу для вызова функции с data')
+        logger.warning(
+            'Вызов функции не соответствующей кейсу для вызова функции с data')
         return
 
     for index, row in enumerate(data, start=1):

@@ -1,4 +1,5 @@
 from django.db import connection
+from django.db.models import Q
 
 from collections import defaultdict
 from typing import List, Tuple
@@ -10,8 +11,9 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
-from users.models import RSOUser
+from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
+from users.serializers import UserIdRegionSerializer
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -227,3 +229,111 @@ def get_competition_participants_contact_data():
         cursor.execute(COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY)
         rows = cursor.fetchall()
         return rows
+
+
+def get_regions_users_data():
+    queryset = UserRegion.objects.all()
+    queryset = queryset.order_by('reg_region')
+    serializer = UserIdRegionSerializer(queryset, many=True)
+
+    rows = []
+    for item in serializer.data:
+        row = (list(dict(item).values()))
+        rows.append(row)
+    return rows
+
+
+def get_commander_school_data(competition_id: int) -> list:
+    # информация по отряду наставнику в тандеме
+    detachment_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=False)
+    ).select_related(
+        'detachment'
+    ).prefetch_related(
+        'detachment__region',
+    ).values(
+        'detachment__name',
+        'detachment__region__name',
+        'detachment__q2detachmentreport_detachment_reports__commander_achievement',
+        'detachment__q2detachmentreport_detachment_reports__commissioner_achievement',
+        'detachment__q2detachmentreport_detachment_reports__commander_link',
+        'detachment__q2detachmentreport_detachment_reports__commissioner_link',
+        'detachment__q2tandemranking_main_detachment__place',
+    ).all()
+
+    # информация по старт отряду в тандеме
+    junior_detachment_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=False)
+    ).select_related(
+        'junior_detachment'
+    ).prefetch_related(
+        'junior_detachment__region',
+    ).values(
+        'junior_detachment__name',
+        'junior_detachment__region__name',
+        'junior_detachment__q2detachmentreport_detachment_reports__commander_achievement',
+        'junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement',
+        'junior_detachment__q2detachmentreport_detachment_reports__commander_link',
+        'junior_detachment__q2detachmentreport_detachment_reports__commissioner_link',
+        'junior_detachment__q2tandemranking_junior_detachment__place',
+    ).all()
+
+    # информация по старт отряду в индивидуальных заявках
+    individual_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=True)
+    ).select_related(
+        'junior_detachment'
+    ).prefetch_related(
+        'junior_detachment__region',
+    ).values(
+        'junior_detachment__name',
+        'junior_detachment__region__name',
+        'junior_detachment__q2detachmentreport_detachment_reports__commander_achievement',
+        'junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement',
+        'junior_detachment__q2detachmentreport_detachment_reports__commander_link',
+        'junior_detachment__q2detachmentreport_detachment_reports__commissioner_link',
+        'junior_detachment__q2ranking__place',
+    ).all()
+
+    # Добываем данные по отряду наставнику в тандеме
+    rows = [
+        (
+            data.get('detachment__name', '-'),
+            data.get('detachment__region__name', '-'),
+            'Тандем',
+            'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
+            'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
+            data.get('detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
+            data.get('detachment__q2detachmentreport_detachment_reports__commissioner_link', '-') or '-',
+            data.get('detachment__q2tandemranking_main_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in detachment_data
+    ]
+
+    # Добываем данные по отряду старт в тандеме
+    rows.extend([
+        (
+            data.get('junior_detachment__name', '-'),
+            data.get('junior_detachment__region__name', '-'),
+            'Тандем',
+            'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
+            'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
+            data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
+            data.get('junior_detachment__q2detachmentreport_detachment_reports__commissioner_link', '-') or '-',
+            data.get('junior_detachment__q2tandemranking_junior_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in junior_detachment_data
+    ])
+
+    # Добываем данные по отряду старт в индивидуальных заявках
+    rows.extend([
+        (
+            data.get('junior_detachment__name', '-'),
+            data.get('junior_detachment__region__name', '-'),
+            'Дебют',
+            'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
+            'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
+            data.get('detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
+            data.get('detachment__q2detachmentreport_detachment_reports__commissioner_link', '-') or '-',
+            data.get('junior_detachment__q2ranking__place', 'Ещё нет в рейтинге') or 'Ещё нет в рейтинге'
+        ) for data in individual_data
+    ])
+    return rows

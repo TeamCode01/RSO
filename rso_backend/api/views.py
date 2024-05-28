@@ -1,5 +1,6 @@
 import io
 import os
+import requests
 from datetime import datetime
 
 import pdfrw
@@ -20,6 +21,7 @@ from reportlab.pdfgen import canvas
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api.filters import EducationalInstitutionFilter
 from api.mixins import ListRetrieveViewSet
@@ -684,3 +686,49 @@ class MemberCertViewSet(viewsets.ReadOnlyModelViewSet):
                 )
             response = create_and_return_archive(internal_certs)
             return response
+
+
+class ExchangeTokenView(viewsets.ModelViewSet):
+    """Обмен silent token и uuid от ВК для получения access token."""
+
+
+    permission_classes = [permissions.AllowAny,]
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'silent_token': openapi.Schema(type=openapi.TYPE_STRING),
+                'uuid': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )
+    )
+    def post(self, request):
+        silent_token = request.data.get('silent_token')
+        uuid = request.data.get('uuid')
+
+        if not silent_token or not uuid:
+            return Response(
+                {'error': 'Silent token и uuid не были переданы в запросе.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            response = requests.post(
+                'https://api.vk.com/method/auth.exchangeSilentAuthToken',
+                params={
+                'v': settings.VK_API_VERSION,
+                'silent_token': silent_token,
+                'access_token': settings.SOCIAL_AUTH_VK_OAUTH2_SECRET,
+                'uuid': uuid
+            })
+            response_data = response.json()
+
+            if 'response' in response_data:
+                access_token = response_data['response']['access_token']
+                return Response({'access_token': access_token}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': response_data.get('error', 'Unknown error')}, status=status.HTTP_400_BAD_REQUEST)
+
+        except requests.RequestException as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

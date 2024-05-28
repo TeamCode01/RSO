@@ -5,10 +5,10 @@ from rest_framework.routers import DefaultRouter
 from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DELETE_UPDATE_RETRIEVE, DOWNLOAD_ALL_FORMS,
                            DOWNLOAD_CONSENT_PD, DOWNLOAD_MEMBERSHIP_FILE,
-                           DOWNLOAD_PARENT_CONSENT_PD, LIST, LIST_CREATE,
+                           DOWNLOAD_PARENT_CONSENT_PD, EXCHANGE_TOKEN, LIST, LIST_CREATE,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
                            UPDATE_RETRIEVE)
-from api.views import (AreaViewSet, EducationalInstitutionViewSet,
+from api.views import (AreaViewSet, EducationalInstitutionViewSet, ExchangeTokenView,
                        MemberCertViewSet, RegionViewSet,
                        change_membership_fee_status, verify_user)
 from competitions.models import Q5EducatedParticipant
@@ -337,6 +337,7 @@ EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
 )
 EventAdditionalIssueListVS = EventAdditionalIssueViewSet.as_view(LIST_CREATE)
 EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
+ExchangeTokenVS = ExchangeTokenView.as_view(EXCHANGE_TOKEN)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
@@ -584,6 +585,7 @@ user_nested_urls = [
         name='get-detachment-places'
     ),
     path('', include('djoser.urls')),
+    path('exchange-token/', ExchangeTokenVS, name='exchange-token'),
 ]
 
 urlpatterns = [

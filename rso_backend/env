@@ -1,0 +1,17 @@
+DEBUG=True
+SECRET_KEY='django-insecure-)@=jqmfdnbo38guitah!+3^u#)2sc(jd8*^2fm$-rd)aaiwehq'
+API_URL=http://backend:8000/api/v1
+ALLOWED_HOSTS=127.0.0.1,213.139.208.147,localhost,backend,0.0.0.0,rso.sprint.1t.ru,лк.трудкрут.рф
+POSTGRES_USER=rso
+POSTGRES_PASSWORD=HML&rXks37otKGj
+POSTGRES_DB=rso
+DB_HOST=db
+DB_PORT=5432
+RUN_TYPE=DOCKER
+DATABASE=sqlite
+EMAIL_HOST_USER=rso.login@yandex.ru
+EMAIL_HOST_PASSWORD=gxaanickfhofgzoo
+DEFAULT_SITE_URL=rso.sprint.1t.ru
+FRONTEND_TAG=latest
+SOCIAL_AUTH_VK_OAUTH2_KEY = '51915086'
+SOCIAL_AUTH_VK_OAUTH2_SECRET = '4vHdCwp3oP3dvuYt2BdN'

@@ -13,10 +13,16 @@ from urllib.parse import quote
 from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
-from reports.constants import (COMPETITION_PARTICIPANTS_DATA_HEADERS,
+from reports.constants import (COMMANDER_SCHOOL_DATA_HEADERS,
+                               COMPETITION_PARTICIPANTS_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
-                               SAFETY_TEST_RESULTS_HEADERS, COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS)
-from reports.utils import (get_competition_users, get_detachment_q_results, adapt_attempts)
+                               REGION_USERS_DATA_HEADERS,
+                               SAFETY_TEST_RESULTS_HEADERS,
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS)
+from reports.utils import (
+    get_commander_school_data, get_competition_users, get_detachment_q_results,
+    adapt_attempts
+)
 
 
 def has_reports_access(user):
@@ -31,7 +37,9 @@ class TaskStatusView(View):
             download_url = default_storage.url(file_path)
             return JsonResponse({'status': 'SUCCESS', 'download_url': download_url})
         elif task.state == 'FAILURE':
-            return JsonResponse({'status': 'FAILURE'})
+            return JsonResponse({'status': 'FAILURE',
+                                 'result': str(task.result),
+                                 'traceback': str(task.traceback)})
         return JsonResponse({'status': task.state})
 
 
@@ -167,3 +175,49 @@ class ReportView(View):
 
     def get(self, request):
         return render(request, self.template_name)
+
+
+class ExportCommanderSchoolDataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return COMMANDER_SCHOOL_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Прохождение_школы_командирского_состава_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Школа командиров'
+
+    def get_data_func(self):
+        return 'commander_school'
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(
+    user_passes_test(has_reports_access,
+                     login_url='/',
+                     redirect_field_name=None),
+    name='dispatch')
+class CommanderSchoolView(View):
+    template_name = 'reports/commander_school.html'
+
+    def get(self, request):
+        results = get_commander_school_data(settings.COMPETITION_ID)
+        context = {'sample_results': results,
+                   'columns': COMMANDER_SCHOOL_DATA_HEADERS}
+        return render(request, self.template_name, context)
+
+
+class ExportRegionsUserDataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return REGION_USERS_DATA_HEADERS
+
+    def get_filename(self):
+        return f'юзеры_по_регионам_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Данные пользователей по регионам'
+
+    def get_data_func(self):
+        return 'regions_users_data'

@@ -1,0 +1,105 @@
+{% extends 'reports/base.html' %}
+{% load i18n %}
+{% block title %}Прохождение Командиром и Комиссаром студенческого отряда региональной школы командного состава
+{% endblock %}
+{% block header %}
+{% include 'reports/header.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'reports/header.html' %}
+<div class="container">
+    <h1>Прохождение Командиром и Комиссаром студенческого отряда региональной школы командного состава
+    </h1>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #007acc;
+            text-align: left;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        th {
+            background-color: #f0f8ff;
+            color: #007acc;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+
+    <table>
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+                <!-- <th>№</th>
+                <th>Название отряда</th>
+                <th>Регион</th>
+                <th>Номинация</th>
+                <th>Региональная школа командного состава пройдена командиром отряда</th>
+                <th>Региональная школа командного состава пройдена комиссаром отряда</th>
+                <th>Ссылка на публикацию из группы отряда о прохождении региональной школы командного состава командиром отряда</th>
+                <th>Ссылка на публикацию из группы отряда о прохождении региональной школы командного состава комиссаром отряда</th>
+                <th>Место в рейтинге по показателю</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in sample_results %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.0 }}</td>
+                    <td>{{ row.1 }}</td>
+                    <td>{{ row.2 }}</td>
+                    <td>{{ row.3 }}</td>
+                    <td>{{ row.4 }}</td>
+                    <td>{{ row.5 }}</td>
+                    <td>{{ row.6 }}</td>
+                    <td>{{ row.7 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button id="downloadButton" class="button">Скачать все результаты в Excel</button>
+
+<script>
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        const button = this;
+        button.disabled = true;
+        button.textContent = 'Подождите, файл готовится...';
+
+        fetch('{% url "export_commander_school_results" %}')
+            .then(response => response.json())
+            .then(data => {
+                const taskId = data.task_id;
+                const intervalId = setInterval(() => {
+                    fetch(`/reports/task-status/${taskId}/`)
+                        .then(response => response.json())
+                        .then(statusData => {
+                            if (statusData.status === 'SUCCESS') {
+                                clearInterval(intervalId);
+                                window.location.href = statusData.download_url;
+                                button.disabled = false;
+                                button.textContent = 'Скачать все результаты в Excel';
+                            } else if (statusData.status === 'FAILURE') {
+                                clearInterval(intervalId);
+                                button.disabled = false;
+                                button.textContent = 'Ошибка при подготовке файла. Попробуйте снова.';
+                            }
+                        });
+                }, 2000);
+            });
+    });
+</script>
+
+{% endblock %}
