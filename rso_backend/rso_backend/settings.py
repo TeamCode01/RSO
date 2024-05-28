@@ -440,7 +440,7 @@ else:
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
             'schedule': timedelta(
-                minute=3,
+                minutes=3,
                 seconds=20
             )
         },
