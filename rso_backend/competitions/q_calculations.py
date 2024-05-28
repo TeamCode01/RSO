@@ -739,13 +739,162 @@ def calculate_q6_place(competition_id):
             )
             partner_entry.score = (partner_entry_participants_number / partner_entry.april_1_detachment_members)
             partner_entry.save()
-            tuple_to_append = (
-                entry, partner_entry, entry.score + partner_entry.score
-            )
-            if tuple_to_append not in category:
-                category.append(tuple_to_append)
-        elif (entry and not partner_entry) and category == solo_entries:
-            category.append((entry, entry.score))
+
+            verified = False
+
+            try:
+                if entry.working_semester_opening_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.patriotic_action_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.demonstration_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.safety_work_week_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.commander_commissioner_school_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.creative_festival_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.professional_competition_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if entry.spartakiad_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.working_semester_opening_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.patriotic_action_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.demonstration_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.safety_work_week_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.commander_commissioner_school_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.creative_festival_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.professional_competition_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.spartakiad_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            if verified:
+                tuple_to_append = (entry, partner_entry, entry.score + partner_entry.score)
+                if tuple_to_append not in category:
+                    category.append(tuple_to_append)
+
+            elif entry and not partner_entry and category == solo_entries:
+                verified = False
+                try:
+                    if entry.working_semester_opening_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.patriotic_action_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.demonstration_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.safety_work_week_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.commander_commissioner_school_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.creative_festival_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.professional_competition_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                try:
+                    if entry.spartakiad_block.is_verified:
+                        verified = True
+                except ObjectDoesNotExist:
+                    pass
+
+                if verified:
+                    category.append((entry, entry.score))
 
     if solo_entries:
         logger.info(
@@ -779,7 +928,7 @@ def calculate_q6_place(competition_id):
             'Есть записи для тандем-участников. Удаляем записи из таблицы Q6 TandemRanking'
         )
         Q6TandemRanking.objects.all().delete()
-        print(f'Tandem Entries: {tandem_entries}')
+        logger.info(f'Tandem Entries: {tandem_entries}')
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_place = 0
         place = 0
@@ -789,8 +938,12 @@ def calculate_q6_place(competition_id):
             additional_place_detachment = calculate_q6_boolean_scores(entry[1])
             if entry[2] != previous_score:
                 place = last_place + 1
+            logger.info(
+                f'Для {entry[0].detachment} и {entry[1].detachment} определили места: по части сравнения - {place}, '
+                f'доп места {additional_place_junior} и {additional_place_detachment}. '
+            )
             updated_place = place + (
-                round_math(additional_place_junior + additional_place_detachment / 2)
+                round_math((additional_place_junior + additional_place_detachment) / 2)
             )
             logger.info(
                 f'Отчет {entry[0]} и {entry[1]} занимает {updated_place} место'
