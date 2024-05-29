@@ -839,10 +839,10 @@ def calculate_q6_place(competition_id):
                 pass
 
             if verified:
+                logger.info(f'Для {entry.detachment} и {partner_entry.detachment} найден верифицированный блок, сохраняем {entry.score + partner_entry.score} очков')
                 tuple_to_append = (entry, partner_entry, entry.score + partner_entry.score)
                 if tuple_to_append not in category:
                     category.append(tuple_to_append)
-
             elif entry and not partner_entry and category == solo_entries:
                 verified = False
                 try:
@@ -894,7 +894,65 @@ def calculate_q6_place(competition_id):
                     pass
 
                 if verified:
+                    logger.info(f'Для {entry.detachment} найден верифицированный блок, сохраняем {entry.score} очков')
                     category.append((entry, entry.score))
+                else:
+                    logger.info(f'Для {entry.detachment} не найден верифицированный блок, пропускаем')
+        elif partner_entry and not entry and category == solo_entries:
+            verified = False
+            try:
+                if partner_entry.working_semester_opening_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.patriotic_action_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.demonstration_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.safety_work_week_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.commander_commissioner_school_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.creative_festival_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.professional_competition_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            try:
+                if partner_entry.spartakiad_block.is_verified:
+                    verified = True
+            except ObjectDoesNotExist:
+                pass
+
+            if verified:
+                logger.info(f'Для {partner_entry.detachment} найден верифицированный блок, сохраняем {partner_entry.score} очков')
+                category.append((partner_entry, partner_entry.score))
+            else:
+                logger.info(f'Для {partner_entry.detachment} не найден верифицированный блок, пропускаем')
 
     if solo_entries:
         logger.info(
@@ -913,7 +971,7 @@ def calculate_q6_place(competition_id):
                 place = last_place + 1
             updated_place = place + additional_place
             logger.info(
-                f'Отчет {entry[0]} занимает {updated_place} место'
+                f'Отчет {entry[0].detachment} занимает {updated_place} место'
             )
             Q6Ranking.objects.create(
                 detachment=entry[0].detachment,
