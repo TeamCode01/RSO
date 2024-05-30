@@ -706,6 +706,7 @@ def calculate_q6_place(competition_id):
             entry.save()
 
         if partner_entry and entry:
+            logger.info(f'ПЕРВОЕ УСЛОВИЕ ДЛЯ {partner_entry.detachment} и {entry.detachment}')
             working_semester_opening_participants = 0
             patriotic_action_participants = 0
             first_may_demonstration_participants = 0
@@ -745,97 +746,97 @@ def calculate_q6_place(competition_id):
             try:
                 if entry.working_semester_opening_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.patriotic_action_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.demonstration_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.safety_work_week_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.commander_commissioner_school_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.creative_festival_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.professional_competition_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if entry.spartakiad_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.working_semester_opening_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.patriotic_action_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.demonstration_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.safety_work_week_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.commander_commissioner_school_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.creative_festival_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.professional_competition_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.spartakiad_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             if verified:
@@ -843,109 +844,138 @@ def calculate_q6_place(competition_id):
                 tuple_to_append = (entry, partner_entry, entry.score + partner_entry.score)
                 if tuple_to_append not in category:
                     category.append(tuple_to_append)
-            elif entry and not partner_entry and category == solo_entries:
-                verified = False
-                try:
-                    if entry.working_semester_opening_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+        elif entry and not partner_entry and category == solo_entries:
+            new_entry = Q6DetachmentReport.objects.filter(detachment=entry.detachment).first()
+            if new_entry:
+                logger.info(f'нашли new_entry {new_entry}')
+                entry = new_entry
+            else:
+                logger.info('НЕ нашли new_entry')
+            logger.info(f'ВТОРОЕ УСЛОВИЕ ДЛЯ')
+            logger.info(f'{entry.detachment}')
+            logger.info(f'{entry}')
+            verified = False
+            try:
+                if entry.working_semester_opening_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                try:
-                    if entry.patriotic_action_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                if entry.patriotic_action_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                try:
-                    if entry.demonstration_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                if entry.demonstration_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                try:
-                    if entry.safety_work_week_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                if entry.safety_work_week_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                try:
-                    if entry.commander_commissioner_school_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                logger.info(
+                    f'ДЛЯ {entry.detachment} ПРОВЕРЯЕМ commander_commissioner_school_block '
+                    f'IS_VERIFIED?: {entry.commander_commissioner_school_block.is_verified}'
+                )
+                if entry.commander_commissioner_school_block.is_verified:
+                    logger.info('YES')
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError) as e:
+                logger.info(f'NO: {e}')
+                pass
 
-                try:
-                    if entry.creative_festival_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                if entry.creative_festival_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                try:
-                    if entry.professional_competition_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                if entry.professional_competition_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                try:
-                    if entry.spartakiad_block.is_verified:
-                        verified = True
-                except ObjectDoesNotExist:
-                    pass
+            try:
+                if entry.spartakiad_block.is_verified:
+                    verified = True
+            except (ObjectDoesNotExist, AttributeError):
+                pass
 
-                if verified:
-                    logger.info(f'Для {entry.detachment} найден верифицированный блок, сохраняем {entry.score} очков')
-                    category.append((entry, entry.score))
-                else:
-                    logger.info(f'Для {entry.detachment} не найден верифицированный блок, пропускаем')
+            if verified:
+                logger.info(f'Для {entry.detachment} найден верифицированный блок, сохраняем {entry.score} очков')
+                category.append((entry, entry.score))
+            else:
+                logger.info(f'Для {entry.detachment} не найден верифицированный блок, пропускаем')
         elif partner_entry and not entry and category == solo_entries:
+            new_entry = Q6DetachmentReport.objects.filter(detachment=partner_entry.detachment).first()
+            if new_entry:
+                logger.info(f'нашли new_entry {new_entry}')
+                partner_entry = new_entry
+            else:
+                logger.info('НЕ нашли new_entry')
+            logger.info(f'ТРЕТЬЕ УСЛОВИЕ ДЛЯ')
+            logger.info(f'{partner_entry.detachment}')
             verified = False
             try:
                 if partner_entry.working_semester_opening_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.patriotic_action_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.demonstration_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.safety_work_week_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
+                logger.info(
+                    f'ДЛЯ {partner_entry.detachment} ПРОВЕРЯЕМ commander_commissioner_school_block '
+                    f'IS_VERIFIED?: {partner_entry.commander_commissioner_school_block.is_verified}'
+                )
                 if partner_entry.commander_commissioner_school_block.is_verified:
+                    logger.info('YES')
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError) as e:
+                logger.info(f'NO: {e}')
                 pass
 
             try:
                 if partner_entry.creative_festival_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.professional_competition_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             try:
                 if partner_entry.spartakiad_block.is_verified:
                     verified = True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, AttributeError):
                 pass
 
             if verified:
