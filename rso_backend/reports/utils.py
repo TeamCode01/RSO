@@ -360,7 +360,7 @@ def get_q5_data(competition_id: int) -> list:
             for report in reports.filter(detachment_id=detachment.id):
                 for edu_participant in educated_participants.filter(detachment_report_id=report.id):
                     place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
-                    document_url = f'https://{settings.DEFAULT_SITE_URL}/{edu_participant.document.url}' if edu_participant.document else '-'
+                    document_url = f'https://{settings.DEFAULT_SITE_URL}{edu_participant.document.url}' if edu_participant.document else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
@@ -378,7 +378,7 @@ def get_q5_data(competition_id: int) -> list:
             for report in reports.filter(detachment_id=junior_detachment.id):
                 for edu_participant in educated_participants.filter(detachment_report_id=report.id):
                     place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
-                    document_url = f'https://{settings.DEFAULT_SITE_URL}/{edu_participant.document.url}' if edu_participant.document else '-'
+                    document_url = f'https://{settings.DEFAULT_SITE_URL}{edu_participant.document.url}' if edu_participant.document else '-'
                     rows.append((
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
@@ -396,7 +396,7 @@ def get_q5_data(competition_id: int) -> list:
             for report in reports.filter(detachment_id=detachment.id):
                 for edu_participant in educated_participants.filter(detachment_report_id=report.id):
                     place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
-                    document_url = f'https://{settings.DEFAULT_SITE_URL}/{edu_participant.document.url}' if edu_participant.document else '-'
+                    document_url = f'https://{settings.DEFAULT_SITE_URL}{edu_participant.document.url}' if edu_participant.document else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
