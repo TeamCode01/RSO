@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from celery import shared_task
 from django.conf import settings
 
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE
 from competitions.models import (Q1Ranking, Q1Report, Q1TandemRanking,
                                  Q2Ranking, Q2TandemRanking, Q3Ranking,
                                  Q3TandemRanking, Q4Ranking, Q4TandemRanking,
@@ -68,9 +68,8 @@ def calculate_q3_q4_places_task():
 def calculate_q5_places_task():
     """Считает места по 5 показателю."""
     today = date.today()
-    cutoff_date = date(2024, 6, 30)
 
-    if today <= cutoff_date + timedelta(days=1):
+    if today <= COUNT_PLACES_DEADLINE:
         calculate_q5_place(competition_id=settings.COMPETITION_ID)
     else:
         logger.warning('Истек срок выполнения подсчета по 5 показателю')
@@ -79,7 +78,11 @@ def calculate_q5_places_task():
 @shared_task
 def calculate_q6_places_task():
     """Считает места по 6 показателю."""
-    calculate_q6_place(competition_id=settings.COMPETITION_ID)
+    today = date.today()
+    if today <= COUNT_PLACES_DEADLINE:
+        calculate_q6_place(competition_id=settings.COMPETITION_ID)
+    else:
+        logger.warning('Истек срок выполнения подсчета по 5 показателю')
 
 
 @shared_task
@@ -144,10 +147,14 @@ def calculate_q12_places_task():
 @shared_task
 def calculate_q14_places_task():
     logger.info('Начинаем считать места по 14 показателю')
-    calculate_q14_place(competition_id=settings.COMPETITION_ID)
-    logger.info(
-        'Посчитали.'
-    )
+    today = date.today()
+    if today <= COUNT_PLACES_DEADLINE:
+        calculate_q14_place(competition_id=settings.COMPETITION_ID)
+        logger.info(
+            'Посчитали Q14.'
+        )
+    else:
+        logger.info('Истек срок подсчета 14 показателя')
 
 
 @shared_task
@@ -174,7 +181,11 @@ def calculate_q16_places_task():
 @shared_task
 def calculate_q17_places_task():
     logger.info('Начинаем считать места по 17 показателю')
-    calculate_q17_place(competition_id=settings.COMPETITION_ID)
+    today = date.today()
+    if today <= COUNT_PLACES_DEADLINE:
+        calculate_q17_place(competition_id=settings.COMPETITION_ID)
+    else:
+        logger.info('Истек срок подсчета 17 показателя')
     logger.info(
         'Посчитали.'
     )
@@ -183,7 +194,11 @@ def calculate_q17_places_task():
 @shared_task
 def calculate_q18_places_task():
     logger.info('Начинаем считать места по 18 показателю')
-    calculate_q18_place(competition_id=settings.COMPETITION_ID)
+    today = date.today()
+    if today <= COUNT_PLACES_DEADLINE:
+        calculate_q18_place(competition_id=settings.COMPETITION_ID)
+    else:
+        logger.info('Истек срок подсчета 18 показателя')
     logger.info(
         'Посчитали.'
     )

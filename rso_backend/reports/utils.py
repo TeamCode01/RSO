@@ -1,5 +1,8 @@
+from urllib.parse import urljoin
+
 from django.db import connection
 from django.db.models import Q
+from django.conf import settings
 
 from collections import defaultdict
 from typing import List, Tuple
@@ -7,7 +10,8 @@ from typing import List, Tuple
 from api.utils import get_user_detachment, get_user_detachment_position
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (CompetitionParticipants, OverallRanking,
-                                 OverallTandemRanking)
+                                 OverallTandemRanking, Q5DetachmentReport, Q5EducatedParticipant, Q5TandemRanking,
+                                 Q5Ranking)
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
@@ -336,4 +340,71 @@ def get_commander_school_data(competition_id: int) -> list:
             data.get('junior_detachment__q2ranking__place', 'Ещё нет в рейтинге') or 'Ещё нет в рейтинге'
         ) for data in individual_data
     ])
+    return rows
+
+
+def get_q5_data(competition_id: int) -> list:
+    rows = []
+
+    # Fetch all related data once to avoid multiple queries
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q5DetachmentReport.objects.all().select_related('detachment')
+    educated_participants = Q5EducatedParticipant.objects.select_related('detachment_report').all()
+    tandem_rankings = {tr.detachment_id: tr for tr in Q5TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q5Ranking.objects.all()}
+
+    # Fetch data for the main detachments
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for edu_participant in educated_participants.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    document_url = f'https://{settings.DEFAULT_SITE_URL}/{edu_participant.document.url}' if edu_participant.document else '-'
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Тандем',
+                        edu_participant.name,
+                        document_url,
+                        'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    # Fetch data for the junior detachments in tandem
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        if junior_detachment:
+            for report in reports.filter(detachment_id=junior_detachment.id):
+                for edu_participant in educated_participants.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    document_url = f'https://{settings.DEFAULT_SITE_URL}/{edu_participant.document.url}' if edu_participant.document else '-'
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        edu_participant.name,
+                        document_url,
+                        'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    # Fetch data for individual participants
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for edu_participant in educated_participants.filter(detachment_report_id=report.id):
+                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                    document_url = f'https://{settings.DEFAULT_SITE_URL}/{edu_participant.document.url}' if edu_participant.document else '-'
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Дебют',
+                        edu_participant.name,
+                        document_url,
+                        'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
     return rows
