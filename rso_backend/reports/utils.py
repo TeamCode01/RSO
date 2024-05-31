@@ -372,7 +372,7 @@ def get_q5_data(competition_id: int) -> list:
                     ))
 
     # Fetch data for the junior detachments in tandem
-    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, junior_detachment__isnull=False):
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
         junior_detachment = detachments.get(participant.junior_detachment_id)
         if junior_detachment:
             for report in reports.filter(detachment_id=junior_detachment.id):
@@ -391,7 +391,7 @@ def get_q5_data(competition_id: int) -> list:
 
     # Fetch data for individual participants
     for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
-        detachment = detachments.get(participant.detachment_id)
+        detachment = detachments.get(participant.junior_detachment_id)
         if detachment:
             for report in reports.filter(detachment_id=detachment.id):
                 for edu_participant in educated_participants.filter(detachment_report_id=report.id):
