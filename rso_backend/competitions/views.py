@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from dal import autocomplete
 from django.conf import settings
@@ -35,7 +35,7 @@ from api.permissions import (
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
 from competitions.models import (Q8, Q9, Q10, Q11, Q12,
@@ -2083,6 +2083,11 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(year=2024, month=6, day=30)
+        if today <= cutoff_date + timedelta(days=1):
+            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
@@ -2293,6 +2298,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
+        today = date.today()
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
         try:
             detachment_id = request.user.detachment_commander.id
@@ -2301,7 +2307,6 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         report, created = Q6DetachmentReport.objects.get_or_create(competition=competition, detachment_id=detachment_id)
 
-        # Подготовка полей для обновления отчета и подблоков
         block_models = {
             'demonstration_block': DemonstrationBlock,
             'patriotic_action_block': PatrioticActionBlock,
@@ -2324,8 +2329,25 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
             'spartakiad_block': ['spartakiad'],
         }
 
+        block_deadlines = {
+            'demonstration_block': date(2024, 5, 31),
+            'patriotic_action_block': date(2024, 5, 31),
+            'safety_work_week_block': date(2024, 5, 31),
+            'commander_commissioner_school_block': date(2024, 5, 31),
+            'working_semester_opening_block': date(2024, 6, 30),
+            'creative_festival_block': date(2024, 10, 15),
+            'professional_competition_block': date(2024, 10, 15),
+            'spartakiad_block': date(2024, 10, 15),
+        }
+
         for block_name, block_model in block_models.items():
             if block_name in request.data:
+                if today > block_deadlines[block_name]:
+                    return Response(
+                        {
+                            'error': f'Прием ответов по блоку окончен {block_deadlines[block_name].strftime("%d.%m.%Y")}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 block_data = request.data.get(block_name, {})
                 block_instance, _ = block_model.objects.get_or_create(report=report)
                 for field in block_fields[block_name]:
@@ -4040,6 +4062,10 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     @swagger_auto_schema(request_body=Q18DetachmentReportSerializer)
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(year=2024, month=9, day=30)
+        if today <= cutoff_date + timedelta(days=1):
+            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
         context = super().get_serializer_context()
         competition_id = self.kwargs.get('competition_pk')
         try:

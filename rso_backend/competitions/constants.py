@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+from rest_framework.response import Response
+from rest_framework import status
 from competitions.models import (Q1Ranking, Q1TandemRanking, Q2Ranking,
                                  Q2TandemRanking, Q3Ranking, Q3TandemRanking,
                                  Q4Ranking, Q4TandemRanking, Q5Ranking,
@@ -59,3 +62,9 @@ TANDEM_RANKING_MODELS = [
     Q19TandemRanking,
     Q20TandemRanking
 ]
+
+COUNT_PLACES_DEADLINE = date(2024, 10, 15) + timedelta(days=1)
+DEADLINE_RESPONSE = Response(
+    {'error': 'Прием ответов по показателю окончен {deadline}.'},
+    status=status.HTTP_400_BAD_REQUEST
+)
