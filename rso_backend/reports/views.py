@@ -18,7 +18,7 @@ from reports.constants import (COMMANDER_SCHOOL_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
                                REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
-                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS)
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS)
 from reports.utils import (
     get_commander_school_data, get_competition_users, get_detachment_q_results,
     adapt_attempts
@@ -190,6 +190,21 @@ class ExportCommanderSchoolDataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'commander_school'
+
+
+class ExportQ5DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q5_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Школа командиров'
+
+    def get_data_func(self):
+        return 'get_q5_data'
 
 
 @method_decorator(login_required, name='dispatch')
