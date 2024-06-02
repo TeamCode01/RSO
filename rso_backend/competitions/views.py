@@ -2133,7 +2133,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=6, day=30)
-        if today <= cutoff_date + timedelta(days=1):
+        if today >= cutoff_date + timedelta(days=1):
             return DEADLINE_RESPONSE.format(deadline=cutoff_date)
 
         competition = get_object_or_404(
@@ -4112,7 +4112,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=9, day=30)
-        if today <= cutoff_date + timedelta(days=1):
+        if today >= cutoff_date + timedelta(days=1):
             return DEADLINE_RESPONSE.format(deadline=cutoff_date)
         context = super().get_serializer_context()
         competition_id = self.kwargs.get('competition_pk')
