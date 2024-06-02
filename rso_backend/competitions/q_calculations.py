@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 
 from api.constants import Q6_BLOCK_MODELS
+from competitions.constants import COUNT_PLACES_DEADLINE
 from competitions.models import (CompetitionParticipants, OverallRanking,
                                  OverallTandemRanking, Q1Ranking, Q1Report,
                                  Q2DetachmentReport, Q2Ranking,
@@ -1202,7 +1203,7 @@ def calculate_place(
                     False - чем меньше очков, тем выше место.
     """
     today = date.today()
-    cutoff_date = date(2024, 10, 15)
+    cutoff_date = COUNT_PLACES_DEADLINE
 
     if today >= cutoff_date:
         return
@@ -1341,7 +1342,7 @@ def calculate_q1_score(competition_id):
     """
     Функция для расчета очков по 1 показателю.
 
-    Выполняется только 7.05.2024.
+    Выполняется каждый день до 12.06.2024.
     """
     today = date.today()
     end_date = date(2024, 6, 12)
