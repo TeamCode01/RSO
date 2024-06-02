@@ -15,13 +15,13 @@ from competitions.models import CompetitionParticipants
 from questions.models import Attempt
 from reports.constants import (COMMANDER_SCHOOL_DATA_HEADERS,
                                COMPETITION_PARTICIPANTS_DATA_HEADERS,
-                               DETACHMENT_Q_RESULTS_HEADERS,
+                               DETACHMENT_Q_RESULTS_HEADERS, MEMBERSHIP_FEE_DATA_HEADERS,
                                REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
                                COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS)
 from reports.utils import (
     get_commander_school_data, get_competition_users, get_detachment_q_results,
-    adapt_attempts
+    adapt_attempts, get_membership_fee_data
 )
 
 
@@ -236,3 +236,34 @@ class ExportRegionsUserDataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'regions_users_data'
+
+
+class ExportMembershipFeeDataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return MEMBERSHIP_FEE_DATA_HEADERS
+
+    def get_filename(self):
+        return f'оплата членского_взноса_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Оплата членского взноса'
+
+    def get_data_func(self):
+        return 'membership_fee'
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(
+    user_passes_test(has_reports_access,
+                     login_url='/',
+                     redirect_field_name=None),
+    name='dispatch')
+class MembershipFeeDataView(View):
+    template_name = 'reports/membership_fee.html'
+
+    def get(self, request):
+        results = get_membership_fee_data(settings.COMPETITION_ID)
+        context = {'sample_results': results,
+                   'columns': MEMBERSHIP_FEE_DATA_HEADERS}
+        return render(request, self.template_name, context)

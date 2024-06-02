@@ -6,8 +6,9 @@ from reports.views import (CommanderSchoolView, CompetitionParticipantView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
                            ExportDetachmentQResultsView,
+                           ExportMembershipFeeDataView, 
                            ExportRegionsUserDataView,
-                           ExportSafetyTestResultsView, ReportView,
+                           ExportSafetyTestResultsView, MembershipFeeDataView, ReportView,
                            SafetyTestResultsView, TaskStatusView, ExportQ5DataView)
 
 urlpatterns = [
@@ -67,5 +68,14 @@ urlpatterns = [
         'get_q5_data/export/',
         ExportQ5DataView.as_view(),
         name='export_q5_data'
+    ),
+    path(
+        'membership_fee/export/',
+        ExportMembershipFeeDataView.as_view(),
+        name='membership_fee_export'
+    ),
+    path('membership_fee/',
+         MembershipFeeDataView.as_view(),
+         name='membership_fee'
     )
 ]

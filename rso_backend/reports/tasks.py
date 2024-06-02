@@ -9,7 +9,7 @@ from django.core.files.storage import default_storage
 from urllib.parse import unquote
 
 from reports.utils import (
-    get_commander_school_data, get_detachment_q_results,
+    get_commander_school_data, get_detachment_q_results, get_membership_fee_data,
     get_regions_users_data, get_safety_results,
     get_competition_participants_contact_data,
     get_competition_participants_data, get_q5_data
@@ -46,6 +46,9 @@ def generate_excel_file(headers, worksheet_title, filename, data_func):
             data = get_regions_users_data()
         case 'get_q5_data':
             data = get_q5_data(settings.COMPETITION_ID)
+        case 'membership_fee':
+            data = get_membership_fee_data(
+                competition_id=settings.COMPETITION_ID)
 
     if not data:
         logger.warning(
