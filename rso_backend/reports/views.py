@@ -18,7 +18,8 @@ from reports.constants import (COMMANDER_SCHOOL_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
                                REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
-                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS)
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS,
+                               Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS)
 from reports.utils import (
     get_commander_school_data, get_competition_users, get_detachment_q_results,
     adapt_attempts
@@ -205,6 +206,66 @@ class ExportQ5DataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_q5_data'
+    
+
+class ExportQ15DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q15_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Победы_членов_отр_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Победы членов отряда'
+
+    def get_data_func(self):
+        return 'get_q15_data'
+
+
+class ExportQ16DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q16_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Активность_в_соц_сет{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Активность в социальных сетях'
+
+    def get_data_func(self):
+        return 'get_q16_data'
+
+
+class ExportQ17DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q17_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Колич_упоминаний_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Количеество упоминаний в СМИ'
+
+    def get_data_func(self):
+        return 'get_q17_data'
+
+
+class ExportQ20DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q20_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Соотвецтв_требованиям_и_полож_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Соответствование требованиям'
+
+    def get_data_func(self):
+        return 'get_q20_data'
 
 
 @method_decorator(login_required, name='dispatch')

@@ -10,8 +10,10 @@ from typing import List, Tuple
 from api.utils import get_user_detachment, get_user_detachment_position
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (CompetitionParticipants, OverallRanking,
-                                 OverallTandemRanking, Q5DetachmentReport, Q5EducatedParticipant, Q5TandemRanking,
-                                 Q5Ranking)
+                                 OverallTandemRanking, Q5DetachmentReport, Q5EducatedParticipant, Q5TandemRanking, Q5Ranking, Q15GrantWinner, Q15Rank, Q15TandemRank,
+                                 Q15DetachmentReport, Q17DetachmentReport,
+                                 Q17EventLink, Q17Ranking, Q17TandemRanking, Q20TandemRanking,
+                                 Q20Ranking, Q20Report, Q16Ranking, Q16TandemRanking, Q16Report)
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
@@ -406,5 +408,191 @@ def get_q5_data(competition_id: int) -> list:
                         'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
                         place
                     ))
+
+    return rows
+
+def get_q15_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr for tr in Q15TandemRank.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q15Rank.objects.all()}
+    reports = Q15DetachmentReport.objects.select_related('detachment').all()
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    grant_winners = Q15GrantWinner.objects.select_related('detachment_report').all()
+    rows = []
+
+    competition_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id
+    ).select_related('detachment', 'junior_detachment')
+
+    def process_participant(detachment, rank_type, rankings):
+        if detachment:
+            detachment_reports = reports.filter(detachment_id=detachment.id)
+            for report in detachment_reports:
+                report_grant_winners = grant_winners.filter(detachment_report_id=report.id)
+                for grant_winner in report_grant_winners:
+                    place = rankings.get(detachment.id).place if detachment.id in rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        rank_type,
+                        grant_winner.name,
+                        grant_winner.status,
+                        grant_winner.author_name,
+                        grant_winner.competition_link,
+                        grant_winner.prove_link,
+                        'Верифицирован' if grant_winner.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    for participant in competition_participants:
+        detachment = detachments.get(participant.detachment_id)
+        process_participant(detachment, 'Тандем', tandem_rankings)
+
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        process_participant(junior_detachment, 'Тандем', tandem_rankings)
+
+    individual_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=True
+    ).select_related('junior_detachment')
+
+    for participant in individual_participants:
+        detachment = detachments.get(participant.junior_detachment_id)
+        process_participant(detachment, 'Дебют', individual_rankings)
+
+    return rows
+
+def get_q16_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr for tr in Q16TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q16Ranking.objects.all()}
+    reports = Q16Report.objects.all().select_related('detachment')
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    rows = []
+
+    competition_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id
+    ).select_related('detachment', 'junior_detachment')
+
+    def process_participant(detachment, rank_type, rankings):
+        if detachment:
+            detachment_reports = reports.filter(detachment_id=detachment.id)
+            for report in detachment_reports:
+                place = rankings.get(detachment.id).place if detachment.id in rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    rank_type,
+                    report.link_vk_commander,
+                    report.link_vk_commissar,
+                    report.vk_rso_number_subscribers,
+                    report.link_vk_detachment,
+                    report.vk_detachment_number_subscribers,
+                    report.score,
+                    report.june_15_detachment_members,
+                    place
+                ))
+
+    for participant in competition_participants:
+        detachment = detachments.get(participant.detachment_id)
+        process_participant(detachment, 'Тандем', tandem_rankings)
+
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        process_participant(junior_detachment, 'Тандем', tandem_rankings)
+
+    individual_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=True
+    ).select_related('junior_detachment')
+
+    for participant in individual_participants:
+        detachment = detachments.get(participant.junior_detachment_id)
+        process_participant(detachment, 'Дебют', individual_rankings)
+
+    return rows
+
+def get_q17_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr for tr in Q17TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q17Ranking.objects.all()}
+    reports = Q17DetachmentReport.objects.all().select_related('detachment')
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    event_links = Q17EventLink.objects.select_related('detachment_report').all()
+    rows = []
+
+    def process_participants(participants, rankings, rank_type):
+        for participant in participants:
+            detachment = detachments.get(participant.detachment_id)
+            if detachment:
+                detachment_reports = reports.filter(detachment_id=detachment.id)
+                for report in detachment_reports:
+                    report_event_links = event_links.filter(detachment_report_id=report.id)
+                    for event_link in report_event_links:
+                        place = rankings.get(detachment.id).place if detachment.id in rankings else 'Ещё нет в рейтинге'
+                        rows.append((
+                            detachment.name,
+                            detachment.region.name if detachment.region else '-',
+                            rank_type,
+                            event_link.link,
+                            str(event_link.detachment_report),
+                            'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                            place
+                        ))
+
+    # Process tandem participants
+    tandem_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=False
+    ).select_related('detachment', 'junior_detachment')
+
+    process_participants(tandem_participants, tandem_rankings, 'Тандем')
+
+    # Process individual participants
+    individual_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=True
+    ).select_related('junior_detachment')
+
+    process_participants(individual_participants, individual_rankings, 'Дебют')
+
+    return rows
+
+def get_q20_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr for tr in Q20TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q20Ranking.objects.all()}
+    reports = Q20Report.objects.all().select_related('detachment')
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    rows = []
+
+    competition_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id
+    ).select_related('detachment', 'junior_detachment')
+
+    def process_participant(detachment, rank_type, rankings):
+        if detachment:
+            detachment_reports = reports.filter(detachment_id=detachment.id)
+            for report in detachment_reports:
+                place = rankings.get(detachment.id).place if detachment.id in rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    rank_type,
+                    report.link_emblem_img,
+                    report.link_emblem,
+                    report.link_flag_img,
+                    report.link_flag,
+                    report.link_banner_img,
+                    report.link_banner,
+                    report.score,
+                    place
+                ))
+
+    for participant in competition_participants:
+        detachment = detachments.get(participant.detachment_id)
+        process_participant(detachment, 'Тандем', tandem_rankings)
+
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        process_participant(junior_detachment, 'Тандем', tandem_rankings)
+
+    individual_participants = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=True
+    ).select_related('junior_detachment')
+
+    for participant in individual_participants:
+        detachment = detachments.get(participant.junior_detachment_id)
+        process_participant(detachment, 'Дебют', individual_rankings)
 
     return rows
