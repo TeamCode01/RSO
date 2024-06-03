@@ -691,7 +691,6 @@ class MemberCertViewSet(viewsets.ReadOnlyModelViewSet):
 class ExchangeTokenView(viewsets.ModelViewSet):
     """Обмен silent token и uuid от ВК для получения access token."""
 
-
     permission_classes = [permissions.AllowAny,]
 
     @swagger_auto_schema(
@@ -717,18 +716,26 @@ class ExchangeTokenView(viewsets.ModelViewSet):
             response = requests.post(
                 'https://api.vk.com/method/auth.exchangeSilentAuthToken',
                 params={
-                'v': settings.VK_API_VERSION,
-                'silent_token': silent_token,
-                'access_token': settings.SOCIAL_AUTH_VK_OAUTH2_SECRET,
-                'uuid': uuid
-            })
+                    'v': settings.VK_API_VERSION,
+                    'silent_token': silent_token,
+                    'access_token': settings.VITE_SERVICE_TOKEN,
+                    'uuid': uuid
+                })
             response_data = response.json()
 
             if 'response' in response_data:
                 access_token = response_data['response']['access_token']
-                return Response({'access_token': access_token}, status=status.HTTP_200_OK)
+                return Response(
+                    {'access_token': access_token},
+                    status=status.HTTP_200_OK
+                )
             else:
-                return Response({'error': response_data.get('error', 'Unknown error')}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'error': response_data.get('error', 'Unknown error')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         except requests.RequestException as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
