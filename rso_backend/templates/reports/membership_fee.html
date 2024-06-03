@@ -1,6 +1,6 @@
 {% extends 'reports/base.html' %}
 {% load i18n %}
-{% block title %}Прохождение Командиром и Комиссаром студенческого отряда региональной школы командного состава
+{% block title %}Численность членов линейного студенческого отряда в соответствии с объемом уплаченных членских взносов
 {% endblock %}
 {% block header %}
 {% include 'reports/header.html' %}
@@ -9,7 +9,7 @@
 {% block content %}
 {% include 'reports/header.html' %}
 <div class="container">
-    <h1>Прохождение Командиром и Комиссаром студенческого отряда региональной школы командного состава
+    <h1>Численность членов линейного студенческого отряда в соответствии с объемом уплаченных членских взносов
     </h1>
     <style>
         table {
@@ -55,7 +55,6 @@
                     <td>{{ row.4 }}</td>
                     <td>{{ row.5 }}</td>
                     <td>{{ row.6 }}</td>
-                    <td>{{ row.7 }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -69,7 +68,7 @@
         button.disabled = true;
         button.textContent = 'Подождите, файл готовится...';
 
-        fetch('{% url "export_commander_school_results" %}')
+        fetch('{% url "membership_fee_export" %}')
             .then(response => response.json())
             .then(data => {
                 const taskId = data.task_id;

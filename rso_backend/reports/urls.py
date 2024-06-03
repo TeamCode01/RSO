@@ -6,10 +6,12 @@ from reports.views import (CommanderSchoolView, CompetitionParticipantView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
                            ExportDetachmentQResultsView,
+                           ExportMembershipFeeDataView, 
                            ExportRegionsUserDataView,
-                           ExportSafetyTestResultsView, ReportView,
+                           ExportSafetyTestResultsView, ReportView,MembershipFeeDataView,
                            SafetyTestResultsView, TaskStatusView, ExportQ5DataView, ExportQ15DataView,
                            ExportQ16DataView, ExportQ17DataView, ExportQ20DataView)
+
 
 urlpatterns = [
     path('', ReportView.as_view(), name='reports'),
@@ -89,4 +91,13 @@ urlpatterns = [
         ExportQ20DataView.as_view(),
         name='export_q20_data'
     ),
+    path(
+        'membership_fee/export/',
+        ExportMembershipFeeDataView.as_view(),
+        name='membership_fee_export'
+    ),
+    path('membership_fee/',
+         MembershipFeeDataView.as_view(),
+         name='membership_fee'
+    )
 ]

@@ -60,84 +60,98 @@ include 'reports/header.html' %}
 	</div>
 </div>
 <script>
-	function setupDownloadButton(buttonId, url, defaultText) {
-		document.getElementById(buttonId).addEventListener('click', function () {
-			const button = this
-			button.disabled = true
-			button.textContent = 'Подождите, файл готовится...'
+		function setupDownloadButton(buttonId, url, defaultText) {
+			document.getElementById(buttonId).addEventListener('click', function () {
+				const button = this
+				button.disabled = true
+				button.textContent = 'Подождите, файл готовится...'
 
-			fetch(url)
-				.then(response => response.json())
-				.then(data => {
-					const taskId = data.task_id
-					const intervalId = setInterval(() => {
-						fetch(`/reports/task-status/${taskId}/`)
-							.then(response => response.json())
-							.then(statusData => {
-								if (statusData.status === 'SUCCESS') {
-									clearInterval(intervalId)
-									window.location.href = statusData.download_url
-									button.disabled = false
-									button.textContent = defaultText
-								} else if (statusData.status === 'FAILURE') {
-									clearInterval(intervalId)
-									button.disabled = false
-									button.textContent =
-										'Ошибка при подготовке файла. Попробуйте снова.'
-								}
-							})
-					}, 2000)
-				})
-		})
-	}
 
-	setupDownloadButton(
-		'downloadContactDataButton',
-		'{% url "competition_participants_contact_data" %}',
-		'Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)'
-	)
-	setupDownloadButton(
-		'downloadUsersDataButton',
-		'{% url "regions_users_data" %}',
-		'Выгрузка данных пользователей по регионам (файл)'
-	)
-	setupDownloadButton(
-		'downloadQ5DataButton',
-		'{% url "export_q5_data" %}',
-		'Процент членов студенческого отряда, прошедших профессиональное обучение (файл)'
-	)
-	setupDownloadButton(
-		'downloadQ15DataButton',
-		'{% url "export_q15_data" %}',
-		'Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах (файл)'
-	)
-	setupDownloadButton(
-		'downloadQ16DataButton',
-		'{% url "export_q16_data" %}',
-		'Активность отряда в социальных сетях (файл)'
-	)
-	setupDownloadButton(
-		'downloadQ17DataButton',
-		'{% url "export_q17_data" %}',
-		'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)'
-	)
-	setupDownloadButton(
-		'downloadQ20DataButton',
-		'{% url "export_q20_data" %}',
-		'Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов (файл)'
-	)
+	{% block content %}
+	    {% include 'reports/header.html' %}
+	    <div class="container">
+	        <h2>Привет, {{ user.get_full_name }}!</h2>
+	        <h1>Доступные отчеты:</h1>
+	        <div class="search-container">
+	            <input type="text" id="reportSearch" placeholder="Поиск отчетов...">
+	        </div>
+	        <div class="grid-container" id="buttonContainer">
+	            <a href="{% url 'safety_test_results' %}" class="button">Результаты тестирования по безопасности</a>
+	            <a href="{% url 'competition_participants' %}" class="button">Общая выгрузка участников конкурса</a>
+	            <a href="{% url 'detachment_q_results' %}" class="button">Общая выгрузка участников конкурса по всем показателям</a>
+	            <button class="button" id="downloadContactDataButton">Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)</button>
+	            <button class="button" id="downloadUsersDataButton">Выгрузка данных пользователей по регионам (Файл)</button>
+	            <button class="button" id="downloadQ5DataButton">Процент членов студенческого отряда, прошедших профессиональное обучение (файл)</button>
+							<button class="button" id="downloadQ15DataButton">Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах(файл)</button>
+							<button class="button" id="downloadQ16DataButton">Активность отряда в социальных сетях (файл)</button>
+							<button class="button" id="downloadQ17DataButton">Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)</button>
+							<button class="button" id="downloadQ20DataButton">Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов (файл)</button>
+	{#            <a href="/report2" class="button">Отчет 2</a>#}
+	{#            <a href="/report3" class="button">Отчет 3</a>#}
+	{#            <a href="/report1" class="button">Отчет 1</a>#}
+	{#            <a href="/report2" class="button">Отчет 2</a>#}
+	{#            <a href="/report3" class="button">Отчет 3</a>#}
+	{#            <a href="/report1" class="button">Отчет 1</a>#}
+	{#            <a href="/report2" class="button">Отчет 2</a>#}
+	{#            <a href="/report3" class="button">Отчет 3</a>#}
+	{#            <a href="/report1" class="button">Отчет 1</a>#}
+	{#            <a href="/report2" class="button">Отчет 2</a>#}
+	{#            <a href="/report3" class="button">Отчет 3</a>#}
+	            <a href="{% url 'commander_school' %}" class="button">Прохождение Командиром и Комиссаром школы командирского состава</a>
+	            <a href="{% url 'membership_fee' %}" class="button">Численность членов отряда в соответствии с объемом уплаченных членских взносов</a>
+	            <!-- отчеты размещать здесь -->
+	        </div>
+	    </div>
+	    <script>
+	        function setupDownloadButton(buttonId, url, defaultText) {
+	            document.getElementById(buttonId).addEventListener('click', function() {
+	                const button = this;
+	                button.disabled = true;
+	                button.textContent = 'Подождите, файл готовится...';
 
-	const searchInput = document.getElementById('reportSearch')
-	const buttonContainer = document.getElementById('buttonContainer')
-	const buttons = buttonContainer.getElementsByTagName('button')
+	                fetch(url)
+	                    .then(response => response.json())
+	                    .then(data => {
+	                        const taskId = data.task_id;
+	                        const intervalId = setInterval(() => {
+	                            fetch(`/reports/task-status/${taskId}/`)
+	                                .then(response => response.json())
+	                                .then(statusData => {
+	                                    if (statusData.status === 'SUCCESS') {
+	                                        clearInterval(intervalId);
+	                                        window.location.href = statusData.download_url;
+	                                        button.disabled = false;
+	                                        button.textContent = defaultText;
+	                                    } else if (statusData.status === 'FAILURE') {
+	                                        clearInterval(intervalId);
+	                                        button.disabled = false;
+	                                        button.textContent = 'Ошибка при подготовке файла. Попробуйте снова.';
+	                                    }
+	                                });
+	                        }, 2000);
+	                    });
+	            });
+	        }
 
-	searchInput.addEventListener('input', function () {
-		const filter = searchInput.value.toLowerCase()
-		for (const button of buttons) {
-			const text = button.textContent || button.innerText
-			button.style.display =
-				text.toLowerCase().indexOf(filter) > -1 ? '' : 'none'
-		}
-	})
+	        setupDownloadButton('downloadContactDataButton', '{% url "competition_participants_contact_data" %}', 'Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)');
+	        setupDownloadButton('downloadUsersDataButton', '{% url "regions_users_data" %}', 'Выгрузка данных пользователей по регионам (файл)');
+	        setupDownloadButton('downloadQ5DataButton', '{% url "export_q5_data" %}', 'Процент членов студенческого отряда, прошедших профессиональное обучение (файл)');
+					setupDownloadButton('downloadQ15DataButton', '{% url "export_q15_data" %}',
+					'Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах (файл)')
+					setupDownloadButton('downloadQ16DataButton', '{% url "export_q16_data" %}', 'Активность отряда в социальных сетях (файл)')
+					setupDownloadButton('downloadQ17DataButton', '{% url "export_q17_data" %}', 'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)')
+					setupDownloadButton('downloadQ20DataButton', '{% url "export_q20_data" %}', 'Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов (файл)')
+
+	        const searchInput = document.getElementById('reportSearch');
+	        const buttonContainer = document.getElementById('buttonContainer');
+	        const buttons = buttonContainer.getElementsByTagName('button');
+
+	        searchInput.addEventListener('input', function() {
+	            const filter = searchInput.value.toLowerCase();
+	            for (const button of buttons) {
+	                const text = button.textContent || button.innerText;
+	                button.style.display = text.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+	            }
+	        });
 </script>
 {% endblock %}

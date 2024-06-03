@@ -1,7 +1,7 @@
 from urllib.parse import urljoin
 
-from django.db import connection
-from django.db.models import Q
+from django.db import connection, models
+from django.db.models import Count, Q, Case, When, Value
 from django.conf import settings
 
 from collections import defaultdict
@@ -250,13 +250,15 @@ def get_regions_users_data():
 
 
 def get_commander_school_data(competition_id: int) -> list:
+    """Функция формирует данные для отчета q2."""
     # информация по отряду наставнику в тандеме
     detachment_data = CompetitionParticipants.objects.filter(
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
-        'detachment'
+        'detachment__region'
     ).prefetch_related(
-        'detachment__region',
+        'detachment__q2detachmentreport_detachment_reports',
+        'detachment__q2tandemranking_main_detachment'
     ).values(
         'detachment__name',
         'detachment__region__name',
@@ -271,9 +273,10 @@ def get_commander_school_data(competition_id: int) -> list:
     junior_detachment_data = CompetitionParticipants.objects.filter(
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
-        'junior_detachment'
+        'junior_detachment__region'
     ).prefetch_related(
-        'junior_detachment__region',
+        'junior_detachment__q2detachmentreport_detachment_reports',
+        'junior_detachment__q2tandemranking_junior_detachment'
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
@@ -288,9 +291,10 @@ def get_commander_school_data(competition_id: int) -> list:
     individual_data = CompetitionParticipants.objects.filter(
         Q(competition_id=competition_id) & Q(detachment__isnull=True)
     ).select_related(
-        'junior_detachment'
+        'junior_detachment__region'
     ).prefetch_related(
-        'junior_detachment__region',
+        'junior_detachment__q2detachmentreport_detachment_reports',
+        'junior_detachment__q2ranking'
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
@@ -335,10 +339,10 @@ def get_commander_school_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
-            'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
-            'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
-            data.get('detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
-            data.get('detachment__q2detachmentreport_detachment_reports__commissioner_link', '-') or '-',
+            'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
+            'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
+            data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
+            data.get('junior_detachment__q2detachmentreport_detachment_reports__commissioner_link', '-') or '-',
             data.get('junior_detachment__q2ranking__place', 'Ещё нет в рейтинге') or 'Ещё нет в рейтинге'
         ) for data in individual_data
     ])
@@ -410,6 +414,7 @@ def get_q5_data(competition_id: int) -> list:
                     ))
 
     return rows
+
 
 def get_q15_data(competition_id: int) -> list:
     tandem_rankings = {tr.detachment_id: tr for tr in Q15TandemRank.objects.all()}
@@ -594,5 +599,144 @@ def get_q20_data(competition_id: int) -> list:
     for participant in individual_participants:
         detachment = detachments.get(participant.junior_detachment_id)
         process_participant(detachment, 'Дебют', individual_rankings)
+
+def get_membership_fee_data(competition_id: int) -> list:
+    """Функция формирует данные для отчета q1."""
+    # информация по отряду наставнику в тандеме
+    detachment_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=False)
+    ).select_related(
+        'detachment__region',
+        'detachment__members'
+        'detachment__commander',
+    ).prefetch_related(
+        'detachment__q1report_detachment_reports',
+        'detachment__q1tandemranking_main_detachment'
+    ).annotate(
+        membership_fee_count=Count(
+            'detachment__members__user',
+            filter=Q(detachment__members__user__membership_fee=True)),
+        members=Count('detachment__members__user'),
+        membership_fee_commander_count=Case(
+            When(detachment__commander__membership_fee=True, then=Value(1)),
+            default=Value(0),
+            output_field=models.IntegerField(),
+        ),
+    ).values(
+        'detachment__name',
+        'detachment__region__name',
+        'membership_fee_count',
+        'members',
+        'membership_fee_commander_count',
+        'detachment__q1report_detachment_reports__score',
+        'detachment__q1tandemranking_main_detachment__place',
+    ).all()
+
+    junior_detachment_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=False)
+    ).select_related(
+        'junior_detachment__region',
+        'junior_detachment__members'
+        'junior_detachment__commander',
+    ).prefetch_related(
+        'junior_detachment__q1report_detachment_reports',
+        'junior_detachment__q1tandemranking_junior_detachment'
+    ).annotate(
+        membership_fee_count=Count(
+            'junior_detachment__members__user',
+            filter=Q(junior_detachment__members__user__membership_fee=True)),
+        members=Count('junior_detachment__members__user'),
+        membership_fee_commander_count=Case(
+            When(junior_detachment__commander__membership_fee=True, then=Value(1)),
+            default=Value(0),
+            output_field=models.IntegerField(),
+        ),
+    ).values(
+        'junior_detachment__name',
+        'junior_detachment__region__name',
+        'membership_fee_count',
+        'members',
+        'membership_fee_commander_count',
+        'junior_detachment__q1report_detachment_reports__score',
+        'junior_detachment__q1tandemranking_junior_detachment__place',
+    ).all()
+
+    # # информация по старт отряду в индивидуальных заявках
+    individual_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=True)
+    ).select_related(
+        'junior_detachment__region',
+        'junior_detachment__members',
+        'junior_detachment__commander',
+    ).prefetch_related(
+        'junior_detachment__q1report_detachment_reports',
+        'junior_detachment__q1ranking'
+    ).annotate(
+        membership_fee_count=Count(
+            'junior_detachment__members__user',
+            filter=Q(junior_detachment__members__user__membership_fee=True)),
+        members=Count('junior_detachment__members__user'),
+        membership_fee_commander_count=Case(
+            When(junior_detachment__commander__membership_fee=True, then=Value(1)),
+            default=Value(0),
+            output_field=models.IntegerField(),
+        ),
+    ).values(
+        'junior_detachment__name',
+        'junior_detachment__region__name',
+        'membership_fee_count',
+        'members',
+        'membership_fee_commander_count',
+        'junior_detachment__q1report_detachment_reports__score',
+        'junior_detachment__q1ranking__place',
+    ).all()
+
+    # Добавляем данные по отряду наставнику в тандеме
+    rows = [
+        (
+            data.get('detachment__name', '-'),
+            data.get('detachment__region__name', '-'),
+            'Тандем',
+            data.get('members') + 1 if data.get('members') else 1,  # командир отряда есть всегда
+            data.get('membership_fee_count', 0) + data.get(
+                'membership_fee_commander_count') or '-',
+            data.get('detachment__q1report_detachment_reports__score', '-') or '-',
+            data.get('detachment__q1tandemranking_main_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in detachment_data
+    ]
+
+    # Добавляем данные по отряду старт в тандеме
+    rows.extend([
+        (
+            data.get('junior_detachment__name', '-'),
+            data.get('junior_detachment__region__name', '-'),
+            'Тандем',
+            data.get('members') + 1 if data.get('members') else 1,
+            data.get('membership_fee_count', 0) + data.get(
+                'membership_fee_commander_count') or '-',
+            data.get('junior_detachment__q1report_detachment_reports__score', '-'
+                     ) or '-',
+            data.get(
+                'junior_detachment__q1tandemranking_junior_detachment__place',
+                'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in junior_detachment_data
+    ])
+
+    # Добавляем данные по отряду старт в индивидуальных заявках
+    rows.extend([
+        (
+            data.get('junior_detachment__name', '-'),
+            data.get('junior_detachment__region__name', '-'),
+            'Дебют',
+            data.get('members') + 1 if data.get('members') else 1,
+            data.get('membership_fee_count', 0) + data.get(
+                'membership_fee_commander_count') or '-',
+            data.get('junior_detachment__q1report_detachment_reports__score', '-'
+                     ) or '-',
+            data.get(
+                'junior_detachment__q1ranking__place',
+                'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in individual_data
+    ])
 
     return rows
