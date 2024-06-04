@@ -717,7 +717,7 @@ class ExchangeTokenView(viewsets.ModelViewSet):
                 'https://api.vk.com/method/auth.exchangeSilentAuthToken',
                 params={
                     'v': settings.VK_API_VERSION,
-                    'silent_token': silent_token,
+                    'token': silent_token,
                     'access_token': settings.VITE_SERVICE_TOKEN,
                     'uuid': uuid
                 })
