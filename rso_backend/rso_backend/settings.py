@@ -560,7 +560,16 @@ if DEBUG:
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8080',
-    'http://31.129.98.70/',
+    'http://127.0.0.1:8080',
+    'http://localhost:80',
+    'http://localhost',
+    'https://d2avids.sytes.net',
+    'https://rso.sprint.1t.ru',
+    'https://лк.трудкрут.рф',
+    'http://213.139.208.147',
+    'https://213.139.208.147',
+    'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
+    'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -570,7 +579,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8080',
     'http://localhost',
     'https://127.0.0.1',
-    'http://31.129.98.70/',
+    'https://rso.sprint.1t.ru',
+    'https://лк.трудкрут.рф',
+    'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
+    'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
+    'http://213.139.208.147',
+    'https://213.139.208.147',
 ]
 
 REST_FRAMEWORK = {
@@ -586,13 +600,12 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100
 }
 
-
-SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_VK_OAUTH2_KEY')
-SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET')
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
-SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
-VK_API_VERSION = '5.131'
-VITE_SERVICE_TOKEN = os.getenv('VITE_SERVICE_TOKEN')
+if DEBUG:
+    SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_VK_OAUTH2_KEY')
+    SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET')
+    SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
+    SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
+    VK_API_VERSION = '5.131'
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
