@@ -560,16 +560,7 @@ if DEBUG:
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8080',
-    'http://127.0.0.1:8080',
-    'http://localhost:80',
-    'http://localhost',
-    'https://d2avids.sytes.net',
-    'https://rso.sprint.1t.ru',
-    'https://лк.трудкрут.рф',
-    'http://213.139.208.147',
-    'https://213.139.208.147',
-    'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
-    'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
+    'http://31.129.98.70/',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -579,12 +570,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8080',
     'http://localhost',
     'https://127.0.0.1',
-    'https://rso.sprint.1t.ru',
-    'https://лк.трудкрут.рф',
-    'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
-    'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
-    'http://213.139.208.147',
-    'https://213.139.208.147',
+    'http://31.129.98.70/',
 ]
 
 REST_FRAMEWORK = {
