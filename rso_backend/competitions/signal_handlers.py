@@ -131,7 +131,7 @@ def create_score_q12(sender, instance, created=False, **kwargs):
             return report
 
 
-@receiver([post_save, post_delete], sender=Q20Report)
+@receiver([post_save], sender=Q20Report)
 def create_score_q20(sender, instance, created=False, **kwargs):
     if created:
         pass
