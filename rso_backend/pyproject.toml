@@ -35,6 +35,7 @@ openpyxl = "^3.1.2"
 django-rest-framework-social-oauth2 = "^1.2.0"
 pandas = "^2.2.2"
 sqlalchemy = "^2.0.30"
+djangorestframework-simplejwt = "^5.3.1"
 
 
 [build-system]
