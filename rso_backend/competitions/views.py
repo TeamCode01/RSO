@@ -5295,6 +5295,7 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         detachment__isnull=True
     ).exists()
     if is_solo:
+        response['partner_detachment'] = None
         response['is_tandem'] = False
         response['is_junior_detachment'] = True
         try:
@@ -5319,8 +5320,12 @@ def get_detachment_places(request, competition_pk, detachment_pk):
             junior_detachment=detachment,
             detachment__isnull=False,
             competition=competition
-        ).exists()
+        ).first()
         if is_tandem_junior:
+            response['partner_detachment'] = {
+                'id': is_tandem_junior.detachment.id,
+                'name': is_tandem_junior.detachment.name
+            }
             response['is_tandem'] = True
             response['is_junior_detachment'] = True
             try:
@@ -5344,8 +5349,12 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         is_older_detachment = CompetitionParticipants.objects.filter(
             detachment=detachment,
             competition=competition
-        ).exists()
+        ).first()
         if is_older_detachment:
+            response['partner_detachment'] = {
+                'id': is_older_detachment.junior_detachment.id,
+                'name': is_older_detachment.junior_detachment.name
+            }
             response['is_tandem'] = True
             response['is_junior_detachment'] = False
             try:
