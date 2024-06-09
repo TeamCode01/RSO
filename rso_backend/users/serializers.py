@@ -1061,7 +1061,7 @@ class SafeUserSerializer(RSOUserSerializer):
     Для использования в /safe_users/.
     """
 
-    avatar = UserAvatarSerializer(source='media', read_only=True)
+    media = UserMediaSerializer(source='media', read_only=True)
 
     class Meta:
         ref_name = 'safe_users'
@@ -1069,7 +1069,7 @@ class SafeUserSerializer(RSOUserSerializer):
         fields = (
             'id',
             'username',
-            'avatar',
+            'media',
             'email',
             'first_name',
             'last_name',
