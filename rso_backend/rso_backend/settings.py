@@ -8,6 +8,9 @@ from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
+DEFAULT_POSITION_ID = 1
+CENTRAL_HQ_ID = 1
+
 # Redis cache TTL
 DETACHMENT_LIST_TTL = 120
 EDUCATIONALS_LIST_TTL = 120

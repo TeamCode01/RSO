@@ -628,6 +628,8 @@ class UserUnitPosition(models.Model):
     )
     is_trusted = models.BooleanField(default=False, verbose_name='Доверенный')
 
+    skip_central_creation = False
+
     class Meta:
         abstract = True
 
@@ -646,29 +648,40 @@ class UserUnitPosition(models.Model):
         необходимые параметры 'headquarter' и 'class_above' при создании
         нового объекта (не вызывается для центрального штаба).
         """
-        if self._state.adding:
-            default_position, _ = Position.objects.get_or_create(
-                name=settings.DEFAULT_POSITION_NAME
-            )
-            headquarter = kwargs.pop('headquarter', None)
-            class_above = kwargs.pop('class_above', None)
-            if headquarter and class_above:
-                user_id = self.user_id
-                print(self.__class__)
-                print(self.__class__.objects.filter(user_id=user_id).exists())
-                if not self.__class__.objects.filter(user_id=user_id).exists():
+        if self.skip_central_creation:
+            if self._state.adding:
+                default_position, _ = Position.objects.get_or_create(
+                    name=settings.DEFAULT_POSITION_NAME
+                )
+                headquarter = kwargs.pop('headquarter', None)
+                class_above = kwargs.pop('class_above', None)
+                if headquarter and class_above:
+                    user_id = self.user_id
+                    try:
+                        instance = class_above.objects.get(
+                            user_id=user_id,
+                            headquarter=headquarter
+                        )
+                        if not isinstance(instance, UserCentralHeadquarterPosition):
+                            instance_position = instance.position
+                            instance.delete()
+                        else:
+                            instance_position = default_position
+                    except class_above.DoesNotExist:
+                        instance_position = default_position
                     class_above.objects.create(
                         user_id=user_id,
                         headquarter=headquarter,
-                        position=default_position
+                        position=instance_position
                     )
                 else:
-                    return
-            else:
-                raise ValueError(
-                    'headquarter и class_above должны быть переданы '
-                    'в качестве kwargs в подклассах'
-                )
+                    raise ValueError(
+                        'headquarter и class_above должны быть переданы '
+                        'в качестве kwargs в подклассах'
+                    )
+
+        kwargs.pop('headquarter', None)
+        kwargs.pop('class_above', None)
         super().save(*args, **kwargs)
 
     def delete_user_from_all_units(self):
@@ -712,6 +725,7 @@ class UserCentralHeadquarterPosition(UserUnitPosition):
     )
 
     def save(self, *args, **kwargs):
+        # if self._state.adding and self.skip_central_creation:
         if self._state.adding:
             return
         super().save(*args, **kwargs)
@@ -735,13 +749,23 @@ class UserDistrictHeadquarterPosition(UserUnitPosition):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
+            self.skip_central_creation = True
             default_position, _ = Position.objects.get_or_create(
                 name=settings.DEFAULT_POSITION_NAME
             )
+            try:
+                instance = UserCentralHeadquarterPosition.objects.get(
+                    user_id=self.user_id,
+                    headquarter=CentralHeadquarter.objects.first(),
+                )
+                instance_position = instance.position
+                instance.delete()
+            except UserCentralHeadquarterPosition.DoesNotExist:
+                instance_position = default_position
             central_position = UserCentralHeadquarterPosition.objects.create(
                 user_id=self.user_id,
                 headquarter=CentralHeadquarter.objects.first(),
-                position=default_position,
+                position=instance_position,
             )
             central_position.save_base(force_insert=True)
             kwargs['headquarter'] = self.headquarter.central_headquarter
@@ -763,6 +787,7 @@ class UserRegionalHeadquarterPosition(UserUnitPosition):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
+            self.skip_central_creation = True
             kwargs['headquarter'] = self.headquarter.district_headquarter
             kwargs['class_above'] = UserDistrictHeadquarterPosition
         super().save(*args, **kwargs)
@@ -782,6 +807,7 @@ class UserLocalHeadquarterPosition(UserUnitPosition):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
+            self.skip_central_creation = True
             kwargs['headquarter'] = self.headquarter.regional_headquarter
             kwargs['class_above'] = UserRegionalHeadquarterPosition
         super().save(*args, **kwargs)
@@ -811,16 +837,19 @@ class UserEducationalHeadquarterPosition(UserUnitPosition):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
+            self.skip_central_creation = True
             headquarter = self.get_first_filled_headquarter()
             kwargs['headquarter'] = headquarter
             if isinstance(headquarter, LocalHeadquarter):
                 kwargs['class_above'] = UserLocalHeadquarterPosition
             else:
                 kwargs['class_above'] = UserRegionalHeadquarterPosition
+
         super().save(*args, **kwargs)
 
 
 class UserDetachmentPosition(UserUnitPosition):
+
     headquarter = models.ForeignKey(
         'Detachment',
         on_delete=models.CASCADE,
@@ -853,6 +882,7 @@ class UserDetachmentPosition(UserUnitPosition):
             )
             self.position = default_position
         if self._state.adding:
+            self.skip_central_creation = True
             headquarter = self.get_first_filled_headquarter()
             kwargs['headquarter'] = headquarter
             if isinstance(headquarter, EducationalHeadquarter):
@@ -861,6 +891,7 @@ class UserDetachmentPosition(UserUnitPosition):
                 kwargs['class_above'] = UserLocalHeadquarterPosition
             elif isinstance(headquarter, RegionalHeadquarter):
                 kwargs['class_above'] = UserRegionalHeadquarterPosition
+
         super().save(*args, **kwargs)
 
 
@@ -886,3 +917,125 @@ class UserDetachmentApplication(models.Model):
         ]
         verbose_name_plural = 'Заявки на вступление в отряды'
         verbose_name = 'Заявка на вступление в отряд'
+
+
+class UserEducationalApplication(models.Model):
+    """Таблица для подачи заявок на вступление в обр.штаб."""
+    user = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь, подавший заявку на вступление в обр.штаб',
+        related_name='edu_applications',
+    )
+    headquarter = models.ForeignKey(
+        'EducationalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Обр.штаб, в который была подана заявка на вступление',
+        related_name='edu_applications',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'headquarter'],
+                                    name='user_eduunique_constraint')
+        ]
+        verbose_name_plural = 'Заявки на вступление в обр.штабы'
+        verbose_name = 'Заявка на вступление в обр.штаб'
+
+
+class UserLocalApplication(models.Model):
+    """Таблица для подачи заявок на вступление в МШ."""
+
+    user = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь, подавший заявку на вступление в МШ',
+        related_name='local_applications',
+    )
+    headquarter = models.ForeignKey(
+        'LocalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='МШ, в который была подана заявка на вступление',
+        related_name='local_applications',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'headquarter'],
+                                    name='user_local_unique_constraint')
+        ]
+        verbose_name_plural = 'Заявки на вступление в МШ'
+        verbose_name = 'Заявка на вступление в МШ'
+
+
+class UserRegionalApplication(models.Model):
+    """Таблица для подачи заявок на вступление в РШ."""
+
+    user = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь, подавший заявку на вступление в РШ',
+        related_name='regional_applications',
+    )
+    headquarter = models.ForeignKey(
+        'RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='РШ, в котором была подана заявка на вступление',
+        related_name='regional_applications',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'headquarter'],
+                                    name='user_regional_unique_constraint')
+        ]
+
+
+class UserDistrictApplication(models.Model):
+    """Таблица для подачи заявок на вступление в Окружной штаб."""
+
+    user = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        verbose_name=(
+            'Пользователь, подавший заявку на вступление в Окружной штаб'
+        ),
+        related_name='district_applications',
+    )
+    headquarter = models.ForeignKey(
+        'DistrictHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name=(
+            'Окружной штаб, в котором была подана заявка на вступление'
+        ),
+        related_name='district_applications',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'headquarter'],
+                                    name='user_district_unique_constraint')
+        ]
+
+
+class UserCentralApplication(models.Model):
+    """Таблица для подачи заявок на вступление в ЦШ."""
+
+    user = models.ForeignKey(
+        'users.RSOUser',
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь, подавший заявку на вступление в ЦШ',
+        related_name='central_applications',
+    )
+    headquarter = models.ForeignKey(
+        'CentralHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='ЦШ, в котором была подана заявка на вступление',
+        related_name='central_applications',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'headquarter'],
+                                    name='user_central_unique_constraint')
+        ]

@@ -1,28 +1,21 @@
-import io
-
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import Group
-from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
 from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
                                        IntervalSchedule, PeriodicTask,
                                        SolarSchedule)
+from headquarters.utils import create_central_hq_member
 from import_export.admin import ImportExportModelAdmin
-from openpyxl import Workbook
 from rest_framework.authtoken.models import TokenProxy
 
-from headquarters.models import Detachment, UserDetachmentPosition
-from users.forms import RSOUserForm
-from users.models import (AdditionalForeignDocs, RSOUser, UserDocuments,
+from headquarters.models import Detachment
+from users.models import (RSOUser, UserDocuments,
                           UserEducation, UserForeignDocuments,
                           UserForeignParentDocs, UserMedia, UserMemberCertLogs,
                           UserMembershipLogs, UserParent, UserPrivacySettings,
                           UserRegion, UserStatementDocuments,
                           UserVerificationLogs)
 from users.resources import RSOUserResource
-from users.serializers import UserIdRegionSerializer
 
 
 class UserRegionInline(admin.StackedInline):
@@ -72,6 +65,25 @@ class UserForeignParentDocsInline(admin.StackedInline):
 
 @admin.register(RSOUser)
 class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
+
+    actions = ['add_to_central_headquarter_position']
+
+    def add_to_central_headquarter_position(self, request, queryset):
+        """
+
+        Добавление юзера в члены ЦШ через action в разделе таблицы
+        "Пользователи".
+        """
+
+        for user in queryset:
+            create_central_hq_member(
+                headquarter_id=settings.CENTRAL_HQ_ID,
+                user_id=user.id
+            )
+
+    add_to_central_headquarter_position.short_description = (
+        'Добавить юзера в ЦШ'
+    )
 
     def detachment_name(self, obj):
         """
