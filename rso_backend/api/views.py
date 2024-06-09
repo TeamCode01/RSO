@@ -22,6 +22,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import EducationalInstitutionFilter
 from api.mixins import ListRetrieveViewSet
@@ -739,3 +740,60 @@ class ExchangeTokenView(viewsets.ModelViewSet):
             return Response(
                 {'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class VKLoginAPIView(APIView):
+
+    """Вход через VK.
+
+    Принимает access token полученный от ВК.
+    В ответе access_token и  refresh_token бекенда RSO.
+    Время жизни access_token - 30 минут.
+    Время жизни refresh_token - 1 день.
+    """
+
+    permission_classes = [permissions.AllowAny,]
+
+    @swagger_auto_schema(
+                request_body=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=[],
+                    properties={
+                        'access_token': openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            default='foobar'
+                        ),
+                    }
+                )
+            )
+    def post(self, request):
+
+        access_token = request.data.get('access_token')
+
+        response = requests.get("https://api.vk.com/method/users.get", params={"access_token": access_token, "v": "5.131"})
+
+        vk_user_data = response.json().get('response')
+
+        if not vk_user_data:
+            return Response(
+                {
+                    'error': 'Неправильный access token или ошибка в полученном ответе от ВК.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        vk_user_data = vk_user_data[0]
+        vk_id = vk_user_data.get('id')
+        first_name = vk_user_data.get('first_name')
+        last_name = vk_user_data.get('last_name')
+
+        user, _ = RSOUser.objects.get_or_create(
+            username=vk_id,
+            first_name=first_name,
+            last_name=last_name
+
+        )
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })

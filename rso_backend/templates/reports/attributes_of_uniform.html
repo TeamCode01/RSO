@@ -1,0 +1,102 @@
+{% extends 'reports/base.html' %}
+{% load i18n %}
+{% block title %}
+  Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов
+{% endblock %}
+{% block header %}
+{% include 'reports/header.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'reports/header.html' %}
+<div class="container">
+    <h1>
+        Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов
+    </h1>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #007acc;
+            text-align: left;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        th {
+            background-color: #f0f8ff;
+            color: #007acc;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+
+    <table>
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in sample_results %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.0 }}</td>
+                    <td>{{ row.1 }}</td>
+                    <td>{{ row.2 }}</td>
+                    <td>{{ row.3 }}</td>
+                    <td>{{ row.4 }}</td>
+                    <td>{{ row.5 }}</td>
+                    <td>{{ row.6 }}</td>
+                    <td>{{ row.7 }}</td>
+                    <td>{{ row.8 }}</td>
+                    <td>{{ row.9 }}</td>
+                    <td>{{ row.10 }}</td>
+                    <td>{{ row.11 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button id="downloadButton" class="button">Скачать все результаты в Excel</button>
+
+<script>
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        const button = this;
+        button.disabled = true;
+        button.textContent = 'Подождите, файл готовится...';
+
+        fetch('{% url "attributes_of_uniform_export" %}')
+            .then(response => response.json())
+            .then(data => {
+                const taskId = data.task_id;
+                const intervalId = setInterval(() => {
+                    fetch(`/reports/task-status/${taskId}/`)
+                        .then(response => response.json())
+                        .then(statusData => {
+                            if (statusData.status === 'SUCCESS') {
+                                clearInterval(intervalId);
+                                window.location.href = statusData.download_url;
+                                button.disabled = false;
+                                button.textContent = 'Скачать все результаты в Excel';
+                            } else if (statusData.status === 'FAILURE') {
+                                clearInterval(intervalId);
+                                button.disabled = false;
+                                button.textContent = 'Ошибка при подготовке файла. Попробуйте снова.';
+                            }
+                        });
+                }, 2000);
+            });
+    });
+</script>
+
+{% endblock %}

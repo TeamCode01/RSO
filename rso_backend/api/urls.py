@@ -10,7 +10,7 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            UPDATE_RETRIEVE, LIST_CREATE,)
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
-                       ExchangeTokenView,
+                       ExchangeTokenView, VKLoginAPIView,
                        change_membership_fee_status, verify_user)
 from competitions.views import (CompetitionApplicationsViewSet,
                                 CompetitionParticipantsViewSet,
@@ -672,5 +672,6 @@ urlpatterns = [
     path('questions/', QuestionsView.as_view(), name='questions'),
     path('submit_answers/', submit_answers, name='submit-answers'),
     path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
+    path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
     path('', include(router.urls)),
 ] + user_nested_urls
