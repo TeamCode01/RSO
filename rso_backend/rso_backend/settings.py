@@ -330,79 +330,79 @@ if DEBUG:
         },
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
-            'schedule': timedelta(minutes=5)
+            'schedule': timedelta(minutes=15)
         },
         'calculate_q1': {
             'task': 'competitions.tasks.calculate_q1_places_task',
-            'schedule': timedelta(minutes=4, seconds=40)
+            'schedule': timedelta(minutes=14, seconds=40)
         },
         'calculate_q3_q4': {
             'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': timedelta(minutes=4, seconds=26)
+            'schedule': timedelta(minutes=14, seconds=26)
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
-            'schedule': timedelta(minutes=4, seconds=40)
+            'schedule': timedelta(minutes=14, seconds=40)
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(seconds=46)
+            'schedule': timedelta(minutes=11, seconds=33)
         },
         'calculate_q7': {
             'task': 'competitions.tasks.calculate_q7_places_task',
-            'schedule': timedelta(minutes=4, seconds=30)
+            'schedule': timedelta(minutes=14, seconds=30)
         },
         'calculate_q8': {
             'task': 'competitions.tasks.calculate_q8_places_task',
-            'schedule': timedelta(minutes=5, seconds=1)
+            'schedule': timedelta(minutes=15, seconds=1)
         },
         'calculate_q9': {
             'task': 'competitions.tasks.calculate_q9_places_task',
-            'schedule': timedelta(minutes=5, seconds=33)
+            'schedule': timedelta(minutes=15, seconds=33)
         },
         'calculate_q10': {
             'task': 'competitions.tasks.calculate_q10_places_task',
-            'schedule': timedelta(minutes=4, seconds=44)
+            'schedule': timedelta(minutes=14, seconds=44)
         },
         'calculate_q11': {
             'task': 'competitions.tasks.calculate_q11_places_task',
-            'schedule': timedelta(minutes=4, seconds=11)
+            'schedule': timedelta(minutes=14, seconds=11)
         },
         'calculate_q12': {
             'task': 'competitions.tasks.calculate_q12_places_task',
-            'schedule': timedelta(minutes=4, seconds=16)
+            'schedule': timedelta(minutes=14, seconds=16)
         },
         'calculate_q14': {
             'task': 'competitions.tasks.calculate_q14_places_task',
-            'schedule': timedelta(minutes=4, seconds=33)
+            'schedule': timedelta(minutes=14, seconds=33)
         },
         'calculate_q15': {
             'task': 'competitions.tasks.calculate_q15_places_task',
-            'schedule': timedelta(minutes=4, seconds=55)
+            'schedule': timedelta(minutes=14, seconds=55)
         },
         'calculate_q16_score': {
             'task': 'competitions.tasks.calculate_q16_score_task',
-            'schedule': timedelta(minutes=4, seconds=55)
+            'schedule': timedelta(minutes=14, seconds=55)
         },
         'calculate_q16': {
             'task': 'competitions.tasks.calculate_q16_places_task',
-            'schedule': timedelta(minutes=3, seconds=55)
+            'schedule': timedelta(minutes=13, seconds=55)
         },
         'calculate_q17': {
             'task': 'competitions.tasks.calculate_q17_places_task',
-            'schedule': timedelta(minutes=4, seconds=3)
+            'schedule': timedelta(minutes=14, seconds=3)
         },
         'calculate_q18': {
             'task': 'competitions.tasks.calculate_q18_places_task',
-            'schedule': timedelta(seconds=45)
+            'schedule': timedelta(minutes=11, seconds=33)
         },
         'calculate_q20': {
             'task': 'competitions.tasks.calculate_q20_places_task',
-            'schedule': timedelta(minutes=3, seconds=33)
+            'schedule': timedelta(minutes=13, seconds=33)
         },
         'calculate_overall_places': {
             'task': 'competitions.tasks.calculate_overall_places_task',
-            'schedule': timedelta(minutes=5, seconds=33)
+            'schedule': timedelta(minutes=15, seconds=33)
         }
     }
 else:
@@ -444,7 +444,7 @@ else:
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
             'schedule': timedelta(
-                minutes=3,
+                hours=3,
                 seconds=20
             )
         },
