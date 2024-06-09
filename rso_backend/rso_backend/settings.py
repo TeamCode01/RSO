@@ -8,6 +8,9 @@ from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
+DEFAULT_POSITION_ID = 1
+CENTRAL_HQ_ID = 1
+
 # Redis cache TTL
 DETACHMENT_LIST_TTL = 120
 EDUCATIONALS_LIST_TTL = 120
@@ -98,7 +101,8 @@ INSTALLED_APPS = [
     'import_export',
     'oauth2_provider',
     'social_django',
-    'rest_framework_social_oauth2'
+    'rest_framework_social_oauth2',
+    'rest_framework_simplejwt',
 ]
 
 INSTALLED_APPS += [
@@ -326,79 +330,79 @@ if DEBUG:
         },
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
-            'schedule': timedelta(minutes=5)
+            'schedule': timedelta(minutes=15)
         },
         'calculate_q1': {
             'task': 'competitions.tasks.calculate_q1_places_task',
-            'schedule': timedelta(minutes=4, seconds=40)
+            'schedule': timedelta(minutes=14, seconds=40)
         },
         'calculate_q3_q4': {
             'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': timedelta(minutes=4, seconds=26)
+            'schedule': timedelta(minutes=14, seconds=26)
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
-            'schedule': timedelta(minutes=4, seconds=40)
+            'schedule': timedelta(minutes=14, seconds=40)
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(seconds=46)
+            'schedule': timedelta(minutes=11, seconds=33)
         },
         'calculate_q7': {
             'task': 'competitions.tasks.calculate_q7_places_task',
-            'schedule': timedelta(minutes=4, seconds=30)
+            'schedule': timedelta(minutes=14, seconds=30)
         },
         'calculate_q8': {
             'task': 'competitions.tasks.calculate_q8_places_task',
-            'schedule': timedelta(minutes=5, seconds=1)
+            'schedule': timedelta(minutes=15, seconds=1)
         },
         'calculate_q9': {
             'task': 'competitions.tasks.calculate_q9_places_task',
-            'schedule': timedelta(minutes=5, seconds=33)
+            'schedule': timedelta(minutes=15, seconds=33)
         },
         'calculate_q10': {
             'task': 'competitions.tasks.calculate_q10_places_task',
-            'schedule': timedelta(minutes=4, seconds=44)
+            'schedule': timedelta(minutes=14, seconds=44)
         },
         'calculate_q11': {
             'task': 'competitions.tasks.calculate_q11_places_task',
-            'schedule': timedelta(minutes=4, seconds=11)
+            'schedule': timedelta(minutes=14, seconds=11)
         },
         'calculate_q12': {
             'task': 'competitions.tasks.calculate_q12_places_task',
-            'schedule': timedelta(minutes=4, seconds=16)
+            'schedule': timedelta(minutes=14, seconds=16)
         },
         'calculate_q14': {
             'task': 'competitions.tasks.calculate_q14_places_task',
-            'schedule': timedelta(minutes=4, seconds=33)
+            'schedule': timedelta(minutes=14, seconds=33)
         },
         'calculate_q15': {
             'task': 'competitions.tasks.calculate_q15_places_task',
-            'schedule': timedelta(minutes=4, seconds=55)
+            'schedule': timedelta(minutes=14, seconds=55)
         },
         'calculate_q16_score': {
             'task': 'competitions.tasks.calculate_q16_score_task',
-            'schedule': timedelta(minutes=4, seconds=55)
+            'schedule': timedelta(minutes=14, seconds=55)
         },
         'calculate_q16': {
             'task': 'competitions.tasks.calculate_q16_places_task',
-            'schedule': timedelta(minutes=3, seconds=55)
+            'schedule': timedelta(minutes=13, seconds=55)
         },
         'calculate_q17': {
             'task': 'competitions.tasks.calculate_q17_places_task',
-            'schedule': timedelta(minutes=4, seconds=3)
+            'schedule': timedelta(minutes=14, seconds=3)
         },
         'calculate_q18': {
             'task': 'competitions.tasks.calculate_q18_places_task',
-            'schedule': timedelta(seconds=45)
+            'schedule': timedelta(minutes=11, seconds=33)
         },
         'calculate_q20': {
             'task': 'competitions.tasks.calculate_q20_places_task',
-            'schedule': timedelta(minutes=3, seconds=33)
+            'schedule': timedelta(minutes=13, seconds=33)
         },
         'calculate_overall_places': {
             'task': 'competitions.tasks.calculate_overall_places_task',
-            'schedule': timedelta(minutes=5, seconds=33)
+            'schedule': timedelta(minutes=15, seconds=33)
         }
     }
 else:
@@ -440,7 +444,7 @@ else:
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
             'schedule': timedelta(
-                minutes=3,
+                hours=3,
                 seconds=20
             )
         },
@@ -589,9 +593,10 @@ CSRF_TRUSTED_ORIGINS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework_social_oauth2.authentication.SocialAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
@@ -658,6 +663,46 @@ DJOSER = {
         'user_list': ['rest_framework.permissions.IsAuthenticated'],
         'user': ['rest_framework.permissions.IsAuthenticated'],
     }
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": False,
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": "",
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+
+    "AUTH_HEADER_TYPES": ("JWT",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+
+    "JTI_CLAIM": "jti",
+
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+
+    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
+    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
+    "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
 SWAGGER_SETTINGS = {

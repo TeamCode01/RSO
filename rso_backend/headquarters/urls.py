@@ -4,9 +4,20 @@ from headquarters.views import (DetachmentAutoComplete,
                                 EducationalAutoComplete,
                                 EducationalInstitutionAutoComplete,
                                 LocalAutoComplete, PositionAutoComplete,
-                                RegionalAutoComplete, RegionAutoComplete)
+                                RegionalAutoComplete, RegionAutoComplete,
+                                DistrictAutoComplete, CentralAutoComplete)
 
 urlpatterns = [
+    path(
+        'autocomplete/central/',
+        CentralAutoComplete.as_view(),
+        name='central-autocomplete'
+    ),
+    path(
+        'autocomplete/district/',
+        DistrictAutoComplete.as_view(),
+        name='district-autocomplete'
+    ),
     path(
         'autocomplete/region/',
         RegionAutoComplete.as_view(),

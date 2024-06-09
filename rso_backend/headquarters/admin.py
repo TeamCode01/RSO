@@ -2,13 +2,18 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from import_export.admin import ImportExportModelAdmin
 
-from headquarters.forms import (CentralForm, CentralPositionForm,
+from headquarters.forms import (CentralForm, CentralPositionAddForm,
                                 DetachmentForm, DetachmentPositionAddForm,
                                 DetachmentPositionForm, DistrictForm,
                                 DistrictPositionForm, EducationalForm,
                                 EducationalPositionForm, LocalForm,
                                 LocalPositionForm, RegionalForm,
-                                RegionalPositionForm)
+                                RegionalPositionForm,
+                                CentralPositionForm,
+                                DistrictPositionAddForm,
+                                EducationalPositionAddForm,
+                                LocalPositionAddForm,
+                                RegionalPositionAddForm,)
 from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -154,15 +159,15 @@ class DetachmentAdmin(BaseUnitAdmin):
         """
         Валидируем создание отряда с регионом несуществующего РШ.
         """
-        if (not obj.regional_headquarter and
-                not RegionalHeadquarter.objects.filter(
-                    region=obj.region).exists()
+        if (
+            not obj.regional_headquarter and
+            not RegionalHeadquarter.objects.filter(region=obj.region).exists()
         ):
             raise ValidationError({
                 'region': 'В базе данных не найден РШ '
                           'с данным регионом. '
-                          'Для начала создайте соответсвующий РШ или выберите '
-                          'другой регион.'
+                          'Для начала создайте соответствующий РШ '
+                          'или выберите другой регион.'
             })
 
         super().save_model(request, obj, form, change)
@@ -180,39 +185,60 @@ class BaseCentralPositionAdmin(admin.ModelAdmin):
         for obj in queryset:
             obj.delete()
 
-    def has_add_permission(self, request, obj=None):
-        """Запрещаем добавление участника в отряд через админку."""
-        return False
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Use special form during position creation.
+        """
+        defaults = {}
+        if obj is None:
+            defaults['form'] = self.add_form
+        defaults.update(kwargs)
+        return super().get_form(request, obj, **defaults)
 
 
 @admin.register(UserCentralHeadquarterPosition)
 class UserCentralHeadquarterPositionAdmin(BaseCentralPositionAdmin):
     form = CentralPositionForm
+    add_form = CentralPositionAddForm
+
+    def has_add_permission(self, request, obj=None):
+        """Запрещаем добавление участника в ЦШ через админку."""
+        return False
 
 
 @admin.register(UserDistrictHeadquarterPosition)
 class UserDistrictHeadquarterPositionAdmin(BaseCentralPositionAdmin):
     form = DistrictPositionForm
+    add_form = DistrictPositionAddForm
 
 
 @admin.register(UserRegionalHeadquarterPosition)
 class UserRegionalHeadquarterPositionAdmin(BaseCentralPositionAdmin):
     form = RegionalPositionForm
+    add_form = RegionalPositionAddForm
 
 
 @admin.register(UserLocalHeadquarterPosition)
 class UserLocalHeadquarterPositionAdmin(BaseCentralPositionAdmin):
     form = LocalPositionForm
+    add_form = LocalPositionAddForm
 
 
 @admin.register(UserEducationalHeadquarterPosition)
 class UserEducationalHeadquarterPositionAdmin(BaseCentralPositionAdmin):
     form = EducationalPositionForm
+    add_form = EducationalPositionAddForm
 
 
 @admin.register(UserDetachmentPosition)
 class UserDetachmentPositionAdmin(BaseCentralPositionAdmin):
-    list_display = ('user', 'position', 'headquarter', 'membership_fee', 'date_membership_fee')
+    list_display = (
+        'user',
+        'position',
+        'headquarter',
+        'membership_fee',
+        'date_membership_fee'
+    )
     form = DetachmentPositionForm
     add_form = DetachmentPositionAddForm
 
@@ -238,7 +264,10 @@ class UserDetachmentPositionAdmin(BaseCentralPositionAdmin):
     def date_membership_fee(self, obj):
         user = obj.user
         logs = user.membership_logs.all()
-        if logs.count() == 0 or logs.last().status == 'Изменен на "не оплачен"':
+        if (
+            logs.count() == 0
+            or logs.last().status == 'Изменен на "не оплачен"'
+        ):
             return None
         return logs.last().date
 
