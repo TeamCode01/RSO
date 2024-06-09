@@ -35,11 +35,11 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition,
+                                 UserRegionalHeadquarterPosition,)
                                 #  UserCentralApplication,
                                 #  UserDistrictApplication,
                                 #  UserEducationalApplication,
-                                 UserLocalApplication,)
+                                #  UserLocalApplication,)
                                 #  UserRegionalApplication,)
 from headquarters.registry_serializers import (
     DetachmentRegistrySerializer, DistrictHeadquarterRegistrySerializer,
@@ -59,9 +59,9 @@ from headquarters.serializers import (
     ShortLocalHeadquarterSerializer, ShortRegionalHeadquarterListSerializer,
     ShortRegionalHeadquarterSerializer, #UserCentralApplicationSerializer,
     UserDetachmentApplicationReadSerializer,
-    UserDetachmentApplicationSerializer, #UserDistrictApplicationSerializer,
+    UserDetachmentApplicationSerializer,) #UserDistrictApplicationSerializer,
     # UserEducationalApplicationSerializer, 
-    UserLocalApplicationSerializer,)
+    # UserLocalApplicationSerializer,)
     #UserRegionalApplicationSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
@@ -668,17 +668,17 @@ class DetachmentAcceptViewSet(BaseAcceptRejectViewSet):
 #     permission_classes = (IsEducationalCommander,)
 
 
-class LocalAcceptViewSet(BaseAcceptRejectViewSet):
-    """Принять/отклонить заявку участника в МШ по ID заявки.
+# class LocalAcceptViewSet(BaseAcceptRejectViewSet):
+#     """Принять/отклонить заявку участника в МШ по ID заявки.
 
-    Доступ - командир местного штаба.
-    """
+#     Доступ - командир местного штаба.
+#     """
 
-    application_model = UserLocalApplication
-    position_model = UserLocalHeadquarterPosition
-    headquarter_model = LocalHeadquarter
-    serializer_class = LocalPositionSerializer
-    permission_classes = (IsLocalCommander,)
+#     application_model = UserLocalApplication
+#     position_model = UserLocalHeadquarterPosition
+#     headquarter_model = LocalHeadquarter
+#     serializer_class = LocalPositionSerializer
+#     permission_classes = (IsLocalCommander,)
 
 
 # class RegionalAcceptViewSet(BaseAcceptRejectViewSet):
@@ -855,14 +855,14 @@ class DetachmentApplicationViewSet(BaseApplicationViewSet):
 #     target_model = EducationalHeadquarter
 
 
-class LocalApplicationViewSet(BaseApplicationViewSet):
-    """Подать/отменить заявку в МШ. URL-параметры обязательны."""
+# class LocalApplicationViewSet(BaseApplicationViewSet):
+#     """Подать/отменить заявку в МШ. URL-параметры обязательны."""
 
-    application_model = UserLocalApplication
-    serializer_class = UserLocalApplicationSerializer
-    position_model = UserLocalHeadquarterPosition
-    permission_classes = (permissions.IsAuthenticated,)
-    target_model = LocalHeadquarter
+#     application_model = UserLocalApplication
+#     serializer_class = UserLocalApplicationSerializer
+#     position_model = UserLocalHeadquarterPosition
+#     permission_classes = (permissions.IsAuthenticated,)
+#     target_model = LocalHeadquarter
 
 
 # class RegionalApplicationViewSet(BaseApplicationViewSet):

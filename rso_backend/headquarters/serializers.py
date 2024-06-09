@@ -19,10 +19,10 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition,
+                                 UserRegionalHeadquarterPosition,)
                                 #  UserDistrictApplication,
                                 #  UserEducationalApplication,
-                                 UserLocalApplication,)
+                                #  UserLocalApplication,)
                                 #  UserRegionalApplication,
                                 #  UserCentralApplication,)
 from users.models import RSOUser
@@ -879,19 +879,19 @@ class UserDetachmentApplicationSerializer(BaseApplicationSerializer):
 #             raise ValidationError('Образовательный штаб не найден.')
 
 
-class UserLocalApplicationSerializer(BaseApplicationSerializer):
-    """Сериализатор для подачи заявок в местный штаб."""
+# class UserLocalApplicationSerializer(BaseApplicationSerializer):
+#     """Сериализатор для подачи заявок в местный штаб."""
 
-    class Meta(BaseApplicationSerializer.Meta):
-        model = UserLocalApplication
+#     class Meta(BaseApplicationSerializer.Meta):
+#         model = UserLocalApplication
 
-    def get_headquarter_or_detachment(self):
-        try:
-            return LocalHeadquarter.objects.get(
-                id=self.context['view'].kwargs.get('pk')
-            )
-        except LocalHeadquarter.DoesNotExist:
-            raise ValidationError('Местный штаб не найден.')
+#     def get_headquarter_or_detachment(self):
+#         try:
+#             return LocalHeadquarter.objects.get(
+#                 id=self.context['view'].kwargs.get('pk')
+#             )
+#         except LocalHeadquarter.DoesNotExist:
+#             raise ValidationError('Местный штаб не найден.')
 
 
 # class UserRegionalApplicationSerializer(BaseApplicationSerializer):

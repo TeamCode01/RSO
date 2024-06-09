@@ -58,11 +58,11 @@ from headquarters.views import (#CentralAcceptViewSet,
                                 PositionViewSet, #RegionalAcceptViewSet,
                                 RegionalViewSet, #RegionalApplicationViewSet,
                                 #CentralApplicationViewSet,
-                                CentralPositionViewSet, LocalAcceptViewSet,
+                                CentralPositionViewSet, # LocalAcceptViewSet,
                                 CentralViewSet,  #DistrictAcceptViewSet,
                                 #DistrictApplicationViewSet,
                                 RegionalPositionViewSet,
-                                LocalApplicationViewSet,
+                                # LocalApplicationViewSet,
                                 # EducationalAcceptViewSet,
                                 # EducationalApplicationViewSet,
                                 get_structural_units)
@@ -336,8 +336,8 @@ EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
 EducationalPositionUpdateVS = EducationalPositionViewSet.as_view(
     UPDATE_RETRIEVE
 )
-LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
-LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
+# LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
+# LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
 LocalPositionListVS = LocalPositionViewSet.as_view(LIST)
 LocalPositionUpdateVS = LocalPositionViewSet.as_view(UPDATE_RETRIEVE)
 # RegionalAcceptVS = RegionalAcceptViewSet.as_view(CREATE_DELETE)
@@ -495,16 +495,16 @@ user_nested_urls = [
         LocalPositionUpdateVS,
         name='local-members-update'
     ),
-    path(
-        'locals/<int:pk>/apply/',
-        LocalApplicationVS,
-        name='local-application'
-    ),
-    path(
-        'locals/<int:pk>/applications/<int:application_pk>/accept/',
-        LocalAcceptVS,
-        name='user-local-apply'
-    ),
+    # path(
+    #     'locals/<int:pk>/apply/',
+    #     LocalApplicationVS,
+    #     name='local-application'
+    # ),
+    # path(
+    #     'locals/<int:pk>/applications/<int:application_pk>/accept/',
+    #     LocalAcceptVS,
+    #     name='user-local-apply'
+    # ),
     path(
         'regionals/<int:pk>/members/',
         RegionalPositionListVS,
