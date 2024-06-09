@@ -968,74 +968,74 @@ class UserLocalApplication(models.Model):
         verbose_name = 'Заявка на вступление в МШ'
 
 
-class UserRegionalApplication(models.Model):
-    """Таблица для подачи заявок на вступление в РШ."""
+# class UserRegionalApplication(models.Model):
+#     """Таблица для подачи заявок на вступление в РШ."""
 
-    user = models.ForeignKey(
-        'users.RSOUser',
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь, подавший заявку на вступление в РШ',
-        related_name='regional_applications',
-    )
-    headquarter = models.ForeignKey(
-        'RegionalHeadquarter',
-        on_delete=models.CASCADE,
-        verbose_name='РШ, в котором была подана заявка на вступление',
-        related_name='regional_applications',
-    )
+#     user = models.ForeignKey(
+#         'users.RSOUser',
+#         on_delete=models.CASCADE,
+#         verbose_name='Пользователь, подавший заявку на вступление в РШ',
+#         related_name='regional_applications',
+#     )
+#     headquarter = models.ForeignKey(
+#         'RegionalHeadquarter',
+#         on_delete=models.CASCADE,
+#         verbose_name='РШ, в котором была подана заявка на вступление',
+#         related_name='regional_applications',
+#     )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'headquarter'],
-                                    name='user_regional_unique_constraint')
-        ]
-
-
-class UserDistrictApplication(models.Model):
-    """Таблица для подачи заявок на вступление в Окружной штаб."""
-
-    user = models.ForeignKey(
-        'users.RSOUser',
-        on_delete=models.CASCADE,
-        verbose_name=(
-            'Пользователь, подавший заявку на вступление в Окружной штаб'
-        ),
-        related_name='district_applications',
-    )
-    headquarter = models.ForeignKey(
-        'DistrictHeadquarter',
-        on_delete=models.CASCADE,
-        verbose_name=(
-            'Окружной штаб, в котором была подана заявка на вступление'
-        ),
-        related_name='district_applications',
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'headquarter'],
-                                    name='user_district_unique_constraint')
-        ]
+#     class Meta:
+#         constraints = [
+#             models.UniqueConstraint(fields=['user', 'headquarter'],
+#                                     name='user_regional_unique_constraint')
+#         ]
 
 
-class UserCentralApplication(models.Model):
-    """Таблица для подачи заявок на вступление в ЦШ."""
+# class UserDistrictApplication(models.Model):
+#     """Таблица для подачи заявок на вступление в Окружной штаб."""
 
-    user = models.ForeignKey(
-        'users.RSOUser',
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь, подавший заявку на вступление в ЦШ',
-        related_name='central_applications',
-    )
-    headquarter = models.ForeignKey(
-        'CentralHeadquarter',
-        on_delete=models.CASCADE,
-        verbose_name='ЦШ, в котором была подана заявка на вступление',
-        related_name='central_applications',
-    )
+#     user = models.ForeignKey(
+#         'users.RSOUser',
+#         on_delete=models.CASCADE,
+#         verbose_name=(
+#             'Пользователь, подавший заявку на вступление в Окружной штаб'
+#         ),
+#         related_name='district_applications',
+#     )
+#     headquarter = models.ForeignKey(
+#         'DistrictHeadquarter',
+#         on_delete=models.CASCADE,
+#         verbose_name=(
+#             'Окружной штаб, в котором была подана заявка на вступление'
+#         ),
+#         related_name='district_applications',
+#     )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'headquarter'],
-                                    name='user_central_unique_constraint')
-        ]
+#     class Meta:
+#         constraints = [
+#             models.UniqueConstraint(fields=['user', 'headquarter'],
+#                                     name='user_district_unique_constraint')
+#         ]
+
+
+# class UserCentralApplication(models.Model):
+#     """Таблица для подачи заявок на вступление в ЦШ."""
+
+#     user = models.ForeignKey(
+#         'users.RSOUser',
+#         on_delete=models.CASCADE,
+#         verbose_name='Пользователь, подавший заявку на вступление в ЦШ',
+#         related_name='central_applications',
+#     )
+#     headquarter = models.ForeignKey(
+#         'CentralHeadquarter',
+#         on_delete=models.CASCADE,
+#         verbose_name='ЦШ, в котором была подана заявка на вступление',
+#         related_name='central_applications',
+#     )
+
+#     class Meta:
+#         constraints = [
+#             models.UniqueConstraint(fields=['user', 'headquarter'],
+#                                     name='user_central_unique_constraint')
+#         ]

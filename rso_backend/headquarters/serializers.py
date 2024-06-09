@@ -20,11 +20,11 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition,
-                                 UserDistrictApplication,
+                                #  UserDistrictApplication,
                                  UserEducationalApplication,
-                                 UserLocalApplication,
-                                 UserRegionalApplication,
-                                 UserCentralApplication,)
+                                 UserLocalApplication,)
+                                #  UserRegionalApplication,
+                                #  UserCentralApplication,)
 from users.models import RSOUser
 from users.short_serializers import ShortUserSerializer
 
@@ -894,49 +894,49 @@ class UserLocalApplicationSerializer(BaseApplicationSerializer):
             raise ValidationError('Местный штаб не найден.')
 
 
-class UserRegionalApplicationSerializer(BaseApplicationSerializer):
-    """Сериализатор для подачи заявок в региональный штаб."""
+# class UserRegionalApplicationSerializer(BaseApplicationSerializer):
+#     """Сериализатор для подачи заявок в региональный штаб."""
 
-    class Meta(BaseApplicationSerializer.Meta):
-        model = UserRegionalApplication
+#     class Meta(BaseApplicationSerializer.Meta):
+#         model = UserRegionalApplication
 
-    def get_headquarter_or_detachment(self):
-        try:
-            return RegionalHeadquarter.objects.get(
-                id=self.context['view'].kwargs.get('pk')
-            )
-        except RegionalHeadquarter.DoesNotExist:
-            raise ValidationError('Региональный штаб не найден.')
-
-
-class UserDistrictApplicationSerializer(BaseApplicationSerializer):
-    """Сериализатор для подачи заявок в окружной штаб."""
-
-    class Meta(BaseApplicationSerializer.Meta):
-        model = UserDistrictApplication
-
-    def get_headquarter_or_detachment(self):
-        try:
-            return DistrictHeadquarter.objects.get(
-                id=self.context['view'].kwargs.get('pk')
-            )
-        except DistrictHeadquarter.DoesNotExist:
-            raise ValidationError('Окружной штаб не найден.')
+#     def get_headquarter_or_detachment(self):
+#         try:
+#             return RegionalHeadquarter.objects.get(
+#                 id=self.context['view'].kwargs.get('pk')
+#             )
+#         except RegionalHeadquarter.DoesNotExist:
+#             raise ValidationError('Региональный штаб не найден.')
 
 
-class UserCentralApplicationSerializer(BaseApplicationSerializer):
-    """Сериализатор для подачи заявок в центральный штаб."""
+# class UserDistrictApplicationSerializer(BaseApplicationSerializer):
+#     """Сериализатор для подачи заявок в окружной штаб."""
 
-    class Meta(BaseApplicationSerializer.Meta):
-        model = UserCentralApplication
+#     class Meta(BaseApplicationSerializer.Meta):
+#         model = UserDistrictApplication
 
-    def get_headquarter_or_detachment(self):
-        try:
-            return CentralHeadquarter.objects.get(
-                id=self.context['view'].kwargs.get('pk')
-            )
-        except CentralHeadquarter.DoesNotExist:
-            raise ValidationError('Центральный штаб не найден.')
+#     def get_headquarter_or_detachment(self):
+#         try:
+#             return DistrictHeadquarter.objects.get(
+#                 id=self.context['view'].kwargs.get('pk')
+#             )
+#         except DistrictHeadquarter.DoesNotExist:
+#             raise ValidationError('Окружной штаб не найден.')
+
+
+# class UserCentralApplicationSerializer(BaseApplicationSerializer):
+#     """Сериализатор для подачи заявок в центральный штаб."""
+
+#     class Meta(BaseApplicationSerializer.Meta):
+#         model = UserCentralApplication
+
+#     def get_headquarter_or_detachment(self):
+#         try:
+#             return CentralHeadquarter.objects.get(
+#                 id=self.context['view'].kwargs.get('pk')
+#             )
+#         except CentralHeadquarter.DoesNotExist:
+#             raise ValidationError('Центральный штаб не найден.')
 
 
 class BaseApplicationReadSerializer(serializers.ModelSerializer):

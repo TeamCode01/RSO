@@ -36,11 +36,11 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition,
-                                 UserCentralApplication,
-                                 UserDistrictApplication,
+                                #  UserCentralApplication,
+                                #  UserDistrictApplication,
                                  UserEducationalApplication,
-                                 UserLocalApplication,
-                                 UserRegionalApplication,)
+                                 UserLocalApplication,)
+                                #  UserRegionalApplication,)
 from headquarters.registry_serializers import (
     DetachmentRegistrySerializer, DistrictHeadquarterRegistrySerializer,
     EducationalHeadquarterRegistrySerializer,
@@ -57,11 +57,11 @@ from headquarters.serializers import (
     ShortEducationalHeadquarterListSerializer,
     ShortEducationalHeadquarterSerializer, ShortLocalHeadquarterListSerializer,
     ShortLocalHeadquarterSerializer, ShortRegionalHeadquarterListSerializer,
-    ShortRegionalHeadquarterSerializer, UserCentralApplicationSerializer,
+    ShortRegionalHeadquarterSerializer, #UserCentralApplicationSerializer,
     UserDetachmentApplicationReadSerializer,
-    UserDetachmentApplicationSerializer, UserDistrictApplicationSerializer,
-    UserEducationalApplicationSerializer, UserLocalApplicationSerializer,
-    UserRegionalApplicationSerializer)
+    UserDetachmentApplicationSerializer, #UserDistrictApplicationSerializer,
+    UserEducationalApplicationSerializer, UserLocalApplicationSerializer,)
+    #UserRegionalApplicationSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -680,73 +680,73 @@ class LocalAcceptViewSet(BaseAcceptRejectViewSet):
     permission_classes = (IsLocalCommander,)
 
 
-class RegionalAcceptViewSet(BaseAcceptRejectViewSet):
-    """Принять/отклонить заявку участника в РШ по ID заявки.
+# class RegionalAcceptViewSet(BaseAcceptRejectViewSet):
+#     """Принять/отклонить заявку участника в РШ по ID заявки.
 
-    Доступ - командир регионального штаба.
-    """
+#     Доступ - командир регионального штаба.
+#     """
 
-    application_model = UserRegionalApplication
-    position_model = UserRegionalHeadquarterPosition
-    headquarter_model = RegionalHeadquarter
-    serializer_class = RegionalPositionSerializer
-    permission_classes = (IsRegionalCommander,)
-
-
-class DistrictAcceptViewSet(BaseAcceptRejectViewSet):
-    """Принять/отклонить заявку участника в Окружной штаб по ID заявки.
-
-    Доступ - командир окружного штаба.
-    """
-
-    application_model = UserDistrictApplication
-    position_model = UserDistrictHeadquarterPosition
-    headquarter_model = DistrictHeadquarter
-    serializer_class = DistrictPositionSerializer
-    permission_classes = (IsDistrictCommander,)
+#     application_model = UserRegionalApplication
+#     position_model = UserRegionalHeadquarterPosition
+#     headquarter_model = RegionalHeadquarter
+#     serializer_class = RegionalPositionSerializer
+#     permission_classes = (IsRegionalCommander,)
 
 
-class CentralAcceptViewSet(CreateDeleteViewSet):
-    """Принять/отклонить заявку участника в Центральной штаб по ID заявки.
+# class DistrictAcceptViewSet(BaseAcceptRejectViewSet):
+#     """Принять/отклонить заявку участника в Окружной штаб по ID заявки.
 
-    Доступ - командир центрального штаба.
-    """
+#     Доступ - командир окружного штаба.
+#     """
 
-    application_model = UserCentralApplication
-    position_model = UserCentralHeadquarterPosition
-    headquarter_model = CentralHeadquarter
-    serializer_class = CentralPositionSerializer
-    pagination_class = IsStuffOrCentralCommander
+#     application_model = UserDistrictApplication
+#     position_model = UserDistrictHeadquarterPosition
+#     headquarter_model = DistrictHeadquarter
+#     serializer_class = DistrictPositionSerializer
+#     permission_classes = (IsDistrictCommander,)
 
-    def create(self, request, *args, **kwargs):
 
-        application_pk = self.kwargs.get('application_pk')
-        user_id = get_object_or_404(
-            UserCentralApplication,
-            pk=application_pk
-        ).user_id
-        headquarter_id = self.kwargs.get('pk')
-        application = get_object_or_404(
-            self.application_model, id=application_pk
-        )
-        with transaction.atomic():
-            create_central_hq_member(
-                headquarter_id=headquarter_id,
-                user_id=user_id,
-            )
-            application.delete()
-        return Response(status=status.HTTP_201_CREATED)
+# class CentralAcceptViewSet(CreateDeleteViewSet):
+#     """Принять/отклонить заявку участника в Центральной штаб по ID заявки.
 
-    def destroy(self, request, *args, **kwargs):
-        """Отклоняет (удаляет) заявку пользователя."""
-        application_id = self.kwargs.get('application_pk')
-        application = get_object_or_404(
-            self.application_model, id=application_id
-        )
-        application.delete()
-        return Response(
-            {'success': 'Заявка отклонена'}, status=status.HTTP_204_NO_CONTENT
-        )
+#     Доступ - командир центрального штаба.
+#     """
+
+#     application_model = UserCentralApplication
+#     position_model = UserCentralHeadquarterPosition
+#     headquarter_model = CentralHeadquarter
+#     serializer_class = CentralPositionSerializer
+#     pagination_class = IsStuffOrCentralCommander
+
+#     def create(self, request, *args, **kwargs):
+
+#         application_pk = self.kwargs.get('application_pk')
+#         user_id = get_object_or_404(
+#             UserCentralApplication,
+#             pk=application_pk
+#         ).user_id
+#         headquarter_id = self.kwargs.get('pk')
+#         application = get_object_or_404(
+#             self.application_model, id=application_pk
+#         )
+#         with transaction.atomic():
+#             create_central_hq_member(
+#                 headquarter_id=headquarter_id,
+#                 user_id=user_id,
+#             )
+#             application.delete()
+#         return Response(status=status.HTTP_201_CREATED)
+
+#     def destroy(self, request, *args, **kwargs):
+#         """Отклоняет (удаляет) заявку пользователя."""
+#         application_id = self.kwargs.get('application_pk')
+#         application = get_object_or_404(
+#             self.application_model, id=application_id
+#         )
+#         application.delete()
+#         return Response(
+#             {'success': 'Заявка отклонена'}, status=status.HTTP_204_NO_CONTENT
+#         )
 
 
 class BaseApplicationViewSet(viewsets.ModelViewSet):
@@ -864,34 +864,34 @@ class LocalApplicationViewSet(BaseApplicationViewSet):
     target_model = LocalHeadquarter
 
 
-class RegionalApplicationViewSet(BaseApplicationViewSet):
-    """Подать/отменить заявку в СО ЛО. URL-параметры обязательны."""
+# class RegionalApplicationViewSet(BaseApplicationViewSet):
+#     """Подать/отменить заявку в СО ЛО. URL-параметры обязательны."""
 
-    application_model = UserRegionalApplication
-    serializer_class = UserRegionalApplicationSerializer
-    position_model = UserRegionalHeadquarterPosition
-    permission_classes = (permissions.IsAuthenticated,)
-    target_model = RegionalHeadquarter
-
-
-class DistrictApplicationViewSet(BaseApplicationViewSet):
-    """Подать/отменить заявку в окружной штаб. URL-параметры обязательны."""
-
-    application_model = UserDistrictApplication
-    serializer_class = UserDistrictApplicationSerializer
-    position_model = UserDistrictHeadquarterPosition
-    permission_classes = (permissions.IsAuthenticated,)
-    target_model = DistrictHeadquarter
+#     application_model = UserRegionalApplication
+#     serializer_class = UserRegionalApplicationSerializer
+#     position_model = UserRegionalHeadquarterPosition
+#     permission_classes = (permissions.IsAuthenticated,)
+#     target_model = RegionalHeadquarter
 
 
-class CentralApplicationViewSet(BaseApplicationViewSet):
-    """Подать/отменить заявку в центральной штаб. URL-параметры обязательны."""
+# class DistrictApplicationViewSet(BaseApplicationViewSet):
+#     """Подать/отменить заявку в окружной штаб. URL-параметры обязательны."""
 
-    application_model = UserCentralApplication
-    serializer_class = UserCentralApplicationSerializer
-    position_model = UserCentralHeadquarterPosition
-    permission_classes = (permissions.IsAuthenticated,)
-    target_model = CentralHeadquarter
+#     application_model = UserDistrictApplication
+#     serializer_class = UserDistrictApplicationSerializer
+#     position_model = UserDistrictHeadquarterPosition
+#     permission_classes = (permissions.IsAuthenticated,)
+#     target_model = DistrictHeadquarter
+
+
+# class CentralApplicationViewSet(BaseApplicationViewSet):
+#     """Подать/отменить заявку в центральной штаб. URL-параметры обязательны."""
+
+#     application_model = UserCentralApplication
+#     serializer_class = UserCentralApplicationSerializer
+#     position_model = UserCentralHeadquarterPosition
+#     permission_classes = (permissions.IsAuthenticated,)
+#     target_model = CentralHeadquarter
 
 
 @api_view(['GET'])
