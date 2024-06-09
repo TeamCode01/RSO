@@ -21,7 +21,7 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition,
                                 #  UserDistrictApplication,
-                                 UserEducationalApplication,
+                                #  UserEducationalApplication,
                                  UserLocalApplication,)
                                 #  UserRegionalApplication,
                                 #  UserCentralApplication,)
@@ -864,19 +864,19 @@ class UserDetachmentApplicationSerializer(BaseApplicationSerializer):
             raise ValidationError('Отряд не найден.')
 
 
-class UserEducationalApplicationSerializer(BaseApplicationSerializer):
-    """Сериализатор для подачи заявок в обр. штаб."""
+# class UserEducationalApplicationSerializer(BaseApplicationSerializer):
+#     """Сериализатор для подачи заявок в обр. штаб."""
 
-    class Meta(BaseApplicationSerializer.Meta):
-        model = UserEducationalApplication
+#     class Meta(BaseApplicationSerializer.Meta):
+#         model = UserEducationalApplication
 
-    def get_headquarter_or_detachment(self):
-        try:
-            return EducationalHeadquarter.objects.get(
-                id=self.context['view'].kwargs.get('pk')
-            )
-        except EducationalHeadquarter.DoesNotExist:
-            raise ValidationError('Образовательный штаб не найден.')
+#     def get_headquarter_or_detachment(self):
+#         try:
+#             return EducationalHeadquarter.objects.get(
+#                 id=self.context['view'].kwargs.get('pk')
+#             )
+#         except EducationalHeadquarter.DoesNotExist:
+#             raise ValidationError('Образовательный штаб не найден.')
 
 
 class UserLocalApplicationSerializer(BaseApplicationSerializer):
@@ -957,11 +957,11 @@ class UserDetachmentApplicationReadSerializer(BaseApplicationReadSerializer):
         model = UserDetachmentApplication
 
 
-class UserEducationalApplicationReadSerializer(BaseApplicationReadSerializer):
-    """Сериализатор для чтения заявок в образовательный штаб."""
+# class UserEducationalApplicationReadSerializer(BaseApplicationReadSerializer):
+#     """Сериализатор для чтения заявок в образовательный штаб."""
 
-    class Meta(BaseApplicationReadSerializer.Meta):
-        model = UserEducationalApplication
+#     class Meta(BaseApplicationReadSerializer.Meta):
+#         model = UserEducationalApplication
 
 
 class DetachmentSerializer(BaseUnitSerializer):

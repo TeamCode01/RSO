@@ -38,7 +38,7 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserRegionalHeadquarterPosition,
                                 #  UserCentralApplication,
                                 #  UserDistrictApplication,
-                                 UserEducationalApplication,
+                                #  UserEducationalApplication,
                                  UserLocalApplication,)
                                 #  UserRegionalApplication,)
 from headquarters.registry_serializers import (
@@ -60,7 +60,8 @@ from headquarters.serializers import (
     ShortRegionalHeadquarterSerializer, #UserCentralApplicationSerializer,
     UserDetachmentApplicationReadSerializer,
     UserDetachmentApplicationSerializer, #UserDistrictApplicationSerializer,
-    UserEducationalApplicationSerializer, UserLocalApplicationSerializer,)
+    # UserEducationalApplicationSerializer, 
+    UserLocalApplicationSerializer,)
     #UserRegionalApplicationSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
@@ -654,17 +655,17 @@ class DetachmentAcceptViewSet(BaseAcceptRejectViewSet):
     permission_classes = (IsDetachmentCommander,)
 
 
-class EducationalAcceptViewSet(BaseAcceptRejectViewSet):
-    """Принять/отклонить заявку участника в СО ОО по ID заявки.
+# class EducationalAcceptViewSet(BaseAcceptRejectViewSet):
+#     """Принять/отклонить заявку участника в СО ОО по ID заявки.
 
-    Доступ - командир образовательного штаба.
-    """
+#     Доступ - командир образовательного штаба.
+#     """
 
-    application_model = UserEducationalApplication
-    position_model = UserEducationalHeadquarterPosition
-    headquarter_model = EducationalHeadquarter
-    serializer_class = EducationalPositionSerializer
-    permission_classes = (IsEducationalCommander,)
+#     application_model = UserEducationalApplication
+#     position_model = UserEducationalHeadquarterPosition
+#     headquarter_model = EducationalHeadquarter
+#     serializer_class = EducationalPositionSerializer
+#     permission_classes = (IsEducationalCommander,)
 
 
 class LocalAcceptViewSet(BaseAcceptRejectViewSet):
@@ -844,14 +845,14 @@ class DetachmentApplicationViewSet(BaseApplicationViewSet):
         )
 
 
-class EducationalApplicationViewSet(BaseApplicationViewSet):
-    """Подать/отменить заявку в СО ОО. URL-параметры обязательны."""
+# class EducationalApplicationViewSet(BaseApplicationViewSet):
+#     """Подать/отменить заявку в СО ОО. URL-параметры обязательны."""
 
-    application_model = UserEducationalApplication
-    serializer_class = UserEducationalApplicationSerializer
-    position_model = UserEducationalHeadquarterPosition
-    permission_classes = (permissions.IsAuthenticated,)
-    target_model = EducationalHeadquarter
+#     application_model = UserEducationalApplication
+#     serializer_class = UserEducationalApplicationSerializer
+#     position_model = UserEducationalHeadquarterPosition
+#     permission_classes = (permissions.IsAuthenticated,)
+#     target_model = EducationalHeadquarter
 
 
 class LocalApplicationViewSet(BaseApplicationViewSet):
@@ -865,7 +866,7 @@ class LocalApplicationViewSet(BaseApplicationViewSet):
 
 
 # class RegionalApplicationViewSet(BaseApplicationViewSet):
-#     """Подать/отменить заявку в СО ЛО. URL-параметры обязательны."""
+#     """Подать/отменить заявку в РШ. URL-параметры обязательны."""
 
 #     application_model = UserRegionalApplication
 #     serializer_class = UserRegionalApplicationSerializer

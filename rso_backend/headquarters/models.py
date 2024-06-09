@@ -919,28 +919,28 @@ class UserDetachmentApplication(models.Model):
         verbose_name = 'Заявка на вступление в отряд'
 
 
-class UserEducationalApplication(models.Model):
-    """Таблица для подачи заявок на вступление в обр.штаб."""
-    user = models.ForeignKey(
-        'users.RSOUser',
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь, подавший заявку на вступление в обр.штаб',
-        related_name='edu_applications',
-    )
-    headquarter = models.ForeignKey(
-        'EducationalHeadquarter',
-        on_delete=models.CASCADE,
-        verbose_name='Обр.штаб, в который была подана заявка на вступление',
-        related_name='edu_applications',
-    )
+# class UserEducationalApplication(models.Model):
+#     """Таблица для подачи заявок на вступление в обр.штаб."""
+#     user = models.ForeignKey(
+#         'users.RSOUser',
+#         on_delete=models.CASCADE,
+#         verbose_name='Пользователь, подавший заявку на вступление в обр.штаб',
+#         related_name='edu_applications',
+#     )
+#     headquarter = models.ForeignKey(
+#         'EducationalHeadquarter',
+#         on_delete=models.CASCADE,
+#         verbose_name='Обр.штаб, в который была подана заявка на вступление',
+#         related_name='edu_applications',
+#     )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'headquarter'],
-                                    name='user_eduunique_constraint')
-        ]
-        verbose_name_plural = 'Заявки на вступление в обр.штабы'
-        verbose_name = 'Заявка на вступление в обр.штаб'
+#     class Meta:
+#         constraints = [
+#             models.UniqueConstraint(fields=['user', 'headquarter'],
+#                                     name='user_eduunique_constraint')
+#         ]
+#         verbose_name_plural = 'Заявки на вступление в обр.штабы'
+#         verbose_name = 'Заявка на вступление в обр.штаб'
 
 
 class UserLocalApplication(models.Model):
