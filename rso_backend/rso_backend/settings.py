@@ -432,7 +432,7 @@ else:
         },
         'calculate_q3_q4': {
             'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': crontab(hours=6, minutes=29)
+            'schedule': crontab(hour=6, minutes=29)
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
