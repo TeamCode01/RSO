@@ -444,8 +444,8 @@ else:
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
             'schedule': crontab(
-                hours=3,
-                seconds=20
+                hour=3,
+                minute=20
             )
         },
         'calculate_q7': {
