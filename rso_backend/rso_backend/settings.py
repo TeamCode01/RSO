@@ -366,15 +366,15 @@ if DEBUG:
         },
         'calculate_q11': {
             'task': 'competitions.tasks.calculate_q11_places_task',
-            'schedule': timedelta(minutes=14, seconds=11)
+            'schedule': timedelta(minutes=9, seconds=11)
         },
         'calculate_q12': {
             'task': 'competitions.tasks.calculate_q12_places_task',
-            'schedule': timedelta(minutes=14, seconds=16)
+            'schedule': timedelta(minutes=17, seconds=16)
         },
         'calculate_q14': {
             'task': 'competitions.tasks.calculate_q14_places_task',
-            'schedule': timedelta(minutes=14, seconds=33)
+            'schedule': timedelta(minutes=16, seconds=33)
         },
         'calculate_q15': {
             'task': 'competitions.tasks.calculate_q15_places_task',
@@ -432,7 +432,7 @@ else:
         },
         'calculate_q3_q4': {
             'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': timedelta(hours=6, minutes=29)
+            'schedule': crontab(hours=6, minutes=29)
         },
         'calculate_q5': {
             'task': 'competitions.tasks.calculate_q5_places_task',
@@ -443,7 +443,7 @@ else:
         },
         'calculate_q6': {
             'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(
+            'schedule': crontab(
                 hours=3,
                 seconds=20
             )
