@@ -7,7 +7,7 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DOWNLOAD_CONSENT_PD, DOWNLOAD_MEMBERSHIP_FILE,
                            DOWNLOAD_PARENT_CONSENT_PD, EXCHANGE_TOKEN, LIST,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
-                           UPDATE_RETRIEVE, LIST_CREATE,)
+                           UPDATE_RETRIEVE, LIST_CREATE, )
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
                        ExchangeTokenView, VKLoginAPIView,
@@ -39,7 +39,7 @@ from competitions.views import (CompetitionApplicationsViewSet,
                                 QVerificationLogByNumberView,
                                 get_detachment_place, get_detachment_places,
                                 get_place_overall, get_place_q1, get_place_q3,
-                                get_place_q4, get_q1_info)
+                                get_place_q4, get_q1_info, DetachmentReportView)
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
                           EventOrganizationDataViewSet,
@@ -48,24 +48,24 @@ from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           MultiEventViewSet, create_answers,
                           group_applications, group_applications_me,
                           is_participant_or_applicant)
-from headquarters.views import (#CentralAcceptViewSet,
-                                DetachmentAcceptViewSet,
-                                DetachmentApplicationViewSet,
-                                DetachmentPositionViewSet, DetachmentViewSet,
-                                DistrictPositionViewSet, DistrictViewSet,
-                                EducationalPositionViewSet, EducationalViewSet,
-                                LocalPositionViewSet, LocalViewSet,
-                                PositionViewSet, #RegionalAcceptViewSet,
-                                RegionalViewSet, #RegionalApplicationViewSet,
-                                #CentralApplicationViewSet,
-                                CentralPositionViewSet, # LocalAcceptViewSet,
-                                CentralViewSet,  #DistrictAcceptViewSet,
-                                #DistrictApplicationViewSet,
-                                RegionalPositionViewSet,
-                                # LocalApplicationViewSet,
-                                # EducationalAcceptViewSet,
-                                # EducationalApplicationViewSet,
-                                get_structural_units)
+from headquarters.views import (  # CentralAcceptViewSet,
+    DetachmentAcceptViewSet,
+    DetachmentApplicationViewSet,
+    DetachmentPositionViewSet, DetachmentViewSet,
+    DistrictPositionViewSet, DistrictViewSet,
+    EducationalPositionViewSet, EducationalViewSet,
+    LocalPositionViewSet, LocalViewSet,
+    PositionViewSet,  # RegionalAcceptViewSet,
+    RegionalViewSet,  # RegionalApplicationViewSet,
+    # CentralApplicationViewSet,
+    CentralPositionViewSet,  # LocalAcceptViewSet,
+    CentralViewSet,  # DistrictAcceptViewSet,
+    # DistrictApplicationViewSet,
+    RegionalPositionViewSet,
+    # LocalApplicationViewSet,
+    # EducationalAcceptViewSet,
+    # EducationalApplicationViewSet,
+    get_structural_units)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
@@ -655,23 +655,29 @@ user_nested_urls = [
         get_detachment_places,
         name='get-detachment-places'
     ),
+    path(
+        'competitions/<int:competition_pk>/detachment/<int:detachment_id>/q/<int:report_number>/',
+        DetachmentReportView.as_view(),
+        name='detachment_report_view'
+    ),
+
     path('', include('djoser.urls')),
     path('exchange-token/', ExchangeTokenVS, name='exchange-token'),
 ]
 
 urlpatterns = [
-    path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
-    path(
-        'reset_password/',
-        CustomUserViewSet.as_view(POST_RESET_PASSWORD),
-        name='reset_password'
-    ),
-    path(
-        'rsousers', CustomUserViewSet.as_view(LIST),
-    ),
-    path('questions/', QuestionsView.as_view(), name='questions'),
-    path('submit_answers/', submit_answers, name='submit-answers'),
-    path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
-    path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
-    path('', include(router.urls)),
-] + user_nested_urls
+                  path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
+                  path(
+                      'reset_password/',
+                      CustomUserViewSet.as_view(POST_RESET_PASSWORD),
+                      name='reset_password'
+                  ),
+                  path(
+                      'rsousers', CustomUserViewSet.as_view(LIST),
+                  ),
+                  path('questions/', QuestionsView.as_view(), name='questions'),
+                  path('submit_answers/', submit_answers, name='submit-answers'),
+                  path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
+                  path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
+                  path('', include(router.urls)),
+              ] + user_nested_urls
