@@ -791,16 +791,16 @@ class VKLoginAPIView(APIView):
         vk_id = vk_user_data.get('id')
         first_name = vk_user_data.get('first_name')
         last_name = vk_user_data.get('last_name')
-        screen_name = vk_user_data.get('screen_name', None)
+        screen_name = vk_user_data.get('screen_name', '')
         bdate = vk_user_data.get('bdate', None)
         city = vk_user_data.get('city').get('title') if vk_user_data.get('city') else None
-        country = vk_user_data.get('country').get('title') if vk_user_data.get('country') else None
         # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
         sex = vk_user_data.get('sex', None)
         phone = vk_user_data.get('phone', None)
 
-        parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
-        formatted_date = parsed_date.strftime('%Y-%m-%d')
+        if bdate:
+            parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
+            formatted_date = parsed_date.strftime('%Y-%m-%d')
 
         gender = None
         if sex == 2:
@@ -817,27 +817,27 @@ class VKLoginAPIView(APIView):
                 user.first_name = first_name
             if not user.last_name:
                 user.last_name = last_name
-            if not user.gender:
+            if not user.gender and gender:
                 user.gender = gender
             if not user.username:
-                user.username = f'{screen_name}_{vk_id}'
-            if not user.date_of_birth:
+                user.username = f'{vk_id}_{screen_name}'
+            if not user.date_of_birth and bdate:
                 user.date_of_birth = formatted_date
-            if not user.phone_number:
+            if not user.phone_number and phone:
                 user.phone_number = phone
-            if not user.address:
-                user.address = f'{city}, {country}'
+            if not user.address and city:
+                user.address = city
 
         if not user:
             user = RSOUser.objects.create(
                 social_vk='https://vk.com/id'+str(vk_id),
                 first_name=first_name,
                 last_name=last_name,
-                username=f'{screen_name}_{vk_id}',
+                username=f'{vk_id}_{screen_name}',
                 gender=gender,
                 date_of_birth=formatted_date,
                 phone_number=phone,
-                address=f'{city}, {country}',
+                address=city,
             )
         user.save()
 
