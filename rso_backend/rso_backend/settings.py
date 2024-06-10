@@ -541,9 +541,8 @@ else:
         },
         'calculate_overall_places': {
             'task': 'competitions.tasks.calculate_overall_places_task',
-            'schedule': crontab(
-                hour=4,
-                minute=6,
+            'schedule': timedelta(
+                minutes=3,
             )
         }
     }
