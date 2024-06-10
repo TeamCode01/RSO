@@ -770,28 +770,77 @@ class VKLoginAPIView(APIView):
 
         access_token = request.data.get('access_token')
 
-        response = requests.get("https://api.vk.com/method/users.get", params={"access_token": access_token, "v": "5.131"})
-
+        response = requests.get(
+            'https://api.vk.com/method/account.getProfileInfo',
+            params={
+                'access_token': access_token,
+                'v': settings.VK_API_VERSION,
+            }
+        )
         vk_user_data = response.json().get('response')
 
         if not vk_user_data:
             return Response(
                 {
-                    'error': 'Неправильный access token или ошибка в полученном ответе от ВК.'
+                    'error': 'Неправильный access token '
+                    'или ошибка в полученном ответе от ВК.'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        vk_user_data = vk_user_data[0]
+
         vk_id = vk_user_data.get('id')
         first_name = vk_user_data.get('first_name')
         last_name = vk_user_data.get('last_name')
+        screen_name = vk_user_data.get('screen_name', None)
+        bdate = vk_user_data.get('bdate', None)
+        city = vk_user_data.get('city').get('title') if vk_user_data.get('city') else None
+        country = vk_user_data.get('country').get('title') if vk_user_data.get('country') else None
+        # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
+        sex = vk_user_data.get('sex', None)
+        phone = vk_user_data.get('phone', None)
 
-        user, _ = RSOUser.objects.get_or_create(
-            username=vk_id,
-            first_name=first_name,
-            last_name=last_name
+        parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
+        formatted_date = parsed_date.strftime('%Y-%m-%d')
 
-        )
+        gender = None
+        if sex == 2:
+            gender = 'male'
+        elif sex == 1:
+            gender = 'female'
+
+        user = RSOUser.objects.filter(
+            social_vk='https://vk.com/id'+str(vk_id),
+        ).first()
+
+        if user:
+            if not user.first_name:
+                user.first_name = first_name
+            if not user.last_name:
+                user.last_name = last_name
+            if not user.gender:
+                user.gender = gender
+            if not user.username:
+                user.username = f'{screen_name}_{vk_id}'
+            if not user.date_of_birth:
+                user.date_of_birth = formatted_date
+            if not user.phone_number:
+                user.phone_number = phone
+            if not user.address:
+                user.address = f'{city}, {country}'
+
+        if not user:
+            user = RSOUser.objects.create(
+                social_vk='https://vk.com/id'+str(vk_id),
+                first_name=first_name,
+                last_name=last_name,
+                username=f'{screen_name}_{vk_id}',
+                gender=gender,
+                date_of_birth=formatted_date,
+                phone_number=phone,
+                address=f'{city}, {country}',
+            )
+        user.save()
+
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
