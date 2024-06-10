@@ -1061,7 +1061,7 @@ class SafeUserSerializer(RSOUserSerializer):
     Для использования в /safe_users/.
     """
 
-    media = UserMediaSerializer(source='media', read_only=True)
+    media = UserMediaSerializer(read_only=True)
 
     class Meta:
         ref_name = 'safe_users'
