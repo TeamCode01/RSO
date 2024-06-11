@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pdfrw
 from django.conf import settings
-from django.core.cache import cache
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -782,9 +782,14 @@ class VKLoginAPIView(APIView):
         elif sex == 1:
             gender = 'female'
 
-        user = RSOUser.objects.filter(
-            social_vk='https://vk.com/id'+str(vk_id),
-        ).first()
+        if screen_name != '':
+            user = RSOUser.objects.filter(
+                Q(social_vk='https://vk.com/id'+str(vk_id)) | Q(social_vk='https://vk.com/'+str(screen_name))
+            ).first()
+        else:
+            user = RSOUser.objects.filter(
+                social_vk='https://vk.com/id'+str(vk_id)
+            ).first()
 
         if user:
             if not user.first_name:
