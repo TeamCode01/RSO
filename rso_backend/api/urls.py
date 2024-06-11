@@ -7,7 +7,7 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DOWNLOAD_CONSENT_PD, DOWNLOAD_MEMBERSHIP_FILE,
                            DOWNLOAD_PARENT_CONSENT_PD, EXCHANGE_TOKEN, LIST,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
-                           UPDATE_RETRIEVE, LIST_CREATE, )
+                           UPDATE_RETRIEVE, LIST_CREATE, UPDATE_DELETE_RETRIEVE, )
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
                        ExchangeTokenView, VKLoginAPIView,
@@ -333,25 +333,25 @@ DetachmentPositionUpdateDeleteVS = DetachmentPositionViewSet.as_view(
 # EducationalAcceptVS = EducationalAcceptViewSet.as_view(CREATE_DELETE)
 # EducationalApplicationVS = EducationalApplicationViewSet.as_view(CREATE_DELETE)
 EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
-EducationalPositionUpdateVS = EducationalPositionViewSet.as_view(
-    UPDATE_RETRIEVE
+EducationalPositionUpdateDeleteVS = EducationalPositionViewSet.as_view(
+    UPDATE_DELETE_RETRIEVE
 )
 # LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
 # LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
 LocalPositionListVS = LocalPositionViewSet.as_view(LIST)
-LocalPositionUpdateVS = LocalPositionViewSet.as_view(UPDATE_RETRIEVE)
+LocalPositionUpdateDeleteVS = LocalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
 # RegionalAcceptVS = RegionalAcceptViewSet.as_view(CREATE_DELETE)
 # RegionalApplicationVS = RegionalApplicationViewSet.as_view(CREATE_DELETE)
 RegionalPositionListVS = RegionalPositionViewSet.as_view(LIST)
-RegionalPositionUpdateVS = RegionalPositionViewSet.as_view(UPDATE_RETRIEVE)
+RegionalPositionUpdateDeleteVS = RegionalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
 # DistrictAcceptVS = DistrictAcceptViewSet.as_view(CREATE_DELETE)
 # DistrictApplicationVS = DistrictApplicationViewSet.as_view(CREATE_DELETE)
 DistrictPositionListVS = DistrictPositionViewSet.as_view(LIST)
-DistrictPositionUpdateVS = DistrictPositionViewSet.as_view(UPDATE_RETRIEVE)
+DistrictPositionUpdateDeleteVS = DistrictPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
 # CentralAcceptVS = CentralAcceptViewSet.as_view(CREATE_DELETE)
 # CentralApplicationVS = CentralApplicationViewSet.as_view(CREATE_DELETE)
 CentralPositionListVS = CentralPositionViewSet.as_view(LIST)
-CentralPositionUpdateVS = CentralPositionViewSet.as_view(UPDATE_RETRIEVE)
+CentralPositionUpdateDeleteVS = CentralPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
 EventOrganizationDataListVS = EventOrganizationDataViewSet.as_view(LIST_CREATE)
 EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
     UPDATE_DELETE
@@ -482,7 +482,7 @@ user_nested_urls = [
     ),
     path(
         'educationals/<int:pk>/members/<int:membership_pk>/',
-        EducationalPositionUpdateVS,
+        EducationalPositionUpdateDeleteVS,
         name='educational-members-update'
     ),
     path(
@@ -492,7 +492,7 @@ user_nested_urls = [
     ),
     path(
         'locals/<int:pk>/members/<int:membership_pk>/',
-        LocalPositionUpdateVS,
+        LocalPositionUpdateDeleteVS,
         name='local-members-update'
     ),
     # path(
@@ -512,7 +512,7 @@ user_nested_urls = [
     ),
     path(
         'regionals/<int:pk>/members/<int:membership_pk>/',
-        RegionalPositionUpdateVS,
+        RegionalPositionUpdateDeleteVS,
         name='regional-members-update'
     ),
     # path(
@@ -532,7 +532,7 @@ user_nested_urls = [
     ),
     path(
         'districts/<int:pk>/members/<int:membership_pk>/',
-        DistrictPositionUpdateVS,
+        DistrictPositionUpdateDeleteVS,
         name='district-members-update'
     ),
     # path(
@@ -552,7 +552,7 @@ user_nested_urls = [
     ),
     path(
         'centrals/<int:pk>/members/<int:membership_pk>/',
-        CentralPositionUpdateVS,
+        CentralPositionUpdateDeleteVS,
         name='central-members-update'
     ),
     # path(

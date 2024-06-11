@@ -45,7 +45,7 @@ services:
       - internal_dev
     environment:
       - GUNICORN_WORKERS=1
-      - GUNICORN_TIMEOUT=360
+      - GUNICORN_TIMEOUT=60
   celery_worker:
     image: d2avids/rso_backend:dev
     restart: always

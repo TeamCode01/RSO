@@ -23,6 +23,12 @@ UPDATE_RETRIEVE = {
     'patch': 'partial_update',
     'get': 'retrieve',
 }
+UPDATE_DELETE_RETRIEVE = {
+    'put': 'update',
+    'patch': 'partial_update',
+    'get': 'retrieve',
+    'delete': 'destroy'
+}
 DELETE_UPDATE_RETRIEVE = {
     'put': 'update',
     'patch': 'partial_update',
