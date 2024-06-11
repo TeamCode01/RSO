@@ -35,7 +35,8 @@ from api.permissions import (
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE, \
+    DETACHMENT_REPORTS_MODELS
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
 from competitions.models import (Q8, Q9, Q10, Q11, Q12,
@@ -5377,3 +5378,25 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         else:
             return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
     return Response(response, status=status.HTTP_200_OK)
+
+
+class DetachmentReportView(APIView):
+    def get(self, request, competition_pk, report_number, detachment_id):
+        report_model = DETACHMENT_REPORTS_MODELS.get(report_number)
+        if not report_model:
+            return Response(f'Отчетов по показателю {report_number} не существует', status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            report = report_model.objects.get(detachment_id=detachment_id, competition_id=competition_pk)
+        except report_model.DoesNotExist:
+            return Response(
+                f'Отчет по показателю {report_number} для данного отряда не найден', status=status.HTTP_404_NOT_FOUND
+            )
+
+        data = {
+            field.name: getattr(report, field.name)
+            for field in report._meta.fields
+            if field.name not in ['competition', 'detachment']
+        }
+
+        return Response(data, status=status.HTTP_200_OK)

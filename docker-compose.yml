@@ -44,7 +44,8 @@ services:
     networks:
       - internal
     environment:
-      - GUNICORN_CMD_ARGS=--timeout 360
+      - GUNICORN_WORKERS=7
+      - GUNICORN_TIMEOUT=360
   celery_worker:
     image: d2avids/rso_backend:latest
     restart: always

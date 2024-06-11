@@ -23,6 +23,12 @@ UPDATE_RETRIEVE = {
     'patch': 'partial_update',
     'get': 'retrieve',
 }
+UPDATE_DELETE_RETRIEVE = {
+    'put': 'update',
+    'patch': 'partial_update',
+    'get': 'retrieve',
+    'delete': 'destroy'
+}
 DELETE_UPDATE_RETRIEVE = {
     'put': 'update',
     'patch': 'partial_update',
@@ -61,7 +67,6 @@ DOWNLOAD_MEMBERSHIP_FILE = {'get': 'download_membership_file'}
 DOWNLOAD_CONSENT_PD = {'get': 'download_consent_personal_data'}
 DOWNLOAD_PARENT_CONSENT_PD = {'get': 'download_parent_consent_personal_data'}
 DOWNLOAD_ALL_FORMS = {'get': 'download_all_forms'}
-EXCHANGE_TOKEN = {'post':'post'}
 
 HEADQUARTERS_MODELS_MAPPING = {
     'Центральные штабы': CentralHeadquarter,

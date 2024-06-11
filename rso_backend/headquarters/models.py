@@ -702,7 +702,8 @@ class UserUnitPosition(models.Model):
         удаления пользователя из всех структурных единиц при его удалении
         из одной из структур.
         """
-        self.delete_user_from_all_units()
+        if isinstance(self, UserDetachmentPosition):
+            self.delete_user_from_all_units()
         super().delete(*args, **kwargs)
 
     def __str__(self):
