@@ -1,13 +1,13 @@
 version: '3'
 
 volumes:
-  static_dev:
-  media_dev:
-  pg_data_dev:
-  frontend_dist_dev:
+  static:
+  media:
+  pg_data:
+  frontend_dist:
 
 networks:
-  internal_dev:
+  internal:
     driver: bridge
 
 services:
@@ -16,80 +16,81 @@ services:
     env_file: .env
     restart: always
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - pg_data_dev:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     networks:
-      - internal_dev
+      - internal
   redis:
     image: redis:alpine
     restart: always
     ports:
-      - "6380:6379"
+      - "6379:6379"
     networks:
-      - internal_dev
+      - internal
   backend:
-    image: d2avids/rso_backend:dev
+    image: d2avids/rso_backend:latest
     env_file: .env
     restart: always
     ports:
-      - "8081:8080"
+      - "8080:8080"
     depends_on:
       - db
       - redis
     volumes:
       - ./logs:/app/logs
-      - static_dev:/backend_static/static
-      - media_dev:/app/media
+      - static:/backend_static/static
+      - media:/app/media
     networks:
-      - internal_dev
+      - internal
     environment:
-      - GUNICORN_CMD_ARGS=--timeout 360
+      - GUNICORN_WORKERS=1
+      - GUNICORN_TIMEOUT=360
   celery_worker:
-    image: d2avids/rso_backend:dev
+    image: d2avids/rso_backend:latest
     restart: always
     env_file: .env
     command: celery -A rso_backend worker --loglevel=info
     volumes:
       - ./logs:/app/logs
-      - media_dev:/app/media
+      - media:/app/media
     depends_on:
       - backend
     networks:
-      - internal_dev
+      - internal
   celery_beat:
-    image: d2avids/rso_backend:dev
+    image: d2avids/rso_backend:latest
     restart: always
     env_file: .env
     command: celery -A rso_backend beat -l info
     volumes:
       - ./logs:/app/logs
-      - media_dev:/app/media
+      - media:/app/media
     depends_on:
       - celery_worker
     networks:
-      - internal_dev
+      - internal
   frontend:
-    image: nem1zida/rso_frontend:dev
+    image: nem1zida/rso_frontend:latest
     restart: always
     env_file: .env
     depends_on:
       - backend
     volumes:
-      - frontend_dist_dev:/app/src/app/dist
+      - frontend_dist:/app/src/app/dist
     networks:
-      - internal_dev
+      - internal
   nginx:
     image: nginx:alpine
     restart: always
     depends_on:
       - frontend
     ports:
-      - "8001:80"
+      - "8000:80"
     volumes:
-      - static_dev:/static/
-      - media_dev:/media/
-      - frontend_dist_dev:/usr/src/app/src/app/dist
+      - static:/static/
+      - media:/media/
+      - frontend_dist:/usr/src/app/src/app/dist
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     networks:
-      - internal_dev
+      - internal
