@@ -5381,14 +5381,14 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         else:
             return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
     return Response(response, status=status.HTTP_200_OK)
+
+
 def serialize_value(value):
     if isinstance(value, str):
         try:
-            # Try to parse JSON string
             parsed_value = json.loads(value.replace("'", "\""))
             return serialize_value(parsed_value)
         except (json.JSONDecodeError, TypeError):
-            # Try to cast to proper type if it's not a JSON string
             try:
                 if value.lower() == 'true':
                     return True
@@ -5416,6 +5416,7 @@ def serialize_value(value):
     else:
         return value
 
+
 class DetachmentReportView(APIView):
     def get(self, request, competition_pk, report_number, detachment_id):
         report_model = DETACHMENT_REPORTS_MODELS.get(report_number)
@@ -5427,13 +5428,11 @@ class DetachmentReportView(APIView):
             if not report:
                 return Response({'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            print(f"Error retrieving report: {e}")
             return Response({'detail': 'Произошла ошибка при получении отчета'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             data = model_to_dict(report, exclude=['competition', 'detachment'])
         except AttributeError as e:
-            print(f"Error converting model to dict: {e}")
             return Response({'detail': 'Произошла ошибка при преобразовании отчета в словарь'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         for related_object in report_model._meta.related_objects:
@@ -5456,20 +5455,19 @@ class DetachmentReportView(APIView):
             except ObjectDoesNotExist:
                 continue
             except AttributeError as e:
-                print(f"Error accessing related object {related_name}: {e}")
+                print(f'Ошибка получения связанного объекта {related_name}: {e}')
                 continue
 
-        print(f"Data to be returned: {data}")
+        print(f'Возвращаемая дата: {data}')
 
-        # Sanitize data for JSON serialization
         sanitized_data = {}
         for key, value in data.items():
             try:
                 serialized_value = serialize_value(value)
-                json.dumps(serialized_value)  # Ensure value is JSON serializable
+                json.dumps(serialized_value)
                 sanitized_data[key] = serialized_value
             except (UnicodeDecodeError, UnicodeEncodeError, TypeError, ValueError, AttributeError) as e:
-                print(f"Error serializing field {key}: {e}")
-                sanitized_data[key] = str(value)  # or handle the data differently
+                print(f'Ошибка сериализации ключа {key}: {e}')
+                sanitized_data[key] = str(value)
 
         return Response(sanitized_data, status=status.HTTP_200_OK)
