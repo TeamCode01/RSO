@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from django.forms import model_to_dict
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -5384,19 +5385,35 @@ class DetachmentReportView(APIView):
     def get(self, request, competition_pk, report_number, detachment_id):
         report_model = DETACHMENT_REPORTS_MODELS.get(report_number)
         if not report_model:
-            return Response(f'Отчетов по показателю {report_number} не существует', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'Отчетов по показателю {report_number} не существует'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            report = report_model.objects.get(detachment_id=detachment_id, competition_id=competition_pk)
+            report = report_model.objects.select_related().get(detachment_id=detachment_id,
+                                                               competition_id=competition_pk)
         except report_model.DoesNotExist:
             return Response(
-                f'Отчет по показателю {report_number} для данного отряда не найден', status=status.HTTP_404_NOT_FOUND
+                {'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'}, status=status.HTTP_404_NOT_FOUND
             )
 
-        data = {
-            field.name: getattr(report, field.name)
-            for field in report._meta.fields
-            if field.name not in ['competition', 'detachment']
-        }
+        data = model_to_dict(report, exclude=['competition', 'detachment'])
+
+        for related_object in report_model._meta.related_objects:
+            related_name = related_object.get_accessor_name()
+
+            try:
+                related_manager = getattr(report, related_name)
+
+                if hasattr(related_manager, 'all'):
+                    related_queryset = related_manager.all()
+                    data[related_name] = [
+                        model_to_dict(item)
+                        for item in related_queryset
+                    ]
+                else:
+                    related_instance = related_manager
+                    if related_instance:
+                        data[related_name] = model_to_dict(related_instance)
+            except ObjectDoesNotExist:
+                continue
 
         return Response(data, status=status.HTTP_200_OK)
