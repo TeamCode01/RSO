@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import date, timedelta
@@ -7,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.fields.files import FieldFile
 from django.forms import model_to_dict
 from django.http import QueryDict
 from django.http.response import HttpResponse
@@ -5379,7 +5381,40 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         else:
             return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
     return Response(response, status=status.HTTP_200_OK)
-
+def serialize_value(value):
+    if isinstance(value, str):
+        try:
+            # Try to parse JSON string
+            parsed_value = json.loads(value.replace("'", "\""))
+            return serialize_value(parsed_value)
+        except (json.JSONDecodeError, TypeError):
+            # Try to cast to proper type if it's not a JSON string
+            try:
+                if value.lower() == 'true':
+                    return True
+                elif value.lower() == 'false':
+                    return False
+                elif value.isdigit():
+                    return int(value)
+                elif '.' in value:
+                    return float(value)
+                else:
+                    return value
+            except ValueError:
+                return value
+    elif isinstance(value, list):
+        return [serialize_value(v) for v in value]
+    elif isinstance(value, dict):
+        return {k: serialize_value(v) for k, v in value.items()}
+    elif isinstance(value, FieldFile):
+        if value and value.name:
+            return f"https://{settings.DEFAULT_SITE_URL}{value.url}"
+        else:
+            return None
+    elif value is None:
+        return None
+    else:
+        return value
 
 class DetachmentReportView(APIView):
     def get(self, request, competition_pk, report_number, detachment_id):
@@ -5388,32 +5423,53 @@ class DetachmentReportView(APIView):
             return Response({'detail': f'Отчетов по показателю {report_number} не существует'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            report = report_model.objects.select_related().get(detachment_id=detachment_id,
-                                                               competition_id=competition_pk)
-        except report_model.DoesNotExist:
-            return Response(
-                {'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'}, status=status.HTTP_404_NOT_FOUND
-            )
+            report = report_model.objects.select_related().filter(detachment_id=detachment_id, competition_id=competition_pk).last()
+            if not report:
+                return Response({'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            print(f"Error retrieving report: {e}")
+            return Response({'detail': 'Произошла ошибка при получении отчета'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        data = model_to_dict(report, exclude=['competition', 'detachment'])
+        try:
+            data = model_to_dict(report, exclude=['competition', 'detachment'])
+        except AttributeError as e:
+            print(f"Error converting model to dict: {e}")
+            return Response({'detail': 'Произошла ошибка при преобразовании отчета в словарь'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         for related_object in report_model._meta.related_objects:
             related_name = related_object.get_accessor_name()
 
             try:
-                related_manager = getattr(report, related_name)
+                related_manager = getattr(report, related_name, None)
 
-                if hasattr(related_manager, 'all'):
-                    related_queryset = related_manager.all()
-                    data[related_name] = [
-                        model_to_dict(item)
-                        for item in related_queryset
-                    ]
-                else:
-                    related_instance = related_manager
-                    if related_instance:
-                        data[related_name] = model_to_dict(related_instance)
+                if related_manager is not None:
+                    if hasattr(related_manager, 'all'):
+                        related_queryset = related_manager.all()
+                        data[related_name] = [
+                            model_to_dict(item)
+                            for item in related_queryset
+                        ]
+                    else:
+                        related_instance = related_manager
+                        if related_instance:
+                            data[related_name] = model_to_dict(related_instance)
             except ObjectDoesNotExist:
                 continue
+            except AttributeError as e:
+                print(f"Error accessing related object {related_name}: {e}")
+                continue
 
-        return Response(data, status=status.HTTP_200_OK)
+        print(f"Data to be returned: {data}")
+
+        # Sanitize data for JSON serialization
+        sanitized_data = {}
+        for key, value in data.items():
+            try:
+                serialized_value = serialize_value(value)
+                json.dumps(serialized_value)  # Ensure value is JSON serializable
+                sanitized_data[key] = serialized_value
+            except (UnicodeDecodeError, UnicodeEncodeError, TypeError, ValueError, AttributeError) as e:
+                print(f"Error serializing field {key}: {e}")
+                sanitized_data[key] = str(value)  # or handle the data differently
+
+        return Response(sanitized_data, status=status.HTTP_200_OK)
