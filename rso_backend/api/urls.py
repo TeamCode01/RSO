@@ -5,12 +5,13 @@ from rest_framework.routers import DefaultRouter
 from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DELETE_UPDATE_RETRIEVE, DOWNLOAD_ALL_FORMS,
                            DOWNLOAD_CONSENT_PD, DOWNLOAD_MEMBERSHIP_FILE,
-                           DOWNLOAD_PARENT_CONSENT_PD, EXCHANGE_TOKEN, LIST,
+                           DOWNLOAD_PARENT_CONSENT_PD, LIST,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
-                           UPDATE_RETRIEVE, LIST_CREATE, UPDATE_DELETE_RETRIEVE, )
+                           UPDATE_RETRIEVE, LIST_CREATE,
+                           UPDATE_DELETE_RETRIEVE, )
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
-                       ExchangeTokenView, VKLoginAPIView,
+                       VKLoginAPIView,
                        change_membership_fee_status, verify_user)
 from competitions.views import (CompetitionApplicationsViewSet,
                                 CompetitionParticipantsViewSet,
@@ -39,7 +40,8 @@ from competitions.views import (CompetitionApplicationsViewSet,
                                 QVerificationLogByNumberView,
                                 get_detachment_place, get_detachment_places,
                                 get_place_overall, get_place_q1, get_place_q3,
-                                get_place_q4, get_q1_info, DetachmentReportView)
+                                get_place_q4, get_q1_info,
+                                DetachmentReportView)
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
                           EventOrganizationDataViewSet,
@@ -358,7 +360,6 @@ EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
 )
 EventAdditionalIssueListVS = EventAdditionalIssueViewSet.as_view(LIST_CREATE)
 EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
-ExchangeTokenVS = ExchangeTokenView.as_view(EXCHANGE_TOKEN)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
@@ -662,7 +663,6 @@ user_nested_urls = [
     ),
 
     path('', include('djoser.urls')),
-    path('exchange-token/', ExchangeTokenVS, name='exchange-token'),
 ]
 
 urlpatterns = [

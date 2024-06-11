@@ -689,8 +689,15 @@ class MemberCertViewSet(viewsets.ReadOnlyModelViewSet):
             return response
 
 
-class ExchangeTokenView(viewsets.ModelViewSet):
-    """Обмен silent token и uuid от ВК для получения access token."""
+class VKLoginAPIView(APIView):
+
+    """Вход через VK.
+
+    Принимает silent_token и uuid полученные от ВК.
+    В ответе access_token и  refresh_token бекенда RSO.
+    Время жизни access_token - 5 часов.
+    Время жизни refresh_token - 7 дней.
+    """
 
     permission_classes = [permissions.AllowAny,]
 
@@ -726,10 +733,6 @@ class ExchangeTokenView(viewsets.ModelViewSet):
 
             if 'response' in response_data:
                 access_token = response_data['response']['access_token']
-                return Response(
-                    {'access_token': access_token},
-                    status=status.HTTP_200_OK
-                )
             else:
                 return Response(
                     {'error': response_data.get('error', 'Unknown error')},
@@ -740,35 +743,6 @@ class ExchangeTokenView(viewsets.ModelViewSet):
             return Response(
                 {'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-class VKLoginAPIView(APIView):
-
-    """Вход через VK.
-
-    Принимает access token полученный от ВК.
-    В ответе access_token и  refresh_token бекенда RSO.
-    Время жизни access_token - 30 минут.
-    Время жизни refresh_token - 1 день.
-    """
-
-    permission_classes = [permissions.AllowAny,]
-
-    @swagger_auto_schema(
-                request_body=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    required=[],
-                    properties={
-                        'access_token': openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            default='foobar'
-                        ),
-                    }
-                )
-            )
-    def post(self, request):
-
-        access_token = request.data.get('access_token')
 
         response = requests.get(
             'https://api.vk.com/method/account.getProfileInfo',
