@@ -1,5 +1,7 @@
-{% extends 'reports/base.html' %} {% load static %} {% block content %} {%
-include 'reports/header.html' %}
+{% extends 'reports/base.html' %} 
+{% load static %} 
+{% block content %} 
+{% include 'reports/header.html' %}
 <div class="container">
 	<h2>Привет, {{ user.get_full_name }}!</h2>
 	<h1>Доступные отчеты:</h1>
@@ -38,21 +40,24 @@ include 'reports/header.html' %}
 			Количество упоминаний в СМИ о прошедших творческих, добровольческих и
 			патриотических мероприятиях отряда (файл)
 		</button>
+		<button class="button" id="downloadQ18DataButton">
+			Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)
+		</button>
 		<button class="button" id="downloadQ20DataButton">
 			Соответствие требованиям и положению символики и атрибутике форменной
 			одежды и символики отрядов (файл)
 		</button>
-		{# <a href="/report2" class="button">Отчет 2</a>#} {#
-		<a href="/report3" class="button">Отчет 3</a>#} {#
-		<a href="/report1" class="button">Отчет 1</a>#} {#
-		<a href="/report2" class="button">Отчет 2</a>#} {#
-		<a href="/report3" class="button">Отчет 3</a>#} {#
-		<a href="/report1" class="button">Отчет 1</a>#} {#
-		<a href="/report2" class="button">Отчет 2</a>#} {#
-		<a href="/report3" class="button">Отчет 3</a>#} {#
-		<a href="/report1" class="button">Отчет 1</a>#} {#
-		<a href="/report2" class="button">Отчет 2</a>#} {#
-		<a href="/report3" class="button">Отчет 3</a>#}
+{#            <a href="/report2" class="button">Отчет 2</a>#}
+{#            <a href="/report3" class="button">Отчет 3</a>#}
+{#            <a href="/report1" class="button">Отчет 1</a>#}
+{#            <a href="/report2" class="button">Отчет 2</a>#}
+{#            <a href="/report3" class="button">Отчет 3</a>#}
+{#            <a href="/report1" class="button">Отчет 1</a>#}
+{#            <a href="/report2" class="button">Отчет 2</a>#}
+{#            <a href="/report3" class="button">Отчет 3</a>#}
+{#            <a href="/report1" class="button">Отчет 1</a>#}
+{#            <a href="/report2" class="button">Отчет 2</a>#}
+{#            <a href="/report3" class="button">Отчет 3</a>#}
 		<a href="{% url 'commander_school' %}" class="button"
 			>Прохождение Командиром и Комиссаром школы командирского состава</a
 		>
@@ -124,6 +129,11 @@ include 'reports/header.html' %}
 		'downloadQ17DataButton',
 		'{% url "export_q17_data" %}',
 		'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)'
+	)
+	setupDownloadButton(
+		'downloadQ18DataButton',
+		'{% url "export_q18_data" %}',
+		'Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)'
 	)
 	setupDownloadButton(
 		'downloadQ20DataButton',

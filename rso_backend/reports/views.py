@@ -19,7 +19,8 @@ from reports.constants import (COMMANDER_SCHOOL_DATA_HEADERS,
                                REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
                                COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS,
-                               Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS)
+                               Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS,
+                               Q18_DATA_HEADERS)
 from reports.utils import (
     get_commander_school_data, get_competition_users, get_detachment_q_results,
     adapt_attempts, get_membership_fee_data
@@ -252,6 +253,20 @@ class ExportQ17DataView(BaseExcelExportView):
     def get_data_func(self):
         return 'get_q17_data'
 
+
+class ExportQ18DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q18_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Охват_бойцов_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Охват бойцов, принявших участие во Всероссийском дне ударного труда'
+
+    def get_data_func(self):
+        return 'get_q18_data'
+    
 
 class ExportQ20DataView(BaseExcelExportView):
 
