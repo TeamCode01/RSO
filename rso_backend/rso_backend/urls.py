@@ -43,22 +43,10 @@ else:
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/auth/', include('rest_framework_social_oauth2.urls', namespace='authorize')),
     path('api/v1/', include('api.urls')),
     path('api/v1/', include('djoser.urls')),
     path('api/v1/', include('djoser.urls.jwt')),
     path('api/v1/', include('djoser.urls.authtoken')),
-    # path(
-    #     'api/v1/jwt_token/',
-    #     TokenObtainPairView.as_view(),
-    #     name='token_obtain_pair'
-    # ),
-    # path(
-    #     'api/v1/jwt_token/refresh/',
-    #     TokenRefreshView.as_view(),
-    #     name='token_refresh'
-    # ),
-    # path('api/v1/jwt_token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path(
         'swagger<format>/',
         schema_view.without_ui(cache_timeout=0),

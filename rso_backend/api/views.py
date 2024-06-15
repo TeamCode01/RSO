@@ -733,6 +733,8 @@ class VKLoginAPIView(APIView):
 
             if 'response' in response_data:
                 access_token = response_data['response']['access_token']
+                email = response_data['response']['email']
+                phone = response_data['response']['phone']
             else:
                 return Response(
                     {'error': response_data.get('error', 'Unknown error')},
@@ -770,7 +772,7 @@ class VKLoginAPIView(APIView):
         city = vk_user_data.get('city').get('title') if vk_user_data.get('city') else None
         # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
         sex = vk_user_data.get('sex', None)
-        phone = vk_user_data.get('phone', None)
+        # phone = vk_user_data.get('phone', None)
 
         if bdate:
             parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
@@ -784,11 +786,11 @@ class VKLoginAPIView(APIView):
 
         if screen_name != '':
             user = RSOUser.objects.filter(
-                Q(social_vk='https://vk.com/id'+str(vk_id)) | Q(social_vk='https://vk.com/'+str(screen_name))
+                Q(email=email) | Q(social_vk='https://vk.com/id'+str(vk_id)) | Q(social_vk='https://vk.com/'+str(screen_name))
             ).first()
         else:
             user = RSOUser.objects.filter(
-                social_vk='https://vk.com/id'+str(vk_id)
+                Q(email=email) | Q(social_vk='https://vk.com/id'+str(vk_id))
             ).first()
 
         if user:

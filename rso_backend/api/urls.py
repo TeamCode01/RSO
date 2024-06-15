@@ -50,24 +50,24 @@ from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           MultiEventViewSet, create_answers,
                           group_applications, group_applications_me,
                           is_participant_or_applicant)
-from headquarters.views import (  # CentralAcceptViewSet,
-    DetachmentAcceptViewSet,
-    DetachmentApplicationViewSet,
-    DetachmentPositionViewSet, DetachmentViewSet,
-    DistrictPositionViewSet, DistrictViewSet,
-    EducationalPositionViewSet, EducationalViewSet,
-    LocalPositionViewSet, LocalViewSet,
-    PositionViewSet,  # RegionalAcceptViewSet,
-    RegionalViewSet,  # RegionalApplicationViewSet,
-    # CentralApplicationViewSet,
-    CentralPositionViewSet,  # LocalAcceptViewSet,
-    CentralViewSet,  # DistrictAcceptViewSet,
-    # DistrictApplicationViewSet,
-    RegionalPositionViewSet,
-    # LocalApplicationViewSet,
-    # EducationalAcceptViewSet,
-    # EducationalApplicationViewSet,
-    get_structural_units)
+from headquarters.views import (CentralAcceptViewSet,
+                                DetachmentAcceptViewSet,
+                                DetachmentApplicationViewSet,
+                                DetachmentPositionViewSet, DetachmentViewSet,
+                                DistrictPositionViewSet, DistrictViewSet,
+                                EducationalPositionViewSet, EducationalViewSet,
+                                LocalPositionViewSet, LocalViewSet,
+                                PositionViewSet,  RegionalAcceptViewSet,
+                                RegionalViewSet,  RegionalApplicationViewSet,
+                                CentralApplicationViewSet,
+                                CentralPositionViewSet,  LocalAcceptViewSet,
+                                CentralViewSet,  DistrictAcceptViewSet,
+                                DistrictApplicationViewSet,
+                                RegionalPositionViewSet,
+                                LocalApplicationViewSet,
+                                EducationalAcceptViewSet,
+                                EducationalApplicationViewSet,
+                                get_structural_units)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
@@ -332,26 +332,26 @@ DetachmentPositionListVS = DetachmentPositionViewSet.as_view(LIST)
 DetachmentPositionUpdateDeleteVS = DetachmentPositionViewSet.as_view(
     DELETE_UPDATE_RETRIEVE
 )
-# EducationalAcceptVS = EducationalAcceptViewSet.as_view(CREATE_DELETE)
-# EducationalApplicationVS = EducationalApplicationViewSet.as_view(CREATE_DELETE)
+EducationalAcceptVS = EducationalAcceptViewSet.as_view(CREATE_DELETE)
+EducationalApplicationVS = EducationalApplicationViewSet.as_view(CREATE_DELETE)
 EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
 EducationalPositionUpdateDeleteVS = EducationalPositionViewSet.as_view(
     UPDATE_DELETE_RETRIEVE
 )
-# LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
-# LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
+LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
+LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
 LocalPositionListVS = LocalPositionViewSet.as_view(LIST)
 LocalPositionUpdateDeleteVS = LocalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-# RegionalAcceptVS = RegionalAcceptViewSet.as_view(CREATE_DELETE)
-# RegionalApplicationVS = RegionalApplicationViewSet.as_view(CREATE_DELETE)
+RegionalAcceptVS = RegionalAcceptViewSet.as_view(CREATE_DELETE)
+RegionalApplicationVS = RegionalApplicationViewSet.as_view(CREATE_DELETE)
 RegionalPositionListVS = RegionalPositionViewSet.as_view(LIST)
 RegionalPositionUpdateDeleteVS = RegionalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-# DistrictAcceptVS = DistrictAcceptViewSet.as_view(CREATE_DELETE)
-# DistrictApplicationVS = DistrictApplicationViewSet.as_view(CREATE_DELETE)
+DistrictAcceptVS = DistrictAcceptViewSet.as_view(CREATE_DELETE)
+DistrictApplicationVS = DistrictApplicationViewSet.as_view(CREATE_DELETE)
 DistrictPositionListVS = DistrictPositionViewSet.as_view(LIST)
 DistrictPositionUpdateDeleteVS = DistrictPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-# CentralAcceptVS = CentralAcceptViewSet.as_view(CREATE_DELETE)
-# CentralApplicationVS = CentralApplicationViewSet.as_view(CREATE_DELETE)
+CentralAcceptVS = CentralAcceptViewSet.as_view(CREATE_DELETE)
+CentralApplicationVS = CentralApplicationViewSet.as_view(CREATE_DELETE)
 CentralPositionListVS = CentralPositionViewSet.as_view(LIST)
 CentralPositionUpdateDeleteVS = CentralPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
 EventOrganizationDataListVS = EventOrganizationDataViewSet.as_view(LIST_CREATE)
@@ -466,16 +466,16 @@ user_nested_urls = [
         DetachmentCompetitionIsTandemView.as_view(),
         name='detachment-competition-place'
     ),
-    # path(
-    #     'educationals/<int:pk>/apply/',
-    #     EducationalApplicationVS,
-    #     name='educational-application'
-    # ),
-    # path(
-    #     'educationals/<int:pk>/applications/<int:application_pk>/accept/',
-    #     EducationalAcceptVS,
-    #     name='user-edu-apply'
-    # ),
+    path(
+        'educationals/<int:pk>/apply/',
+        EducationalApplicationVS,
+        name='educational-application'
+    ),
+    path(
+        'educationals/<int:pk>/applications/<int:application_pk>/accept/',
+        EducationalAcceptVS,
+        name='user-edu-apply'
+    ),
     path(
         'educationals/<int:pk>/members/',
         EducationalPositionListVS,
@@ -496,16 +496,16 @@ user_nested_urls = [
         LocalPositionUpdateDeleteVS,
         name='local-members-update'
     ),
-    # path(
-    #     'locals/<int:pk>/apply/',
-    #     LocalApplicationVS,
-    #     name='local-application'
-    # ),
-    # path(
-    #     'locals/<int:pk>/applications/<int:application_pk>/accept/',
-    #     LocalAcceptVS,
-    #     name='user-local-apply'
-    # ),
+    path(
+        'locals/<int:pk>/apply/',
+        LocalApplicationVS,
+        name='local-application'
+    ),
+    path(
+        'locals/<int:pk>/applications/<int:application_pk>/accept/',
+        LocalAcceptVS,
+        name='user-local-apply'
+    ),
     path(
         'regionals/<int:pk>/members/',
         RegionalPositionListVS,
@@ -516,16 +516,16 @@ user_nested_urls = [
         RegionalPositionUpdateDeleteVS,
         name='regional-members-update'
     ),
-    # path(
-    #     'regionals/<int:pk>/apply/',
-    #     RegionalApplicationVS,
-    #     name='regional-application'
-    # ),
-    # path(
-    #     'regionals/<int:pk>/applications/<int:application_pk>/accept/',
-    #     RegionalAcceptVS,
-    #     name='user-regional-apply'
-    # ),
+    path(
+        'regionals/<int:pk>/apply/',
+        RegionalApplicationVS,
+        name='regional-application'
+    ),
+    path(
+        'regionals/<int:pk>/applications/<int:application_pk>/accept/',
+        RegionalAcceptVS,
+        name='user-regional-apply'
+    ),
     path(
         'districts/<int:pk>/members/',
         DistrictPositionListVS,
@@ -536,16 +536,16 @@ user_nested_urls = [
         DistrictPositionUpdateDeleteVS,
         name='district-members-update'
     ),
-    # path(
-    #     'districts/<int:pk>/apply/',
-    #     DistrictApplicationVS,
-    #     name='district-application'
-    # ),
-    # path(
-    #     'districts/<int:pk>/applications/<int:application_pk>/accept/',
-    #     DistrictAcceptVS,
-    #     name='user-district-apply'
-    # ),
+    path(
+        'districts/<int:pk>/apply/',
+        DistrictApplicationVS,
+        name='district-application'
+    ),
+    path(
+        'districts/<int:pk>/applications/<int:application_pk>/accept/',
+        DistrictAcceptVS,
+        name='user-district-apply'
+    ),
     path(
         'centrals/<int:pk>/members/',
         CentralPositionListVS,
@@ -556,16 +556,16 @@ user_nested_urls = [
         CentralPositionUpdateDeleteVS,
         name='central-members-update'
     ),
-    # path(
-    #     'centrals/<int:pk>/apply/',
-    #     CentralApplicationVS,
-    #     name='central-application'
-    # ),
-    # path(
-    #     'centrals/<int:pk>/applications/<int:application_pk>/accept/',
-    #     CentralAcceptVS,
-    #     name='user-central-apply'
-    # ),
+    path(
+        'centrals/<int:pk>/apply/',
+        CentralApplicationVS,
+        name='central-application'
+    ),
+    path(
+        'centrals/<int:pk>/applications/<int:application_pk>/accept/',
+        CentralAcceptVS,
+        name='user-central-apply'
+    ),
     path(
         'rsousers/me/professional_education/',
         UserProfEduRetrieveCreateVS,

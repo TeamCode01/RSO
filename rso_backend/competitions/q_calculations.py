@@ -1410,11 +1410,11 @@ def calculate_q1_score(competition_id):
 
 def calculate_q3_q4_place(competition_id: int):
     logger.info(
-        'Удаляем все записи из Q3Ranking, Q3TandemRanking, '
+        'Удаляем все записи из '
         'Q4Ranking, Q4TandemRanking, '
     )
-    Q3TandemRanking.objects.all().delete()
-    Q3Ranking.objects.all().delete()
+    # Q3TandemRanking.objects.all().delete()
+    # Q3Ranking.objects.all().delete()
     Q4Ranking.objects.all().delete()
     Q4TandemRanking.objects.all().delete()
     logger.info('Считаем места по 3 показателю')
@@ -1434,15 +1434,15 @@ def calculate_q3_q4_place(competition_id: int):
     logger.info(tandem_entries)
     for entry in solo_entries:
         # Получаем результаты для командира отряда
-        q3_place = get_q3_q4_place(entry.junior_detachment, 'university')
+        # q3_place = get_q3_q4_place(entry.junior_detachment, 'university')
         q4_place = get_q3_q4_place(entry.junior_detachment, 'safety')
-        if q3_place:
-            logger.info(f'Для СОЛО {entry} посчитали Q3 место - {q3_place}')
-            Q3Ranking.objects.create(
-                competition_id=competition_id,
-                detachment=entry.junior_detachment,
-                place=q3_place,
-            )
+        # if q3_place:
+        #     logger.info(f'Для СОЛО {entry} посчитали Q3 место - {q3_place}')
+        #     Q3Ranking.objects.create(
+        #         competition_id=competition_id,
+        #         detachment=entry.junior_detachment,
+        #         place=q3_place,
+        #     )
         if q4_place:
             logger.info(f'Для {entry} посчитали Q4 место - {q4_place}')
             Q4Ranking.objects.create(
@@ -1451,19 +1451,19 @@ def calculate_q3_q4_place(competition_id: int):
                 place=q4_place,
             )
     for tandem_entry in tandem_entries:
-        q3_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'university')
-        q3_place_2 = get_q3_q4_place(tandem_entry.detachment, 'university')
+        # q3_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'university')
+        # q3_place_2 = get_q3_q4_place(tandem_entry.detachment, 'university')
         q4_place_1 = get_q3_q4_place(tandem_entry.junior_detachment, 'safety')
         q4_place_2 = get_q3_q4_place(tandem_entry.detachment, 'safety')
-        if q3_place_1 and q3_place_2:
-            final_place = round_math((q3_place_1 + q3_place_2) / 2)
-            logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q3 место - {final_place}')
-            Q3TandemRanking.objects.create(
-                competition_id=competition_id,
-                detachment=tandem_entry.detachment,
-                junior_detachment=tandem_entry.junior_detachment,
-                place=final_place
-            )
+        # if q3_place_1 and q3_place_2:
+        #     final_place = round_math((q3_place_1 + q3_place_2) / 2)
+        #     logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q3 место - {final_place}')
+        #     Q3TandemRanking.objects.create(
+        #         competition_id=competition_id,
+        #         detachment=tandem_entry.detachment,
+        #         junior_detachment=tandem_entry.junior_detachment,
+        #         place=final_place
+        #     )
         if q4_place_1 and q4_place_2:
             final_place = round_math((q4_place_1 + q4_place_2) / 2)
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q4 место - {final_place}')

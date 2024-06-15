@@ -31,7 +31,7 @@ urlpatterns = [
     path(
         'autocomplete/educational/',
         EducationalAutoComplete.as_view(),
-         name='educational-autocomplete'
+        name='educational-autocomplete'
     ),
     path(
         'autocomplete/educational-institution/',
