@@ -40,6 +40,9 @@ services:
       - media:/app/media
     networks:
       - internal
+    environment:
+      - GUNICORN_WORKERS=1
+      - GUNICORN_TIMEOUT=60
   celery_worker:
     build: ./rso_backend
     env_file: .env
