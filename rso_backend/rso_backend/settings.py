@@ -99,9 +99,6 @@ INSTALLED_APPS = [
     'django_filters',
     'django_celery_beat',
     'import_export',
-    'oauth2_provider',
-    'social_django',
-    'rest_framework_social_oauth2',
     'rest_framework_simplejwt',
 ]
 
@@ -593,8 +590,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework_social_oauth2.authentication.SocialAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
@@ -605,44 +600,13 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100
 }
 
-
-SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_VK_OAUTH2_KEY')
-SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET')
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
-SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
+# For VK ID
 VK_API_VERSION = '5.199'
 VITE_SERVICE_TOKEN = os.getenv('VITE_SERVICE_TOKEN')
-
-SOCIAL_AUTH_PIPELINE = (
-    'social_core.pipeline.social_auth.social_details',
-    'social_core.pipeline.social_auth.social_uid',
-    'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.user.get_username',
-    'social_core.pipeline.user.create_user',
-    'social_core.pipeline.social_auth.associate_user',
-    'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
-)
-
-
-OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
-    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400,
-    'ROTATE_REFRESH_TOKENS': True,
-}
-
-
-OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
-
-DRFSO2_URL_NAMESPACE='authorize'
 
 
 AUTHENTICATION_BACKENDS = [
     'api.backends.UserModelBackend',
-    'social_core.backends.vk.VKOAuth2',
-    'rest_framework_social_oauth2.backends.DjangoOAuth2',
 ]
 
 DJOSER = {
