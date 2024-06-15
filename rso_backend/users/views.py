@@ -1,4 +1,3 @@
-import io
 import mimetypes
 import os
 import zipfile
@@ -15,7 +14,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from openpyxl import Workbook
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -486,7 +484,6 @@ class UserForeignParentDocsViewSet(BaseUserViewSet):
             ]
         else:
             return [permissions.IsAuthenticated(), IsStuffOrAuthor()]
-
 
     @swagger_auto_schema(
                 request_body=openapi.Schema(
