@@ -772,7 +772,6 @@ class VKLoginAPIView(APIView):
         city = vk_user_data.get('city').get('title') if vk_user_data.get('city') else None
         # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
         sex = vk_user_data.get('sex', None)
-        # phone = vk_user_data.get('phone', None)
 
         if bdate:
             parsed_date = datetime.strptime(bdate, '%d.%m.%Y')

@@ -236,15 +236,85 @@ def get_competition_participants_contact_data():
 
 
 def get_regions_users_data():
-    queryset = UserRegion.objects.all()
-    queryset = queryset.order_by('reg_region')
-    serializer = UserIdRegionSerializer(queryset, many=True)
+    # queryset = UserRegion.objects.all()
+    # queryset = queryset.order_by('reg_region')
+    # serializer = UserIdRegionSerializer(queryset, many=True)
 
-    rows = []
-    for item in serializer.data:
-        row = (list(dict(item).values()))
-        rows.append(row)
-    return rows
+    # rows = []
+    # for item in serializer.data:
+    #     row = (list(dict(item).values()))
+    #     rows.append(row)
+    # return rows
+
+    users_data = UserRegion.objects.select_related(
+            'user',
+            'user__documents',
+            'user__education',
+            'user__usercentralheadquarterposition',
+            'user__centralheadquarter_commander',
+            'user__userdistrictheadquarterposition',
+            'user__districtheadquarter_commander',
+            'user__userregionalheadquarterposition',
+            'user__regionalheadquarter_commander',
+            'user__userlocalheadquarterposition',
+            'user__usereducationalheadquarterposition',
+            'user__userdetachmentposition'
+        ).values_list(
+            'reg_region__code',
+            'reg_region__name',
+            'user__id',
+            'user__first_name',
+            'user__last_name',
+            'user__patronymic_name',
+            'user__username',
+            'user__date_of_birth',
+            'user__documents__russian_passport',
+            'user__documents__pass_ser_num',
+            'user__documents__pass_whom',
+            'user__documents__pass_date',
+            'user__documents__pass_code',
+            'user__documents__inn',
+            'user__documents__snils',
+            'reg_town',
+            'reg_house',
+            'reg_fact_same_address',
+            'fact_region_id',
+            'fact_region_name',
+            'fact_town',
+            'fact_house',
+            'user__education__study_institution',
+            'user__education__study_faculty',
+            'user__education__study_specialty',
+            'user__education__study_year',
+            'user__phone_number',
+            'user__email',
+            'user__social_vk',
+            'user__social_tg',
+            'user__is_rso_member',
+            'user__is_verified',
+            'user__membership_fee',
+            'user__usercentralheadquarterposition_id',
+            'user__usercentralheadquarterposition_position',
+            # 'centralhq_commander',
+            # 'districthq_member',
+            # 'districthq_member_position',
+            # 'district_commander',
+            # 'regionalhq_member',
+            # 'regionalhq_member_position',
+            # 'regionalhq_commander',
+            # 'localhq_member',
+            # 'localhq_member_position',
+            # 'localhq_commander',
+            # 'eduhq_member',
+            # 'eduhq_member_position',
+            # 'eduhq_commander',
+            # 'detachment_member',
+            # 'detachment_member_area',
+            # 'deatachment_member_position',
+            # 'detachment_commander',
+            # 'detachment_commander_area',
+        ).all()
+    return list(users_data)
 
 
 def get_commander_school_data(competition_id: int) -> list:
