@@ -17,7 +17,6 @@ from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
-from users.serializers import UserIdRegionSerializer
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -236,29 +235,21 @@ def get_competition_participants_contact_data():
 
 
 def get_regions_users_data():
-    # queryset = UserRegion.objects.all()
-    # queryset = queryset.order_by('reg_region')
-    # serializer = UserIdRegionSerializer(queryset, many=True)
-
-    # rows = []
-    # for item in serializer.data:
-    #     row = (list(dict(item).values()))
-    #     rows.append(row)
-    # return rows
-
     users_data = UserRegion.objects.select_related(
             'user',
             'user__documents',
             'user__education',
-            'user__usercentralheadquarterposition',
-            'user__centralheadquarter_commander',
-            'user__userdistrictheadquarterposition',
-            'user__districtheadquarter_commander',
-            'user__userregionalheadquarterposition',
-            'user__regionalheadquarter_commander',
-            'user__userlocalheadquarterposition',
-            'user__usereducationalheadquarterposition',
-            'user__userdetachmentposition'
+            # 'user__usercentralheadquarterposition__position',
+            # 'user__centralheadquarter_commander',
+            # 'user__userdistrictheadquarterposition__position',
+            # 'user__districtheadquarter_commander',
+            # 'user__userregionalheadquarterposition__position',
+            # 'user__regionalheadquarter_commander',
+            # 'user__userlocalheadquarterposition__position',
+            # 'user__usereducationalheadquarterposition__position',
+            # 'user__userdetachmentposition__headquarter__area',
+            # 'user__userdetachmentposition__position',
+            # 'user__detachment_commander__area'
         ).values_list(
             'reg_region__code',
             'reg_region__name',
@@ -279,7 +270,7 @@ def get_regions_users_data():
             'reg_house',
             'reg_fact_same_address',
             'fact_region_id',
-            'fact_region_name',
+            'fact_region__fact_region__reg_region',
             'fact_town',
             'fact_house',
             'user__education__study_institution',
@@ -293,28 +284,28 @@ def get_regions_users_data():
             'user__is_rso_member',
             'user__is_verified',
             'user__membership_fee',
-            'user__usercentralheadquarterposition_id',
-            'user__usercentralheadquarterposition_position',
-            # 'centralhq_commander',
-            # 'districthq_member',
-            # 'districthq_member_position',
-            # 'district_commander',
-            # 'regionalhq_member',
-            # 'regionalhq_member_position',
-            # 'regionalhq_commander',
-            # 'localhq_member',
-            # 'localhq_member_position',
-            # 'localhq_commander',
-            # 'eduhq_member',
-            # 'eduhq_member_position',
-            # 'eduhq_commander',
-            # 'detachment_member',
-            # 'detachment_member_area',
-            # 'deatachment_member_position',
-            # 'detachment_commander',
-            # 'detachment_commander_area',
+            # 'user__usercentralheadquarterposition',
+            # 'user__usercentralheadquarterposition__position__name',
+            # 'user__centralheadquarter_commander',
+            # 'user__userdistrictheadquarterposition',
+            # 'user__userdistrictheadquarterposition__position__name',
+            # 'user__districtheadquarter_commander',
+            # 'user__userregionalheadquarterposition',
+            # 'user__userregionalheadquarterposition__position__name',
+            # 'user__regionalheadquarter_commander',
+            # 'user__userlocalheadquarterposition',
+            # 'user__userlocalheadquarterposition__position__name',
+            # 'user__localheadquarter_commander',
+            # 'user__usereducationalheadquarterposition',
+            # 'user__usereducationalheadquarterposition__position__name',
+            # 'user__educationalheadquarter_commander',
+            # 'user__userdetachmentposition',
+            # 'user__userdetachmentposition__headquarter__area__name',
+            # 'user__userdetachmentposition__position__name',
+            # 'user__detachment_commander',
+            # 'user__detachment_commander__area__name',
         ).all()
-    return list(users_data)
+    return users_data
 
 
 def get_commander_school_data(competition_id: int) -> list:
