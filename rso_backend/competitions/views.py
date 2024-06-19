@@ -2136,7 +2136,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def create(self, request, *args, **kwargs):
         today = date.today()
-        cutoff_date = date(year=2024, month=6, day=30)
+        cutoff_date = date(year=2024, month=7, day=15)
         if today >= cutoff_date + timedelta(days=1):
             return DEADLINE_RESPONSE.format(deadline=cutoff_date)
 
