@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import date, timedelta
@@ -7,6 +8,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.fields.files import FieldFile
+from django.forms import model_to_dict
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -35,7 +38,8 @@ from api.permissions import (
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE, \
+    DETACHMENT_REPORTS_MODELS
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
 from competitions.models import (Q8, Q9, Q10, Q11, Q12,
@@ -63,7 +67,7 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q19TandemRanking, Q20Report,
                                  QVerificationLog, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
                                  CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
-                                 ProfessionalCompetitionBlock, SpartakiadBlock)
+                                 ProfessionalCompetitionBlock, SpartakiadBlock, Q1Report)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
 from competitions.q_calculations import (calculate_q13_place,
@@ -285,7 +289,7 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         """
         filename = 'Regulation_on_the_best_LSO_2024.pdf'
         filepath = (
-            str(settings.BASE_DIR) + '/templates/competitions/' + filename
+                str(settings.BASE_DIR) + '/templates/competitions/' + filename
         )
         return self.download_file_competitions(filepath, filename)
 
@@ -2132,7 +2136,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def create(self, request, *args, **kwargs):
         today = date.today()
-        cutoff_date = date(year=2024, month=6, day=30)
+        cutoff_date = date(year=2024, month=7, day=15)
         if today >= cutoff_date + timedelta(days=1):
             return DEADLINE_RESPONSE.format(deadline=cutoff_date)
 
@@ -2623,7 +2627,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block', permission_classes=[permissions.IsAuthenticated,])
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block',
+            permission_classes=[permissions.IsAuthenticated, ])
     def verify_spartakiad_block(self, request, *args, **kwargs):
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
@@ -3288,11 +3293,11 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     detachment=report.detachment,
                 )
                 solo_ranking.place = calculate_q13_place(
-                        Q13EventOrganization.objects.filter(
-                            detachment_report=report,
-                            is_verified=True
-                        )
+                    Q13EventOrganization.objects.filter(
+                        detachment_report=report,
+                        is_verified=True
                     )
+                )
                 solo_ranking.save()
             else:
                 if participants_entry:
@@ -4790,13 +4795,13 @@ def get_q1_info(request, competition_pk):
     detachment = get_object_or_404(Detachment, commander=request.user)
     if not competition.competition_participants.filter(
             Q(detachment=detachment) | Q(junior_detachment=detachment)
-            ).exists():
+    ).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response({
         'number_of_members': detachment.members.count() + 1,
         'number_of_payments': detachment.members.filter(
-                user__membership_fee=True
-            ).count() + (1 if detachment.commander.membership_fee else 0)
+            user__membership_fee=True
+        ).count() + (1 if detachment.commander.membership_fee else 0)
     })
 
 
@@ -5228,6 +5233,7 @@ class DetachmentCompetitionIsTandemView(APIView):
     - При успешном запросе: {'is_tandem': True} или {'is_tandem': False}
     - При ошибке: {'error': 'Описание ошибки'}
     """
+
     def get(self, request, detachment_pk, competition_pk):
         detachment = get_object_or_404(Detachment, pk=detachment_pk)
         competition = get_object_or_404(Competitions, pk=competition_pk)
@@ -5295,6 +5301,7 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         detachment__isnull=True
     ).exists()
     if is_solo:
+        response['partner_detachment'] = None
         response['is_tandem'] = False
         response['is_junior_detachment'] = True
         try:
@@ -5319,8 +5326,12 @@ def get_detachment_places(request, competition_pk, detachment_pk):
             junior_detachment=detachment,
             detachment__isnull=False,
             competition=competition
-        ).exists()
+        ).first()
         if is_tandem_junior:
+            response['partner_detachment'] = {
+                'id': is_tandem_junior.detachment.id,
+                'name': is_tandem_junior.detachment.name
+            }
             response['is_tandem'] = True
             response['is_junior_detachment'] = True
             try:
@@ -5344,8 +5355,12 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         is_older_detachment = CompetitionParticipants.objects.filter(
             detachment=detachment,
             competition=competition
-        ).exists()
+        ).first()
         if is_older_detachment:
+            response['partner_detachment'] = {
+                'id': is_older_detachment.junior_detachment.id,
+                'name': is_older_detachment.junior_detachment.name
+            }
             response['is_tandem'] = True
             response['is_junior_detachment'] = False
             try:
@@ -5368,3 +5383,106 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         else:
             return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
     return Response(response, status=status.HTTP_200_OK)
+
+
+def serialize_value(value):
+    if isinstance(value, str):
+        try:
+            parsed_value = json.loads(value.replace("'", "\""))
+            return serialize_value(parsed_value)
+        except (json.JSONDecodeError, TypeError):
+            try:
+                if value.lower() == 'true':
+                    return True
+                elif value.lower() == 'false':
+                    return False
+                elif value.isdigit():
+                    return int(value)
+                elif '.' in value:
+                    return float(value)
+                else:
+                    return value
+            except ValueError:
+                return value
+    elif isinstance(value, list):
+        return [serialize_value(v) for v in value]
+    elif isinstance(value, dict):
+        return {k: serialize_value(v) for k, v in value.items()}
+    elif isinstance(value, FieldFile):
+        if value and value.name:
+            return f"https://{settings.DEFAULT_SITE_URL}{value.url}"
+        else:
+            return None
+    elif value is None:
+        return None
+    else:
+        return value
+
+
+class DetachmentReportView(APIView):
+    def get(self, request, competition_pk, report_number, detachment_id):
+        report_model = DETACHMENT_REPORTS_MODELS.get(report_number)
+        if not report_model:
+            return Response({'detail': f'Отчетов по показателю {report_number} не существует'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            report = report_model.objects.select_related().filter(detachment_id=detachment_id,
+                                                                  competition_id=competition_pk).last()
+            if not report:
+                return Response({'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'},
+                                status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': 'Произошла ошибка при получении отчета'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            data = model_to_dict(report, exclude=['competition', 'detachment'])
+        except AttributeError as e:
+            return Response({'detail': 'Произошла ошибка при преобразовании отчета в словарь'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        for related_object in report_model._meta.related_objects:
+            related_name = related_object.get_accessor_name()
+
+            try:
+                related_manager = getattr(report, related_name, None)
+
+                if related_manager is not None:
+                    if hasattr(related_manager, 'all'):
+                        related_queryset = related_manager.all()
+                        data[related_name] = [
+                            model_to_dict(item)
+                            for item in related_queryset
+                        ]
+                    else:
+                        related_instance = related_manager
+                        if related_instance:
+                            data[related_name] = model_to_dict(related_instance)
+            except ObjectDoesNotExist:
+                continue
+            except AttributeError as e:
+                print(f'Ошибка получения связанного объекта {related_name}: {e}')
+                continue
+
+        print(f'Возвращаемая дата: {data}')
+        if isinstance(report, Q1Report):
+            data.update(
+                {
+                    'number_of_members': report.detachment.members.count() + 1,
+                    'number_of_payments': report.detachment.members.filter(
+                        user__membership_fee=True
+                    ).count() + (1 if report.detachment.commander.membership_fee else 0)
+                }
+            )
+        sanitized_data = {}
+        for key, value in data.items():
+            try:
+                serialized_value = serialize_value(value)
+                json.dumps(serialized_value)
+                sanitized_data[key] = serialized_value
+            except (UnicodeDecodeError, UnicodeEncodeError, TypeError, ValueError, AttributeError) as e:
+                print(f'Ошибка сериализации ключа {key}: {e}')
+                sanitized_data[key] = str(value)
+
+        return Response(sanitized_data, status=status.HTTP_200_OK)

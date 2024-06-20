@@ -13,16 +13,22 @@ from urllib.parse import quote
 from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
-from reports.constants import (COMMANDER_SCHOOL_DATA_HEADERS,
+from reports.constants import (ATTRIBUTION_DATA_HEADERS, COMMANDER_SCHOOL_DATA_HEADERS,
                                COMPETITION_PARTICIPANTS_DATA_HEADERS,
-                               DETACHMENT_Q_RESULTS_HEADERS, MEMBERSHIP_FEE_DATA_HEADERS,
+                               DETACHMENT_Q_RESULTS_HEADERS,
+                               MEMBERSHIP_FEE_DATA_HEADERS,
                                REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
+<<<<<<< HEAD
                                COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS,
                                Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS,
                                Q18_DATA_HEADERS)
+=======
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS,
+                               Q5_DATA_HEADERS)
+>>>>>>> origin/dev
 from reports.utils import (
-    get_commander_school_data, get_competition_users, get_detachment_q_results,
+    get_attributes_of_uniform_data, get_commander_school_data, get_competition_users, get_detachment_q_results,
     adapt_attempts, get_membership_fee_data
 )
 
@@ -342,4 +348,35 @@ class MembershipFeeDataView(View):
         results = get_membership_fee_data(settings.COMPETITION_ID)
         context = {'sample_results': results,
                    'columns': MEMBERSHIP_FEE_DATA_HEADERS}
+        return render(request, self.template_name, context)
+
+
+class ExportAttributesOfUniformView(BaseExcelExportView):
+
+    def get_headers(self):
+        return ATTRIBUTION_DATA_HEADERS
+
+    def get_filename(self):
+        return f'соответствие_символики_отрядов_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Соответствие символики отрядов'
+
+    def get_data_func(self):
+        return 'attributes_of_uniform'
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(
+    user_passes_test(has_reports_access,
+                     login_url='/',
+                     redirect_field_name=None),
+    name='dispatch')
+class AttributesOfUniformDataView(View):
+    template_name = 'reports/attributes_of_uniform.html'
+
+    def get(self, request):
+        results = get_attributes_of_uniform_data(settings.COMPETITION_ID)
+        context = {'sample_results': results,
+                   'columns': ATTRIBUTION_DATA_HEADERS}
         return render(request, self.template_name, context)

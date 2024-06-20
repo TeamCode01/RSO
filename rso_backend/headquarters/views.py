@@ -1,13 +1,14 @@
 from dal import autocomplete
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view
@@ -35,7 +36,12 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition)
+                                 UserRegionalHeadquarterPosition,
+                                 UserCentralApplication,
+                                 UserDistrictApplication,
+                                 UserEducationalApplication,
+                                 UserLocalApplication,
+                                 UserRegionalApplication,)
 from headquarters.registry_serializers import (
     DetachmentRegistrySerializer, DistrictHeadquarterRegistrySerializer,
     EducationalHeadquarterRegistrySerializer,
@@ -52,12 +58,16 @@ from headquarters.serializers import (
     ShortEducationalHeadquarterListSerializer,
     ShortEducationalHeadquarterSerializer, ShortLocalHeadquarterListSerializer,
     ShortLocalHeadquarterSerializer, ShortRegionalHeadquarterListSerializer,
-    ShortRegionalHeadquarterSerializer,
+    ShortRegionalHeadquarterSerializer, UserCentralApplicationSerializer,
     UserDetachmentApplicationReadSerializer,
-    UserDetachmentApplicationSerializer)
+    UserDetachmentApplicationSerializer, UserDistrictApplicationSerializer,
+    UserEducationalApplicationSerializer,
+    UserLocalApplicationSerializer,
+    UserRegionalApplicationSerializer)
 from headquarters.swagger_schemas import applications_response
-from headquarters.utils import (get_detachment_members_to_verify,
-                                get_regional_hq_members_to_verify)
+from headquarters.utils import (create_central_hq_member,
+                                get_regional_hq_members_to_verify,
+                                get_detachment_members_to_verify,)
 from users.serializers import UserVerificationReadSerializer
 
 
@@ -169,7 +179,9 @@ class RegionalViewSet(viewsets.ModelViewSet):
     """
 
     queryset = RegionalHeadquarter.objects.all()
-    filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter)
+    filter_backends = (
+        filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
+    )
     search_fields = ('name', 'region__name',)
     ordering_fields = ('name', 'founding_date',)
     filterset_class = RegionalHeadquarterFilter
@@ -230,7 +242,9 @@ class LocalViewSet(viewsets.ModelViewSet):
     """
 
     queryset = LocalHeadquarter.objects.all()
-    filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter)
+    filter_backends = (
+        filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
+    )
     search_fields = ('name',)
     ordering_fields = ('name', 'founding_date',)
     filterset_class = LocalHeadquarterFilter
@@ -279,7 +293,9 @@ class EducationalViewSet(viewsets.ModelViewSet):
     """
 
     queryset = EducationalHeadquarter.objects.all()
-    filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter)
+    filter_backends = (
+        filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
+    )
     search_fields = ('name',)
     filterset_class = EducationalHeadquarterFilter
     ordering_fields = ('name', 'founding_date',)
@@ -333,7 +349,9 @@ class DetachmentViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Detachment.objects.all()
-    filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter)
+    filter_backends = (
+        filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
+    )
     search_fields = ('name',)
     filterset_class = DetachmentFilter
     ordering_fields = ('name', 'founding_date',)
@@ -446,7 +464,6 @@ class CentralPositionViewSet(BasePositionViewSet):
     permission_classes = (IsStuffOrCentralCommander,)
     serializer_class = CentralPositionSerializer
     ordering_fields = ('user__last_name', 'user__date_of_birth',)
-
 
     def get_queryset(self):
         return get_headquarter_users_positions_queryset(
@@ -581,80 +598,220 @@ class DetachmentPositionViewSet(BasePositionViewSet):
         )
 
 
-class DetachmentAcceptViewSet(CreateDeleteViewSet):
-    """Принять/отклонить заявку участника в отряд по ID заявки.
+class BaseAcceptRejectViewSet(CreateDeleteViewSet):
+    """Базовый вьюсет для принятия и отклонения заявок."""
 
-    Можно дополнительно установить позицию и статус доверенности.
-    Доступно командиру и доверенным лицам.
-    """
-
-    queryset = UserDetachmentPosition.objects.all()
-    serializer_class = DetachmentPositionSerializer
-    permission_classes = (IsDetachmentCommander,)
+    application_model = None
+    position_model = None
+    serializer_class = None
+    headquarter_model = None
+    permission_classes = ()
 
     def perform_create(self, serializer):
-        """Получает user и detachment для сохранения."""
+
         headquarter_id = self.kwargs.get('pk')
         application_id = self.kwargs.get('application_pk')
         application = get_object_or_404(
-            UserDetachmentApplication, id=application_id
+            self.application_model, id=application_id
         )
         user = application.user
-        headquarter = get_object_or_404(Detachment, id=headquarter_id)
+        headquarter = get_object_or_404(
+            self.headquarter_model, id=headquarter_id
+        )
         application.delete()
         serializer.save(user=user, headquarter=headquarter)
 
+
+    @swagger_auto_schema(
+                request_body=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=[],
+                    properties={}
+                            )
+                        )
     def create(self, request, *args, **kwargs):
-        """Принимает (добавляет пользователя в отряд) юзера, удаляя заявку."""
+        """Добавляет пользователя в отряд/штаб, удаляя заявку.
+
+        id - pk отряда/штаба.
+        application_id - pk заявки.
+        """
         try:
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValidationError as e:
-            return Response(
-                {'detail': e},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'detail': e}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
         """Отклоняет (удаляет) заявку пользователя."""
         application_id = self.kwargs.get('application_pk')
         application = get_object_or_404(
-            UserDetachmentApplication, id=application_id
+            self.application_model, id=application_id
         )
         application.delete()
         return Response(
-            {'success': 'Заявка отклонена'},
-            status=status.HTTP_204_NO_CONTENT
+            {'success': 'Заявка отклонена'}, status=status.HTTP_204_NO_CONTENT
         )
 
 
-class DetachmentApplicationViewSet(viewsets.ModelViewSet):
-    """Подать/отменить заявку в отряд. URL-параметры обязательны.
+class DetachmentAcceptViewSet(BaseAcceptRejectViewSet):
+    """Принять/отклонить заявку участника в отряд по ID заявки.
 
-    Доступно только авторизованному пользователю.
+    Доступ - командир отряда.
+    id - pk отряда
+    application_id - pk заявки.
     """
 
-    serializer_class = UserDetachmentApplicationSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    application_model = UserDetachmentApplication
+    position_model = UserDetachmentPosition
+    headquarter_model = Detachment
+    serializer_class = DetachmentPositionSerializer
+    permission_classes = (IsDetachmentCommander,)
+
+
+class EducationalAcceptViewSet(BaseAcceptRejectViewSet):
+    """Принять/отклонить заявку участника в СО ОО по ID заявки.
+
+    Доступ - командир образовательного штаба.
+    id - pk штаба.
+    application_id - pk заявки.
+    """
+
+    application_model = UserEducationalApplication
+    position_model = UserEducationalHeadquarterPosition
+    headquarter_model = EducationalHeadquarter
+    serializer_class = EducationalPositionSerializer
+    permission_classes = (IsEducationalCommander,)
+
+
+class LocalAcceptViewSet(BaseAcceptRejectViewSet):
+    """Принять/отклонить заявку участника в МШ по ID заявки.
+
+    Доступ - командир местного штаба.
+    id - pk штаба.
+    application_id - pk заявки.
+    """
+
+    application_model = UserLocalApplication
+    position_model = UserLocalHeadquarterPosition
+    headquarter_model = LocalHeadquarter
+    serializer_class = LocalPositionSerializer
+    permission_classes = (IsLocalCommander,)
+
+
+class RegionalAcceptViewSet(BaseAcceptRejectViewSet):
+    """Принять/отклонить заявку участника в РШ по ID заявки.
+
+    Доступ - командир регионального штаба.
+    id - pk штаба.
+    application_id - pk заявки.
+    """
+
+    application_model = UserRegionalApplication
+    position_model = UserRegionalHeadquarterPosition
+    headquarter_model = RegionalHeadquarter
+    serializer_class = RegionalPositionSerializer
+    permission_classes = (IsRegionalCommander,)
+
+
+class DistrictAcceptViewSet(BaseAcceptRejectViewSet):
+    """Принять/отклонить заявку участника в Окружной штаб по ID заявки.
+
+    Доступ - командир окружного штаба.
+    id - pk штаба.
+    application_id - pk заявки.
+    """
+
+    application_model = UserDistrictApplication
+    position_model = UserDistrictHeadquarterPosition
+    headquarter_model = DistrictHeadquarter
+    serializer_class = DistrictPositionSerializer
+    permission_classes = (IsDistrictCommander,)
+
+
+class CentralAcceptViewSet(CreateDeleteViewSet):
+    """Принять/отклонить заявку участника в Центральной штаб по ID заявки.
+
+    Доступ - командир центрального штаба.
+    id - pk штаба.
+    application_id - pk заявки.
+    """
+
+    application_model = UserCentralApplication
+    position_model = UserCentralHeadquarterPosition
+    headquarter_model = CentralHeadquarter
+    serializer_class = CentralPositionSerializer
+    pagination_class = IsStuffOrCentralCommander
+
+    @swagger_auto_schema(
+                request_body=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=[],
+                    properties={}
+                            )
+                        )
+    def create(self, request, *args, **kwargs):
+
+        application_pk = self.kwargs.get('application_pk')
+        user_id = get_object_or_404(
+            UserCentralApplication,
+            pk=application_pk
+        ).user_id
+        headquarter_id = self.kwargs.get('pk')
+        if headquarter_id != settings.CENTRAL_HEADQUARTER_ID:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        application = get_object_or_404(
+            self.application_model, id=application_pk
+        )
+        with transaction.atomic():
+            create_central_hq_member(
+                headquarter_id=headquarter_id,
+                user_id=user_id,
+            )
+            application.delete()
+        return Response(status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        """Отклоняет (удаляет) заявку пользователя."""
+        application_id = self.kwargs.get('application_pk')
+        application = get_object_or_404(
+            self.application_model, id=application_id
+        )
+        application.delete()
+        return Response(
+            {'success': 'Заявка отклонена'}, status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class BaseApplicationViewSet(viewsets.ModelViewSet):
+    """Базовый вьюсет для подачи и отмены заявок."""
+
+    application_model = None
+    serializer_class = None
+    position_model = None
+    target_model = None
+    permission_classes = ()
 
     def get_queryset(self):
-        detachment_id = self.kwargs.get('pk')
-        detachment = get_object_or_404(Detachment, id=detachment_id)
-        return UserDetachmentApplication.objects.filter(detachment=detachment)
+        headquarter_id = self.kwargs.get('pk')
+        headquarter = get_object_or_404(self.target_model, id=headquarter_id)
+        return self.application_model.objects.filter(headquarter=headquarter)
 
     def perform_create(self, serializer):
         user = self.request.user
-        detachment_id = self.kwargs.get('pk')
-        detachment = get_object_or_404(Detachment, id=detachment_id)
-        serializer.save(user=user, detachment=detachment)
+        target_id = self.kwargs.get('pk')
+        target = get_object_or_404(self.target_model, id=target_id)
+        serializer.save(user=user, headquarter=target)
 
     def create(self, request, *args, **kwargs):
-        """Подает заявку на вступление в отряд, переданный URL-параметром."""
-        if UserDetachmentPosition.objects.filter(user=request.user).exists():
+        """Подает заявку на вступление, переданный URL-параметром."""
+
+        if self.position_model.objects.filter(
+            user_id=self.request.user.id
+        ).exists():
             return Response(
-                {'error': 'Вы уже являетесь членом одного из отрядов'},
+                {'detail': 'Пользователь уже в отряде/штабе на этом уровне.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         serializer = self.get_serializer(data=request.data)
@@ -663,15 +820,15 @@ class DetachmentApplicationViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
-        """Отклоняет заявку на вступление в отряд."""
-        detachment_id = self.kwargs.get('pk')
+        """Отклоняет заявку на вступление."""
+        target_id = self.kwargs.get('pk')
         try:
-            application = UserDetachmentApplication.objects.get(
+            application = self.application_model.objects.get(
                 user=self.request.user,
-                detachment=Detachment.objects.get(id=detachment_id)
+                headquarter=self.target_model.objects.get(id=target_id)
             )
             application.delete()
-        except UserDetachmentApplication.DoesNotExist:
+        except self.application_model.DoesNotExist:
             return Response(
                 {'error': 'Не найдена существующая заявка'},
                 status=status.HTTP_404_NOT_FOUND
@@ -680,6 +837,96 @@ class DetachmentApplicationViewSet(viewsets.ModelViewSet):
             {'success': 'Заявка отклонена'},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+class DetachmentApplicationViewSet(BaseApplicationViewSet):
+    """Подать/отменить заявку в отряд. URL-параметры обязательны."""
+
+    application_model = UserDetachmentApplication
+    serializer_class = UserDetachmentApplicationSerializer
+    position_model = UserDetachmentPosition
+    permission_classes = (permissions.IsAuthenticated,)
+    target_model = Detachment
+
+    def get_queryset(self):
+        detachment_id = self.kwargs.get('pk')
+        detachment = get_object_or_404(self.target_model, id=detachment_id)
+        return self.application_model.objects.filter(detachment=detachment)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        target_id = self.kwargs.get('pk')
+        target = get_object_or_404(self.target_model, id=target_id)
+        serializer.save(user=user, detachment=target)
+
+    def destroy(self, request, *args, **kwargs):
+        """Отклоняет заявку на вступление."""
+        target_id = self.kwargs.get('pk')
+        try:
+            application = self.application_model.objects.get(
+                user=self.request.user,
+                detachment=self.target_model.objects.get(id=target_id)
+            )
+            application.delete()
+        except self.application_model.DoesNotExist:
+            return Response(
+                {'error': 'Не найдена существующая заявка'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(
+            {'success': 'Заявка отклонена'},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class EducationalApplicationViewSet(BaseApplicationViewSet):
+    """Подать/отменить заявку в СО ОО. URL-параметры обязательны."""
+
+    application_model = UserEducationalApplication
+    serializer_class = UserEducationalApplicationSerializer
+    position_model = UserEducationalHeadquarterPosition
+    permission_classes = (permissions.IsAuthenticated,)
+    target_model = EducationalHeadquarter
+
+
+class LocalApplicationViewSet(BaseApplicationViewSet):
+    """Подать/отменить заявку в МШ. URL-параметры обязательны."""
+
+    application_model = UserLocalApplication
+    serializer_class = UserLocalApplicationSerializer
+    position_model = UserLocalHeadquarterPosition
+    permission_classes = (permissions.IsAuthenticated,)
+    target_model = LocalHeadquarter
+
+
+class RegionalApplicationViewSet(BaseApplicationViewSet):
+    """Подать/отменить заявку в РШ. URL-параметры обязательны."""
+
+    application_model = UserRegionalApplication
+    serializer_class = UserRegionalApplicationSerializer
+    position_model = UserRegionalHeadquarterPosition
+    permission_classes = (permissions.IsAuthenticated,)
+    target_model = RegionalHeadquarter
+
+
+class DistrictApplicationViewSet(BaseApplicationViewSet):
+    """Подать/отменить заявку в окружной штаб. URL-параметры обязательны."""
+
+    application_model = UserDistrictApplication
+    serializer_class = UserDistrictApplicationSerializer
+    position_model = UserDistrictHeadquarterPosition
+    permission_classes = (permissions.IsAuthenticated,)
+    target_model = DistrictHeadquarter
+
+
+class CentralApplicationViewSet(BaseApplicationViewSet):
+    """Подать/отменить заявку в центральной штаб. URL-параметры обязательны."""
+
+    application_model = UserCentralApplication
+    serializer_class = UserCentralApplicationSerializer
+    position_model = UserCentralHeadquarterPosition
+    permission_classes = (permissions.IsAuthenticated,)
+    target_model = CentralHeadquarter
 
 
 @api_view(['GET'])
@@ -721,6 +968,25 @@ def get_structural_units(request):
     }
 
     return Response(response)
+
+
+class CentralAutoComplete(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        qs = CentralHeadquarter.objects.all()
+
+        if self.q:
+            qs = qs.filter(name__icontains=self.q)
+
+        return qs.order_by('name')
+
+
+class DistrictAutoComplete(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        qs = DistrictHeadquarter.objects.all()
+        if self.q:
+            qs = qs.filter(name__icontains=self.q)
+
+        return qs.order_by('name')
 
 
 class RegionAutoComplete(autocomplete.Select2QuerySetView):

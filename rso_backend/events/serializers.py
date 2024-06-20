@@ -87,9 +87,15 @@ class EventOrganizerDataSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         event = self.context.get('event')
+        organizer = data.get('organizer')
 
-        if EventOrganizationData.objects.filter(event=event, organizer=data.get('organizer')).exists():
-            raise serializers.ValidationError("Для данного мероприятия уже назначен этот организатор.")
+        instance = self.instance
+        existing_organizer = EventOrganizationData.objects.filter(event=event, organizer=organizer)
+        if instance:
+            existing_organizer = existing_organizer.exclude(id=instance.id)
+
+        if existing_organizer.exists():
+            raise serializers.ValidationError('Для данного мероприятия уже назначен этот организатор.')
         return data
 
     def to_representation(self, instance):

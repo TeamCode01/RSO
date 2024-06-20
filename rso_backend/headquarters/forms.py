@@ -117,6 +117,19 @@ class CentralPositionForm(BasePositionForm):
         }
 
 
+class CentralPositionAddForm(forms.ModelForm):
+    class Meta:
+        model = UserCentralHeadquarterPosition
+        fields = '__all__'
+        widgets = {
+            'user': autocomplete.ModelSelect2(url='user-autocomplete'),
+            'position': autocomplete.ModelSelect2(url='position-autocomplete'),
+            'headquarter': autocomplete.ModelSelect2(
+                url='central-autocomplete'
+            )
+        }
+
+
 class DistrictPositionForm(BasePositionForm):
     class Meta:
         model = UserDistrictHeadquarterPosition
@@ -126,11 +139,37 @@ class DistrictPositionForm(BasePositionForm):
         }
 
 
+class DistrictPositionAddForm(forms.ModelForm):
+    class Meta:
+        model = UserDistrictHeadquarterPosition
+        fields = '__all__'
+        widgets = {
+            'user': autocomplete.ModelSelect2(url='user-autocomplete'),
+            'position': autocomplete.ModelSelect2(url='position-autocomplete'),
+            'headquarter': autocomplete.ModelSelect2(
+                url='district-autocomplete'
+            )
+        }
+
+
 class RegionalPositionForm(BasePositionForm):
     class Meta:
         model = UserRegionalHeadquarterPosition
         fields = '__all__'
         widgets = {
+            'position': autocomplete.ModelSelect2(url='position-autocomplete'),
+            'headquarter': autocomplete.ModelSelect2(
+                url='regional-autocomplete'
+            )
+        }
+
+
+class RegionalPositionAddForm(forms.ModelForm):
+    class Meta:
+        model = UserRegionalHeadquarterPosition
+        fields = '__all__'
+        widgets = {
+            'user': autocomplete.ModelSelect2(url='user-autocomplete'),
             'position': autocomplete.ModelSelect2(url='position-autocomplete'),
             'headquarter': autocomplete.ModelSelect2(
                 url='regional-autocomplete'
@@ -150,11 +189,38 @@ class LocalPositionForm(BasePositionForm):
         }
 
 
+class LocalPositionAddForm(forms.ModelForm):
+    class Meta:
+        model = UserLocalHeadquarterPosition
+        fields = '__all__'
+        widgets = {
+            'user': autocomplete.ModelSelect2(url='user-autocomplete'),
+            'position': autocomplete.ModelSelect2(url='position-autocomplete'),
+            'headquarter': autocomplete.ModelSelect2(
+                url='local-autocomplete'
+            )
+        }
+
+
 class EducationalPositionForm(BasePositionForm):
     class Meta:
         model = UserEducationalHeadquarterPosition
         fields = '__all__'
         widgets = {
+            'user': autocomplete.ModelSelect2(url='user-autocomplete'),
+            'position': autocomplete.ModelSelect2(url='position-autocomplete'),
+            'headquarter': autocomplete.ModelSelect2(
+                url='educational-autocomplete'
+            )
+        }
+
+
+class EducationalPositionAddForm(forms.ModelForm):
+    class Meta:
+        model = UserEducationalHeadquarterPosition
+        fields = '__all__'
+        widgets = {
+            'user': autocomplete.ModelSelect2(url='user-autocomplete'),
             'position': autocomplete.ModelSelect2(url='position-autocomplete'),
             'headquarter': autocomplete.ModelSelect2(
                 url='educational-autocomplete'

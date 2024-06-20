@@ -5,18 +5,19 @@ from rest_framework.routers import DefaultRouter
 from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            DELETE_UPDATE_RETRIEVE, DOWNLOAD_ALL_FORMS,
                            DOWNLOAD_CONSENT_PD, DOWNLOAD_MEMBERSHIP_FILE,
-                           DOWNLOAD_PARENT_CONSENT_PD, EXCHANGE_TOKEN, LIST, LIST_CREATE,
+                           DOWNLOAD_PARENT_CONSENT_PD, LIST,
                            POST_RESET_PASSWORD, RETRIEVE_CREATE, UPDATE_DELETE,
-                           UPDATE_RETRIEVE)
-from api.views import (AreaViewSet, EducationalInstitutionViewSet, ExchangeTokenView,
+                           UPDATE_RETRIEVE, LIST_CREATE,
+                           UPDATE_DELETE_RETRIEVE, )
+from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
+                       VKLoginAPIView,
                        change_membership_fee_status, verify_user)
-from competitions.models import Q5EducatedParticipant
 from competitions.views import (CompetitionApplicationsViewSet,
                                 CompetitionParticipantsViewSet,
                                 CompetitionViewSet,
                                 DetachmentCompetitionIsTandemView,
-                                Q2DetachmentReportViewSet, Q5DetachmentReport,
+                                Q2DetachmentReportViewSet,
                                 Q5DetachmentReportViewSet,
                                 Q5EducatedParticipantViewSet,
                                 Q6DetachmentReportViewSet,
@@ -39,7 +40,8 @@ from competitions.views import (CompetitionApplicationsViewSet,
                                 QVerificationLogByNumberView,
                                 get_detachment_place, get_detachment_places,
                                 get_place_overall, get_place_q1, get_place_q3,
-                                get_place_q4, get_q1_info)
+                                get_place_q4, get_q1_info,
+                                DetachmentReportView)
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
                           EventOrganizationDataViewSet,
@@ -48,15 +50,24 @@ from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           MultiEventViewSet, create_answers,
                           group_applications, group_applications_me,
                           is_participant_or_applicant)
-from headquarters.views import (CentralPositionViewSet, CentralViewSet,
+from headquarters.views import (CentralAcceptViewSet,
                                 DetachmentAcceptViewSet,
                                 DetachmentApplicationViewSet,
                                 DetachmentPositionViewSet, DetachmentViewSet,
                                 DistrictPositionViewSet, DistrictViewSet,
                                 EducationalPositionViewSet, EducationalViewSet,
                                 LocalPositionViewSet, LocalViewSet,
-                                PositionViewSet, RegionalPositionViewSet,
-                                RegionalViewSet, get_structural_units)
+                                PositionViewSet,  RegionalAcceptViewSet,
+                                RegionalViewSet,  RegionalApplicationViewSet,
+                                CentralApplicationViewSet,
+                                CentralPositionViewSet,  LocalAcceptViewSet,
+                                CentralViewSet,  DistrictAcceptViewSet,
+                                DistrictApplicationViewSet,
+                                RegionalPositionViewSet,
+                                LocalApplicationViewSet,
+                                EducationalAcceptViewSet,
+                                EducationalApplicationViewSet,
+                                get_structural_units)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
@@ -318,26 +329,37 @@ AdditionalDocsVS = AdditionalForeignDocsViewSet.as_view(
 DetachmentAcceptVS = DetachmentAcceptViewSet.as_view(CREATE_DELETE)
 DetachmentApplicationVS = DetachmentApplicationViewSet.as_view(CREATE_DELETE)
 DetachmentPositionListVS = DetachmentPositionViewSet.as_view(LIST)
-DetachmentPositionUpdateDeleteVS = DetachmentPositionViewSet.as_view(DELETE_UPDATE_RETRIEVE)
-EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
-EducationalPositionUpdateVS = EducationalPositionViewSet.as_view(
-    UPDATE_RETRIEVE
+DetachmentPositionUpdateDeleteVS = DetachmentPositionViewSet.as_view(
+    DELETE_UPDATE_RETRIEVE
 )
+EducationalAcceptVS = EducationalAcceptViewSet.as_view(CREATE_DELETE)
+EducationalApplicationVS = EducationalApplicationViewSet.as_view(CREATE_DELETE)
+EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
+EducationalPositionUpdateDeleteVS = EducationalPositionViewSet.as_view(
+    UPDATE_DELETE_RETRIEVE
+)
+LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
+LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
 LocalPositionListVS = LocalPositionViewSet.as_view(LIST)
-LocalPositionUpdateVS = LocalPositionViewSet.as_view(UPDATE_RETRIEVE)
+LocalPositionUpdateDeleteVS = LocalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
+RegionalAcceptVS = RegionalAcceptViewSet.as_view(CREATE_DELETE)
+RegionalApplicationVS = RegionalApplicationViewSet.as_view(CREATE_DELETE)
 RegionalPositionListVS = RegionalPositionViewSet.as_view(LIST)
-RegionalPositionUpdateVS = RegionalPositionViewSet.as_view(UPDATE_RETRIEVE)
+RegionalPositionUpdateDeleteVS = RegionalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
+DistrictAcceptVS = DistrictAcceptViewSet.as_view(CREATE_DELETE)
+DistrictApplicationVS = DistrictApplicationViewSet.as_view(CREATE_DELETE)
 DistrictPositionListVS = DistrictPositionViewSet.as_view(LIST)
-DistrictPositionUpdateVS = DistrictPositionViewSet.as_view(UPDATE_RETRIEVE)
+DistrictPositionUpdateDeleteVS = DistrictPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
+CentralAcceptVS = CentralAcceptViewSet.as_view(CREATE_DELETE)
+CentralApplicationVS = CentralApplicationViewSet.as_view(CREATE_DELETE)
 CentralPositionListVS = CentralPositionViewSet.as_view(LIST)
-CentralPositionUpdateVS = CentralPositionViewSet.as_view(UPDATE_RETRIEVE)
+CentralPositionUpdateDeleteVS = CentralPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
 EventOrganizationDataListVS = EventOrganizationDataViewSet.as_view(LIST_CREATE)
 EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
     UPDATE_DELETE
 )
 EventAdditionalIssueListVS = EventAdditionalIssueViewSet.as_view(LIST_CREATE)
 EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
-ExchangeTokenVS = ExchangeTokenView.as_view(EXCHANGE_TOKEN)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
@@ -445,13 +467,23 @@ user_nested_urls = [
         name='detachment-competition-place'
     ),
     path(
+        'educationals/<int:pk>/apply/',
+        EducationalApplicationVS,
+        name='educational-application'
+    ),
+    path(
+        'educationals/<int:pk>/applications/<int:application_pk>/accept/',
+        EducationalAcceptVS,
+        name='user-edu-apply'
+    ),
+    path(
         'educationals/<int:pk>/members/',
         EducationalPositionListVS,
         name='educational-members-list'
     ),
     path(
         'educationals/<int:pk>/members/<int:membership_pk>/',
-        EducationalPositionUpdateVS,
+        EducationalPositionUpdateDeleteVS,
         name='educational-members-update'
     ),
     path(
@@ -461,8 +493,18 @@ user_nested_urls = [
     ),
     path(
         'locals/<int:pk>/members/<int:membership_pk>/',
-        LocalPositionUpdateVS,
+        LocalPositionUpdateDeleteVS,
         name='local-members-update'
+    ),
+    path(
+        'locals/<int:pk>/apply/',
+        LocalApplicationVS,
+        name='local-application'
+    ),
+    path(
+        'locals/<int:pk>/applications/<int:application_pk>/accept/',
+        LocalAcceptVS,
+        name='user-local-apply'
     ),
     path(
         'regionals/<int:pk>/members/',
@@ -471,8 +513,18 @@ user_nested_urls = [
     ),
     path(
         'regionals/<int:pk>/members/<int:membership_pk>/',
-        RegionalPositionUpdateVS,
+        RegionalPositionUpdateDeleteVS,
         name='regional-members-update'
+    ),
+    path(
+        'regionals/<int:pk>/apply/',
+        RegionalApplicationVS,
+        name='regional-application'
+    ),
+    path(
+        'regionals/<int:pk>/applications/<int:application_pk>/accept/',
+        RegionalAcceptVS,
+        name='user-regional-apply'
     ),
     path(
         'districts/<int:pk>/members/',
@@ -481,8 +533,18 @@ user_nested_urls = [
     ),
     path(
         'districts/<int:pk>/members/<int:membership_pk>/',
-        DistrictPositionUpdateVS,
+        DistrictPositionUpdateDeleteVS,
         name='district-members-update'
+    ),
+    path(
+        'districts/<int:pk>/apply/',
+        DistrictApplicationVS,
+        name='district-application'
+    ),
+    path(
+        'districts/<int:pk>/applications/<int:application_pk>/accept/',
+        DistrictAcceptVS,
+        name='user-district-apply'
     ),
     path(
         'centrals/<int:pk>/members/',
@@ -491,8 +553,18 @@ user_nested_urls = [
     ),
     path(
         'centrals/<int:pk>/members/<int:membership_pk>/',
-        CentralPositionUpdateVS,
+        CentralPositionUpdateDeleteVS,
         name='central-members-update'
+    ),
+    path(
+        'centrals/<int:pk>/apply/',
+        CentralApplicationVS,
+        name='central-application'
+    ),
+    path(
+        'centrals/<int:pk>/applications/<int:application_pk>/accept/',
+        CentralAcceptVS,
+        name='user-central-apply'
     ),
     path(
         'rsousers/me/professional_education/',
@@ -584,22 +656,28 @@ user_nested_urls = [
         get_detachment_places,
         name='get-detachment-places'
     ),
+    path(
+        'competitions/<int:competition_pk>/detachment/<int:detachment_id>/q/<int:report_number>/',
+        DetachmentReportView.as_view(),
+        name='detachment_report_view'
+    ),
+
     path('', include('djoser.urls')),
-    path('exchange-token/', ExchangeTokenVS, name='exchange-token'),
 ]
 
 urlpatterns = [
-    path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
-    path(
-        'reset_password/',
-        CustomUserViewSet.as_view(POST_RESET_PASSWORD),
-        name='reset_password'
-    ),
-    path(
-        'rsousers', CustomUserViewSet.as_view(LIST),
-    ),
-    path('questions/', QuestionsView.as_view(), name='questions'),
-    path('submit_answers/', submit_answers, name='submit-answers'),
-    path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
-    path('', include(router.urls)),
-] + user_nested_urls
+                  path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
+                  path(
+                      'reset_password/',
+                      CustomUserViewSet.as_view(POST_RESET_PASSWORD),
+                      name='reset_password'
+                  ),
+                  path(
+                      'rsousers', CustomUserViewSet.as_view(LIST),
+                  ),
+                  path('questions/', QuestionsView.as_view(), name='questions'),
+                  path('submit_answers/', submit_answers, name='submit-answers'),
+                  path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
+                  path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
+                  path('', include(router.urls)),
+              ] + user_nested_urls

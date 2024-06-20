@@ -1,7 +1,7 @@
 from django.urls import path
 
-from reports.views import (CommanderSchoolView, CompetitionParticipantView,
-                           DetachmentQResultsView,
+from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, CompetitionParticipantView,
+                           DetachmentQResultsView, ExportAttributesOfUniformView,
                            ExportCommanderSchoolDataView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
@@ -101,8 +101,17 @@ urlpatterns = [
         ExportMembershipFeeDataView.as_view(),
         name='membership_fee_export'
     ),
-    path('membership_fee/',
-         MembershipFeeDataView.as_view(),
-         name='membership_fee'
-    )
+    path(
+        'membership_fee/',
+        MembershipFeeDataView.as_view(),
+        name='membership_fee'
+    ),
+    path('attributes_of_uniform/export/',
+         ExportAttributesOfUniformView.as_view(),
+         name='attributes_of_uniform_export'),
+    path(
+        'attributes_of_uniform/',
+        AttributesOfUniformDataView.as_view(),
+        name='attributes_of_uniform'
+    ),
 ]

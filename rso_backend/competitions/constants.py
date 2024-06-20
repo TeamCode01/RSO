@@ -16,7 +16,10 @@ from competitions.models import (Q1Ranking, Q1TandemRanking, Q2Ranking,
                                  Q17TandemRanking, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking,
                                  Q19TandemRanking, Q20Ranking,
-                                 Q20TandemRanking)
+                                 Q20TandemRanking, Q2DetachmentReport, Q5DetachmentReport, Q6DetachmentReport,
+                                 Q13DetachmentReport, Q14DetachmentReport, Q15DetachmentReport, Q17DetachmentReport,
+                                 Q18DetachmentReport, Q1Report, Q12Report, Q11Report, Q10Report, Q9Report, Q8Report,
+                                 Q7Report, Q16Report, Q19Report, Q20Report)
 
 SOLO_RANKING_MODELS = [
     Q1Ranking,
@@ -62,6 +65,26 @@ TANDEM_RANKING_MODELS = [
     Q19TandemRanking,
     Q20TandemRanking
 ]
+DETACHMENT_REPORTS_MODELS = {
+    1: Q1Report,
+    2: Q2DetachmentReport,
+    5: Q5DetachmentReport,
+    6: Q6DetachmentReport,
+    7: Q7Report,
+    8: Q8Report,
+    9: Q9Report,
+    10: Q10Report,
+    11: Q11Report,
+    12: Q12Report,
+    13: Q13DetachmentReport,
+    14: Q14DetachmentReport,
+    15: Q15DetachmentReport,
+    16: Q16Report,
+    17: Q17DetachmentReport,
+    18: Q18DetachmentReport,
+    19: Q19Report,
+    20: Q20Report
+}
 
 COUNT_PLACES_DEADLINE = date(2024, 10, 15) + timedelta(days=1)
 DEADLINE_RESPONSE = Response(

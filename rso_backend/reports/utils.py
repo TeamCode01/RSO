@@ -20,7 +20,6 @@ from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
-from users.serializers import UserIdRegionSerializer
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -239,15 +238,77 @@ def get_competition_participants_contact_data():
 
 
 def get_regions_users_data():
-    queryset = UserRegion.objects.all()
-    queryset = queryset.order_by('reg_region')
-    serializer = UserIdRegionSerializer(queryset, many=True)
-
-    rows = []
-    for item in serializer.data:
-        row = (list(dict(item).values()))
-        rows.append(row)
-    return rows
+    users_data = UserRegion.objects.select_related(
+            'user',
+            'user__documents',
+            'user__education',
+            # 'user__usercentralheadquarterposition__position',
+            # 'user__centralheadquarter_commander',
+            # 'user__userdistrictheadquarterposition__position',
+            # 'user__districtheadquarter_commander',
+            # 'user__userregionalheadquarterposition__position',
+            # 'user__regionalheadquarter_commander',
+            # 'user__userlocalheadquarterposition__position',
+            # 'user__usereducationalheadquarterposition__position',
+            # 'user__userdetachmentposition__headquarter__area',
+            # 'user__userdetachmentposition__position',
+            # 'user__detachment_commander__area'
+        ).values_list(
+            'reg_region__code',
+            'reg_region__name',
+            'user__id',
+            'user__first_name',
+            'user__last_name',
+            'user__patronymic_name',
+            'user__username',
+            'user__date_of_birth',
+            'user__documents__russian_passport',
+            'user__documents__pass_ser_num',
+            'user__documents__pass_whom',
+            'user__documents__pass_date',
+            'user__documents__pass_code',
+            'user__documents__inn',
+            'user__documents__snils',
+            'reg_town',
+            'reg_house',
+            'reg_fact_same_address',
+            'fact_region_id',
+            'fact_region__fact_region__reg_region',
+            'fact_town',
+            'fact_house',
+            'user__education__study_institution',
+            'user__education__study_faculty',
+            'user__education__study_specialty',
+            'user__education__study_year',
+            'user__phone_number',
+            'user__email',
+            'user__social_vk',
+            'user__social_tg',
+            'user__is_rso_member',
+            'user__is_verified',
+            'user__membership_fee',
+            # 'user__usercentralheadquarterposition',
+            # 'user__usercentralheadquarterposition__position__name',
+            # 'user__centralheadquarter_commander',
+            # 'user__userdistrictheadquarterposition',
+            # 'user__userdistrictheadquarterposition__position__name',
+            # 'user__districtheadquarter_commander',
+            # 'user__userregionalheadquarterposition',
+            # 'user__userregionalheadquarterposition__position__name',
+            # 'user__regionalheadquarter_commander',
+            # 'user__userlocalheadquarterposition',
+            # 'user__userlocalheadquarterposition__position__name',
+            # 'user__localheadquarter_commander',
+            # 'user__usereducationalheadquarterposition',
+            # 'user__usereducationalheadquarterposition__position__name',
+            # 'user__educationalheadquarter_commander',
+            # 'user__userdetachmentposition',
+            # 'user__userdetachmentposition__headquarter__area__name',
+            # 'user__userdetachmentposition__position__name',
+            # 'user__detachment_commander',
+            # 'user__detachment_commander__area__name',
+        ).all()
+    return users_data
 
 
 def get_commander_school_data(competition_id: int) -> list:
@@ -885,6 +946,134 @@ def get_membership_fee_data(competition_id: int) -> list:
                      ) or '-',
             data.get(
                 'junior_detachment__q1ranking__place',
+                'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in individual_data
+    ])
+
+    return rows
+
+
+def get_attributes_of_uniform_data(competition_id):
+    detachment_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=False)
+    ).select_related(
+        'detachment__region'
+    ).prefetch_related(
+        'detachment__q20report_detachment_reports',
+        'detachment__q20tandemranking_main_detachment'
+    ).values(
+        'detachment__name',
+        'detachment__region__name',
+        'detachment__q20report_detachment_reports__score',
+        'detachment__q20report_detachment_reports__link_emblem',
+        'detachment__q20report_detachment_reports__link_emblem_img',
+        'detachment__q20report_detachment_reports__link_flag',
+        'detachment__q20report_detachment_reports__link_flag_img',
+        'detachment__q20report_detachment_reports__link_banner',
+        'detachment__q20report_detachment_reports__link_banner_img',
+        'detachment__q20report_detachment_reports__is_verified',
+        'detachment__q20tandemranking_main_detachment__place',
+    ).all()
+
+    junior_detachment_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=False)
+    ).select_related(
+        'junior_detachment__region'
+    ).prefetch_related(
+        'junior_detachment__q20report_detachment_reports',
+        'junior_detachment__q20tandemranking_junior_detachment'
+    ).values(
+        'junior_detachment__name',
+        'junior_detachment__region__name',
+        'junior_detachment__q20report_detachment_reports__score',
+        'junior_detachment__q20report_detachment_reports__link_emblem',
+        'junior_detachment__q20report_detachment_reports__link_emblem_img',
+        'junior_detachment__q20report_detachment_reports__link_flag',
+        'junior_detachment__q20report_detachment_reports__link_flag_img',
+        'junior_detachment__q20report_detachment_reports__link_banner',
+        'junior_detachment__q20report_detachment_reports__link_banner_img',
+        'junior_detachment__q20report_detachment_reports__is_verified',
+        'junior_detachment__q20tandemranking_junior_detachment__place',
+    ).all()
+
+    # # информация по старт отряду в индивидуальных заявках
+    individual_data = CompetitionParticipants.objects.filter(
+        Q(competition_id=competition_id) & Q(detachment__isnull=True)
+    ).select_related(
+        'junior_detachment__region'
+    ).prefetch_related(
+        'junior_detachment__q20report_detachment_reports',
+        'junior_detachment__q20ranking'
+    ).values(
+        'junior_detachment__name',
+        'junior_detachment__region__name',
+        'junior_detachment__q20report_detachment_reports__score',
+        'junior_detachment__q20report_detachment_reports__link_emblem',
+        'junior_detachment__q20report_detachment_reports__link_emblem_img',
+        'junior_detachment__q20report_detachment_reports__link_flag',
+        'junior_detachment__q20report_detachment_reports__link_flag_img',
+        'junior_detachment__q20report_detachment_reports__link_banner',
+        'junior_detachment__q20report_detachment_reports__link_banner_img',
+        'junior_detachment__q20report_detachment_reports__is_verified',
+        'junior_detachment__q20ranking__place',
+    ).all()
+
+    # Добавляем данные по отряду наставнику в тандеме
+    rows = [
+        (
+            data.get('detachment__name', '-'),
+            data.get('detachment__region__name', '-'),
+            'Тандем',
+            data.get('detachment__q20report_detachment_reports__link_emblem', '-') or '-',
+            data.get('detachment__q20report_detachment_reports__link_emblem_img', '-') or '-',
+            data.get('detachment__q20report_detachment_reports__link_flag', '-') or '-',
+            data.get('detachment__q20report_detachment_reports__link_flag_img', '-') or '-',
+            data.get('detachment__q20report_detachment_reports__link_banner', '-') or '-',
+            data.get('detachment__q20report_detachment_reports__link_banner_img', '-') or '-',
+            data.get('detachment__q20report_detachment_reports__is_verified', 'False') or 'False',
+            data.get('detachment__q20report_detachment_reports__score', '-') or '-',
+            data.get('detachment__q20tandemranking_main_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in detachment_data
+    ]
+
+    # Добавляем данные по отряду старт в тандеме
+    rows.extend([
+        (
+            data.get('junior_detachment__name', '-'),
+            data.get('junior_detachment__region__name', '-'),
+            'Тандем',
+            data.get('junior_detachment__q20report_detachment_reports__link_emblem', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_emblem_img', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_flag', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_flag_img', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_banner', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_banner_img', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__is_verified', 'False') or 'False',
+            data.get('junior_detachment__q20report_detachment_reports__score', '-'
+                     ) or '-',
+            data.get(
+                'junior_detachment__q20tandemranking_junior_detachment__place',
+                'Ещё нет в рейтинге') or 'Ещё не подал отчет'
+        ) for data in junior_detachment_data
+    ])
+
+    # Добавляем данные по отряду старт в индивидуальных заявках
+    rows.extend([
+        (
+            data.get('junior_detachment__name', '-'),
+            data.get('junior_detachment__region__name', '-'),
+            'Дебют',
+            data.get('junior_detachment__q20report_detachment_reports__link_emblem', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_emblem_img', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_flag', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_flag_img', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_banner', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__link_banner_img', '-') or '-',
+            data.get('junior_detachment__q20report_detachment_reports__is_verified', 'False') or 'False',
+            data.get('junior_detachment__q20report_detachment_reports__score', '-'
+                     ) or '-',
+            data.get(
+                'junior_detachment__q20ranking__place',
                 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
         ) for data in individual_data
     ])

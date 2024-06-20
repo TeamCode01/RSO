@@ -7,6 +7,9 @@ from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from rest_framework_simplejwt.views import (TokenObtainPairView,
+                                            TokenRefreshView,
+                                            TokenVerifyView)
 
 swagger_url = os.getenv('SWAGGER_URL')
 
@@ -40,9 +43,9 @@ else:
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/auth/', include('rest_framework_social_oauth2.urls', namespace='authorize')),
     path('api/v1/', include('api.urls')),
     path('api/v1/', include('djoser.urls')),
+    path('api/v1/', include('djoser.urls.jwt')),
     path('api/v1/', include('djoser.urls.authtoken')),
     path(
         'swagger<format>/',
@@ -66,8 +69,6 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('competitions.urls')),
 ]
-
-# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL,
