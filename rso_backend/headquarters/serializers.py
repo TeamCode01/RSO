@@ -489,7 +489,6 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
     с моделью CentralHeadquarter.
     """
     working_years = serializers.SerializerMethodField(read_only=True)
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CentralHeadquarter
@@ -497,8 +496,6 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
             'working_years',
             'detachments_appearance_year',
             'rso_founding_congress_date',
-            'members',
-            'sub_commanders',
         )
 
     @staticmethod
@@ -506,60 +503,7 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
         return (
             dt.datetime.now().year - settings.CENTRAL_HEADQUARTER_FOUNDING_DATE
         )
-    
-    def get_sub_commanders(self, obj):
-        commanders = []
 
-        district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=obj)
-
-        for district_hq in district_headquarters:
-            if district_hq.commander:
-                commanders.append({
-                    'id': district_hq.commander.id,
-                    'type': 'DistrictHeadquarter',
-                    'commander': district_hq.commander.name,
-                    'unit': district_hq.name
-                })
-
-            regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
-            for regional_hq in regional_headquarters:
-                if regional_hq.commander:
-                    commanders.append({
-                        'id': regional_hq.commander.id,
-                        'type': 'RegionalHeadquarter',
-                        'commander': regional_hq.commander.name,
-                        'unit': regional_hq.name
-                    })
-
-                detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
-                for detachment in detachments:
-                    commanders.append({
-                        'id': detachment.commander.id if detachment.commander else None,
-                        'type': 'Detachment',
-                        'commander': detachment.commander.name if detachment.commander else None,
-                        'unit': detachment.name
-                    })
-
-                local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                for local_hq in local_headquarters:
-                    commanders.append({
-                        'id': local_hq.commander.id if local_hq.commander else None,
-                        'type': 'LocalHeadquarter',
-                        'commander': local_hq.commander.name if local_hq.commander else None,
-                        'unit': local_hq.name
-                    })
-
-                educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                for edu_hq in educational_headquarters:
-                    commanders.append({
-                        'id': edu_hq.commander.id if edu_hq.commander else None,
-                        'type': 'EducationalHeadquarter',
-                        'commander': edu_hq.commander.name if edu_hq.commander else None,
-                        'unit': edu_hq.name
-                    })
-
-        return commanders
-    
 
 class DistrictHeadquarterSerializer(BaseUnitSerializer):
     """Сериализатор для окружного штаба.
@@ -583,7 +527,6 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
     local_headquarters = serializers.SerializerMethodField()
     educational_headquarters = serializers.SerializerMethodField()
     detachments = serializers.SerializerMethodField()
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DistrictHeadquarter
@@ -595,9 +538,8 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
             'local_headquarters',
             'educational_headquarters',
             'detachments',
-            'sub_commanders',
         )
-        read_only_fields = ('regional_headquarters', 'sub_commanders')
+        read_only_fields = ('regional_headquarters',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -647,50 +589,6 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
         """Для очищения кэша перед началом сериализации."""
         self._cached_units = None
         return super().to_representation(obj)
-    
-    def get_sub_commanders(self, obj):
-        commanders = []
-
-        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=obj)
-        
-        for regional_hq in regional_headquarters:
-
-            if regional_hq.commander:
-                commanders.append({
-                    'id': regional_hq.commander.id,
-                    'type': 'RegionalHeadquarter',
-                    'commander': regional_hq.commander.name,
-                    'unit': regional_hq.name
-                })
-
-            detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
-            for detachment in detachments:
-                commanders.append({
-                    'id': detachment.commander.id if detachment.commander else None,
-                    'type': 'Detachment',
-                    'commander': detachment.commander.name if detachment.commander else None,
-                    'unit': detachment.name
-                })
-
-            local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-            for local_hq in local_headquarters:
-                commanders.append({
-                    'id': local_hq.commander.id if local_hq.commander else None,
-                    'type': 'LocalHeadquarter',
-                    'commander': local_hq.commander.name if local_hq.commander else None,
-                    'unit': local_hq.name
-                })
-
-            educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-            for edu_hq in educational_headquarters:
-                commanders.append({
-                    'id': edu_hq.commander.id if edu_hq.commander else None,
-                    'type': 'EducationalHeadquarter',
-                    'commander': edu_hq.commander.name if edu_hq.commander else None,
-                    'unit': edu_hq.name
-                })
-
-        return commanders
 
 
 class RegionalHeadquarterSerializer(BaseUnitSerializer):
@@ -712,7 +610,6 @@ class RegionalHeadquarterSerializer(BaseUnitSerializer):
     educational_headquarters = serializers.SerializerMethodField(
         read_only=True
     )
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = RegionalHeadquarter
@@ -730,13 +627,11 @@ class RegionalHeadquarterSerializer(BaseUnitSerializer):
             'detachments',
             'local_headquarters',
             'educational_headquarters',
-            'sub_commanders',
         )
         read_only_fields = (
             'detachments',
             'local_headquarters',
             'educational_headquarters',
-            'sub_commanders',
         )
 
     def to_representation(self, instance):
@@ -785,38 +680,6 @@ class RegionalHeadquarterSerializer(BaseUnitSerializer):
             units['detachments'], many=True
         ).data
         return detachment_serializer
-    
-    def get_sub_commanders(self, obj):
-        commanders = []
-
-        detachments = Detachment.objects.filter(regional_headquarter=obj)
-        for detachment in detachments:
-            commanders.append({
-                'id': detachment.commander.id if detachment.commander else None,
-                'type': 'Detachment',
-                'commander': detachment.commander.name if detachment.commander else None,
-                'unit': detachment.name
-            })
-
-        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=obj)
-        for local_hq in local_headquarters:
-            commanders.append({
-                'id': local_hq.commander.id if local_hq.commander else None,
-                'type': 'LocalHeadquarter',
-                'commander': local_hq.commander.name if local_hq.commander else None,
-                'unit': local_hq.name
-            })
-
-        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=obj)
-        for edu_hq in educational_headquarters:
-            commanders.append({
-                'id': edu_hq.commander.id if edu_hq.commander else None,
-                'type': 'EducationalHeadquarter',
-                'commander': edu_hq.commander.name if edu_hq.commander else None,
-                'unit': edu_hq.name
-            })
-
-        return commanders
 
 
 class LocalHeadquarterSerializer(BaseUnitSerializer):
@@ -835,7 +698,6 @@ class LocalHeadquarterSerializer(BaseUnitSerializer):
     detachments = serializers.SerializerMethodField(
         read_only=True
     )
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = LocalHeadquarter
@@ -844,9 +706,8 @@ class LocalHeadquarterSerializer(BaseUnitSerializer):
             'founding_date',
             'educational_headquarters',
             'detachments',
-            'sub_commanders',
         )
-        read_only_fields = ('educational_headquarters', 'detachments', 'sub_commanders')
+        read_only_fields = ('educational_headquarters', 'detachments')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -889,30 +750,6 @@ class LocalHeadquarterSerializer(BaseUnitSerializer):
             units['detachments'], many=True
         ).data
         return detachment_serializer
-    
-    def get_sub_commanders(self, obj):
-        commanders = []
-
-        detachments = Detachment.objects.filter(local_headquarter=obj)
-        for detachment in detachments:
-            commanders.append({
-                'id': detachment.commander.id if detachment.commander else None,
-                'type': 'Detachment',
-                'commander': detachment.commander.name if detachment.commander else None,
-                'unit': detachment.name
-            })
-
-        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=obj)
-        for edu_hq in educational_headquarters:
-            commanders.append({
-                'id': edu_hq.commander.id if edu_hq.commander else None,
-                'type': 'EducationalHeadquarter',
-                'commander': edu_hq.commander.name if edu_hq.commander else None,
-                'unit': edu_hq.name
-            })
-
-        return commanders
-
 
 
 class EducationalHeadquarterSerializer(BaseUnitSerializer):
@@ -937,7 +774,6 @@ class EducationalHeadquarterSerializer(BaseUnitSerializer):
     detachments = serializers.SerializerMethodField(
         read_only=True
     )
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = EducationalHeadquarter
@@ -946,10 +782,9 @@ class EducationalHeadquarterSerializer(BaseUnitSerializer):
             'local_headquarter',
             'regional_headquarter',
             'founding_date',
-            'detachments',
-            'sub_commanders',
+            'detachments'
         )
-        read_only_fields = ('detachments', 'sub_commanders')
+        read_only_fields = ('detachments',)
 
     def create(self, validated_data):
         """
@@ -984,20 +819,6 @@ class EducationalHeadquarterSerializer(BaseUnitSerializer):
                 self._get_units(obj)['detachments'], many=True
             ).data
         )
-    
-    def get_sub_commanders(self, obj):
-        commanders = []
-
-        detachments = Detachment.objects.filter(educational_headquarter=obj)
-        for detachment in detachments:
-            commanders.append({
-                'type': 'Detachment',
-                'commander': detachment.commander.name if detachment.commander else None,
-                'unit': detachment.name
-            })
-
-        return commanders
-
 
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
