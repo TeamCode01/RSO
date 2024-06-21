@@ -55,40 +55,56 @@ class RSOUserFilter(filters.FilterSet):
 
     def filter_district_headquarter(self, queryset, name, value):
         headquarters = DistrictHeadquarter.objects.filter(name__iexact=value)
-        user_ids = []
+        user_ids = set()
         for headquarter in headquarters:
-            user_ids.append(headquarter.commander.id)
-            user_ids.extend(headquarter.members.values_list('user_id', flat=True))
+            user_ids.add(headquarter.commander.id)
+            user_ids.update(headquarter.members.values_list('user_id', flat=True))
+            sub_units = headquarter.regional_headquarters.all()
+            for sub_unit in sub_units:
+                if sub_unit.commander:
+                    user_ids.add(sub_unit.commander.id)
         return queryset.filter(id__in=user_ids)
 
     def filter_regional_headquarter(self, queryset, name, value):
         headquarters = RegionalHeadquarter.objects.filter(name__iexact=value)
-        user_ids = []
+        user_ids = set()
         for headquarter in headquarters:
-            user_ids.append(headquarter.commander.id)
-            user_ids.extend(headquarter.members.values_list('user_id', flat=True))
+            user_ids.add(headquarter.commander.id)
+            user_ids.update(headquarter.members.values_list('user_id', flat=True))
+            sub_units = headquarter.local_headquarters.all() | headquarter.educational_headquarters.all() | headquarter.detachments.all()
+            for sub_unit in sub_units:
+                if sub_unit.commander:
+                    user_ids.add(sub_unit.commander.id)
         return queryset.filter(id__in=user_ids)
 
     def filter_local_headquarter(self, queryset, name, value):
         headquarters = LocalHeadquarter.objects.filter(name__iexact=value)
-        user_ids = []
+        user_ids = set()
         for headquarter in headquarters:
-            user_ids.append(headquarter.commander.id)
-            user_ids.extend(headquarter.members.values_list('user_id', flat=True))
+            user_ids.add(headquarter.commander.id)
+            user_ids.update(headquarter.members.values_list('user_id', flat=True))
+            sub_units = headquarter.detachments.all()
+            for sub_unit in sub_units:
+                if sub_unit.commander:
+                    user_ids.add(sub_unit.commander.id)
         return queryset.filter(id__in=user_ids)
 
     def filter_educational_headquarter(self, queryset, name, value):
         headquarters = EducationalHeadquarter.objects.filter(name__iexact=value)
-        user_ids = []
+        user_ids = set()
         for headquarter in headquarters:
-            user_ids.append(headquarter.commander.id)
-            user_ids.extend(headquarter.members.values_list('user_id', flat=True))
+            user_ids.add(headquarter.commander.id)
+            user_ids.update(headquarter.members.values_list('user_id', flat=True))
+            sub_units = headquarter.detachments.all()
+            for sub_unit in sub_units:
+                if sub_unit.commander:
+                    user_ids.add(sub_unit.commander.id)
         return queryset.filter(id__in=user_ids)
 
     def filter_detachment_headquarter(self, queryset, name, value):
         headquarters = Detachment.objects.filter(name__iexact=value)
-        user_ids = []
+        user_ids = set()
         for headquarter in headquarters:
-            user_ids.append(headquarter.commander.id)
-            user_ids.extend(headquarter.members.values_list('user_id', flat=True))
+            user_ids.add(headquarter.commander.id)
+            user_ids.update(headquarter.members.values_list('user_id', flat=True))
         return queryset.filter(id__in=user_ids)
