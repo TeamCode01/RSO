@@ -58,11 +58,11 @@ from headquarters.serializers import (
     ShortEducationalHeadquarterListSerializer,
     ShortEducationalHeadquarterSerializer, ShortLocalHeadquarterListSerializer,
     ShortLocalHeadquarterSerializer, ShortRegionalHeadquarterListSerializer,
-    ShortRegionalHeadquarterSerializer, UserCentralApplicationSerializer,
+    ShortRegionalHeadquarterSerializer, UserCentralApplicationReadSerializer, UserCentralApplicationSerializer,
     UserDetachmentApplicationReadSerializer,
-    UserDetachmentApplicationSerializer, UserDistrictApplicationSerializer,
-    UserEducationalApplicationSerializer,
-    UserLocalApplicationSerializer,
+    UserDetachmentApplicationSerializer, UserDistrictApplicationReadSerializer, UserDistrictApplicationSerializer, UserEducationalApplicationReadSerializer,
+    UserEducationalApplicationSerializer, UserLocalApplicationReadSerializer,
+    UserLocalApplicationSerializer, UserRegionalApplicationReadSerializer,
     UserRegionalApplicationSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
@@ -113,6 +113,19 @@ class CentralViewSet(ListRetrieveUpdateViewSet):
             permission_classes = (IsStuffOrCentralCommanderOrTrusted,)
         return [permission() for permission in permission_classes]
 
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserCentralApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserCentralApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class DistrictViewSet(viewsets.ModelViewSet):
     """Представляет окружные штабы.
@@ -155,6 +168,19 @@ class DistrictViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(settings.DISTR_OBJECT_CACHE_TTL))
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserDistrictApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserDistrictApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RegionalViewSet(viewsets.ModelViewSet):
@@ -225,6 +251,20 @@ class RegionalViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserRegionalApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserRegionalApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class LocalViewSet(viewsets.ModelViewSet):
     """Представляет местные штабы.
 
@@ -269,6 +309,19 @@ class LocalViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = (IsLocalCommander,)
         return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserLocalApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserLocalApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EducationalViewSet(viewsets.ModelViewSet):
@@ -320,6 +373,19 @@ class EducationalViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = (IsEducationalCommander,)
         return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserEducationalApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserEducationalApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DetachmentViewSet(viewsets.ModelViewSet):

@@ -1143,6 +1143,34 @@ class UserEducationalApplicationReadSerializer(BaseApplicationReadSerializer):
         model = UserEducationalApplication
 
 
+class UserLocalApplicationReadSerializer(BaseApplicationReadSerializer):
+    """Сериализатор для чтения заявок в местный штаб."""
+
+    class Meta(BaseApplicationReadSerializer.Meta):
+        model = UserLocalApplication
+
+
+class UserRegionalApplicationReadSerializer(BaseApplicationReadSerializer):
+    """Сериализатор для чтения заявок в региональный штаб."""
+
+    class Meta(BaseApplicationReadSerializer.Meta):
+        model = UserRegionalApplication
+
+
+class UserDistrictApplicationReadSerializer(BaseApplicationReadSerializer):
+    """Сериализатор для чтения заявок в окружной штаб."""
+
+    class Meta(BaseApplicationReadSerializer.Meta):
+        model = UserDistrictApplication
+
+
+class UserCentralApplicationReadSerializer(BaseApplicationReadSerializer):
+    """Сериализатор для чтения заявок в центральный штаб."""
+
+    class Meta(BaseApplicationReadSerializer.Meta):
+        model = UserCentralApplication
+
+
 class DetachmentSerializer(BaseUnitSerializer):
     """Сериализатор для отряда.
 
