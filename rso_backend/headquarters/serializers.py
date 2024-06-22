@@ -163,16 +163,18 @@ class DistrictPositionSerializer(BasePositionSerializer):
     def get_sub_commanders(self, obj):
         commanders = []
         try:
-            regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=obj)
+            district_headquarter = obj.headquarter 
+            regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_headquarter)
         except ObjectDoesNotExist:
             raise serializers.ValidationError("Regional headquarters do not exist for this district headquarter.")
 
         for regional_hq in regional_headquarters:
             if regional_hq.commander:
+                commander_name = regional_hq.commander.get_full_name() if hasattr(regional_hq.commander, 'get_full_name') else str(regional_hq.commander)
                 commanders.append({
                     'id': regional_hq.commander.id,
                     'type': 'RegionalHeadquarter',
-                    'commander': regional_hq.commander.name,
+                    'commander': commander_name,
                     'unit': regional_hq.name
                 })
 
@@ -183,10 +185,11 @@ class DistrictPositionSerializer(BasePositionSerializer):
 
             for detachment in detachments:
                 if detachment.commander:
+                    commander_name = detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander)
                     commanders.append({
                         'id': detachment.commander.id,
                         'type': 'Detachment',
-                        'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                        'commander': commander_name,
                         'unit': detachment.name
                     })
 
@@ -197,10 +200,11 @@ class DistrictPositionSerializer(BasePositionSerializer):
 
             for local_hq in local_headquarters:
                 if local_hq.commander:
+                    commander_name = local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander)
                     commanders.append({
                         'id': local_hq.commander.id,
                         'type': 'LocalHeadquarter',
-                        'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander),
+                        'commander': commander_name,
                         'unit': local_hq.name
                     })
 
@@ -211,10 +215,11 @@ class DistrictPositionSerializer(BasePositionSerializer):
 
             for edu_hq in educational_headquarters:
                 if edu_hq.commander:
+                    commander_name = edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander)
                     commanders.append({
                         'id': edu_hq.commander.id,
                         'type': 'EducationalHeadquarter',
-                        'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
+                        'commander': commander_name,
                         'unit': edu_hq.name
                     })
 
