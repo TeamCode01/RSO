@@ -63,6 +63,22 @@ class RSOUserFilter(filters.FilterSet):
             for sub_unit in sub_units:
                 if sub_unit.commander:
                     user_ids.add(sub_unit.commander.id)
+                    user_ids.update(sub_unit.members.values_list('user_id', flat=True))
+                    local_headquarters = sub_unit.local_headquarters.all()
+                    for local_hq in local_headquarters:
+                        if local_hq.commander:
+                            user_ids.add(local_hq.commander.id)
+                            user_ids.update(local_hq.members.values_list('user_id', flat=True))
+                            educational_headquarters = local_hq.educational_headquarters.all()
+                            for edu_hq in educational_headquarters:
+                                if edu_hq.commander:
+                                    user_ids.add(edu_hq.commander.id)
+                                    user_ids.update(edu_hq.members.values_list('user_id', flat=True))
+                                    detachments = edu_hq.detachments.all()
+                                    for detachment in detachments:
+                                        if detachment.commander:
+                                            user_ids.add(detachment.commander.id)
+                                            user_ids.update(detachment.members.values_list('user_id', flat=True))
         return queryset.filter(id__in=user_ids)
 
     def filter_regional_headquarter(self, queryset, name, value):
@@ -71,10 +87,26 @@ class RSOUserFilter(filters.FilterSet):
         for headquarter in headquarters:
             user_ids.add(headquarter.commander.id)
             user_ids.update(headquarter.members.values_list('user_id', flat=True))
-            sub_units = headquarter.local_headquarters.all() | headquarter.educational_headquarters.all() | headquarter.detachments.all()
-            for sub_unit in sub_units:
-                if sub_unit.commander:
-                    user_ids.add(sub_unit.commander.id)
+            local_headquarters = headquarter.local_headquarters.all()
+            for local_hq in local_headquarters:
+                if local_hq.commander:
+                    user_ids.add(local_hq.commander.id)
+                    user_ids.update(local_hq.members.values_list('user_id', flat=True))
+                    educational_headquarters = local_hq.educational_headquarters.all()
+                    for edu_hq in educational_headquarters:
+                        if edu_hq.commander:
+                            user_ids.add(edu_hq.commander.id)
+                            user_ids.update(edu_hq.members.values_list('user_id', flat=True))
+                            detachments = edu_hq.detachments.all()
+                            for detachment in detachments:
+                                if detachment.commander:
+                                    user_ids.add(detachment.commander.id)
+                                    user_ids.update(detachment.members.values_list('user_id', flat=True))
+            detachments = headquarter.detachments.all()
+            for detachment in detachments:
+                if detachment.commander:
+                    user_ids.add(detachment.commander.id)
+                    user_ids.update(detachment.members.values_list('user_id', flat=True))
         return queryset.filter(id__in=user_ids)
 
     def filter_local_headquarter(self, queryset, name, value):
@@ -83,10 +115,21 @@ class RSOUserFilter(filters.FilterSet):
         for headquarter in headquarters:
             user_ids.add(headquarter.commander.id)
             user_ids.update(headquarter.members.values_list('user_id', flat=True))
-            sub_units = headquarter.detachments.all()
-            for sub_unit in sub_units:
-                if sub_unit.commander:
-                    user_ids.add(sub_unit.commander.id)
+            educational_headquarters = headquarter.educational_headquarters.all()
+            for edu_hq in educational_headquarters:
+                if edu_hq.commander:
+                    user_ids.add(edu_hq.commander.id)
+                    user_ids.update(edu_hq.members.values_list('user_id', flat=True))
+                detachments = edu_hq.detachments.all()
+                for detachment in detachments:
+                    if detachment.commander:
+                        user_ids.add(detachment.commander.id)
+                        user_ids.update(detachment.members.values_list('user_id', flat=True))
+            detachments = headquarter.detachments.all()
+            for detachment in detachments:
+                if detachment.commander:
+                    user_ids.add(detachment.commander.id)
+                    user_ids.update(detachment.members.values_list('user_id', flat=True))
         return queryset.filter(id__in=user_ids)
 
     def filter_educational_headquarter(self, queryset, name, value):
@@ -95,10 +138,11 @@ class RSOUserFilter(filters.FilterSet):
         for headquarter in headquarters:
             user_ids.add(headquarter.commander.id)
             user_ids.update(headquarter.members.values_list('user_id', flat=True))
-            sub_units = headquarter.detachments.all()
-            for sub_unit in sub_units:
-                if sub_unit.commander:
-                    user_ids.add(sub_unit.commander.id)
+            detachments = headquarter.detachments.all()
+            for detachment in detachments:
+                if detachment.commander:
+                    user_ids.add(detachment.commander.id)
+                    user_ids.update(detachment.members.values_list('user_id', flat=True))
         return queryset.filter(id__in=user_ids)
 
     def filter_detachment_headquarter(self, queryset, name, value):
