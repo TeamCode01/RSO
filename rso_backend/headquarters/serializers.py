@@ -78,75 +78,66 @@ class CentralPositionSerializer(BasePositionSerializer):
 
     def get_sub_commanders(self, obj):
         commanders = []
-        try:
-            district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=obj)
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError("District headquarter does not exist.")
         
-        for district_hq in district_headquarters:
-            if district_hq.commander:
-                commanders.append({
-                    'id': district_hq.commander.id,
-                    'type': 'DistrictHeadquarter',
-                    'commander': district_hq.commander.name,
-                    'unit': district_hq.name
-                })
-
-            try:
-                regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
-            except ObjectDoesNotExist:
-                continue
-
-            for regional_hq in regional_headquarters:
-                if regional_hq.commander:
+        try:
+            central_headquarter = obj.headquarter
+            district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=central_headquarter)
+            
+            for district_hq in district_headquarters:
+                if district_hq.commander:
                     commanders.append({
-                        'id': regional_hq.commander.id,
-                        'type': 'RegionalHeadquarter',
-                        'commander': regional_hq.commander.name,
-                        'unit': regional_hq.name
+                        'id': district_hq.commander.id,
+                        'type': 'DistrictHeadquarter',
+                        'commander': district_hq.commander.get_full_name() if hasattr(district_hq.commander, 'get_full_name') else str(district_hq.commander),
+                        'unit': district_hq.name
                     })
 
-                try:
+                regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
+                
+                for regional_hq in regional_headquarters:
+                    if regional_hq.commander:
+                        commanders.append({
+                            'id': regional_hq.commander.id,
+                            'type': 'RegionalHeadquarter',
+                            'commander': regional_hq.commander.get_full_name() if hasattr(regional_hq.commander, 'get_full_name') else str(regional_hq.commander),
+                            'unit': regional_hq.name
+                        })
+
                     detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
-                except ObjectDoesNotExist:
-                    continue
+                    
+                    for detachment in detachments:
+                        if detachment.commander:
+                            commanders.append({
+                                'id': detachment.commander.id,
+                                'type': 'Detachment',
+                                'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                                'unit': detachment.name
+                            })
 
-                for detachment in detachments:
-                    if detachment.commander:
-                        commanders.append({
-                            'id': detachment.commander.id,
-                            'type': 'Detachment',
-                            'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
-                            'unit': detachment.name
-                        })
-
-                try:
                     local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                except ObjectDoesNotExist:
-                    continue
+                    
+                    for local_hq in local_headquarters:
+                        if local_hq.commander:
+                            commanders.append({
+                                'id': local_hq.commander.id,
+                                'type': 'LocalHeadquarter',
+                                'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander),
+                                'unit': local_hq.name
+                            })
 
-                for local_hq in local_headquarters:
-                    if local_hq.commander:
-                        commanders.append({
-                            'id': local_hq.commander.id,
-                            'type': 'LocalHeadquarter',
-                            'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander),
-                            'unit': local_hq.name
-                        })
-
-                try:
                     educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                except ObjectDoesNotExist:
-                    continue
+                    
+                    for edu_hq in educational_headquarters:
+                        if edu_hq.commander:
+                            commanders.append({
+                                'id': edu_hq.commander.id,
+                                'type': 'EducationalHeadquarter',
+                                'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
+                                'unit': edu_hq.name
+                            })
 
-                for edu_hq in educational_headquarters:
-                    if edu_hq.commander:
-                        commanders.append({
-                            'id': edu_hq.commander.id,
-                            'type': 'EducationalHeadquarter',
-                            'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
-                            'unit': edu_hq.name
-                        })
+        except CentralHeadquarter.DoesNotExist:
+            raise serializers.ValidationError("Central headquarter does not exist for this position.")
 
         return commanders
 
@@ -292,32 +283,31 @@ class LocalPositionSerializer(BasePositionSerializer):
     def get_sub_commanders(self, obj):
         commanders = []
         try:
-            detachments = Detachment.objects.filter(local_headquarter=obj)
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError("Detachments do not exist for this local headquarter.")
+            local_headquarter = obj.headquarter
+            detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
+            for detachment in detachments:
+                if detachment.commander:
+                    commander_info = ({
+                        'id': detachment.commander.id,
+                        'type': 'Detachment',
+                        'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                        'unit': detachment.name
+                    })
+                    commanders.append(commander_info)
 
-        for detachment in detachments:
-            if detachment.commander:
-                commanders.append({
-                    'id': detachment.commander.id,
-                    'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
-                    'unit': detachment.name
-                })
+            educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=local_headquarter)
+            for edu_hq in educational_headquarters:
+                if edu_hq.commander:
+                    commander_info = {
+                        'id': edu_hq.commander.id,
+                        'type': 'EducationalHeadquarter',
+                        'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
+                        'unit': edu_hq.name
+                    }
+                    commanders.append(commander_info)
 
-        try:
-            educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=obj)
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError("Educational headquarters do not exist for this local headquarter.")
-
-        for edu_hq in educational_headquarters:
-            if edu_hq.commander:
-                commanders.append({
-                    'id': edu_hq.commander.id,
-                    'type': 'EducationalHeadquarter',
-                    'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
-                    'unit': edu_hq.name
-                })
+        except LocalHeadquarter.DoesNotExist:
+            raise serializers.ValidationError("Local headquarter does not exist for this position.")
 
         return commanders
 
