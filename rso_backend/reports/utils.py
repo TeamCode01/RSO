@@ -10,14 +10,16 @@ from typing import List, Tuple
 from api.utils import get_user_detachment, get_user_detachment_position
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (CompetitionParticipants, OverallRanking,
-                                 OverallTandemRanking, Q5DetachmentReport, Q5EducatedParticipant, Q5TandemRanking,
-                                 Q5Ranking)
+                                 OverallTandemRanking, Q5DetachmentReport, Q5EducatedParticipant, Q5TandemRanking, Q5Ranking, Q15GrantWinner, Q15Rank, Q15TandemRank,
+                                 Q15DetachmentReport, Q17DetachmentReport,
+                                 Q17EventLink, Q17Ranking, Q17TandemRanking, Q20TandemRanking,
+                                 Q20Ranking, Q20Report, Q16Ranking, Q16TandemRanking, Q16Report,
+                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport,)
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
-from users.serializers import UserIdRegionSerializer
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -236,15 +238,77 @@ def get_competition_participants_contact_data():
 
 
 def get_regions_users_data():
-    queryset = UserRegion.objects.all()
-    queryset = queryset.order_by('reg_region')
-    serializer = UserIdRegionSerializer(queryset, many=True)
-
-    rows = []
-    for item in serializer.data:
-        row = (list(dict(item).values()))
-        rows.append(row)
-    return rows
+    users_data = UserRegion.objects.select_related(
+            'user',
+            'user__documents',
+            'user__education',
+            # 'user__usercentralheadquarterposition__position',
+            # 'user__centralheadquarter_commander',
+            # 'user__userdistrictheadquarterposition__position',
+            # 'user__districtheadquarter_commander',
+            # 'user__userregionalheadquarterposition__position',
+            # 'user__regionalheadquarter_commander',
+            # 'user__userlocalheadquarterposition__position',
+            # 'user__usereducationalheadquarterposition__position',
+            # 'user__userdetachmentposition__headquarter__area',
+            # 'user__userdetachmentposition__position',
+            # 'user__detachment_commander__area'
+        ).values_list(
+            'reg_region__code',
+            'reg_region__name',
+            'user__id',
+            'user__first_name',
+            'user__last_name',
+            'user__patronymic_name',
+            'user__username',
+            'user__date_of_birth',
+            'user__documents__russian_passport',
+            'user__documents__pass_ser_num',
+            'user__documents__pass_whom',
+            'user__documents__pass_date',
+            'user__documents__pass_code',
+            'user__documents__inn',
+            'user__documents__snils',
+            'reg_town',
+            'reg_house',
+            'reg_fact_same_address',
+            'fact_region_id',
+            'fact_region__fact_region__reg_region',
+            'fact_town',
+            'fact_house',
+            'user__education__study_institution',
+            'user__education__study_faculty',
+            'user__education__study_specialty',
+            'user__education__study_year',
+            'user__phone_number',
+            'user__email',
+            'user__social_vk',
+            'user__social_tg',
+            'user__is_rso_member',
+            'user__is_verified',
+            'user__membership_fee',
+            # 'user__usercentralheadquarterposition',
+            # 'user__usercentralheadquarterposition__position__name',
+            # 'user__centralheadquarter_commander',
+            # 'user__userdistrictheadquarterposition',
+            # 'user__userdistrictheadquarterposition__position__name',
+            # 'user__districtheadquarter_commander',
+            # 'user__userregionalheadquarterposition',
+            # 'user__userregionalheadquarterposition__position__name',
+            # 'user__regionalheadquarter_commander',
+            # 'user__userlocalheadquarterposition',
+            # 'user__userlocalheadquarterposition__position__name',
+            # 'user__localheadquarter_commander',
+            # 'user__usereducationalheadquarterposition',
+            # 'user__usereducationalheadquarterposition__position__name',
+            # 'user__educationalheadquarter_commander',
+            # 'user__userdetachmentposition',
+            # 'user__userdetachmentposition__headquarter__area__name',
+            # 'user__userdetachmentposition__position__name',
+            # 'user__detachment_commander',
+            # 'user__detachment_commander__area__name',
+        ).all()
+    return users_data
 
 
 def get_commander_school_data(competition_id: int) -> list:
@@ -410,6 +474,339 @@ def get_q5_data(competition_id: int) -> list:
                         'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
                         place
                     ))
+
+    return rows
+
+
+def get_q15_data(competition_id: int) -> list:
+    rows = []
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q15DetachmentReport.objects.select_related('detachment').all()
+    grant_winners = Q15GrantWinner.objects.select_related('detachment_report').all()
+    tandem_rankings = {tr.detachment_id: tr for tr in Q15TandemRank.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q15Rank.objects.all()}
+
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for grant_winner in grant_winners.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        grant_winner.name,
+                        grant_winner.status,
+                        grant_winner.author_name,
+                        grant_winner.competition_link,
+                        grant_winner.prove_link,
+                        'Верифицирован' if grant_winner.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        if junior_detachment:
+            for report in reports.filter(detachment_id=junior_detachment.id):
+                for grant_winner in grant_winners.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        grant_winner.name,
+                        grant_winner.status,
+                        grant_winner.author_name,
+                        grant_winner.competition_link,
+                        grant_winner.prove_link,
+                        'Верифицирован' if grant_winner.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for grant_winner in grant_winners.filter(detachment_report_id=report.id):
+                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        grant_winner.name,
+                        grant_winner.status,
+                        grant_winner.author_name,
+                        grant_winner.competition_link,
+                        grant_winner.prove_link,
+                        'Верифицирован' if grant_winner.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    return rows
+
+
+def get_q16_data(competition_id: int) -> list:
+    rows = []
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q16Report.objects.select_related('detachment').all()
+    tandem_rankings = {tr.detachment_id: tr for tr in Q16TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q16Ranking.objects.all()}
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    'Тандем',
+                    report.link_vk_commander,
+                    report.link_vk_commissar,
+                    report.vk_rso_number_subscribers,
+                    report.link_vk_detachment,
+                    report.vk_detachment_number_subscribers,
+                    report.score,
+                    report.june_15_detachment_members,
+                    place
+                ))
+
+    try:
+        for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+            junior_detachment = detachments.get(participant.junior_detachment_id).first()
+            if junior_detachment:
+                for report in reports.filter(detachment_id=junior_detachment.id):
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        report.link_vk_commander,
+                        report.link_vk_commissar,
+                        report.vk_rso_number_subscribers,
+                        report.link_vk_detachment,
+                        report.vk_detachment_number_subscribers,
+                        report.score,
+                        report.june_15_detachment_members,
+                        place
+                    ))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    'Дебют',
+                    report.link_vk_commander,
+                    report.link_vk_commissar,
+                    report.vk_rso_number_subscribers,
+                    report.link_vk_detachment,
+                    report.vk_detachment_number_subscribers,
+                    report.score,
+                    report.june_15_detachment_members,
+                    place
+                ))
+
+    return rows
+
+
+def get_q17_data(competition_id: int) -> list:
+    rows = []
+
+    
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q17DetachmentReport.objects.select_related('detachment').all()
+    event_links = Q17EventLink.objects.select_related('detachment_report').all()
+    tandem_rankings = {tr.detachment_id: tr for tr in Q17TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q17Ranking.objects.all()}
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                report_event_links = event_links.filter(detachment_report_id=report.id)
+                for event_link in report_event_links:
+                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Тандем',
+                        event_link.link,
+                        str(event_link.detachment_report),
+                        'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    
+    try:
+        for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+            junior_detachment = detachments.filter(id=participant.junior_detachment_id).first()
+            if junior_detachment:
+                for report in reports.filter(detachment_id=junior_detachment.id):
+                    report_event_links = event_links.filter(detachment_report_id=report.id)
+                    for event_link in report_event_links:
+                        tandem_ranking = tandem_rankings.get(junior_detachment.id)
+                        place = tandem_ranking.place if tandem_ranking else 'Ещё нет в рейтинге'
+                        rows.append((
+                            junior_detachment.name,
+                            junior_detachment.region.name if junior_detachment.region else '-',
+                            'Тандем',
+                            event_link.link,
+                            str(event_link.detachment_report),
+                            'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                            place
+                        ))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                report_event_links = event_links.filter(detachment_report_id=report.id)
+                for event_link in report_event_links:
+                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Дебют',
+                        event_link.link,
+                        str(event_link.detachment_report),
+                        'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                        place
+                    ))
+
+    return rows
+
+
+def get_q18_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr for tr in Q18TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q18Ranking.objects.all()}
+    reports = Q18DetachmentReport.objects.all().select_related('detachment')
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    rows = []
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    'Тандем',
+                    report.participants_number,
+                    report.score,
+                    place
+                ))
+                
+    try:
+        for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+            junior_detachment = detachments.get(participant.junior_detachment_id).first()
+            if junior_detachment:
+                for report in reports.filter(detachment_id=junior_detachment.id):
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        report.participants_number,
+                        report.score,
+                        place
+                    ))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+                
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    'Дебют',
+                    report.participants_number,
+                    report.score,
+                    place
+                ))
+
+    return rows
+
+
+
+def get_q20_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr for tr in Q20TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q20Ranking.objects.all()}
+    reports = Q20Report.objects.all().select_related('detachment')
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    rows = []
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False).select_related('detachment', 'junior_detachment'):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    'Тандем',
+                    report.link_emblem_img,
+                    report.link_emblem,
+                    report.link_flag_img,
+                    report.link_flag,
+                    report.link_banner_img,
+                    report.link_banner,
+                    report.score,
+                    place
+                ))
+    try:
+        for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+            junior_detachment = detachments.get(participant.junior_detachment_id).first()
+            if junior_detachment:
+                for report in reports.filter(detachment_id=junior_detachment.id):
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        report.link_emblem_img,
+                        report.link_emblem,
+                        report.link_flag_img,
+                        report.link_flag,
+                        report.link_banner_img,
+                        report.link_banner,
+                        report.score,
+                        place
+                    ))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=junior_detachment.id):
+                place = individual_rankings.get(junior_detachment.id).place if junior_detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    junior_detachment.name,
+                    junior_detachment.region.name if junior_detachment.region else '-',
+                    'Дебют',
+                    report.link_emblem_img,
+                    report.link_emblem,
+                    report.link_flag_img,
+                    report.link_flag,
+                    report.link_banner_img,
+                    report.link_banner,
+                    report.score,
+                    place
+                ))
 
     return rows
 

@@ -67,7 +67,7 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q19TandemRanking, Q20Report,
                                  QVerificationLog, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
                                  CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
-                                 ProfessionalCompetitionBlock, SpartakiadBlock)
+                                 ProfessionalCompetitionBlock, SpartakiadBlock, Q1Report)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
 from competitions.q_calculations import (calculate_q13_place,
@@ -289,7 +289,7 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         """
         filename = 'Regulation_on_the_best_LSO_2024.pdf'
         filepath = (
-            str(settings.BASE_DIR) + '/templates/competitions/' + filename
+                str(settings.BASE_DIR) + '/templates/competitions/' + filename
         )
         return self.download_file_competitions(filepath, filename)
 
@@ -2136,7 +2136,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def create(self, request, *args, **kwargs):
         today = date.today()
-        cutoff_date = date(year=2024, month=6, day=30)
+        cutoff_date = date(year=2024, month=7, day=15)
         if today >= cutoff_date + timedelta(days=1):
             return DEADLINE_RESPONSE.format(deadline=cutoff_date)
 
@@ -2627,7 +2627,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         block.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block', permission_classes=[permissions.IsAuthenticated,])
+    @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block',
+            permission_classes=[permissions.IsAuthenticated, ])
     def verify_spartakiad_block(self, request, *args, **kwargs):
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
@@ -3292,11 +3293,11 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
                     detachment=report.detachment,
                 )
                 solo_ranking.place = calculate_q13_place(
-                        Q13EventOrganization.objects.filter(
-                            detachment_report=report,
-                            is_verified=True
-                        )
+                    Q13EventOrganization.objects.filter(
+                        detachment_report=report,
+                        is_verified=True
                     )
+                )
                 solo_ranking.save()
             else:
                 if participants_entry:
@@ -4794,13 +4795,13 @@ def get_q1_info(request, competition_pk):
     detachment = get_object_or_404(Detachment, commander=request.user)
     if not competition.competition_participants.filter(
             Q(detachment=detachment) | Q(junior_detachment=detachment)
-            ).exists():
+    ).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response({
         'number_of_members': detachment.members.count() + 1,
         'number_of_payments': detachment.members.filter(
-                user__membership_fee=True
-            ).count() + (1 if detachment.commander.membership_fee else 0)
+            user__membership_fee=True
+        ).count() + (1 if detachment.commander.membership_fee else 0)
     })
 
 
@@ -5232,6 +5233,7 @@ class DetachmentCompetitionIsTandemView(APIView):
     - При успешном запросе: {'is_tandem': True} или {'is_tandem': False}
     - При ошибке: {'error': 'Описание ошибки'}
     """
+
     def get(self, request, detachment_pk, competition_pk):
         detachment = get_object_or_404(Detachment, pk=detachment_pk)
         competition = get_object_or_404(Competitions, pk=competition_pk)
@@ -5421,19 +5423,24 @@ class DetachmentReportView(APIView):
     def get(self, request, competition_pk, report_number, detachment_id):
         report_model = DETACHMENT_REPORTS_MODELS.get(report_number)
         if not report_model:
-            return Response({'detail': f'Отчетов по показателю {report_number} не существует'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'Отчетов по показателю {report_number} не существует'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            report = report_model.objects.select_related().filter(detachment_id=detachment_id, competition_id=competition_pk).last()
+            report = report_model.objects.select_related().filter(detachment_id=detachment_id,
+                                                                  competition_id=competition_pk).last()
             if not report:
-                return Response({'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'not_found': f'Отчет по показателю {report_number} для данного отряда не найден'},
+                                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'detail': 'Произошла ошибка при получении отчета'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': 'Произошла ошибка при получении отчета'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             data = model_to_dict(report, exclude=['competition', 'detachment'])
         except AttributeError as e:
-            return Response({'detail': 'Произошла ошибка при преобразовании отчета в словарь'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': 'Произошла ошибка при преобразовании отчета в словарь'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         for related_object in report_model._meta.related_objects:
             related_name = related_object.get_accessor_name()
@@ -5459,7 +5466,15 @@ class DetachmentReportView(APIView):
                 continue
 
         print(f'Возвращаемая дата: {data}')
-
+        if isinstance(report, Q1Report):
+            data.update(
+                {
+                    'number_of_members': report.detachment.members.count() + 1,
+                    'number_of_payments': report.detachment.members.filter(
+                        user__membership_fee=True
+                    ).count() + (1 if report.detachment.commander.membership_fee else 0)
+                }
+            )
         sanitized_data = {}
         for key, value in data.items():
             try:
