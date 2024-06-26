@@ -1127,6 +1127,9 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
 class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Detachment.objects.all()
     serializer_class = DetachmentListSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    ordering = ('name',)
 
 
     @method_decorator(cache_page(settings.DETANCHMENT_LIST_CACHE_TTL))
