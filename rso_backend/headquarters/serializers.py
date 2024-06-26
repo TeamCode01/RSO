@@ -1353,3 +1353,9 @@ class DetachmentSerializer(BaseUnitSerializer):
                 return ShortDetachmentSerializer(
                     participants.detachment
                 ).data
+
+
+class DetachmentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Detachment
+        fields = ('id', 'name')

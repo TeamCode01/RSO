@@ -67,7 +67,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 LocalApplicationViewSet,
                                 EducationalAcceptViewSet,
                                 EducationalApplicationViewSet,
-                                get_structural_units)
+                                get_structural_units, DetachmentListViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
@@ -285,6 +285,7 @@ router.register(
     Q6DetachmentReportViewSet,
     basename='q6'
 )
+router.register(r'detanchment_list', DetachmentListViewSet, basename='detachment_list')
 
 UserEduVS = UserEducationViewSet.as_view(UPDATE_RETRIEVE)
 UserProfEduRetrieveCreateVS = UserProfessionalEducationViewSet.as_view(

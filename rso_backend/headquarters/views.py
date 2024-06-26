@@ -41,7 +41,7 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserDistrictApplication,
                                  UserEducationalApplication,
                                  UserLocalApplication,
-                                 UserRegionalApplication,)
+                                 UserRegionalApplication)
 from headquarters.registry_serializers import (
     DetachmentRegistrySerializer, DistrictHeadquarterRegistrySerializer,
     EducationalHeadquarterRegistrySerializer,
@@ -63,7 +63,7 @@ from headquarters.serializers import (
     UserDetachmentApplicationSerializer, UserDistrictApplicationReadSerializer, UserDistrictApplicationSerializer, UserEducationalApplicationReadSerializer,
     UserEducationalApplicationSerializer, UserLocalApplicationReadSerializer,
     UserLocalApplicationSerializer, UserRegionalApplicationReadSerializer,
-    UserRegionalApplicationSerializer)
+    UserRegionalApplicationSerializer, DetachmentListSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1122,3 +1122,13 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
             qs = qs.filter(name__icontains=self.q)
 
         return qs.order_by('name')
+
+
+class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Detachment.objects.all()
+    serializer_class = DetachmentListSerializer
+
+
+    @method_decorator(cache_page(settings.DETANCHMENT_LIST_CACHE_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
