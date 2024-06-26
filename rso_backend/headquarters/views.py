@@ -41,7 +41,7 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserDistrictApplication,
                                  UserEducationalApplication,
                                  UserLocalApplication,
-                                 UserRegionalApplication, DetachmentListSerializer)
+                                 UserRegionalApplication)
 from headquarters.registry_serializers import (
     DetachmentRegistrySerializer, DistrictHeadquarterRegistrySerializer,
     EducationalHeadquarterRegistrySerializer,
@@ -63,7 +63,7 @@ from headquarters.serializers import (
     UserDetachmentApplicationSerializer, UserDistrictApplicationReadSerializer, UserDistrictApplicationSerializer, UserEducationalApplicationReadSerializer,
     UserEducationalApplicationSerializer, UserLocalApplicationReadSerializer,
     UserLocalApplicationSerializer, UserRegionalApplicationReadSerializer,
-    UserRegionalApplicationSerializer)
+    UserRegionalApplicationSerializer, DetachmentListSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
