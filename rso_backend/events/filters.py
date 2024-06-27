@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django_filters import rest_framework as filters
+from datetime import datetime
 
 from events.models import Event
 
@@ -14,9 +15,6 @@ class EventFilter(filters.FilterSet):
     direction = filters.CharFilter(
         field_name='direction', lookup_expr='icontains', label='Направление'
     )
-    status = filters.CharFilter(
-        field_name='status', lookup_expr='icontains', label='Статус'
-    )
     scale = filters.CharFilter(
         field_name='scale',
         lookup_expr='icontains',
@@ -26,10 +24,13 @@ class EventFilter(filters.FilterSet):
         field_name = 'author',
         label='Мероприятия, где пользователь организатор'
     )
+    status = filters.CharFilter(
+        method='filter_by_status', label='Статус'
+    )
 
     class Meta:
         model = Event
-        fields = ('format_type', 'direction', 'status', 'scale', 'active_organizer_user_id')
+        fields = ('format_type', 'direction', 'scale', 'active_organizer_user_id')
 
     def filter_scale_or_direction(self, queryset, name, value):
         print(value)
@@ -63,3 +64,11 @@ class EventFilter(filters.FilterSet):
                     q_objects |= Q(active_organizer_user_id=val)
                     
         return queryset.filter(q_objects)
+    
+    def filter_by_status(self, queryset, name, value):
+        current_date = datetime.now().date()
+        if value == 'active':
+            return queryset.filter(time_data__end_date__gte=current_date)
+        elif value == 'inactive':
+            return queryset.filter(time_data__end_date__lt=current_date)
+        return queryset

@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from datetime import datetime
 
 from events.utils import document_path, image_path
 
@@ -15,10 +16,6 @@ class Event(models.Model):
         PATRIOTIC = 'Патриотическое', 'Патриотическое'
         SPORT = 'Спортивное', 'Спортивное'
         CREATIVE = 'Творческое', 'Творческое'
-
-    class EventStatus(models.TextChoices):
-        ACTIVE = 'Активный', 'Активный'
-        INACTIVE = 'Завершенный', 'Завершенный'
 
     class EventApplicationType(models.TextChoices):
         PERSONAL = 'Персональная', 'Персональная'
@@ -63,12 +60,6 @@ class Event(models.Model):
         choices=EventDirection.choices,
         default=EventDirection.VOLUNTARY,
         verbose_name='Масштаб мероприятия'
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=EventStatus.choices,
-        default=EventStatus.ACTIVE,
-        verbose_name='Статус мероприятия'
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -167,6 +158,15 @@ class Event(models.Model):
         blank=True,
         verbose_name='Отряд-организатор',
     )
+
+    def is_active(self):
+        if hasattr(self, 'time_data') and self.time_data.end_date:
+            return self.time_data.end_date >= datetime.now().date()
+        return False
+
+    @property
+    def status(self):
+        return 'active' if self.is_active() else 'inactive'
 
     class Meta:
         ordering = ['-id']
