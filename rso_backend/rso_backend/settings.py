@@ -569,6 +569,8 @@ CORS_ORIGIN_WHITELIST = [
     'https://лк.трудкрут.рф',
     'http://213.139.208.147',
     'https://213.139.208.147',
+    'http://213.139.208.147:30000',
+    'http://213.139.208.147:3000',
     'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
     'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
 ]
@@ -585,6 +587,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
     'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
     'http://213.139.208.147',
+    'http://213.139.208.147:30000',
+    'http://213.139.208.147:3000',
     'https://213.139.208.147',
 ]
 
