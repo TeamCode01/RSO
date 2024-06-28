@@ -106,6 +106,19 @@ class EventViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(settings.EVENTS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+    
+    @method_decorator(cache_page(settings.EVENTS_CACHE_TTL))
+    def list_status(self, request, *args, **kwargs):
+        status_param = request.query_params.get('status')
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if status_param:
+            if status_param == 'active':
+                queryset = queryset.filter(time_data__end_date__gte=datetime.now().date())
+            elif status_param == 'inactive':
+                queryset = queryset.filter(time_data__end_date__lt=datetime.now().date())
+            else:
+                return Response({"error": "Invalid status parameter. Use 'active' or 'inactive'."}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_permissions(self):
         """
