@@ -327,6 +327,10 @@ if DEBUG:
                 month_of_year=10,
             )
         },
+        'delete_temp_reports': {
+            'task': 'reports.tasks.delete_temp_reports_task',
+            'schedule': timedelta(hours=12)
+        },
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
             'schedule': timedelta(minutes=15)
@@ -414,6 +418,10 @@ else:
                 day_of_month=1,
                 month_of_year=10,
             )
+        },
+        'delete_temp_reports': {
+            'task': 'reports.tasks.delete_temp_reports_task',
+            'schedule': crontab(hour=3, minute=0)
         },
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
