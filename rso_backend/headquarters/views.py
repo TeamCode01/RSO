@@ -25,7 +25,8 @@ from api.utils import get_headquarter_users_positions_queryset
 from headquarters.filters import (DetachmentFilter,
                                   EducationalHeadquarterFilter,
                                   LocalHeadquarterFilter,
-                                  RegionalHeadquarterFilter)
+                                  RegionalHeadquarterFilter,
+                                  DetachmentListFilter)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -1127,7 +1128,10 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
 class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Detachment.objects.all()
     serializer_class = DetachmentListSerializer
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (
+        filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
+    )
+    filterset_class = DetachmentListFilter
     search_fields = ('name',)
     ordering = ('name',)
 
@@ -1135,3 +1139,18 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
     @method_decorator(cache_page(settings.DETANCHMENT_LIST_CACHE_TTL))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        regional_headquarter = self.request.query_params.get('regional_headquarter')
+        local_headquarter = self.request.query_params.get('local_headquarter')
+        educational_headquarter = self.request.query_params.get('educational_headquarter')
+
+        if regional_headquarter:
+            queryset = queryset.filter(regional_headquarter=regional_headquarter)
+        if local_headquarter:
+            queryset = queryset.filter(local_headquarter=local_headquarter)
+        if educational_headquarter:
+            queryset = queryset.filter(educational_headquarter=educational_headquarter)
+
+        return queryset

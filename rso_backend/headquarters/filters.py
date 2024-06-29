@@ -118,3 +118,36 @@ class DetachmentFilter(filters.FilterSet):
             'local_headquarter__name',
             'educational_headquarter__name',
         )
+
+
+class DetachmentListFilter(filters.FilterSet):
+
+    district_headquarter__id = filters.CharFilter(
+        field_name='regional_headquarter__district_headquarter__id',
+        lookup_expr='iexact',
+        label='id окружного штаба'
+    )
+    regional_headquarter__id = filters.CharFilter(
+        field_name='regional_headquarter__id',
+        lookup_expr='iexact',
+        label='id регионального штаба'
+    )
+    local_headquarter__id = filters.CharFilter(
+        field_name='local_headquarter__id',
+        lookup_expr='iexact',
+        label='id местного штаба'
+    )
+    educational_headquarter__id = filters.CharFilter(
+        field_name='educational_headquarter__id',
+        lookup_expr='iexact',
+        label='id образовательного штаба'
+    )
+
+    class Meta:
+        model = Detachment
+        fields = (
+            'district_headquarter__id',
+            'regional_headquarter__id',
+            'local_headquarter__id',
+            'educational_headquarter__id',
+        )
