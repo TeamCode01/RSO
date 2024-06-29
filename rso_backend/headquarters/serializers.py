@@ -1358,4 +1358,4 @@ class DetachmentSerializer(BaseUnitSerializer):
 class DetachmentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Detachment
-        fields = ('id', 'name')
+        fields = ('id', 'name', 'local_headquarter', 'educational_headquarter', 'regional_headquarter')
