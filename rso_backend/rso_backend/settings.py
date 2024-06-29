@@ -47,6 +47,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
+PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
@@ -559,6 +560,9 @@ if DEBUG:
 # FOR WINDOWS:
 # celery -A rso_backend worker --loglevel=info -P eventlet
 
+if DEBUG and not PRODUCTION:
+    CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8080',
@@ -602,6 +606,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'MAX_PAGE_SIZE': 1000,
     'PAGE_SIZE': 100
 }
 
