@@ -14,7 +14,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q15DetachmentReport, Q17DetachmentReport,
                                  Q17EventLink, Q17Ranking, Q17TandemRanking, Q20TandemRanking,
                                  Q20Ranking, Q20Report, Q16Ranking, Q16TandemRanking, Q16Report,
-                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport,)
+                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport, Q7TandemRanking, Q7Ranking, Q7Report, LinksQ7, Q7)
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
@@ -408,6 +408,21 @@ def get_commander_school_data(competition_id: int) -> list:
             data.get('junior_detachment__q2ranking__place', 'Ещё нет в рейтинге') or 'Ещё нет в рейтинге'
         ) for data in individual_data
     ])
+    return rows
+
+
+
+def get_q7_data(competition_id: int) -> list:
+    """Функция формирует данные для отчета по таблице Q7."""
+    rows = []
+
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q7Report.objects.all().select_related('detachment')
+    tandem_rankings = {tr.detachment_id: tr for tr in Q7TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir for ir in Q7Ranking.objects.all()}
+    event_links = LinksQ7.objects.select_related('detachment_report').all()
+
+
     return rows
 
 

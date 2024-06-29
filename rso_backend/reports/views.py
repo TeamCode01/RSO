@@ -21,7 +21,7 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS, COMMANDER_SCHOOL_DATA_H
                                SAFETY_TEST_RESULTS_HEADERS,
                                COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS,
                                Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS,
-                               Q18_DATA_HEADERS)
+                               Q18_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data, get_competition_users, get_detachment_q_results,
@@ -170,6 +170,48 @@ class ExportCompetitionParticipantsContactData(BaseExcelExportView):
 
     def get_worksheet_title(self):
         return 'Контакты участников конкурса'
+
+
+class ExportQ7DataView(BaseExcelExportView):
+    def get_data_func(self):
+        return 'contact_data'
+
+    def get_headers(self):
+        return Q7_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Участие_членов_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Участие членов студенческого отряда во всероссийский мероприятиях РСО'
+
+
+class ExportQ8DataView(BaseExcelExportView):
+    def get_data_func(self):
+        return 'contact_data'
+
+    def get_headers(self):
+        return Q8_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Призовые_места_в_окружных_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Призовые места отряда в окружных и межрегиональных мероприятиях и конкурсах РСО'
+
+
+class ExportQ9DataView(BaseExcelExportView):
+    def get_data_func(self):
+        return 'contact_data'
+
+    def get_headers(self):
+        return Q9_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Призовые_места_во_Всероссийских{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Призовые места отряда во Всероссийских мероприятиях и конкурсах РСО'
 
 
 @method_decorator(login_required, name='dispatch')
