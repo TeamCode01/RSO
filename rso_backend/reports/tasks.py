@@ -78,6 +78,12 @@ def generate_excel_file(headers, worksheet_title, filename, data_func):
     decoded_filename = unquote(filename)
 
     content = ContentFile(file_content.read())
-    file_path = default_storage.save(decoded_filename, content)
+    file_path = default_storage.save(f'to_delete_content/{decoded_filename}', content)
 
     return file_path
+
+
+@shared_task
+def delete_temp_reports_task():
+    for file_name in default_storage.listdir('to_delete_content')[1]:
+        default_storage.delete(f'to_delete_content/{file_name}')
