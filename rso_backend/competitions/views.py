@@ -39,7 +39,7 @@ from api.permissions import (
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE, \
-    DETACHMENT_REPORTS_MODELS
+    DETACHMENT_REPORTS_MODELS, get_deadline_response
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
 from competitions.models import (Q8, Q9, Q10, Q11, Q12,
@@ -1242,7 +1242,7 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
             Detachment, id=request.user.detachment_commander.id
@@ -1293,7 +1293,7 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1467,7 +1467,7 @@ class Q8ViewSet(Q7ViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
             Detachment, id=request.user.detachment_commander.id
@@ -1510,7 +1510,7 @@ class Q8ViewSet(Q7ViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1593,7 +1593,7 @@ class Q9ViewSet(Q7ViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
             Detachment, id=request.user.detachment_commander.id
@@ -1642,7 +1642,7 @@ class Q9ViewSet(Q7ViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1727,7 +1727,7 @@ class Q10ViewSet(
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
             Detachment, id=request.user.detachment_commander.id
@@ -1773,7 +1773,7 @@ class Q10ViewSet(
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1858,7 +1858,7 @@ class Q11ViewSet(
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
             Detachment, id=request.user.detachment_commander.id
@@ -1907,7 +1907,7 @@ class Q11ViewSet(
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1992,7 +1992,7 @@ class Q12ViewSet(
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
             Detachment, id=request.user.detachment_commander.id
@@ -2041,7 +2041,7 @@ class Q12ViewSet(
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -2138,7 +2138,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         today = date.today()
         cutoff_date = date(year=2024, month=7, day=15)
         if today >= cutoff_date + timedelta(days=1):
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -4118,7 +4118,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         today = date.today()
         cutoff_date = date(year=2024, month=9, day=30)
         if today >= cutoff_date + timedelta(days=1):
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         context = super().get_serializer_context()
         competition_id = self.kwargs.get('competition_pk')
         try:
@@ -4344,7 +4344,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         today = date.today()
         cutoff_date = date(2024, 9, 30)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -4506,7 +4506,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         today = date.today()
         cutoff_date = date(2024, 9, 30)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
         )
@@ -4614,7 +4614,7 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -4707,7 +4707,7 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
         )
@@ -4998,7 +4998,7 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -5091,7 +5091,7 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
         if today > cutoff_date:
-            return DEADLINE_RESPONSE.format(deadline=cutoff_date)
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
         )
