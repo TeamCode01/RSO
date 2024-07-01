@@ -41,9 +41,9 @@ class EventAdditionalIssuesInline(admin.TabularInline):
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'name', 'format', 'direction', 'status', 'application_type', 'available_structural_units', 'author', 'created_at'
+        'id', 'name', 'format', 'direction', 'application_type', 'available_structural_units', 'author', 'created_at'
     )
-    list_filter = ('format', 'direction', 'status', 'created_at')
+    list_filter = ('format', 'direction', 'created_at')
     search_fields = ('name',)
     inlines = [
         EventTimeDataInline,
@@ -53,7 +53,7 @@ class EventAdmin(admin.ModelAdmin):
         EventAdditionalIssuesInline,
     ]
     fieldsets = [
-        ('Basic Information', {'fields': ['name', 'author', 'format', 'direction', 'scale', 'status']}),
+        ('Basic Information', {'fields': ['name', 'author', 'format', 'direction', 'scale']}),
         ('Time Information', {'fields': ['participants_number', 'description']}),
         ('Organization Information', {'fields': ['org_central_headquarter',
                                                  'org_district_headquarter',

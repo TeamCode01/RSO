@@ -12,6 +12,7 @@ DEFAULT_POSITION_ID = 1
 CENTRAL_HQ_ID = 1
 
 # Redis cache TTL
+DETANCHMENT_LIST_CACHE_TTL = 120
 DETACHMENT_LIST_TTL = 120
 EDUCATIONALS_LIST_TTL = 120
 LOCALS_LIST_TTL = 240
@@ -46,6 +47,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
+PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
@@ -325,6 +327,10 @@ if DEBUG:
                 month_of_year=10,
             )
         },
+        'delete_temp_reports': {
+            'task': 'reports.tasks.delete_temp_reports_task',
+            'schedule': timedelta(hours=12)
+        },
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
             'schedule': timedelta(minutes=15)
@@ -412,6 +418,10 @@ else:
                 day_of_month=1,
                 month_of_year=10,
             )
+        },
+        'delete_temp_reports': {
+            'task': 'reports.tasks.delete_temp_reports_task',
+            'schedule': crontab(hour=3, minute=0)
         },
         'calculate_q1_score': {
             'task': 'competitions.tasks.calculate_q1_score_task',
@@ -558,6 +568,9 @@ if DEBUG:
 # FOR WINDOWS:
 # celery -A rso_backend worker --loglevel=info -P eventlet
 
+if DEBUG and not PRODUCTION:
+    CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:8080',
@@ -569,6 +582,8 @@ CORS_ORIGIN_WHITELIST = [
     'https://лк.трудкрут.рф',
     'http://213.139.208.147',
     'https://213.139.208.147',
+    'http://213.139.208.147:30000',
+    'http://213.139.208.147:3000',
     'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
     'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
 ]
@@ -585,6 +600,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
     'https://xn--j1ab.xn--d1amqcgedd.xn--p1ai',
     'http://213.139.208.147',
+    'http://213.139.208.147:30000',
+    'http://213.139.208.147:3000',
     'https://213.139.208.147',
 ]
 
@@ -597,6 +614,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'MAX_PAGE_SIZE': 1000,
     'PAGE_SIZE': 100
 }
 

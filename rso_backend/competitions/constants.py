@@ -87,7 +87,12 @@ DETACHMENT_REPORTS_MODELS = {
 }
 
 COUNT_PLACES_DEADLINE = date(2024, 10, 15) + timedelta(days=1)
-DEADLINE_RESPONSE = Response(
-    {'error': 'Прием ответов по показателю окончен {deadline}.'},
-    status=status.HTTP_400_BAD_REQUEST
-)
+
+DEADLINE_RESPONSE_TEMPLATE = 'Прием ответов по показателю окончен {deadline}.'
+
+
+def get_deadline_response(deadline):
+    return Response(
+        {'error': DEADLINE_RESPONSE_TEMPLATE.format(deadline=deadline)},
+        status=status.HTTP_400_BAD_REQUEST
+    )

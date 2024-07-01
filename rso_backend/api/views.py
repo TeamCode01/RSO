@@ -769,10 +769,15 @@ class VKLoginAPIView(APIView):
         last_name = vk_user_data.get('last_name')
         screen_name = vk_user_data.get('screen_name', '')
         bdate = vk_user_data.get('bdate', None)
-        city = vk_user_data.get('city').get('title') if vk_user_data.get('city') else None
+        city = (
+            vk_user_data.get(
+                'city'
+            ).get(
+                'title'
+            ) if vk_user_data.get('city') else None
+        )
         # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
         sex = vk_user_data.get('sex', None)
-        # phone = vk_user_data.get('phone', None)
 
         if bdate:
             parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
@@ -819,6 +824,7 @@ class VKLoginAPIView(APIView):
                 date_of_birth=formatted_date,
                 phone_number=phone,
                 address=city,
+                email=email
             )
         user.save()
 

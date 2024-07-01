@@ -462,30 +462,65 @@ class MembershipFeePermission(BasePermission):
         except RegionalHeadquarter.DoesNotExist:
             try:
                 reg_headquarter = (
-                    UserRegionalHeadquarterPosition.
-                    objects.get(user=user_to_change)
+                    UserRegionalHeadquarterPosition.objects.get(user=user_to_change)
                 ).headquarter
-            except (
-                UserRegionalHeadquarterPosition.DoesNotExist, AttributeError
-            ):
-                return False
+            except (UserRegionalHeadquarterPosition.DoesNotExist, AttributeError):
+                reg_headquarter = None
 
-            if reg_headquarter.commander == user:
+            if reg_headquarter and reg_headquarter.commander == user:
                 return True
 
             try:
                 reg_headquarter_member = (
-                    UserRegionalHeadquarterPosition.
-                    objects.get(user=user, headquarter=reg_headquarter)
+                    UserRegionalHeadquarterPosition.objects.get(user=user, headquarter=reg_headquarter)
                 )
-            except (
-                UserRegionalHeadquarterPosition.DoesNotExist, AttributeError
-            ):
-                return False
-            if reg_headquarter_member:
-                if reg_headquarter_member.is_trusted:
-                    return True
-            return False
+            except (UserRegionalHeadquarterPosition.DoesNotExist, AttributeError):
+                reg_headquarter_member = None
+
+            if reg_headquarter_member and reg_headquarter_member.is_trusted:
+                return True
+
+        # Проверяем, является ли пользователь командиром любого из подвластных штабов
+        user_ids = set()
+        if RegionalHeadquarter.objects.filter(commander=user).exists():
+            headquarters = RegionalHeadquarter.objects.filter(commander=user)
+            for headquarter in headquarters:
+                sub_units = headquarter.local_headquarters.all() | headquarter.educational_headquarters.all() | headquarter.detachments.all()
+                for sub_unit in sub_units:
+                    if sub_unit.commander:
+                        user_ids.add(sub_unit.commander.id)
+        
+        if DistrictHeadquarter.objects.filter(commander=user).exists():
+            headquarters = DistrictHeadquarter.objects.filter(commander=user)
+            for headquarter in headquarters:
+                sub_units = headquarter.regional_headquarters.all()
+                for sub_unit in sub_units:
+                    if sub_unit.commander:
+                        user_ids.add(sub_unit.commander.id)
+
+        if LocalHeadquarter.objects.filter(commander=user).exists():
+            headquarters = LocalHeadquarter.objects.filter(commander=user)
+            for headquarter in headquarters:
+                sub_units = headquarter.detachments.all()
+                for sub_unit in sub_units:
+                    if sub_unit.commander:
+                        user_ids.add(sub_unit.commander.id)
+
+        if EducationalHeadquarter.objects.filter(commander=user).exists():
+            headquarters = EducationalHeadquarter.objects.filter(commander=user)
+            for headquarter in headquarters:
+                sub_units = headquarter.detachments.all()
+                for sub_unit in sub_units:
+                    if sub_unit.commander:
+                        user_ids.add(sub_unit.commander.id)
+
+        if Detachment.objects.filter(commander=user).exists():
+            headquarters = Detachment.objects.filter(commander=user)
+            for headquarter in headquarters:
+                if headquarter.commander:
+                    user_ids.add(headquarter.commander.id)
+
+        return user_to_change.id in user_ids
 
 
 class IsRegionalCommanderForCert(BasePermission):

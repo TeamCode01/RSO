@@ -990,6 +990,8 @@ class UserRegionalApplication(models.Model):
             models.UniqueConstraint(fields=['user', 'headquarter'],
                                     name='user_regional_unique_constraint')
         ]
+        verbose_name_plural = 'Заявки на вступление в РШ'
+        verbose_name = 'Заявка на вступление в РШ'
 
 
 class UserDistrictApplication(models.Model):
@@ -1017,6 +1019,8 @@ class UserDistrictApplication(models.Model):
             models.UniqueConstraint(fields=['user', 'headquarter'],
                                     name='user_district_unique_constraint')
         ]
+        verbose_name_plural = 'Заявки на вступление в Окружной штаб'
+        verbose_name = 'Заявка на вступление в Окружной штаб'
 
 
 class UserCentralApplication(models.Model):
@@ -1040,3 +1044,5 @@ class UserCentralApplication(models.Model):
             models.UniqueConstraint(fields=['user', 'headquarter'],
                                     name='user_central_unique_constraint')
         ]
+        verbose_name_plural = 'Заявки на вступление в ЦШ'
+        verbose_name = 'Заявка на вступление в ЦШ'

@@ -25,7 +25,8 @@ from api.utils import get_headquarter_users_positions_queryset
 from headquarters.filters import (DetachmentFilter,
                                   EducationalHeadquarterFilter,
                                   LocalHeadquarterFilter,
-                                  RegionalHeadquarterFilter)
+                                  RegionalHeadquarterFilter,
+                                  DetachmentListFilter)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -41,7 +42,7 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserDistrictApplication,
                                  UserEducationalApplication,
                                  UserLocalApplication,
-                                 UserRegionalApplication,)
+                                 UserRegionalApplication)
 from headquarters.registry_serializers import (
     DetachmentRegistrySerializer, DistrictHeadquarterRegistrySerializer,
     EducationalHeadquarterRegistrySerializer,
@@ -58,12 +59,12 @@ from headquarters.serializers import (
     ShortEducationalHeadquarterListSerializer,
     ShortEducationalHeadquarterSerializer, ShortLocalHeadquarterListSerializer,
     ShortLocalHeadquarterSerializer, ShortRegionalHeadquarterListSerializer,
-    ShortRegionalHeadquarterSerializer, UserCentralApplicationSerializer,
+    ShortRegionalHeadquarterSerializer, UserCentralApplicationReadSerializer, UserCentralApplicationSerializer,
     UserDetachmentApplicationReadSerializer,
-    UserDetachmentApplicationSerializer, UserDistrictApplicationSerializer,
-    UserEducationalApplicationSerializer,
-    UserLocalApplicationSerializer,
-    UserRegionalApplicationSerializer)
+    UserDetachmentApplicationSerializer, UserDistrictApplicationReadSerializer, UserDistrictApplicationSerializer, UserEducationalApplicationReadSerializer,
+    UserEducationalApplicationSerializer, UserLocalApplicationReadSerializer,
+    UserLocalApplicationSerializer, UserRegionalApplicationReadSerializer,
+    UserRegionalApplicationSerializer, DetachmentListSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -113,6 +114,19 @@ class CentralViewSet(ListRetrieveUpdateViewSet):
             permission_classes = (IsStuffOrCentralCommanderOrTrusted,)
         return [permission() for permission in permission_classes]
 
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserCentralApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserCentralApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class DistrictViewSet(viewsets.ModelViewSet):
     """Представляет окружные штабы.
@@ -155,6 +169,19 @@ class DistrictViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(settings.DISTR_OBJECT_CACHE_TTL))
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserDistrictApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserDistrictApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RegionalViewSet(viewsets.ModelViewSet):
@@ -225,6 +252,20 @@ class RegionalViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserRegionalApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserRegionalApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class LocalViewSet(viewsets.ModelViewSet):
     """Представляет местные штабы.
 
@@ -269,6 +310,19 @@ class LocalViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = (IsLocalCommander,)
         return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserLocalApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserLocalApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EducationalViewSet(viewsets.ModelViewSet):
@@ -320,6 +374,19 @@ class EducationalViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = (IsEducationalCommander,)
         return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=['get', ], url_path='applications')
+    @swagger_auto_schema(responses=applications_response)
+    def get_applications(self, request, pk=None):
+        """Получить список заявок на вступление в штаб."""
+        headquarter = self.get_object()
+        applications = UserEducationalApplication.objects.filter(
+            headquarter=headquarter
+        )
+        serializer = UserEducationalApplicationReadSerializer(
+            instance=applications, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DetachmentViewSet(viewsets.ModelViewSet):
@@ -1056,3 +1123,34 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
             qs = qs.filter(name__icontains=self.q)
 
         return qs.order_by('name')
+
+
+class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Detachment.objects.all()
+    serializer_class = DetachmentListSerializer
+    filter_backends = (
+        filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
+    )
+    filterset_class = DetachmentListFilter
+    search_fields = ('name',)
+    ordering = ('name',)
+
+
+    @method_decorator(cache_page(settings.DETANCHMENT_LIST_CACHE_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        regional_headquarter = self.request.query_params.get('regional_headquarter')
+        local_headquarter = self.request.query_params.get('local_headquarter')
+        educational_headquarter = self.request.query_params.get('educational_headquarter')
+
+        if regional_headquarter:
+            queryset = queryset.filter(regional_headquarter=regional_headquarter)
+        if local_headquarter:
+            queryset = queryset.filter(local_headquarter=local_headquarter)
+        if educational_headquarter:
+            queryset = queryset.filter(educational_headquarter=educational_headquarter)
+
+        return queryset
