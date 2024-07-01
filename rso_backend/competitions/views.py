@@ -38,7 +38,7 @@ from api.permissions import (
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, DEADLINE_RESPONSE, \
+from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, \
     DETACHMENT_REPORTS_MODELS, get_deadline_response
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
