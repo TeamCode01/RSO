@@ -285,7 +285,7 @@ router.register(
     Q6DetachmentReportViewSet,
     basename='q6'
 )
-router.register(r'detanchment_list', DetachmentListViewSet, basename='detachment_list')
+router.register(r'detachment_list', DetachmentListViewSet, basename='detachment_list')
 
 UserEduVS = UserEducationViewSet.as_view(UPDATE_RETRIEVE)
 UserProfEduRetrieveCreateVS = UserProfessionalEducationViewSet.as_view(
