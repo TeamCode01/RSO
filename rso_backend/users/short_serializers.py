@@ -29,4 +29,5 @@ class ShortUserSerializer(serializers.ModelSerializer):
             'date_of_birth',
             'membership_fee',
             'is_verified',
+            'phone_number'
         )
