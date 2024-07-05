@@ -324,7 +324,8 @@ class EducationalPositionSerializer(BasePositionSerializer):
     def get_sub_commanders(self, obj):
         commanders = []
         try:
-            detachments = Detachment.objects.filter(educational_headquarter=obj)
+            educational_headquarter = obj.headquarter
+            detachments = Detachment.objects.filter(educational_headquarter=educational_headquarter)
         except ObjectDoesNotExist:
             raise serializers.ValidationError("Detachments do not exist for this educational headquarter.")
 
