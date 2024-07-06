@@ -74,7 +74,7 @@ from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
 from competitions.serializers import (CompetitionApplicationsObjectSerializer,
                                       CompetitionApplicationsSerializer,
-                                      CompetitionParticipantsObjectSerializer,
+                                      CompetitionParticipantsObjectSerializer, CompetitionParticipantsRegObjectSerializer,
                                       CompetitionParticipantsSerializer,
                                       CompetitionSerializer,
                                       CreateQ7Serializer, CreateQ8Serializer,
@@ -586,8 +586,10 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action == 'retrieve' or self.action == 'list':
+        if self.action == 'retrieve':
             return CompetitionParticipantsObjectSerializer
+        if self.action == 'list':
+            return CompetitionParticipantsRegObjectSerializer
         return super().get_serializer_class()
 
     def get_permissions(self):
