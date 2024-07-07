@@ -94,7 +94,10 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             )
 
     def prepared_users_data(self, request, queryset):
-        all_users_data = UserRegion.objects.prefetch_related(
+        user_ids = queryset.values_list('id', flat=True)
+        all_users_data = UserRegion.objects.filter(
+            user__id__in=user_ids
+        ).prefetch_related(
             Prefetch('user', queryset=queryset),
             Prefetch('user__documents'),
             Prefetch('user__education')
@@ -159,10 +162,10 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         )
         return response
 
-    get_users_data.short_description = 'Выгрузить данные пользователей'
     add_to_central_headquarter_position.short_description = (
         'Добавить юзера в ЦШ'
     )
+    get_users_data.short_description = 'Выгрузить данные пользователей'
 
     def detachment_name(self, obj):
         """
