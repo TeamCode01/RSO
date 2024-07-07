@@ -625,6 +625,7 @@ class UserUnitPosition(models.Model):
         verbose_name='Должность',
         null=True,
         blank=True,
+        default=settings.DEFAULT_POSITION_ID
     )
     is_trusted = models.BooleanField(default=False, verbose_name='Доверенный')
 
@@ -726,7 +727,6 @@ class UserCentralHeadquarterPosition(UserUnitPosition):
     )
 
     def save(self, *args, **kwargs):
-        # if self._state.adding and self.skip_central_creation:
         if self._state.adding:
             return
         super().save(*args, **kwargs)
