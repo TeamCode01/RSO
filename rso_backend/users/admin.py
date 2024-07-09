@@ -1,12 +1,21 @@
+from io import BytesIO
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.db.models import Prefetch
+from django.http import HttpResponse
 from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
                                        IntervalSchedule, PeriodicTask,
                                        SolarSchedule)
 from headquarters.utils import create_central_hq_member
 from import_export.admin import ImportExportModelAdmin
+from openpyxl import Workbook
+from reports.constants import REGION_USERS_DATA_HEADERS
+from reports.tasks import generate_excel_file
 from rest_framework.authtoken.models import TokenProxy
+from urllib.parse import unquote
 
 from headquarters.models import Detachment
 from users.models import (RSOUser, UserDocuments,
@@ -66,7 +75,10 @@ class UserForeignParentDocsInline(admin.StackedInline):
 @admin.register(RSOUser)
 class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
-    actions = ['add_to_central_headquarter_position']
+    actions = [
+        'add_to_central_headquarter_position',
+        'get_users_data'
+    ]
 
     def add_to_central_headquarter_position(self, request, queryset):
         """
@@ -81,9 +93,79 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 user_id=user.id
             )
 
+    def prepared_users_data(self, request, queryset):
+        user_ids = queryset.values_list('id', flat=True)
+        all_users_data = UserRegion.objects.filter(
+            user__id__in=user_ids
+        ).prefetch_related(
+            Prefetch('user', queryset=queryset),
+            Prefetch('user__documents'),
+            Prefetch('user__education')
+        ).values_list(
+            'reg_region__code',
+            'reg_region__name',
+            'user__id',
+            'user__first_name',
+            'user__last_name',
+            'user__patronymic_name',
+            'user__username',
+            'user__date_of_birth',
+            'user__documents__russian_passport',
+            'user__documents__pass_ser_num',
+            'user__documents__pass_whom',
+            'user__documents__pass_date',
+            'user__documents__pass_code',
+            'user__documents__inn',
+            'user__documents__snils',
+            'reg_town',
+            'reg_house',
+            'reg_fact_same_address',
+            'fact_region_id',
+            'fact_region__fact_region__reg_region',
+            'fact_town',
+            'fact_house',
+            'user__education__study_institution',
+            'user__education__study_faculty',
+            'user__education__study_specialty',
+            'user__education__study_year',
+            'user__phone_number',
+            'user__email',
+            'user__social_vk',
+            'user__social_tg',
+            'user__is_rso_member',
+            'user__is_verified',
+            'user__membership_fee',
+        )
+        return all_users_data
+
+    def get_users_data(self, request, queryset):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Пользователи'
+        worksheet.append(REGION_USERS_DATA_HEADERS[1:])
+
+        for _, row in enumerate(
+            self.prepared_users_data(request, queryset), start=1
+        ):
+            worksheet.append(row)
+
+        file_content = BytesIO()
+        workbook.save(file_content)
+        file_content.seek(0)
+
+        response = HttpResponse(
+            file_content.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename=users_data.xlsx'
+        )
+        return response
+
     add_to_central_headquarter_position.short_description = (
         'Добавить юзера в ЦШ'
     )
+    get_users_data.short_description = 'Выгрузить данные пользователей'
 
     def detachment_name(self, obj):
         """
