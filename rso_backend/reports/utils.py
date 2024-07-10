@@ -418,10 +418,32 @@ def get_q7_data(competition_id: int) -> list:
 
     detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
     reports = Q7Report.objects.all().select_related('detachment')
-    tandem_rankings = {tr.detachment_id: tr for tr in Q7TandemRanking.objects.all()}
-    individual_rankings = {ir.detachment_id: ir for ir in Q7Ranking.objects.all()}
-    event_links = LinksQ7.objects.select_related('detachment_report').all()
+    tandem_rankings = {tr.place: tr for tr in Q7TandemRanking.objects.all()}
+    individual_rankings = {ir.place: ir for ir in Q7Ranking.objects.all()}
+    event_links = LinksQ7.objects.all().select_related('event')
+    member_participation = Q7.objects.all().select_related('detachment_report')
 
+    print(detachments)
+    print(reports)
+    print(event_links)
+    print('123123123123123123123')
+    print(member_participation)
+    # participant - участник
+    # detachment - отряд
+    # Competition Participants - Участники конкукрса
+    # Получить данные по основным отрядам
+    for participant in CompetitionParticipants.objects.filter(
+            competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id).first()
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = tandem_rankings.get(
+                    detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                rows.append((
+                    report.detachment_report,
+                    report.number_of_participants,
+                    place
+                ))
 
     return rows
 

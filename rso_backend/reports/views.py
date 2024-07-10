@@ -174,13 +174,13 @@ class ExportCompetitionParticipantsContactData(BaseExcelExportView):
 
 class ExportQ7DataView(BaseExcelExportView):
     def get_data_func(self):
-        return 'contact_data'
+        return 'get_q7_data'
 
     def get_headers(self):
         return Q7_DATA_HEADERS
 
     def get_filename(self):
-        return f'Участие_членов_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+        return f'Участие_членов_во_Всероссийских_мероприятиях_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
     def get_worksheet_title(self):
         return 'Участие членов студенческого отряда во всероссийский мероприятиях РСО'
