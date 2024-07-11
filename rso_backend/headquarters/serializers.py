@@ -362,6 +362,7 @@ class BaseShortUnitSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'banner',
+            'emblem'
         )
 
 
