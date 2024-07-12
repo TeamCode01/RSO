@@ -200,9 +200,6 @@ class Q2DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(Q2Ranking)
 class Q2RankingAdmin(QBaseRankingAdmin):
@@ -261,8 +258,6 @@ class Q5DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.admin_order_field = 'detachment__name'
     get_detachment_name.short_description = 'Название отряда'
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(Q5TandemRanking)
@@ -274,64 +269,42 @@ class Q5TandemRankingAdmin(QBaseTandemRankingAdmin):
 class DemonstrationBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'first_may_demonstration', 'first_may_demonstration_participants', 'is_verified')
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(PatrioticActionBlock)
 class PatrioticActionBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'patriotic_action', 'patriotic_action_participants', 'is_verified')
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(SafetyWorkWeekBlock)
 class SafetyWorkWeekBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'safety_work_week', 'is_verified')
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(CommanderCommissionerSchoolBlock)
 class CommanderCommissionerSchoolBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'commander_commissioner_school', 'is_verified')
-
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(WorkingSemesterOpeningBlock)
 class WorkingSemesterOpeningBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'working_semester_opening', 'working_semester_opening_participants', 'is_verified')
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(CreativeFestivalBlock)
 class CreativeFestivalBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'creative_festival', 'is_verified')
-
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(ProfessionalCompetitionBlock)
 class ProfessionalCompetitionBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'professional_competition', 'is_verified')
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(SpartakiadBlock)
 class SpartakiadBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'spartakiad', 'is_verified')
-
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(Q6DetachmentReport)
@@ -464,10 +437,6 @@ class Q6DetachmentReportAdmin(admin.ModelAdmin):
         return obj.professional_competition_block.is_verified
     get_professional_competition_verification_status.short_description = 'Верификация Конкурса профессионального мастерства'
     get_professional_competition_verification_status.boolean = True
-
-    def has_add_permission(self, request, obj=None):
-        """Запрещаем добавление записи через админку."""
-        return False
 
 
 @admin.register(Q6Ranking)
