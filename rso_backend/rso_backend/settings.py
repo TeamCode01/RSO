@@ -197,26 +197,26 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGS_PATH = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_PATH, exist_ok=True)
+
+LOGS_FILENAME = os.path.join(LOGS_PATH, 'backend.log')
+LOG_MAX_BYTES = 20 * 1024 * 1024 # 20 MB
+LOGS_BACKUP_COUNT = 10
+
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
-
     'formatters': {
-        'main_formatter': {
-            'format': '{asctime} - {name} - {levelname} - {module} - {pathname} - {message}',
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
-        },
-        'json_formatter': {
-            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
-            'format': '%(asctime)s %(name)s %(levelname)s %(message)s',
-            'json_ensure_ascii': False
         },
     },
 
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'main_formatter',
+            'formatter': 'verbose',
         },
         'tasks': {
             'level': 'DEBUG',
@@ -226,38 +226,14 @@ LOGGING = {
             'backupCount': 15,
             'formatter': 'json_formatter',
         },
-        'request': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/requests_logs.log',
-            'encoding': 'UTF-8',
-        },
-        'server_handler': {
-            'level': 'INFO',
+        'django': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/server_commands_logs.log',
-            'maxBytes': 1024 * 1024 * 1024,
-            'backupCount': 15,
-            'formatter': 'json_formatter',
+            'filename': LOGS_FILENAME,
+            'maxBytes': LOG_MAX_BYTES,
+            'backupCount': LOGS_BACKUP_COUNT,
+            'level': 'INFO',
+            'formatter': 'verbose',
         },
-        'db': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/db_queries_logs.log',
-            'encoding': 'UTF-8',
-        },
-        'security': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/security_logs.log',
-            'encoding': 'UTF-8',
-        },
-        'security_csrf': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/security_csrf_logs.log',
-            'encoding': 'UTF-8',
-        }
     },
 
     'loggers': {
@@ -265,26 +241,11 @@ LOGGING = {
             'handlers': ['console', 'tasks'],
             'level': 'DEBUG',
         },
-        'django.request': {
+        'django': {
+            'handlers': ['console', 'file'],
             'level': 'INFO',
-            'handlers': ['console', 'request']
+            'propagate': True,
         },
-        'django.server': {
-            'level': 'INFO',
-            'handlers': ['console', 'server_handler']
-        },
-        'django.db.backends': {
-            'level': 'INFO',
-            'handlers': ['console', 'db']
-        },
-        'django.security.*': {
-            'level': 'INFO',
-            'handlers': ['console', 'security']
-        },
-        'django.security.csrf': {
-            'level': 'INFO',
-            'handlers': ['console', 'security_csrf']
-        }
     }
 }
 
