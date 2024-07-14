@@ -69,6 +69,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 EducationalApplicationViewSet,
                                 get_structural_units, DetachmentListViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
+from regional_competitions.views import StatisticalRegionalViewSet
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
                          SafeUserViewSet, UserDocumentsViewSet,
@@ -93,6 +94,11 @@ router.register(r'locals', LocalViewSet)
 router.register(r'detachments', DetachmentViewSet)
 router.register(r'centrals', CentralViewSet, basename='centrals')
 router.register(r'positions', PositionViewSet)
+router.register(
+    r'regional_competitions/statistical_report',
+    StatisticalRegionalViewSet,
+    basename='statistical_report'
+)
 router.register(
     'eduicational_institutions',
     EducationalInstitutionViewSet,
