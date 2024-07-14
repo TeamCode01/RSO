@@ -224,7 +224,7 @@ LOGGING = {
             'filename': 'logs/tasks_logs.log',
             'maxBytes': 1024 * 1024 * 1024,
             'backupCount': 15,
-            'formatter': 'json_formatter',
+            'formatter': 'verbose',
         },
         'django': {
             'class': 'logging.handlers.RotatingFileHandler',
