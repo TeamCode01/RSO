@@ -520,7 +520,7 @@ else:
         },
         'calculate_july_15_participants': {
             'task': 'competitions.tasks.calculate_july_15_participants',
-            'schedule': timedelta(minutes=30)
+            'schedule': timedelta(minutes=3)
         }
     }
 
