@@ -39,7 +39,8 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
 class July15ParticipantAdmin(admin.ModelAdmin):
     list_display = (
         'detachment',
-        'participants_number'
+        'participants_number',
+        'members_number',
     )
     search_fields = ('detachment__name',)
 

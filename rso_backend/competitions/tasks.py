@@ -46,6 +46,11 @@ def calculate_july_15_participants():
             participants_number = UserDetachmentPosition.objects.filter(headquarter=detachment).count() + 1
             july_participants, _ = July15Participant.objects.get_or_create(detachment=detachment)
             july_participants.participants_number = participants_number
+            commander = detachment.commander
+            july_participants.members_number = UserDetachmentPosition.objects.filter(
+                headquarter=detachment,
+                user__membership_fee=True,
+            ).count() + 1 if commander.membership_fee else 0
             july_participants.save()
 
 

@@ -520,7 +520,7 @@ else:
         },
         'calculate_july_15_participants': {
             'task': 'competitions.tasks.calculate_july_15_participants',
-            'schedule': timedelta(minutes=30)
+            'schedule': timedelta(minutes=3)
         }
     }
 
@@ -580,8 +580,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '40/min',
-        'user': '200/min'
+        'anon': '65/min',
+        'user': '400/min'
     },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
