@@ -1,5 +1,5 @@
 import logging
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from celery import shared_task
 from django.conf import settings
@@ -22,7 +22,7 @@ from competitions.models import (Q1Ranking, Q1Report, Q1TandemRanking,
                                  Q17Ranking, Q17TandemRanking, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking,
                                  Q19TandemRanking, Q20Ranking, Q20Report,
-                                 Q20TandemRanking)
+                                 Q20TandemRanking, July15Participant)
 from competitions.q_calculations import (calculate_overall_rankings,
                                          calculate_place, calculate_q1_score,
                                          calculate_q3_q4_place,
@@ -33,8 +33,18 @@ from competitions.q_calculations import (calculate_overall_rankings,
                                          calculate_q17_place,
                                          calculate_q18_place,
                                          calculate_score_q16)
+from headquarters.models import Detachment, UserDetachmentPosition
 
 logger = logging.getLogger('tasks')
+
+
+@shared_task
+def calculate_july_15_participants():
+    """Считает количество участников на 15 июля для каждого отряда."""
+    if datetime.today() <= date(2024, 7, 15):
+        for detachment in Detachment.objects.all():
+            participants_number = UserDetachmentPosition.objects.filter(headquarter=detachment).count() + 1
+            July15Participant.objects.create(headquarter=detachment, participants_number=participants_number)
 
 
 @shared_task
