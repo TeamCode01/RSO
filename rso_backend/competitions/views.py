@@ -2389,10 +2389,10 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         block_deadlines = {
             'demonstration_block': date(2024, 5, 31),
-            'patriotic_action_block': date(2024, 5, 31),
+            'patriotic_action_block': date(2024, 10, 15),
             'safety_work_week_block': date(2024, 5, 31),
             'commander_commissioner_school_block': date(2024, 5, 31),
-            'working_semester_opening_block': date(2024, 6, 30),
+            'working_semester_opening_block': date(2024, 8, 15),
             'creative_festival_block': date(2024, 10, 15),
             'professional_competition_block': date(2024, 10, 15),
             'spartakiad_block': date(2024, 10, 15),
