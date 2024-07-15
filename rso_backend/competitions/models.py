@@ -1722,7 +1722,11 @@ class July15Participant(models.Model):
         null=True,
         blank=True
     )
-    participants_number = models.PositiveIntegerField(verbose_name='Количество участников',)
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество участников',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name_plural = 'Кол-во участников в отрядах на 15 июля'
