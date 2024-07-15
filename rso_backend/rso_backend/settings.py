@@ -367,6 +367,10 @@ if DEBUG:
         'calculate_overall_places': {
             'task': 'competitions.tasks.calculate_overall_places_task',
             'schedule': timedelta(minutes=15, seconds=33)
+        },
+        'calculate_july_15_participants': {
+            'task': 'competitions.tasks.calculate_july_15_participants',
+            'schedule': timedelta(minutes=30)
         }
     }
 else:
@@ -513,6 +517,10 @@ else:
                 hour=4,
                 minute=20
             )
+        },
+        'calculate_july_15_participants': {
+            'task': 'competitions.tasks.calculate_july_15_participants',
+            'schedule': timedelta(minutes=30)
         }
     }
 
