@@ -44,7 +44,7 @@ def calculate_july_15_participants():
     if datetime.today() <= date(2024, 7, 15):
         for detachment in Detachment.objects.all():
             participants_number = UserDetachmentPosition.objects.filter(headquarter=detachment).count() + 1
-            july_participants = July15Participant.objects.get_or_create(headquarter=detachment)
+            july_participants = July15Participant.objects.get_or_create(detachment=detachment)
             july_participants.participants_number = participants_number
             july_participants.save()
 
