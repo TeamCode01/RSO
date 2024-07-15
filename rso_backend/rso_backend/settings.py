@@ -368,10 +368,6 @@ if DEBUG:
             'task': 'competitions.tasks.calculate_overall_places_task',
             'schedule': timedelta(minutes=15, seconds=33)
         },
-        'calculate_july_15_participants': {
-            'task': 'competitions.tasks.calculate_july_15_participants',
-            'schedule': timedelta(minutes=30)
-        }
     }
 else:
     CELERY_BEAT_SCHEDULE = {
@@ -518,10 +514,6 @@ else:
                 minute=20
             )
         },
-        'calculate_july_15_participants': {
-            'task': 'competitions.tasks.calculate_july_15_participants',
-            'schedule': timedelta(minutes=3)
-        }
     }
 
 if DEBUG:
