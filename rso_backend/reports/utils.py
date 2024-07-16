@@ -818,27 +818,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
         'detachment__region',
-        'detachment__members'
-        'detachment__commander',
+        'detachment__july_15_participants'
     ).prefetch_related(
         'detachment__q1report_detachment_reports',
         'detachment__q1tandemranking_main_detachment'
-    ).annotate(
-        membership_fee_count=Count(
-            'detachment__members__user',
-            filter=Q(detachment__members__user__membership_fee=True)),
-        members=Count('detachment__members__user'),
-        membership_fee_commander_count=Case(
-            When(detachment__commander__membership_fee=True, then=Value(1)),
-            default=Value(0),
-            output_field=models.IntegerField(),
-        ),
     ).values(
         'detachment__name',
         'detachment__region__name',
-        'membership_fee_count',
-        'members',
-        'membership_fee_commander_count',
+        'detachment__july_15_participants__members_number',
+        'detachment__july_15_participants__participants_number',
         'detachment__q1report_detachment_reports__score',
         'detachment__q1tandemranking_main_detachment__place',
     ).all()
@@ -847,27 +835,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
         'junior_detachment__region',
-        'junior_detachment__members'
-        'junior_detachment__commander',
+        'junior_detachment__july_15_participants'
     ).prefetch_related(
         'junior_detachment__q1report_detachment_reports',
         'junior_detachment__q1tandemranking_junior_detachment'
-    ).annotate(
-        membership_fee_count=Count(
-            'junior_detachment__members__user',
-            filter=Q(junior_detachment__members__user__membership_fee=True)),
-        members=Count('junior_detachment__members__user'),
-        membership_fee_commander_count=Case(
-            When(junior_detachment__commander__membership_fee=True, then=Value(1)),
-            default=Value(0),
-            output_field=models.IntegerField(),
-        ),
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
-        'membership_fee_count',
-        'members',
-        'membership_fee_commander_count',
+        'junior_detachment__july_15_participants__members_number',
+        'junior_detachment__july_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
         'junior_detachment__q1tandemranking_junior_detachment__place',
     ).all()
@@ -877,27 +853,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=True)
     ).select_related(
         'junior_detachment__region',
-        'junior_detachment__members',
-        'junior_detachment__commander',
+        'junior_detachment__july_15_participants'
     ).prefetch_related(
         'junior_detachment__q1report_detachment_reports',
         'junior_detachment__q1ranking'
-    ).annotate(
-        membership_fee_count=Count(
-            'junior_detachment__members__user',
-            filter=Q(junior_detachment__members__user__membership_fee=True)),
-        members=Count('junior_detachment__members__user'),
-        membership_fee_commander_count=Case(
-            When(junior_detachment__commander__membership_fee=True, then=Value(1)),
-            default=Value(0),
-            output_field=models.IntegerField(),
-        ),
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
-        'membership_fee_count',
-        'members',
-        'membership_fee_commander_count',
+        'junior_detachment__july_15_participants__members_number',
+        'junior_detachment__july_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
         'junior_detachment__q1ranking__place',
     ).all()
@@ -908,9 +872,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('detachment__name', '-'),
             data.get('detachment__region__name', '-'),
             'Тандем',
-            data.get('members') + 1 if data.get('members') else 1,  # командир отряда есть всегда
-            data.get('membership_fee_count', 0) + data.get(
-                'membership_fee_commander_count') or '-',
+            data.get('detachment__july_15_participants__participants_number'),
+            data.get('detachment__july_15_participants__members_number'),
             data.get('detachment__q1report_detachment_reports__score', '-') or '-',
             data.get('detachment__q1tandemranking_main_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
         ) for data in detachment_data
@@ -922,9 +885,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
-            data.get('members') + 1 if data.get('members') else 1,
-            data.get('membership_fee_count', 0) + data.get(
-                'membership_fee_commander_count') or '-',
+            data.get('junior_detachment__july_15_participants__participants_number'),
+            data.get('junior_detachment__july_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
             data.get(
@@ -939,9 +901,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
-            data.get('members') + 1 if data.get('members') else 1,
-            data.get('membership_fee_count', 0) + data.get(
-                'membership_fee_commander_count') or '-',
+            data.get('junior_detachment__july_15_participants__participants_number'),
+            data.get('junior_detachment__july_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
             data.get(

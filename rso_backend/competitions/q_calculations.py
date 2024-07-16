@@ -9,7 +9,7 @@ from django.db.models import Max
 
 from api.constants import Q6_BLOCK_MODELS
 from competitions.constants import COUNT_PLACES_DEADLINE
-from competitions.models import (CompetitionParticipants, OverallRanking,
+from competitions.models import (CompetitionParticipants, July15Participant, OverallRanking,
                                  OverallTandemRanking, Q1Ranking, Q1Report,
                                  Q2DetachmentReport, Q2Ranking,
                                  Q2TandemRanking, Q3Ranking, Q3TandemRanking,
@@ -1349,63 +1349,66 @@ def calculate_q1_score(competition_id):
 
     if today > end_date:
         return
+    try:
+        participants = CompetitionParticipants.objects.filter(
+            competition_id=competition_id
+        ).all()
 
-    participants = CompetitionParticipants.objects.filter(
-        competition_id=competition_id
-    ).all()
+        if not participants:
+            logger.info('Нет участников')
+            return
 
-    if not participants:
-        logger.info('Нет участников')
-        return
+        detachments_data = []
 
-    detachments_data = []
+        members = July15Participant.objects.all()
 
-    # Собираем список списков, где
-    #       первый элемент - id отряда-участника,
-    #       второй - количество участников в отряде,
-    #       третий - количество участников с оплаченным членским взносом
-    # Добавляем везде единичку, т.к. командира нет в members
-    for entry in participants:
-        detachments_data.append([
-            entry.junior_detachment_id,
-            entry.junior_detachment.members.count() + 1,
-            entry.junior_detachment.members.filter(
-                user__membership_fee=True
-            ).count() + (1 if entry.junior_detachment.commander.membership_fee else 0)
-        ])
-        if entry.detachment:
+        members_dict = {m.detachment_id: m for m in members}
+
+        # Собираем список списков, где
+        #       первый элемент - id отряда-участника,
+        #       второй - количество участников в отряде,
+        #       третий - количество участников с оплаченным членским взносом
+        # Добавляем везде единичку, т.к. командира нет в members
+        for entry in participants:
             detachments_data.append([
-                entry.detachment_id,
-                entry.detachment.members.count() + 1,
-                entry.detachment.members.filter(
-                    user__membership_fee=True
-                ).count() + (1 if entry.detachment.commander.membership_fee else 0)
+                entry.junior_detachment_id,
+                members_dict[entry.junior_detachment_id].participants_number,
+                members_dict[entry.junior_detachment_id].members_number
             ])
+            if entry.detachment:
+                detachments_data.append([
+                    entry.detachment_id,
+                    members_dict[entry.detachment_id].participants_number,
+                    members_dict[entry.detachment_id].members_number
+                ])
 
-    # Создаем отчеты каждому отряду с посчитанными score
-    #       10 и менее человек в отряде  – за каждого уплатившего 1 балл
-    #       11-20 человек – за каждого уплатившего 0.75 балла
-    #       21 и более человек – за каждого уплатившего 0.5 балла
+        # logger.info(f'Всего участников 1 показателя: {len(detachments_data)} участники {detachments_data}')
+        # Создаем отчеты каждому отряду с посчитанными score
+        #       10 и менее человек в отряде  – за каждого уплатившего 1 балл
+        #       11-20 человек – за каждого уплатившего 0.75 балла
+        #       21 и более человек – за каждого уплатившего 0.5 балла
 
-    to_create_entries = []
+        to_create_entries = []
 
-    # score по дефолту 1, иначе в таске как False проходит, не считается
-    for data in detachments_data:
-        score = 1
-        if data[1] <= 10:
-            score = data[2] * 1 + 1
-        elif data[1] > 10 and data[1] <= 20:
-            score = data[2] * 0.75 + 1
-        elif data[1] > 20:
-            score = data[2] * 0.5 + 1
-        to_create_entries.append(
-            Q1Report(competition_id=competition_id,
-                     detachment_id=data[0],
-                     score=score)
-        )
+        # score по дефолту 1, иначе в таске как False проходит, не считается
+        for data in detachments_data:
+            score = 0
+            if data[1] <= 10:
+                score = data[2] * 1
+            elif data[1] > 10 and data[1] <= 20:
+                score = data[2] * 0.75
+            elif data[1] > 20:
+                score = data[2] * 0.5
+            to_create_entries.append(
+                Q1Report(competition_id=competition_id,
+                         detachment_id=data[0],
+                         score=score)
+            )
 
-    Q1Report.objects.filter(competition_id=competition_id).delete()
-    Q1Report.objects.bulk_create(to_create_entries)
+        Q1Report.objects.filter(competition_id=competition_id).delete()
+        Q1Report.objects.bulk_create(to_create_entries)
+    except Exception as e:
+        logger.exception(e)
 
 
 def calculate_q3_q4_place(competition_id: int):
