@@ -1711,3 +1711,28 @@ class QVerificationLog(models.Model):
     class Meta:
         verbose_name = 'Лог верификации показателя'
         verbose_name_plural = 'Логи верификаций показателей'
+
+
+class July15Participant(models.Model):
+    detachment = models.ForeignKey(
+        to='headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='july_15_participants',
+        verbose_name='Отряд',
+        null=True,
+        blank=True
+    )
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество участников',
+        blank=True,
+        null=True
+    )
+    members_number = models.PositiveIntegerField(
+        verbose_name='Количество оплаченных чл. взносов',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name_plural = 'Кол-во участников в отрядах на 15 июля'
+        verbose_name = 'Кол-во участников в отряде на 15 июля'

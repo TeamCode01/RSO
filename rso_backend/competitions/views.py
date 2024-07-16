@@ -2142,7 +2142,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def create(self, request, *args, **kwargs):
         today = date.today()
-        cutoff_date = date(year=2024, month=7, day=15)
+        cutoff_date = date(year=2024, month=7, day=16)
         if today >= cutoff_date + timedelta(days=1):
             return get_deadline_response(deadline=cutoff_date)
 
@@ -2389,10 +2389,10 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         block_deadlines = {
             'demonstration_block': date(2024, 5, 31),
-            'patriotic_action_block': date(2024, 5, 31),
+            'patriotic_action_block': date(2024, 10, 15),
             'safety_work_week_block': date(2024, 5, 31),
             'commander_commissioner_school_block': date(2024, 5, 31),
-            'working_semester_opening_block': date(2024, 6, 30),
+            'working_semester_opening_block': date(2024, 8, 15),
             'creative_festival_block': date(2024, 10, 15),
             'professional_competition_block': date(2024, 10, 15),
             'spartakiad_block': date(2024, 10, 15),

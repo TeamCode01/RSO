@@ -850,7 +850,6 @@ class UserEducationalHeadquarterPosition(UserUnitPosition):
 
 
 class UserDetachmentPosition(UserUnitPosition):
-
     headquarter = models.ForeignKey(
         'Detachment',
         on_delete=models.CASCADE,

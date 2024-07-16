@@ -368,7 +368,7 @@ if DEBUG:
         'calculate_overall_places': {
             'task': 'competitions.tasks.calculate_overall_places_task',
             'schedule': timedelta(minutes=15, seconds=33)
-        }
+        },
     }
 else:
     CELERY_BEAT_SCHEDULE = {
@@ -514,7 +514,7 @@ else:
                 hour=4,
                 minute=20
             )
-        }
+        },
     }
 
 if DEBUG:
@@ -568,6 +568,14 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '65/min',
+        'user': '400/min'
+    },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
