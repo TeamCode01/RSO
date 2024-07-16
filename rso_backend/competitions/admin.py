@@ -38,6 +38,7 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
 @admin.register(July15Participant)
 class July15ParticipantAdmin(admin.ModelAdmin):
     list_display = (
+        'detachment_id',
         'detachment',
         'participants_number',
         'members_number',
