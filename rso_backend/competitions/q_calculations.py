@@ -1342,10 +1342,10 @@ def calculate_q1_score(competition_id):
     """
     Функция для расчета очков по 1 показателю.
 
-    Выполняется каждый день до 12.06.2024.
+    Выполняется каждый день до 15.07.2024.
     """
     today = date.today()
-    end_date = date(2024, 6, 30)
+    end_date = date(2024, 7, 16)
 
     if today > end_date:
         return
