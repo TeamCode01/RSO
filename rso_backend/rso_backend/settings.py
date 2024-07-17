@@ -202,7 +202,7 @@ LOGS_PATH = os.path.join(BASE_DIR, 'logs')
 os.makedirs(LOGS_PATH, exist_ok=True)
 
 LOGS_FILENAME = os.path.join(LOGS_PATH, 'backend.log')
-LOG_MAX_BYTES = 20 * 1024 * 1024 # 20 MB
+LOG_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
 LOGS_BACKUP_COUNT = 10
 
 LOGGING = {
