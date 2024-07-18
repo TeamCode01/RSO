@@ -245,11 +245,11 @@ class PrivacyOptionField(serializers.ChoiceField):
 
 
 class UserPrivacySettingsSerializer(serializers.ModelSerializer):
-    privacy_telephone = serializers.CharField()
-    privacy_email = serializers.CharField()
-    privacy_social = serializers.CharField()
-    privacy_about = serializers.CharField()
-    privacy_photo = serializers.CharField()
+    privacy_telephone = serializers.CharField(max_length=20)
+    privacy_email = serializers.CharField(max_length=20)
+    privacy_social = serializers.CharField(max_length=20)
+    privacy_about = serializers.CharField(max_length=20)
+    privacy_photo = serializers.CharField(max_length=20)
 
     class Meta:
         model = UserPrivacySettings
