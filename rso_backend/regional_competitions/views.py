@@ -12,10 +12,10 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR4,
                                           RVerificationLog,
-                                          StatisticalRegionalReport)
+                                          StatisticalRegionalReport, RegionalR7)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR4Serializer, StatisticalRegionalReportSerializer)
+    RegionalR4Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
@@ -373,3 +373,14 @@ class RegionalR4MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
+
+
+class RegionalR7ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR7.objects.all()
+    serializer_class = RegionalR7Serializer
+
+
+class RegionalR7MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR7
+    queryset = RegionalR7.objects.all()
+    serializer_class = RegionalR7Serializer

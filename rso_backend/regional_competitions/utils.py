@@ -10,8 +10,8 @@ def swagger_schema_for_retrieve_method(serializer_cls):
     def decorator(func):
         @swagger_auto_schema(responses={status.HTTP_200_OK: serializer_cls})
         @wraps(func)
-        def wrapped(self, request, *args, **kwargs):
-            return func(self, request, *args, **kwargs)
+        def wrapped(self, *args, **kwargs):
+            return func(self, *args, **kwargs)
 
         return wrapped
 
@@ -42,8 +42,8 @@ def swagger_schema_for_create_and_update_methods(serializer_cls):
     def decorator(func):
         @swagger_auto_schema(request_body=serializer_cls)
         @wraps(func)
-        def wrapped(self, request, *args, **kwargs):
-            return func(self, request, *args, **kwargs)
+        def wrapped(self, *args, **kwargs):
+            return func(self, *args, **kwargs)
         return wrapped
     return decorator
 

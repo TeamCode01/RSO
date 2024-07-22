@@ -7,7 +7,7 @@ from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
 from regional_competitions.models import (CHqRejectingLog, RegionalR4,
                                           RegionalR4Event, RegionalR4Link,
                                           RVerificationLog,
-                                          StatisticalRegionalReport)
+                                          StatisticalRegionalReport, RegionalR7, RegionalR7Place)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -54,7 +54,30 @@ class BaseRSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = None
-        fields = ('regional_version', 'district_version', 'central_version', 'rejecting_reasons')
+        fields = (
+            'id',
+            'regional_headquarter',
+            'is_sent',
+            'verified_by_chq',
+            'verified_by_dhq',
+            'created_at',
+            'updated_at',
+            'score',
+            'regional_version',
+            'district_version',
+            'central_version',
+            'rejecting_reasons'
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+            'is_sent',
+            'verified_by_chq',
+            'verified_by_dhq',
+            'created_at',
+            'updated_at',
+            'score',
+        )
 
     def get_report_number(self):
         return get_report_number_by_class_name(self)
@@ -174,37 +197,15 @@ class RegionalR4Serializer(BaseRSerializer):
 
     class Meta:
         model = RegionalR4
-        fields = (
-            'id',
-            'regional_headquarter',
-            'is_sent',
-            'verified_by_chq',
-            'verified_by_dhq',
-            'created_at',
-            'updated_at',
-            'score',
+        fields = BaseRSerializer.Meta.fields + (
             'comment',
             'events',
-        ) + BaseRSerializer.Meta.fields
-        read_only_fields = (
-            'id',
-            'regional_headquarter',
-            'is_sent',
-            'verified_by_chq',
-            'verified_by_dhq',
-            'created_at',
-            'updated_at',
-            'score'
         )
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
     def create(self, validated_data):
         events_data = validated_data.pop('events', [])
-        regional_r4 = create_first_or_exception(
-            self,
-            validated_data,
-            RegionalR4,
-            REPORT_EXISTS_MESSAGE
-        )
+        regional_r4 = RegionalR4.objects.create(**validated_data)
         self._create_or_update_events(regional_r4, events_data)
         return regional_r4
 
@@ -240,4 +241,42 @@ class RegionalR4Serializer(BaseRSerializer):
             else:
                 RegionalR4Link.objects.create(regional_r4_event=event, **link_data)
         for link in existing_links.values():
+            link.delete()
+
+
+class RegionalR7PlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegionalR7Place
+        fields = (
+            'id',
+            'regional_r7',
+            'place'
+        )
+        read_only_fields = ('id', 'regional_r7', )
+
+
+class RegionalR7Serializer(BaseRSerializer):
+    places = RegionalR7PlaceSerializer(many=True)
+
+    class Meta:
+        model = RegionalR7
+        fields = BaseRSerializer.Meta.fields + ('places',)
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+    def create(self, validated_data):
+        places_data = validated_data.pop('places')
+        regional_r7 = RegionalR7.objects.create(**validated_data)
+        self._create_or_update_places(regional_r7, places_data)
+        return regional_r7
+
+    def _create_or_update_places(self, regional_r7, places_data):
+        existing_places = {event.id: event for event in regional_r7.places.all()}
+        for place_data in places_data:
+            place_id = existing_places.get('id', None)
+            if place_id and place_id in existing_places:
+                RegionalR7Place.objects.filter(id=place_id).update(**place_data)
+                existing_places.pop(place_id)
+            else:
+                RegionalR7Place.objects.create(regional_r7=regional_r7, **place_data)
+        for link in existing_places.values():
             link.delete()

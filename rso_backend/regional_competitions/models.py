@@ -263,3 +263,22 @@ class RegionalR4Link(models.Model):
     link = models.URLField(
         verbose_name='Ссылка на группу мероприятия в социальных сетях'
     )
+
+
+class RegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    class Meta:
+        verbose_name = 'Отчет по 7 показателю'
+        verbose_name_plural = 'Отчеты по 7 показателю'
+
+    def __str__(self):
+        return f'Отчет отряда {self.regional_headquarter.name}'
+
+
+class RegionalR7Place(models.Model):
+    regional_r7 = models.ForeignKey(
+        'RegionalR7',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='places'
+    )
+    place = models.PositiveSmallIntegerField(verbose_name='Призовое место')
