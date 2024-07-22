@@ -622,7 +622,7 @@ def get_q17_data(competition_id: int) -> list:
     tandem_rankings = {tr.detachment_id: tr for tr in Q17TandemRanking.objects.all()}
     individual_rankings = {ir.detachment_id: ir for ir in Q17Ranking.objects.all()}
 
-    
+
     for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
         detachment = detachments.get(participant.detachment_id)
         if detachment:
