@@ -292,9 +292,14 @@ class RegionalR7Place(models.Model):
 
 
 class BaseRegionalR10(models.Model):
-    event_happened = models.BooleanField(verbose_name='Проведение акции')
+    event_happened = models.BooleanField(
+        verbose_name='Проведение акции',
+    )
     document = models.FileField(
-        upload_to=regional_comp_regulations_files_path, verbose_name='Скан документа, подтверждающего проведение акции'
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скан документа, подтверждающего проведение акции',
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -318,7 +323,7 @@ class RegionalR101Link(models.Model):
 
     class Meta:
         verbose_name = 'Ссылка по 10 показателю - "Снежный Десант"'
-        verbose_name_plural = 'Ссылки по 10 показателю - "Снежный Десант'
+        verbose_name_plural = 'Ссылки по 10 показателю - "Снежный Десант"'
 
     def __str__(self):
         return f'ID {self.id}'
@@ -327,7 +332,7 @@ class RegionalR101Link(models.Model):
 class RegionalR102(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 10 показателю - "Поклонимся Великим годам"'
-        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся Великим годам'
+        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся Великим годам"'
 
 
 class RegionalR102Link(models.Model):
@@ -354,7 +359,7 @@ class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
 
     class Meta:
         verbose_name = 'Отчет по 16 показателю'
-        verbose_name_plural = 'Отчеты по 16 показателям'
+        verbose_name_plural = 'Отчеты по 16 показателю'
 
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'

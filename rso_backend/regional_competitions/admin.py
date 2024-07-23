@@ -3,7 +3,8 @@ from django.contrib import admin
 from regional_competitions.models import (CHqRejectingLog, RegionalR4,
                                           RegionalR4Event, RegionalR4Link,
                                           RVerificationLog,
-                                          StatisticalRegionalReport)
+                                          StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
+                                          RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16)
 
 
 @admin.register(StatisticalRegionalReport)
@@ -157,3 +158,80 @@ class RegionalR4Admin(admin.ModelAdmin):
     search_fields = ('regional_headquarter__name', 'comment')
     list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     inlines = [RegionalR4EventAdminInline]
+
+
+class RegionalR101LinkInline(admin.TabularInline):
+    model = RegionalR101Link
+    extra = 0
+
+
+@admin.register(RegionalR101)
+class RegionalR101Admin(admin.ModelAdmin):
+    list_display = (
+        'id', 'event_happened', 'document', 'verified_by_chq', 'verified_by_dhq', 'score', 'created_at', 'updated_at'
+    )
+    search_fields = ('comment',)
+    list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR101LinkInline]
+
+
+class RegionalR102LinkInline(admin.TabularInline):
+    model = RegionalR102Link
+    extra = 0
+
+
+@admin.register(RegionalR102)
+class RegionalR102Admin(admin.ModelAdmin):
+    list_display = (
+        'id', 'event_happened', 'document', 'verified_by_chq', 'verified_by_dhq', 'score', 'created_at', 'updated_at'
+    )
+    search_fields = ('comment',)
+    list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR102LinkInline]
+
+
+class RegionalR16LinkInline(admin.TabularInline):
+    model = RegionalR16Link
+    extra = 1
+
+
+class RegionalR16ProjectInline(admin.TabularInline):
+    model = RegionalR16Project
+    extra = 1
+
+
+@admin.register(RegionalR16Project)
+class RegionalR16ProjectAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_r16',
+        'name',
+        'project_scale',
+        'regulations'
+    )
+    search_fields = ('name',)
+    list_filter = ('project_scale',)
+    inlines = [RegionalR16LinkInline]
+
+
+@admin.register(RegionalR16)
+class RegionalR16Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'is_project',
+        'score',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment',)
+    list_filter = ('is_project', 'verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR16ProjectInline]
+
+
+admin.site.register(RegionalR16Link)
