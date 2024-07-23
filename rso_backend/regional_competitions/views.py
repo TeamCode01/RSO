@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions
+from rest_framework import permissions
 
 from api.mixins import CreateViewSet
 from headquarters.models import RegionalHeadquarter
