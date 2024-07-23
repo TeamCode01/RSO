@@ -110,8 +110,7 @@ from competitions.serializers import (CompetitionApplicationsObjectSerializer,
 # сигналы ниже не удалять, иначе сломается
 from competitions.signal_handlers import (create_score_q7, create_score_q8,
                                           create_score_q9, create_score_q10,
-                                          create_score_q11, create_score_q12,
-                                          create_score_q20)
+                                          create_score_q11, create_score_q12)
 from competitions.swagger_schemas import (q7schema_request,
                                           q7schema_request_update,
                                           q9schema_request,
@@ -4631,6 +4630,14 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'POST':
             report.is_verified = True
+            score = 0
+            if report.link_emblem and report.link_emblem_img:
+                score += 1
+            if report.link_flag and report.link_flag_img:
+                score += 1
+            if report.link_banner and report.link_banner_img:
+                score += 1
+            report.score = score
             report.save()
             QVerificationLog.objects.create(
                 competition_id=self.kwargs.get('competition_pk'),

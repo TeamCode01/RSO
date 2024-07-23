@@ -189,7 +189,7 @@ q9schema_request = openapi.Schema(
             type=openapi.TYPE_ARRAY,
             items=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
-                required=['event_name', 'prize_place''certificate_scans'],
+                required=['event_name', 'prize_place', 'certificate_scans'],
                 properties={
                     'event_name': openapi.Schema(
                         type=openapi.TYPE_STRING,
