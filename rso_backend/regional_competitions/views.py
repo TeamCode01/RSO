@@ -12,10 +12,12 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR4,
                                           RVerificationLog,
-                                          StatisticalRegionalReport, RegionalR7)
+                                          StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
+                                          RegionalR101)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR4Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer)
+    RegionalR4Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer, RegionalR16Serializer,
+    RegionalR102Serializer, RegionalR101Serializer)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
@@ -384,3 +386,36 @@ class RegionalR7MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR7
     queryset = RegionalR7.objects.all()
     serializer_class = RegionalR7Serializer
+
+
+class RegionalR101ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR101.objects.all()
+    serializer_class = RegionalR101Serializer
+
+
+class RegionalR101MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR101
+    queryset = RegionalR101.objects.all()
+    serializer_class = RegionalR101Serializer
+
+
+class RegionalR102ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR102.objects.all()
+    serializer_class = RegionalR102Serializer
+
+
+class RegionalR102MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR102
+    queryset = RegionalR102.objects.all()
+    serializer_class = RegionalR102Serializer
+
+
+class RegionalR16ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR16.objects.all()
+    serializer_class = RegionalR16Serializer
+
+
+class RegionalR16MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR16
+    queryset = RegionalR16.objects.all()
+    serializer_class = RegionalR16Serializer

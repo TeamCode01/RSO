@@ -53,6 +53,8 @@ def get_report_number_by_class_name(link):
     Получает номер отчета для классов с названием,
     соответствующего шаблону `RegionalR<номер_отчета>`.
     """
+    if link.__class__.__name__[11].isdigit():
+        return link.__class__.__name__[9:12]
     if link.__class__.__name__[10].isdigit():
         return link.__class__.__name__[9:11]
     return link.__class__.__name__[9]
@@ -67,4 +69,4 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     Сохраняем в users/{user_id}/photo
     """
     filename = filename.split('.')
-    return f'regional_comp/regulations/{instance.id}/{filename[0][:25]}.{filename[1]}'
+    return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.id}/{filename[0][:25]}.{filename[1]}'

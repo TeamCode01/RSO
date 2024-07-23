@@ -282,3 +282,132 @@ class RegionalR7Place(models.Model):
         related_name='places'
     )
     place = models.PositiveSmallIntegerField(verbose_name='Призовое место')
+
+    class Meta:
+        verbose_name = 'Данные по призовому месту по 7 показателю'
+        verbose_name_plural = 'Данные по призовым местам по 7 показателю'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class BaseRegionalR10(models.Model):
+    event_happened = models.BooleanField(verbose_name='Проведение акции')
+    document = models.FileField(
+        upload_to=regional_comp_regulations_files_path, verbose_name='Скан документа, подтверждающего проведение акции'
+    )
+
+    class Meta:
+        abstract = True
+
+
+class RegionalR101(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    class Meta:
+        verbose_name = 'Отчет по 10 показателю - "Снежный Десант"'
+        verbose_name_plural = 'Отчеты по 10 показателю - "Снежный Десант'
+
+
+class RegionalR101Link(models.Model):
+    regional_r101 = models.ForeignKey(
+        'RegionalR101',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='links'
+    )
+    link = models.URLField(verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции')
+
+    class Meta:
+        verbose_name = 'Ссылка по 10 показателю - "Снежный Десант"'
+        verbose_name_plural = 'Ссылки по 10 показателю - "Снежный Десант'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR102(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    class Meta:
+        verbose_name = 'Отчет по 10 показателю - "Поклонимся Великим годам"'
+        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся Великим годам'
+
+
+class RegionalR102Link(models.Model):
+    regional_r102 = models.ForeignKey(
+        'RegionalR102',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='links'
+    )
+    link = models.URLField(verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции')
+
+    class Meta:
+        verbose_name = 'Ссылка по 10 показателю - "Поклонимся Великим годам"'
+        verbose_name_plural = 'Ссылки по 10 показателю - "Поклонимся Великим годам'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    is_project = models.BooleanField(
+        verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 16 показателю'
+        verbose_name_plural = 'Отчеты по 16 показателям'
+
+    def __str__(self):
+        return f'Отчет отряда {self.regional_headquarter.name}'
+
+
+class RegionalR16Project(models.Model):
+
+    class ProjectScale(models.TextChoices):
+        all_russian = 'Всероссийский', 'Всероссийский'
+        district = 'Окружной', 'Окружной'
+        interregional = 'Межрегиональный', 'Межрегиональный'
+
+    regional_r16 = models.ForeignKey(
+        'RegionalR16',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='projects'
+    )
+    name = models.TextField(verbose_name='Наименование проекта, в котором ЛСО РО одержал победу')
+    project_scale = models.CharField(
+        max_length=30,
+        choices=ProjectScale.choices,
+        verbose_name='Масштаб проекта'
+    )
+    regulations = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Положение о проекте',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Проект по 16 показателю'
+        verbose_name_plural = 'Проекты по 16 показателю'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR16Link(models.Model):
+    regional_r16_project = models.ForeignKey(
+        'RegionalR16Project',
+        on_delete=models.CASCADE,
+        verbose_name='Проект',
+        related_name='links',
+    )
+    link = models.URLField(
+        verbose_name='Ссылка на группу проекта в социальных сетях',
+    )
+
+    class Meta:
+        verbose_name = 'Ссылка по 16 показателю'
+        verbose_name_plural = 'Ссылки по 16 показателю'
+
+    def __str__(self):
+        return f'ID {self.id}'
