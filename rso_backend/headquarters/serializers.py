@@ -27,7 +27,7 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserRegionalApplication,
                                  UserCentralApplication,)
 from users.models import RSOUser
-from users.short_serializers import ShortUserSerializer
+from users.short_serializers import ShortUserSerializer, ShortestUserSerializer
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -78,11 +78,11 @@ class CentralPositionSerializer(BasePositionSerializer):
 
     def get_sub_commanders(self, obj):
         commanders = []
-        
+
         try:
             central_headquarter = obj.headquarter
             district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=central_headquarter)
-            
+
             for district_hq in district_headquarters:
                 if district_hq.commander:
                     commanders.append({
@@ -93,7 +93,7 @@ class CentralPositionSerializer(BasePositionSerializer):
                     })
 
                 regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
-                
+
                 for regional_hq in regional_headquarters:
                     if regional_hq.commander:
                         commanders.append({
@@ -104,7 +104,7 @@ class CentralPositionSerializer(BasePositionSerializer):
                         })
 
                     detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
-                    
+
                     for detachment in detachments:
                         if detachment.commander:
                             commanders.append({
@@ -115,7 +115,7 @@ class CentralPositionSerializer(BasePositionSerializer):
                             })
 
                     local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                    
+
                     for local_hq in local_headquarters:
                         if local_hq.commander:
                             commanders.append({
@@ -126,7 +126,7 @@ class CentralPositionSerializer(BasePositionSerializer):
                             })
 
                     educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                    
+
                     for edu_hq in educational_headquarters:
                         if edu_hq.commander:
                             commanders.append({
@@ -1221,6 +1221,71 @@ class UserCentralApplicationReadSerializer(BaseApplicationReadSerializer):
     """Сериализатор для чтения заявок в центральный штаб."""
 
     class Meta(BaseApplicationReadSerializer.Meta):
+        model = UserCentralApplication
+
+
+class BaseApplicationShortReadSerializer(serializers.ModelSerializer):
+    """Базовый класс для чтения заявок."""
+
+    user = ShortestUserSerializer(read_only=True)
+
+    class Meta:
+        model = None
+        fields = ('id', 'user')
+        read_only_fields = ('user',)
+
+
+class UserDetachmentApplicationShortReadSerializer(
+    BaseApplicationShortReadSerializer
+):
+    """Сериализатор для чтения заявок в отряд."""
+
+    class Meta(BaseApplicationShortReadSerializer.Meta):
+        model = UserDetachmentApplication
+
+
+class UserEducationalApplicationShortReadSerializer(
+    BaseApplicationShortReadSerializer
+):
+    """Сериализатор для чтения заявок в образовательный штаб."""
+
+    class Meta(BaseApplicationShortReadSerializer.Meta):
+        model = UserEducationalApplication
+
+
+class UserLocalApplicationShortReadSerializer(
+    BaseApplicationShortReadSerializer
+):
+    """Сериализатор для чтения заявок в местный штаб."""
+
+    class Meta(BaseApplicationShortReadSerializer.Meta):
+        model = UserLocalApplication
+
+
+class UserRegionalApplicationShortReadSerializer(
+    BaseApplicationShortReadSerializer
+):
+    """Сериализатор для чтения заявок в региональный штаб."""
+
+    class Meta(BaseApplicationShortReadSerializer.Meta):
+        model = UserRegionalApplication
+
+
+class UserDistrictApplicationShortReadSerializer(
+    BaseApplicationShortReadSerializer
+):
+    """Сериализатор для чтения заявок в окружной штаб."""
+
+    class Meta(BaseApplicationShortReadSerializer.Meta):
+        model = UserDistrictApplication
+
+
+class UserCentralApplicationShortReadSerializer(
+    BaseApplicationShortReadSerializer
+):
+    """Сериализатор для чтения заявок в центральный штаб."""
+
+    class Meta(BaseApplicationShortReadSerializer.Meta):
         model = UserCentralApplication
 
 

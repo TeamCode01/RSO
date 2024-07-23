@@ -129,22 +129,3 @@ def create_score_q12(sender, instance, created=False, **kwargs):
             report.save()
 
             return report
-
-
-@receiver([post_save], sender=Q20Report)
-def create_score_q20(sender, instance, created=False, **kwargs):
-    if created:
-        pass
-    else:
-        if instance.is_verified and instance.score == 0:
-            score = 0
-            if instance.link_emblem and instance.link_emblem_img:
-                score += 1
-            if instance.link_flag and instance.link_flag_img:
-                score += 1
-            if instance.link_banner and instance.link_banner_img:
-                score += 1
-            instance.score = score
-            instance.save()
-
-            return instance

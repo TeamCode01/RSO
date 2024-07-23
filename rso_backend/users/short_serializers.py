@@ -31,3 +31,20 @@ class ShortUserSerializer(serializers.ModelSerializer):
             'is_verified',
             'phone_number'
         )
+
+
+class ShortestUserSerializer(serializers.ModelSerializer):
+    """Для сериализации id, имени и аватарки юзера."""
+
+    avatar = UserAvatarSerializer(source='media', read_only=True)
+
+    class Meta:
+        model = RSOUser
+        fields = (
+            'id',
+            'username',
+            'avatar',
+            'first_name',
+            'last_name',
+            'patronymic_name',
+        )
