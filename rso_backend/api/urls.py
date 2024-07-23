@@ -11,7 +11,6 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            UPDATE_DELETE_RETRIEVE, )
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
-                       VKLoginAPIView,
                        change_membership_fee_status, verify_user)
 from competitions.views import (CompetitionApplicationsViewSet,
                                 CompetitionParticipantsViewSet,
@@ -70,7 +69,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 get_structural_units, DetachmentListViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from regional_competitions.views import StatisticalRegionalViewSet
-from services.views import FrontReportsViewSet
+from services.views import FrontReportsViewSet, VKLoginAPIView
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
                          SafeUserViewSet, UserDocumentsViewSet,
