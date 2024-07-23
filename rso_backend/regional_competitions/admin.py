@@ -194,12 +194,12 @@ class RegionalR102Admin(admin.ModelAdmin):
 
 class RegionalR16LinkInline(admin.TabularInline):
     model = RegionalR16Link
-    extra = 1
+    extra = 0
 
 
 class RegionalR16ProjectInline(admin.TabularInline):
     model = RegionalR16Project
-    extra = 1
+    extra = 0
 
 
 @admin.register(RegionalR16Project)
@@ -232,6 +232,3 @@ class RegionalR16Admin(admin.ModelAdmin):
     list_filter = ('is_project', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [RegionalR16ProjectInline]
-
-
-admin.site.register(RegionalR16Link)
