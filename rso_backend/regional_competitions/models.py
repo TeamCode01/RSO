@@ -22,8 +22,8 @@ class StatisticalRegionalReport(models.Model):
     employed_spo = models.PositiveIntegerField(
         verbose_name='Количество трудоустроенных СПО'
     )
-    employed_oop = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных ООП'
+    employed_sop = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СОП'
     )
     employed_smo = models.PositiveIntegerField(
         verbose_name='Количество трудоустроенных СМО'
@@ -31,8 +31,8 @@ class StatisticalRegionalReport(models.Model):
     employed_sservo = models.PositiveIntegerField(
         verbose_name='Количество трудоустроенных ССервО'
     )
-    employed_sses = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных ССэС'
+    employed_ssho = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССхО'
     )
     employed_specialized_detachments = models.PositiveIntegerField(
         verbose_name='Количество трудоустроенных, профильные отряды'
