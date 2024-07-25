@@ -11,7 +11,6 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            UPDATE_DELETE_RETRIEVE, )
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
-                       VKLoginAPIView,
                        change_membership_fee_status, verify_user)
 from competitions.views import (CompetitionApplicationsViewSet,
                                 CompetitionParticipantsViewSet,
@@ -70,6 +69,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 get_structural_units, DetachmentListViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from regional_competitions.views import StatisticalRegionalViewSet
+from services.views import FrontReportsViewSet, VKLoginAPIView
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
                          SafeUserViewSet, UserDocumentsViewSet,
@@ -367,6 +367,7 @@ EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
 )
 EventAdditionalIssueListVS = EventAdditionalIssueViewSet.as_view(LIST_CREATE)
 EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
+FrontReportsVS = FrontReportsViewSet.as_view(LIST_CREATE)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
@@ -668,7 +669,11 @@ user_nested_urls = [
         DetachmentReportView.as_view(),
         name='detachment_report_view'
     ),
-
+    path(
+        'services/front_errors/',
+        FrontReportsVS,
+        name='front-reports'
+    ),
     path('', include('djoser.urls')),
 ]
 
