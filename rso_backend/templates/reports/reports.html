@@ -15,6 +15,9 @@
             <button class="button" id="downloadContactDataButton">Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)</button>
             <!-- <button class="button" id="downloadUsersDataButton">Выгрузка данных пользователей по регионам (Файл)</button> -->
             <button class="button" id="downloadQ5DataButton">Процент членов студенческого отряда, прошедших профессиональное обучение (файл)</button>
+            <button class="button" id="downloadQ7DataButton">Выгрузка отчётов 7(файл)</button>
+            <button class="button" id="downloadQ8DataButton">Выгрузка отчётов 8(файл)</button>
+            <button class="button" id="downloadQ9DataButton">Выгрузка отчётов 9(файл)</button>
 						<button class="button" id="downloadQ15DataButton">Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах(файл)</button>
 						<button class="button" id="downloadQ16DataButton">Активность отряда в социальных сетях (файл)</button>
 						<button class="button" id="downloadQ17DataButton">Количество упоминаний в СМИ о прошедших творческих, добровольческих ипатриотических мероприятиях отряда (файл)</button>
@@ -71,11 +74,14 @@
         setupDownloadButton('downloadContactDataButton', '{% url "competition_participants_contact_data" %}', 'Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)');
         // setupDownloadButton('downloadUsersDataButton', '{% url "regions_users_data" %}', 'Выгрузка данных пользователей по регионам (файл)');
         setupDownloadButton('downloadQ5DataButton', '{% url "export_q5_data" %}', 'Процент членов студенческого отряда, прошедших профессиональное обучение (файл)');
-        setupDownloadButton('downloadQ15DataButton', '{% url "export_q15_data" %}','Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах (файл)')
-        setupDownloadButton('downloadQ16DataButton', '{% url "export_q16_data" %}', 'Активность отряда в социальных сетях (файл)')
-        setupDownloadButton('downloadQ17DataButton', '{% url "export_q17_data" %}', 'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)')
-        setupDownloadButton('downloadQ18DataButton', '{% url "export_q18_data" %}', 'Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)')
-        setupDownloadButton('downloadQ20DataButton', '{% url "export_q20_data" %}', 'Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов (файл)')
+        setupDownloadButton('downloadQ15DataButton', '{% url "export_q15_data" %}','Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах (файл)');
+        setupDownloadButton('downloadQ16DataButton', '{% url "export_q16_data" %}', 'Активность отряда в социальных сетях (файл)');
+        setupDownloadButton('downloadQ17DataButton', '{% url "export_q17_data" %}', 'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)');
+        setupDownloadButton('downloadQ18DataButton', '{% url "export_q18_data" %}', 'Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)');
+        setupDownloadButton('downloadQ20DataButton', '{% url "export_q20_data" %}', 'Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов (файл)');
+        setupDownloadButton('downloadQ7Databutton', '{% url "export_q7_data" %}', 'Выгрузка отчётов 7(файл)');
+        setupDownloadButton('downloadQ8Databutton', '{% url "export_q8_data" %}', 'Выгрузка отчётов 8(файл)');
+        setupDownloadButton('downloadQ9Databutton', '{% url "export_q9_data" %}', 'Выгрузка отчётов 9(файл)');
     
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');

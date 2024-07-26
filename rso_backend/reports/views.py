@@ -9,7 +9,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from celery.result import AsyncResult
 from urllib.parse import quote
-
 from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
@@ -19,7 +18,7 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS, COMMANDER_SCHOOL_DATA_H
                                MEMBERSHIP_FEE_DATA_HEADERS,
                                REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
-                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS,
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS,
                                Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS,
                                Q18_DATA_HEADERS)
 
@@ -209,7 +208,45 @@ class ExportQ5DataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_q5_data'
-    
+
+class ExportQ7DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q7_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Школа командиров'
+
+    def get_data_func(self):
+        return 'get_q7_data'       
+
+class ExportQ8DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q8_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Школа командиров'
+
+    def get_data_func(self):
+        return 'get_q8_data'       
+
+class ExportQ9DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q9_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Школа командиров'
+
+    def get_data_func(self):
+        return 'get_q9_data'       
 
 class ExportQ15DataView(BaseExcelExportView):
 
