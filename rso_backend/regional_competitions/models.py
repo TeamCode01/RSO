@@ -246,8 +246,8 @@ class CHqRejectingLog(models.Model):
 
 class RegionalR4(BaseEventProjectR):
     class Meta:
-        verbose_name = 'Мероприятие по 4 показателю'
-        verbose_name_plural = 'Мероприятия по 4 показателям'
+        verbose_name = 'Отчет по 4 показателю'
+        verbose_name_plural = 'Отчеты по 4 показателю'
 
 
 class RegionalR4Event(BaseEventOrProject):
