@@ -4,9 +4,9 @@ from api.utils import create_first_or_exception
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
-from regional_competitions.models import (CHqRejectingLog, RegionalR4,
-                                          RegionalR4Event, RegionalR4Link,
-                                          RVerificationLog,
+from regional_competitions.models import (CHqRejectingLog, RegionalR4, RegionalR5Event,
+                                          RegionalR4Event, RegionalR4Link, RegionalR5,
+                                          RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
                                           RegionalR102Link, RegionalR102)
@@ -39,6 +39,50 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             StatisticalRegionalReport,
             STATISTICAL_REPORT_EXISTS_MESSAGE
         )
+
+
+class CreateUpdateSerializerMixin(serializers.ModelSerializer):
+    
+    objects_name = None
+
+    class Meta:
+        model = None
+    
+    def create(self, validated_data):
+        received_objects = validated_data.pop(self.objects_name)
+        created_objects = self.Meta.model.objects.create(**validated_data)
+        self._create_or_update_objects(created_objects, received_objects)
+        return created_objects
+
+    def update(self, instance, validated_data):
+        received_objects = validated_data.pop(self.objects_name, [])
+        instance = super().update(instance, validated_data)
+        self._create_or_update_objects(instance, received_objects)
+        return instance
+
+    def create_objects(self, created_objects, validated_data):
+        """
+        Метод для создания объектов в условии метода _create_or_update_objects.
+        Метод опеределяется в наследнике.
+        """
+        pass
+
+    def _create_or_update_objects(self, created_objects, received_objects):
+        existing_objects = {obj.id: obj for obj in created_objects.places.all()}
+        print('existing_objects', existing_objects)
+        for obj_data in received_objects:
+            print('obj_data', obj_data)
+            obj_id = obj_data.get('id', None)
+            print('obj_id', obj_id)
+            if obj_id and obj_id in existing_objects:
+                print('if obj_id in existing_objects модель.objects.filter(id=obj_id).update(**obj_data)')
+                self.Meta.model.objects.filter(id=obj_id).update(**obj_data)
+                existing_objects.pop(obj_id)
+            else:
+                print('**obj_data', obj_data)
+                self.create_objects(created_objects, **obj_data)
+        for item in existing_objects.values():
+            item.delete()
 
 
 class BaseRSerializer(serializers.ModelSerializer):
@@ -139,31 +183,49 @@ class BaseRSerializer(serializers.ModelSerializer):
         return chq_rejecting_log.reasons if chq_rejecting_log else chq_rejecting_log
 
 
-class RegionalR4LinkSerializer(serializers.ModelSerializer):
+class BaseLinkSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RegionalR4Link
+        model = None
         fields = (
             'id',
-            'regional_r4_event',
             'link'
         )
-        read_only_fields = ('id', 'regional_r4_event',)
+        read_only_fields = ('id',)
 
 
-class RegionalR4EventSerializer(serializers.ModelSerializer):
-    links = RegionalR4LinkSerializer(many=True)
+class BaseEventSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = RegionalR4Event
+        model = None
         fields = (
             'id',
-            'regional_r4',
             'participants_number',
             'start_date',
             'end_date',
             'regulations',
+        )
+        read_only_fields = ('id', 'regional_r4')
+
+
+class RegionalR4LinkSerializer(BaseLinkSerializer):
+    class Meta:
+        model = RegionalR4Link
+        fields = BaseLinkSerializer.Meta.fields + (
+            'regional_r4_event',
+        )
+        read_only_fields = BaseLinkSerializer.Meta.read_only_fields + (
+            'regional_r4_event',
+        )
+
+class RegionalR4EventSerializer(BaseEventSerializer):
+    links = RegionalR4LinkSerializer(many=True)
+
+    class Meta:
+        model = RegionalR4Event
+        fields = BaseEventSerializer.Meta.fields + (
+            'links',
+            'regional_r4',
             'is_interregional',
-            'links'
         )
         read_only_fields = ('id', 'regional_r4')
 
@@ -220,6 +282,81 @@ class RegionalR4Serializer(BaseRSerializer):
             link.delete()
 
 
+class RegionalR5LinkSerializer(BaseLinkSerializer):
+    class Meta:
+        model = RegionalR5Link
+        fields = BaseLinkSerializer.Meta.fields + (
+            'regional_r5',
+        )
+        read_only_fields = BaseLinkSerializer.Meta.read_only_fields + (
+            'regional_r5',
+        )
+
+class RegionalR5EventSerializer(BaseEventSerializer):
+    links = RegionalR5LinkSerializer(many=True)
+
+    class Meta:
+        model = RegionalR5Event
+        fields = BaseEventSerializer.Meta.fields + (
+            'links',
+            'regional_r5',
+            'is_interregional',
+        )
+        read_only_fields = ('id', 'regional_r5')
+
+
+class RegionalR5Serializer(BaseRSerializer):
+    projects = RegionalR5EventSerializer(many=True)
+
+    class Meta:
+        model = RegionalR5
+        fields = BaseRSerializer.Meta.fields + (
+            'comment',
+            'projects',
+        )
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+    def create(self, validated_data):
+        events_data = validated_data.pop('events', [])
+        regional_r5 = RegionalR5.objects.create(**validated_data)
+        self._create_or_update_events(regional_r5, events_data)
+        return regional_r5
+
+    def update(self, instance, validated_data):
+        events_data = validated_data.pop('events', [])
+        instance = super().update(instance, validated_data)
+        self._create_or_update_events(instance, events_data)
+        return instance
+
+    def _create_or_update_events(self, regional_r5, events_data):
+        existing_events = {event.id: event for event in regional_r5.events.all()}
+        for event_data in events_data:
+            links_data = event_data.pop('links', [])
+            event_id = event_data.get('id', None)
+            if event_id and event_id in existing_events:
+                RegionalR5Event.objects.filter(id=event_id).update(**event_data)
+                event = RegionalR5Event.objects.get(id=event_id)
+                self._create_or_update_links(event, links_data)
+                existing_events.pop(event_id)
+            else:
+                event = RegionalR5Event.objects.create(regional_r5=regional_r5, **event_data)
+                self._create_or_update_links(event, links_data)
+        for event in existing_events.values():
+            event.delete()
+
+    def _create_or_update_links(self, event, links_data):
+        existing_links = {link.id: link for link in event.links.all()}
+        for link_data in links_data:
+            link_id = link_data.get('id', None)
+            if link_id and link_id in existing_links:
+                RegionalR4Link.objects.filter(id=link_id).update(**link_data)
+                existing_links.pop(link_id)
+            else:
+                RegionalR4Link.objects.create(regional_r4_event=event, **link_data)
+        for link in existing_links.values():
+            link.delete()
+
+
 class RegionalR7PlaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegionalR7Place
@@ -231,37 +368,54 @@ class RegionalR7PlaceSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'regional_r7', )
 
 
-class RegionalR7Serializer(BaseRSerializer):
+# class RegionalR7Serializer(BaseRSerializer):
+#     places = RegionalR7PlaceSerializer(many=True)
+
+#     class Meta:
+#         model = RegionalR7
+#         fields = BaseRSerializer.Meta.fields + ('places',)
+#         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+#     def create(self, validated_data):
+#         places_data = validated_data.pop('places')
+#         regional_r7 = RegionalR7.objects.create(**validated_data)
+#         self._create_or_update_places(regional_r7, places_data)
+#         return regional_r7
+
+#     def update(self, instance, validated_data):
+#         places_data = validated_data.pop('places', [])
+#         instance = super().update(instance, validated_data)
+#         self._create_or_update_places(instance, places_data)
+#         return instance
+
+#     def _create_or_update_places(self, regional_r7, places_data):
+#         existing_places = {place.id: place for place in regional_r7.places.all()}
+#         for place_data in places_data:
+#             place_id = existing_places.get('id', None)
+#             if place_id and place_id in existing_places:
+#                 RegionalR7Place.objects.filter(id=place_id).update(**place_data)
+#                 existing_places.pop(place_id)
+#             else:
+#                 RegionalR7Place.objects.create(regional_r7=regional_r7, **place_data)
+#         for link in existing_places.values():
+#             link.delete()
+
+
+class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    
     places = RegionalR7PlaceSerializer(many=True)
+    objects_name = 'places'
 
     class Meta:
         model = RegionalR7
         fields = BaseRSerializer.Meta.fields + ('places',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
-    def create(self, validated_data):
-        places_data = validated_data.pop('places')
-        regional_r7 = RegionalR7.objects.create(**validated_data)
-        self._create_or_update_places(regional_r7, places_data)
-        return regional_r7
-
-    def update(self, instance, validated_data):
-        places_data = validated_data.pop('places', [])
-        instance = super().update(instance, validated_data)
-        self._create_or_update_places(instance, places_data)
-        return instance
-
-    def _create_or_update_places(self, regional_r7, places_data):
-        existing_places = {place.id: place for place in regional_r7.places.all()}
-        for place_data in places_data:
-            place_id = existing_places.get('id', None)
-            if place_id and place_id in existing_places:
-                RegionalR7Place.objects.filter(id=place_id).update(**place_data)
-                existing_places.pop(place_id)
-            else:
-                RegionalR7Place.objects.create(regional_r7=regional_r7, **place_data)
-        for link in existing_places.values():
-            link.delete()
+    def create_objects(self, created_objects,  place_data):
+        print('created_objects, place_data',created_objects, **place_data)
+        return RegionalR7Place.objects.create(
+            regional_r7=created_objects, **place_data
+        )
 
 
 class RegionalR16LinkSerializer(serializers.ModelSerializer):

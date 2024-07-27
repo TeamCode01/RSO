@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from regional_competitions.models import (CHqRejectingLog, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR4, RegionalR7,
                                           RegionalR4Event, RegionalR4Link,
-                                          RVerificationLog,
+                                          RVerificationLog, RegionalR7Place,
                                           StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
                                           RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16)
 
@@ -158,6 +158,30 @@ class RegionalR4Admin(admin.ModelAdmin):
     search_fields = ('regional_headquarter__name', 'comment')
     list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     inlines = [RegionalR4EventAdminInline]
+
+
+class RegionalR7PlaceInline(admin.TabularInline):
+    model = RegionalR7Place
+    extra = 0
+
+
+
+@admin.register(RegionalR7)
+class RegionalR7Admin(admin.ModelAdmin):
+    list_display = (
+        'regional_headquarter',
+        'id',
+        'is_sent',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at',
+        'score',
+    )
+    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('regional_headquarter__name', 'comment')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
+    inlines = [RegionalR7PlaceInline]
 
 
 class RegionalR101LinkInline(admin.TabularInline):

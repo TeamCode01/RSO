@@ -123,6 +123,41 @@ class BaseComment(models.Model):
         abstract = True
 
 
+class BaseLink(models.Model):
+    link = models.URLField(
+        verbose_name='URL-адрес',
+    )
+
+    class Meta:
+        abstract = True
+
+
+class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    class Meta:
+        abstract = True
+    
+    def __str__(self):
+        return f'Отчет отряда {self.regional_headquarter.name}'
+
+
+class BaseEventOrProject(models.Model):
+            
+    start_date = models.DateField(
+        verbose_name='Дата начала проведения мероприятия'
+    )
+    end_date = models.DateField(
+        verbose_name='Дата окончания проведения мероприятия'
+    )
+    regulations = models.FileField(
+        verbose_name='Положение о мероприятии',
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True
+    )
+    class Meta:
+        abstract = True
+
+
 class RVerificationLog(models.Model):
     user = models.ForeignKey(
         'users.RSOUser',
@@ -209,40 +244,26 @@ class CHqRejectingLog(models.Model):
         )
 
 
-class RegionalR4(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+class RegionalR4(BaseEventProjectR):
     class Meta:
-        verbose_name = 'Отчет по 4 показателю'
-        verbose_name_plural = 'Отчеты по 4 показателю'
-
-    def __str__(self):
-        return f'Отчет отряда {self.regional_headquarter.name}'
+        verbose_name = 'Мероприятие по 4 показателю'
+        verbose_name_plural = 'Мероприятия по 4 показателям'
 
 
-class RegionalR4Event(models.Model):
+class RegionalR4Event(BaseEventOrProject):
     regional_r4 = models.ForeignKey(
         'RegionalR4',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
         related_name='events'
     )
-    participants_number = models.PositiveIntegerField(
-        verbose_name='Количество человек, принявших участие в мероприятии'
-    )
-    start_date = models.DateField(
-        verbose_name='Дата начала проведения мероприятия'
-    )
-    end_date = models.DateField(
-        verbose_name='Дата окончания проведения мероприятия'
-    )
-    regulations = models.FileField(
-        verbose_name='Положение о мероприятии',
-        upload_to=regional_comp_regulations_files_path,
-        blank=True,
-        null=True
-    )
     is_interregional = models.BooleanField(
         verbose_name='Межрегиональное',
         default=False
+    )
+    participants_number = PositiveSmallIntegerField(
+        verbose_name='Количество участников',
+        default=0
     )
 
     class Meta:
@@ -253,23 +274,65 @@ class RegionalR4Event(models.Model):
         return f'ID {self.id}'
 
 
-class RegionalR4Link(models.Model):
+class RegionalR4Link(BaseLink):
     regional_r4_event = models.ForeignKey(
         'RegionalR4Event',
         on_delete=models.CASCADE,
         verbose_name='Мероприятие',
         related_name='links',
     )
-    link = models.URLField(
-        verbose_name='Ссылка на группу мероприятия в социальных сетях'
+
+
+class RegionalR5(BaseEventProjectR):
+    """
+
+    Организация всероссийских (международных) (организатор – региональное отделение РСО),
+    окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
+    трудовых проектов РСО.
+    """
+    class Meta:
+        verbose_name = 'Проект по 5 показателю'
+        verbose_name_plural = 'Проекты по 5 показателям'
+
+
+class RegionalR5Event(BaseEventOrProject):
+    regional_r5 = models.ForeignKey(
+        'RegionalR5',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='events'
+    )
+    ro_participants_number = models.PositiveIntegerField(
+        verbose_name='Количество человек из своего региона, принявших участие в трудовом проекте'
+    )
+    regulations = models.FileField(
+        verbose_name='Положение о мероприятии',
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Мероприятие по 5 показателю'
+        verbose_name_plural = 'Мероприятия по 5 показателю'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR5Link(BaseLink):
+    regional_r5_event = models.ForeignKey(
+        'RegionalR5Event',
+        on_delete=models.CASCADE,
+        verbose_name='Мероприятие',
+        related_name='links',
     )
 
 
 class RegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 7 показателю'
-        verbose_name_plural = 'Отчеты по 7 показателю'
-
+        verbose_name_plural = 'Отчеты по 7 показателю'                                                                                  
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
 
