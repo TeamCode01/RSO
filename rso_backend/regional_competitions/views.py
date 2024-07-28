@@ -1,6 +1,7 @@
 import json
 
 from django.conf import settings
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.decorators import action
@@ -317,6 +318,8 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
     def get_object(self):
         regional_headquarter = RegionalHeadquarter.objects.get(commander=self.request.user)
         report = self.model.objects.filter(regional_headquarter=regional_headquarter).last()
+        if report is None:
+            raise Http404('Отчет по данному показателю не найден')
         return report
 
     def update(self, *args, **kwargs):
@@ -324,6 +327,7 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
         Метод идемпотентен. Поддерживается динамическое обновление
         """
+        self.get_object()
         return super().update(*args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):

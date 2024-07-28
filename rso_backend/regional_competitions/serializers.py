@@ -41,13 +41,20 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
         )
 
 
-class NestedObjectsMixin:
+class NestedCreateUpdateMixin:
     """
     Миксин для сериализаторов, которые реализуют логику
     создания и обновления для двух уровней вложенных объектов.
     """
 
     nested_objects_name = None
+
+    def create_nested_objects(self, created_objects, validated_data):
+        """
+        Метод для создания связанных объектов.
+        Должен быть реализован в наследуемом классе.
+        """
+        raise NotImplementedError('Определите create_nested_objects для NestedCreateUpdateMixin')
 
     def _create_or_update_nested_objects(self, parent_obj, nested_data):
         nested_manager = getattr(parent_obj, self.nested_objects_name)
@@ -93,7 +100,7 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
         Метод для создания связанных объектов.
         Должен быть реализован в наследуемом классе.
         """
-        pass
+        raise NotImplementedError('Определите create_objects для CreateUpdateSerializerMixin')
 
     def _create_or_update_objects(self, created_objects, received_objects):
         existing_objects = {obj.id: obj for obj in getattr(created_objects, self.objects_name).all()}
@@ -263,9 +270,10 @@ class RegionalR4EventSerializer(BaseEventSerializer):
 
 
 class RegionalR4Serializer(
-    BaseRSerializer, CreateUpdateSerializerMixin, NestedObjectsMixin
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
 ):
     events = RegionalR4EventSerializer(many=True, required=False, allow_null=True)
+
     objects_name = 'events'
     nested_objects_name = 'links'
 
@@ -373,7 +381,7 @@ class RegionalR7PlaceSerializer(serializers.ModelSerializer):
 
 
 class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
-    places = RegionalR7PlaceSerializer(many=True)
+    places = RegionalR7PlaceSerializer(many=True, allow_null=True, required=False)
     objects_name = 'places'
 
     class Meta:
@@ -399,7 +407,7 @@ class RegionalR16LinkSerializer(serializers.ModelSerializer):
 
 
 class RegionalR16ProjectSerializer(serializers.ModelSerializer):
-    links = RegionalR16LinkSerializer(many=True, allow_null=True)
+    links = RegionalR16LinkSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
         model = RegionalR16Project
@@ -414,84 +422,36 @@ class RegionalR16ProjectSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'regional_r16', )
 
 
-class RegionalR16Serializer(BaseRSerializer):
+class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
     projects = RegionalR16ProjectSerializer(many=True, allow_null=True, required=False)
+
+    objects_name = 'projects'
+    nested_objects_name = 'links'
 
     class Meta:
         model = RegionalR16
         fields = BaseRSerializer.Meta.fields + ('is_project', 'projects',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
-    def create(self, validated_data):
-        project_data = validated_data.pop('projects')
-        regional_r16 = RegionalR16.objects.create(**validated_data)
-        self._create_or_update_projects(regional_r16, project_data)
-        return regional_r16
+    def create_objects(self, created_objects, project_data):
+        return RegionalR16Project.objects.create(
+            regional_r16=created_objects, **project_data
+        )
 
-    def update(self, instance, validated_data):
-        project_data = validated_data.pop('projects', [])
-        instance = super().update(instance, validated_data)
-        self._create_or_update_projects(instance, project_data)
-        return instance
-
-    def _create_or_update_projects(self, regional_r16, project_data):
-        existing_projects = {project.id: project for project in regional_r16.projects.all()}
-        for project in project_data:
-            project_id = existing_projects.get('id', None)
-            links = project.pop('links', [])
-            if project_id and project_id in existing_projects:
-                project = RegionalR16Project.objects.filter(id=project_id).update(**project)
-                self._create_or_update_links(project, links)
-                existing_projects.pop(project_id)
-            else:
-                project = RegionalR16Project.objects.create(regional_r16=regional_r16, **project)
-                self._create_or_update_links(project, links)
-        for link in existing_projects.values():
-            link.delete()
-
-    def _create_or_update_links(self, project, links_data):
-        existing_links = {link.id: link for link in project.links.all()}
-        for link_data in links_data:
-            link_id = link_data.get('id', None)
-            if link_id and link_id in existing_links:
-                RegionalR16Link.objects.filter(id=link_id).update(**link_data)
-                existing_links.pop(link_id)
-            else:
-                RegionalR16Link.objects.create(regional_r16_project=project, **link_data)
-        for link in existing_links.values():
-            link.delete()
+    def create_nested_objects(self, parent_obj, obj_data):
+        return RegionalR16Link.objects.create(
+            regional_r16_project=parent_obj, **obj_data
+        )
 
 
-class BaseRegionalR10Serializer(BaseRSerializer):
+class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    objects_name = 'links'
+
     class Meta:
         link_model = None
         model = None
         fields = BaseRSerializer.Meta.fields + ('event_happened', 'document', 'links')
         read_only_fields = BaseRSerializer.Meta.read_only_fields
-
-    def create(self, validated_data):
-        links = validated_data.pop('links')
-        regional_r = self.__class__.Meta.model.objects.create(**validated_data)
-        self._create_or_update_links(regional_r, links)
-        return regional_r
-
-    def update(self, instance, validated_data):
-        links = validated_data.pop('links', [])
-        instance = super().update(instance, validated_data)
-        self._create_or_update_links(instance, links)
-        return instance
-
-    def _create_or_update_links(self, regional_r, links):
-        existing_links = {link.id: link for link in regional_r.links.all()}
-        for link in links:
-            link_id = links.get('id', None)
-            if link_id and link_id in existing_links:
-                self.__class__.Meta.link_model.objects.filter(id=link_id).update(**link)
-                existing_links.pop(link_id)
-            else:
-                self.__class__.Meta.link_model.objects.create(regional_r16=regional_r, **link)
-        for link in existing_links.values():
-            link.delete()
 
 
 class RegionalR101LinkSerializer(serializers.ModelSerializer):
@@ -501,14 +461,19 @@ class RegionalR101LinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'regional_r101')
 
 
-class RegionalR101Serializer(BaseRegionalR10Serializer):
+class RegionalR101Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMixin):
     links = RegionalR101LinkSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
         link_model = RegionalR101Link
         model = RegionalR101
-        fields = BaseRegionalR10Serializer.Meta.fields
-        read_only_fields = BaseRegionalR10Serializer.Meta.read_only_fields
+        fields = BaseRSerializer.Meta.fields + BaseRegionalR10Serializer.Meta.fields
+        read_only_fields = BaseRSerializer.Meta.read_only_fields + BaseRegionalR10Serializer.Meta.read_only_fields
+
+    def create_objects(self, created_objects, link_data):
+        return RegionalR101Link.objects.create(
+            regional_r101=created_objects, **link_data
+        )
 
 
 class RegionalR102LinkSerializer(serializers.ModelSerializer):
@@ -518,7 +483,7 @@ class RegionalR102LinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'regional_r102')
 
 
-class RegionalR102Serializer(BaseRegionalR10Serializer):
+class RegionalR102Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMixin):
     links = RegionalR102LinkSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
@@ -526,3 +491,8 @@ class RegionalR102Serializer(BaseRegionalR10Serializer):
         model = RegionalR102
         fields = BaseRegionalR10Serializer.Meta.fields
         read_only_fields = BaseRegionalR10Serializer.Meta.read_only_fields
+
+    def create_objects(self, created_objects, link_data):
+        return RegionalR102Link.objects.create(
+            regional_r102=created_objects, **link_data
+        )
