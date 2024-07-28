@@ -69,7 +69,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 get_structural_units, DetachmentListViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from regional_competitions.views import StatisticalRegionalViewSet
-from services.views import FrontReportsViewSet, VKLoginAPIView
+from services.views import VKLoginAPIView
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
                          SafeUserViewSet, UserDocumentsViewSet,
@@ -94,11 +94,6 @@ router.register(r'locals', LocalViewSet)
 router.register(r'detachments', DetachmentViewSet)
 router.register(r'centrals', CentralViewSet, basename='centrals')
 router.register(r'positions', PositionViewSet)
-router.register(
-    r'regional_competitions/statistical_report',
-    StatisticalRegionalViewSet,
-    basename='statistical_report'
-)
 router.register(
     'eduicational_institutions',
     EducationalInstitutionViewSet,
@@ -692,4 +687,5 @@ urlpatterns = [
                   path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
                   path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
                   path('', include(router.urls)),
+                  path('regional_competitions/', include('regional_competitions.urls')),
               ] + user_nested_urls
