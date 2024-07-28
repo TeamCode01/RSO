@@ -43,7 +43,8 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
 
 class NestedObjectsMixin:
     """
-    Миксин для сериализаторов, которые могут содержать вложенные объекты.
+    Миксин для сериализаторов, которые реализуют логику
+    создания и обновления для двух уровней вложенных объектов.
     """
 
     nested_objects_name = None
@@ -51,7 +52,6 @@ class NestedObjectsMixin:
     def _create_or_update_nested_objects(self, parent_obj, nested_data):
         nested_manager = getattr(parent_obj, self.nested_objects_name)
         existing_objects = {obj.id: obj for obj in nested_manager.all()}
-
         for obj_data in nested_data:
             obj_id = obj_data.get('id', None)
             if obj_id and obj_id in existing_objects:
@@ -66,8 +66,9 @@ class NestedObjectsMixin:
 
 
 class CreateUpdateSerializerMixin(serializers.ModelSerializer):
-    """"
-    Базовый миксин для сериализаторов.
+    """
+    Миксин для сериализаторов, реализующий логику создания
+    и обновления связанных объектов в показателях отчета.
     """
     objects_name = None
     nested_objects_name = None
@@ -97,19 +98,19 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
     def _create_or_update_objects(self, created_objects, received_objects):
         existing_objects = {obj.id: obj for obj in getattr(created_objects, self.objects_name).all()}
         for obj_data in received_objects:
+            print(f'self.nested_objects_name = {self.nested_objects_name}')
             if self.nested_objects_name:
                 nested_data = obj_data.pop(self.nested_objects_name, [])
             obj_id = obj_data.get('id', None)
             if obj_id and obj_id in existing_objects:
                 existing_objects[obj_id].__class__.objects.filter(id=obj_id).update(**obj_data)
-                if hasattr(self, '_create_or_update_nested_objects'):
+                if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     obj_instance = existing_objects[obj_id].__class__.objects.get(id=obj_id)
                     self._create_or_update_nested_objects(obj_instance, nested_data)
                 existing_objects.pop(obj_id)
             else:
                 new_obj = self.create_objects(created_objects, obj_data)
-                if hasattr(self, '_create_or_update_nested_objects'):
-                    nested_data = obj_data.get(self.nested_objects_name, [])
+                if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     self._create_or_update_nested_objects(new_obj, nested_data)
         for obj in existing_objects.values():
             obj.delete()
@@ -249,7 +250,7 @@ class RegionalR4LinkSerializer(BaseLinkSerializer):
 
 
 class RegionalR4EventSerializer(BaseEventSerializer):
-    links = RegionalR4LinkSerializer(many=True)
+    links = RegionalR4LinkSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = RegionalR4Event
@@ -264,7 +265,7 @@ class RegionalR4EventSerializer(BaseEventSerializer):
 class RegionalR4Serializer(
     BaseRSerializer, CreateUpdateSerializerMixin, NestedObjectsMixin
 ):
-    events = RegionalR4EventSerializer(many=True)
+    events = RegionalR4EventSerializer(many=True, required=False, allow_null=True)
     objects_name = 'events'
     nested_objects_name = 'links'
 
@@ -296,7 +297,7 @@ class RegionalR5LinkSerializer(BaseLinkSerializer):
 
 
 class RegionalR5EventSerializer(BaseEventSerializer):
-    links = RegionalR5LinkSerializer(many=True)
+    links = RegionalR5LinkSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = RegionalR5Event
@@ -309,7 +310,7 @@ class RegionalR5EventSerializer(BaseEventSerializer):
 
 
 class RegionalR5Serializer(BaseRSerializer):
-    projects = RegionalR5EventSerializer(many=True)
+    projects = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = RegionalR5
@@ -398,7 +399,7 @@ class RegionalR16LinkSerializer(serializers.ModelSerializer):
 
 
 class RegionalR16ProjectSerializer(serializers.ModelSerializer):
-    links = RegionalR16LinkSerializer(many=True)
+    links = RegionalR16LinkSerializer(many=True, allow_null=True)
 
     class Meta:
         model = RegionalR16Project
@@ -414,7 +415,7 @@ class RegionalR16ProjectSerializer(serializers.ModelSerializer):
 
 
 class RegionalR16Serializer(BaseRSerializer):
-    projects = RegionalR16ProjectSerializer(many=True)
+    projects = RegionalR16ProjectSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
         model = RegionalR16
@@ -501,7 +502,7 @@ class RegionalR101LinkSerializer(serializers.ModelSerializer):
 
 
 class RegionalR101Serializer(BaseRegionalR10Serializer):
-    links = RegionalR101LinkSerializer(many=True)
+    links = RegionalR101LinkSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
         link_model = RegionalR101Link
@@ -518,7 +519,7 @@ class RegionalR102LinkSerializer(serializers.ModelSerializer):
 
 
 class RegionalR102Serializer(BaseRegionalR10Serializer):
-    links = RegionalR102LinkSerializer(many=True)
+    links = RegionalR102LinkSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
         link_model = RegionalR102Link

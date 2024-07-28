@@ -316,14 +316,15 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
     def get_object(self):
         regional_headquarter = RegionalHeadquarter.objects.get(commander=self.request.user)
-        return self.model.objects.filter(regional_headquarter=regional_headquarter).last()
+        report = self.model.objects.filter(regional_headquarter=regional_headquarter).last()
+        return report
 
     def update(self, *args, **kwargs):
         """Редактирует актуальную версию отчета для командира регионального штаба.
 
         Метод идемпотентен. Поддерживается динамическое обновление
         """
-        super().update(*args, **kwargs)
+        return super().update(*args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         """Возвращает актуальную версию отчета для командира регионального штаба.
