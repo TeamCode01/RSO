@@ -41,9 +41,36 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
         )
 
 
-class CreateUpdateSerializerMixin(serializers.ModelSerializer):
+class NestedObjectsMixin:
+    """
+    Миксин для сериализаторов, которые могут содержать вложенные объекты.
+    """
 
+    nested_objects_name = None
+
+    def _create_or_update_nested_objects(self, parent_obj, nested_data):
+        nested_manager = getattr(parent_obj, self.nested_objects_name)
+        existing_objects = {obj.id: obj for obj in nested_manager.all()}
+
+        for obj_data in nested_data:
+            obj_id = obj_data.get('id', None)
+            if obj_id and obj_id in existing_objects:
+                existing_objects[obj_id].__class__.objects.filter(id=obj_id).update(**obj_data)
+                existing_objects.pop(obj_id)
+            else:
+                new_obj = self.create_nested_objects(parent_obj, obj_data)
+                existing_objects.pop(new_obj.id, None)
+
+        for obj in existing_objects.values():
+            obj.delete()
+
+
+class CreateUpdateSerializerMixin(serializers.ModelSerializer):
+    """"
+    Базовый миксин для сериализаторов.
+    """
     objects_name = None
+    nested_objects_name = None
 
     class Meta:
         model = None
@@ -51,60 +78,41 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
     def create(self, validated_data):
         received_objects = validated_data.pop(self.objects_name, [])
         created_objects = self.Meta.model.objects.create(**validated_data)
-        # self._create_or_update_objects_with_nested(created_objects, received_objects)
         self._create_or_update_objects(created_objects, received_objects)
         return created_objects
 
     def update(self, instance, validated_data):
         received_objects = validated_data.pop(self.objects_name, [])
         instance = super().update(instance, validated_data)
-        # self._create_or_update_objects_with_nested(instance, received_objects)
         self._create_or_update_objects(instance, received_objects)
         return instance
 
-    def create_objects(self, created_objects, validated_data,):
+    def create_objects(self, created_objects, validated_data):
         """
-        Метод для создания объектов в условии метода _create_or_update_objects.
-        Метод опеределяется в наследнике.
+        Метод для создания связанных объектов.
+        Должен быть реализован в наследуемом классе.
         """
         pass
-
-    # def _create_or_update_objects_with_nested(self, created_objects, received_objects):
-    #     if not self.nested_objects:
-    #         return self._create_or_update_objects(created_objects, received_objects)
-
-    #     existing_objects = {
-    #         obj.id: obj for obj in getattr(created_objects, self.objects_with_nested).all()
-    #     }
-    #     for obj_data in received_objects:
-    #         nested_data = obj_data.pop(self.objects_name, [])
-    #         obj_id = obj_data.get('id', None)
-    #         if obj_id and obj_id in existing_objects:
-    #             self.Meta.model.objects.filter(id=obj_id).update(**obj_data)
-    #             obj = self.model_with_nested.objects.get(id=obj_id)
-    #             self._create_or_update_objects(
-    #                 created_objects=obj, received_objects=nested_data
-    #             )
-    #             existing_objects.pop(obj_id)
-    #         else:
-    #             obj = self.create_objects(created_objects, obj_data, model_with_nested=self.model_with_nested)
-    #             self._create_or_update_objects(
-    #                 created_objects=obj, received_objects=nested_data
-    #             )
-    #     for item in existing_objects.values():
-    #         item.delete()
 
     def _create_or_update_objects(self, created_objects, received_objects):
         existing_objects = {obj.id: obj for obj in getattr(created_objects, self.objects_name).all()}
         for obj_data in received_objects:
+            if self.nested_objects_name:
+                nested_data = obj_data.pop(self.nested_objects_name, [])
             obj_id = obj_data.get('id', None)
             if obj_id and obj_id in existing_objects:
-                self.Meta.model.objects.filter(id=obj_id).update(**obj_data)
+                existing_objects[obj_id].__class__.objects.filter(id=obj_id).update(**obj_data)
+                if hasattr(self, '_create_or_update_nested_objects'):
+                    obj_instance = existing_objects[obj_id].__class__.objects.get(id=obj_id)
+                    self._create_or_update_nested_objects(obj_instance, nested_data)
                 existing_objects.pop(obj_id)
             else:
-                self.create_objects(created_objects, obj_data)
-        for item in existing_objects.values():
-            item.delete()
+                new_obj = self.create_objects(created_objects, obj_data)
+                if hasattr(self, '_create_or_update_nested_objects'):
+                    nested_data = obj_data.get(self.nested_objects_name, [])
+                    self._create_or_update_nested_objects(new_obj, nested_data)
+        for obj in existing_objects.values():
+            obj.delete()
 
 
 class BaseRSerializer(serializers.ModelSerializer):
@@ -253,66 +261,27 @@ class RegionalR4EventSerializer(BaseEventSerializer):
         read_only_fields = ('id', 'regional_r4')
 
 
-class RegionalR4Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+class RegionalR4Serializer(
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedObjectsMixin
+):
     events = RegionalR4EventSerializer(many=True)
-    objects_name = 'links'
+    objects_name = 'events'
+    nested_objects_name = 'links'
 
     class Meta:
         model = RegionalR4
-        fields = BaseRSerializer.Meta.fields + (
-            'comment',
-            'events',
-        )
+        fields = BaseRSerializer.Meta.fields + ('comment', 'events',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
-    def create(self, validated_data):
-        events_data = validated_data.pop('events', [])
-        regional_r4 = RegionalR4.objects.create(**validated_data)
-        self._create_or_update_events(regional_r4, events_data)
-        return regional_r4
-
-    def update(self, instance, validated_data):
-        events_data = validated_data.pop('events', [])
-        instance = super().update(instance, validated_data)
-        self._create_or_update_events(instance, events_data)
-        return instance
-
-    def create_objects(self, created_objects, obj_data):
-        return RegionalR4Link.objects.create(
-            regional_r4_event=created_objects, **obj_data
+    def create_objects(self, created_objects, event_data):
+        return RegionalR4Event.objects.create(
+            regional_r4=created_objects, **event_data
         )
 
-    def _create_or_update_events(self, regional_r4, events_data):
-        existing_events = {event.id: event for event in regional_r4.events.all()}
-        for event_data in events_data:
-            links_data = event_data.pop('links', [])
-            event_id = event_data.get('id', None)
-            if event_id and event_id in existing_events:
-                RegionalR4Event.objects.filter(id=event_id).update(**event_data)
-                event = RegionalR4Event.objects.get(id=event_id)
-                self._create_or_update_objects(
-                    created_objects=event, received_objects=links_data
-                )
-                existing_events.pop(event_id)
-            else:
-                event = RegionalR4Event.objects.create(regional_r4=regional_r4, **event_data)
-                self._create_or_update_objects(
-                    created_objects=event, received_objects=links_data
-                )
-        for event in existing_events.values():
-            event.delete()
-
-    # def _create_or_update_links(self, event, links_data):
-    #     existing_links = {link.id: link for link in event.links.all()}
-    #     for link_data in links_data:
-    #         link_id = link_data.get('id', None)
-    #         if link_id and link_id in existing_links:
-    #             RegionalR4Link.objects.filter(id=link_id).update(**link_data)
-    #             existing_links.pop(link_id)
-    #         else:
-    #             RegionalR4Link.objects.create(regional_r4_event=event, **link_data)
-    #     for link in existing_links.values():
-    #         link.delete()
+    def create_nested_objects(self, parent_obj, obj_data):
+        return RegionalR4Link.objects.create(
+            regional_r4_event=parent_obj, **obj_data
+        )
 
 
 class RegionalR5LinkSerializer(BaseLinkSerializer):
@@ -324,6 +293,7 @@ class RegionalR5LinkSerializer(BaseLinkSerializer):
         read_only_fields = BaseLinkSerializer.Meta.read_only_fields + (
             'regional_r5',
         )
+
 
 class RegionalR5EventSerializer(BaseEventSerializer):
     links = RegionalR5LinkSerializer(many=True)
@@ -402,7 +372,6 @@ class RegionalR7PlaceSerializer(serializers.ModelSerializer):
 
 
 class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
-    
     places = RegionalR7PlaceSerializer(many=True)
     objects_name = 'places'
 
