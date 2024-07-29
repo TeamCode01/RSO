@@ -14,7 +14,9 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q15DetachmentReport, Q17DetachmentReport,
                                  Q17EventLink, Q17Ranking, Q17TandemRanking, Q20TandemRanking,
                                  Q20Ranking, Q20Report, Q16Ranking, Q16TandemRanking, Q16Report,
-                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport,)
+                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
+                                 Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
+                                 Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
@@ -478,6 +480,125 @@ def get_q5_data(competition_id: int) -> list:
     return rows
 
 
+def get_q13_data(competition_id: int) -> list:
+    rows = []
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q13DetachmentReport.objects.select_related('detachment').all()
+    events = Q13EventOrganization.objects.select_related('detachment_report').all()
+    tandem_rankings = {tr.detachment_id: tr.place for tr in Q13TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir.place for ir in Q13Ranking.objects.all()}
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for event in events.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Тандем',
+                        event.event_type,
+                        event.event_link,
+                        event.score,
+                        place
+                    ))
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        if junior_detachment:
+            for report in reports.filter(detachment_id=junior_detachment.id):
+                for event in events.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(junior_detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        event.event_type,
+                        event.event_link,
+                        event.score,
+                        place
+                    ))
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for event in events.filter(detachment_report_id=report.id):
+                    place = individual_rankings.get(detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'дебют',
+                        event.event_type,
+                        event.event_link,
+                        event.score,
+                        place
+                    ))
+
+    return rows
+
+
+def get_q14_data(competition_id: int) -> list:
+    rows = []
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    reports = Q14DetachmentReport.objects.select_related('detachment').all()
+    projects = Q14LaborProject.objects.select_related('detachment_report').all()
+    tandem_rankings = {tr.detachment_id: tr.place for tr in Q14TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir.place for ir in Q14Ranking.objects.all()}
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for project in projects.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Тандем',
+                        project.lab_project_name,
+                        project.amount,
+                        project.score,
+                        place
+                    ))
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+        junior_detachment = detachments.get(participant.junior_detachment_id)
+        if junior_detachment:
+            for report in reports.filter(detachment_id=junior_detachment.id):
+                for project in projects.filter(detachment_report_id=report.id):
+                    place = tandem_rankings.get(junior_detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        project.lab_project_name,
+                        project.amount,
+                        project.score,
+                        place
+                    ))
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                for project in projects.filter(detachment_report_id=report.id):
+                    place = individual_rankings.get(detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        detachment.name,
+                        detachment.region.name if detachment.region else '-',
+                        'Дебют',
+                        project.lab_project_name,
+                        project.amount,
+                        project.score,
+                        place
+                    ))
+
+    return rows
+
+
+
 def get_q15_data(competition_id: int) -> list:
     rows = []
     detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
@@ -739,6 +860,57 @@ def get_q18_data(competition_id: int) -> list:
 
     return rows
 
+
+def get_q19_data(competition_id: int) -> list:
+    tandem_rankings = {tr.detachment_id: tr.place for tr in Q19TandemRanking.objects.all()}
+    individual_rankings = {ir.detachment_id: ir.place for ir in Q19Ranking.objects.all()}
+    reports = Q19Report.objects.select_related('detachment').all()
+    detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
+    rows = []
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False).select_related('detachment', 'junior_detachment'):
+        detachment = detachments.get(participant.detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = tandem_rankings.get(detachment.id, 'Ещё нет в рейтинге')
+                rows.append((
+                    detachment.name,
+                    detachment.region.name if detachment.region else '-',
+                    'Тандем',
+                    report.safety_violations,
+                    report.score,
+                    place
+                ))
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+            junior_detachment = detachments.get(participant.junior_detachment_id)
+            if junior_detachment:
+                for report in reports.filter(detachment_id=junior_detachment.id):
+                    place = tandem_rankings.get(junior_detachment.id, 'Ещё нет в рейтинге')
+                    rows.append((
+                        junior_detachment.name,
+                        junior_detachment.region.name if junior_detachment.region else '-',
+                        'Тандем',
+                        report.safety_violations,
+                        report.score,
+                        place
+                    ))
+
+    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+        detachment = detachments.get(participant.junior_detachment_id)
+        if detachment:
+            for report in reports.filter(detachment_id=detachment.id):
+                place = individual_rankings.get(junior_detachment.id, 'Ещё нет в рейтинге')
+                rows.append((
+                    junior_detachment.name,
+                    junior_detachment.region.name if junior_detachment.region else '-',
+                    'Дебют',
+                    report.safety_violations,
+                    report.score,
+                    place
+                ))
+
+    return rows
 
 
 def get_q20_data(competition_id: int) -> list:
