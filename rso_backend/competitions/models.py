@@ -1249,7 +1249,7 @@ class Q13Ranking(QBaseRanking):
 
 
 class Q13DetachmentReport(QBaseReport):
-    pass
+    score = models.FloatField(verbose_name='Очки', default=1000)
 
     class Meta:
         verbose_name = 'Отчет по 13 показателю'
