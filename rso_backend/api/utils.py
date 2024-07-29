@@ -98,10 +98,9 @@ def check_commander_or_not(request, headquarters):
     result = False
     for headquarter in headquarters:
         try:
-            # поменять на get когда добавим валидацию на 1 командира на уровень
-            if headquarter.objects.filter(
+            if headquarter.objects.get(
                     commander_id=request.user.id
-            ).first() is not None:
+            ) is not None:
                 result = True
                 break
         except (headquarter.DoesNotExist, AttributeError):
