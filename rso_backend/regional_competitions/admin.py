@@ -1,8 +1,8 @@
 from django.contrib import admin
 
 from regional_competitions.models import (CHqRejectingLog, RegionalR4, RegionalR7,
-                                          RegionalR4Event, RegionalR4Link,
-                                          RVerificationLog, RegionalR7Place,
+                                          RegionalR4Event, RegionalR4Link, RegionalR5,
+                                          RVerificationLog, RegionalR7Place, RegionalR5Link, RegionalR5Event,
                                           StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
                                           RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16)
 
@@ -160,10 +160,51 @@ class RegionalR4Admin(admin.ModelAdmin):
     inlines = [RegionalR4EventAdminInline]
 
 
+class RegionalR5LinkInline(admin.TabularInline):
+    model = RegionalR5Link
+    extra = 0
+
+
+class RegionalR5EventAdminInline(admin.StackedInline):
+    model = RegionalR5Event
+    extra = 0
+
+    class RegionalR5LinkInline(admin.TabularInline):
+        model = RegionalR5Link
+        extra = 0
+
+    inlines = [RegionalR5LinkInline]
+
+
+@admin.register(RegionalR5Event)
+class RegionalR5EventAdmin(admin.ModelAdmin):
+    list_display = ('id', 'regional_r5', 'participants_number', 'ro_participants_number','start_date', 'end_date',)
+    search_fields = ('regional_r5__id',)
+    list_filter = ('start_date', 'end_date', 'regional_r5')
+    inlines = [RegionalR5LinkInline]
+
+
+@admin.register(RegionalR5)
+class RegionalR5Admin(admin.ModelAdmin):
+    list_display = (
+        'regional_headquarter',
+        'id',
+        'is_sent',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at',
+        'score',
+    )
+    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('regional_headquarter__name', 'comment')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
+    inlines = [RegionalR5EventAdminInline]
+
+
 class RegionalR7PlaceInline(admin.TabularInline):
     model = RegionalR7Place
     extra = 0
-
 
 
 @admin.register(RegionalR7)

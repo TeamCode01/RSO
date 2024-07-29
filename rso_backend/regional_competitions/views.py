@@ -12,13 +12,13 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR4,
-                                          RVerificationLog,
+                                          RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
                                           RegionalR101)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR4Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer, RegionalR16Serializer,
-    RegionalR102Serializer, RegionalR101Serializer)
+    RegionalR4Serializer, RegionalR5Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer,
+    RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer,)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
@@ -381,6 +381,19 @@ class RegionalR4MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR5ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR5.objects.all()
+    serializer_class = RegionalR5Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR5MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR5
+    queryset = RegionalR5.objects.all()
+    serializer_class = RegionalR5Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 

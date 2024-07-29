@@ -2,11 +2,12 @@ from django.urls import include, path
 from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
-from regional_competitions.views import (RegionalR4MeViewSet,
-                                         RegionalR4ViewSet,
+from regional_competitions.views import (RegionalR4MeViewSet, RegionalR5MeViewSet,
+                                         RegionalR4ViewSet, RegionalR5ViewSet,
                                          StatisticalRegionalViewSet, RegionalR7ViewSet, RegionalR7MeViewSet,
                                          RegionalR16ViewSet, RegionalR16MeViewSet, RegionalR101ViewSet,
-                                         RegionalR102ViewSet, RegionalR101MeViewSet, RegionalR102MeViewSet)
+                                         RegionalR102ViewSet, RegionalR101MeViewSet, RegionalR102MeViewSet,
+                                         RegionalR5ViewSet, RegionalR5MeViewSet)
 
 
 class MeRouter(SimpleRouter):
@@ -48,12 +49,14 @@ router = DefaultRouter()
 router.register(r'statistical_report', StatisticalRegionalViewSet, basename='statistical_report')
 
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
+router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 router.register(r'reports/7', RegionalR7ViewSet, basename='r7')
 router.register(r'reports/10/1', RegionalR101ViewSet, basename='r10-1')
 router.register(r'reports/10/2', RegionalR102ViewSet, basename='r10-2')
 router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
 
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
+me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
 me_router.register(r'reports/7', RegionalR7MeViewSet, basename='r7_me')
 me_router.register(r'reports/10/1', RegionalR101MeViewSet, basename='r10-1_me')
 me_router.register(r'reports/10/2', RegionalR102MeViewSet, basename='r10-2_me')

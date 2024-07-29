@@ -291,8 +291,8 @@ class RegionalR5(BaseEventProjectR):
     трудовых проектов РСО.
     """
     class Meta:
-        verbose_name = 'Проект по 5 показателю'
-        verbose_name_plural = 'Проекты по 5 показателям'
+        verbose_name = 'Отчет по 5 показателю'
+        verbose_name_plural = 'Отчеты по 5 показателю'
 
 
 class RegionalR5Event(BaseEventOrProject):
@@ -302,19 +302,20 @@ class RegionalR5Event(BaseEventOrProject):
         verbose_name='Отчет',
         related_name='events'
     )
-    ro_participants_number = models.PositiveIntegerField(
-        verbose_name='Количество человек из своего региона, принявших участие в трудовом проекте'
+    participants_number = PositiveSmallIntegerField(
+        verbose_name='Общее количество участников',
+        default=0
     )
-    regulations = models.FileField(
-        verbose_name='Положение о мероприятии',
-        upload_to=regional_comp_regulations_files_path,
-        blank=True,
-        null=True
+    ro_participants_number = models.PositiveIntegerField(
+        verbose_name=(
+            'Количество человек из своего региона, '
+            'принявших участие в трудовом проекте'
+        )
     )
 
     class Meta:
-        verbose_name = 'Мероприятие по 5 показателю'
-        verbose_name_plural = 'Мероприятия по 5 показателю'
+        verbose_name = 'Проект  5-го показателя'
+        verbose_name_plural = 'Проекты 5-го показателя'
 
     def __str__(self):
         return f'ID {self.id}'
