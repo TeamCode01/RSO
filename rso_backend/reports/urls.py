@@ -14,9 +14,7 @@ from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
                            ExportQ16DataView, ExportQ17DataView,
                            ExportQ20DataView, ExportQ18DataView,
                            CompetitionParticipantView,
-                           ExportAttributesOfUniformView,
-                           ExportQ13DataView, ExportQ14DataView,
-                           ExportQ19DataView)
+                           ExportAttributesOfUniformView,)
 
 
 urlpatterns = [
@@ -77,16 +75,6 @@ urlpatterns = [
         name='export_q5_data'
     ),
     path(
-        'get_q13_data/export/',
-        ExportQ13DataView.as_view(),
-        name='export_q13_data'
-    ),
-    path(
-        'get_q14_data/export/',
-        ExportQ14DataView.as_view(),
-        name='export_q14_data'
-    ),
-    path(
         'get_q15_data/export/',
         ExportQ15DataView.as_view(),
         name='export_q15_data'
@@ -105,11 +93,6 @@ urlpatterns = [
         'get_q18_data/export/',
         ExportQ18DataView.as_view(),
         name='export_q18_data'
-    ),
-    path(
-        'get_q19_data/export/',
-        ExportQ19DataView.as_view(),
-        name='export_q19_data'
     ),
     path(
         'get_q20_data/export/',
