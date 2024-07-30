@@ -13,8 +13,7 @@ from reports.utils import (
     get_regions_users_data, get_safety_results,
     get_competition_participants_contact_data,
     get_competition_participants_data, get_q5_data,
-    get_q15_data, get_q16_data, get_q17_data, get_q20_data, get_q18_data,
-    get_q13_data, get_q14_data, get_q19_data
+    get_q15_data, get_q16_data, get_q17_data, get_q20_data, get_q18_data
 )
 
 
@@ -48,10 +47,6 @@ def generate_excel_file(headers, worksheet_title, filename, data_func):
             data = get_regions_users_data()
         case 'get_q5_data':
             data = get_q5_data(settings.COMPETITION_ID)
-        case 'get_q13_data':
-            data = get_q13_data(settings.COMPETITION_ID)
-        case 'get_q14_data':
-            data = get_q14_data(settings.COMPETITION_ID)
         case 'get_q15_data':
             data = get_q15_data(settings.COMPETITION_ID)
         case 'get_q16_data':
@@ -60,8 +55,6 @@ def generate_excel_file(headers, worksheet_title, filename, data_func):
             data = get_q17_data(settings.COMPETITION_ID)
         case 'get_q18_data':
             data = get_q18_data(settings.COMPETITION_ID)
-        case 'get_q19_data':
-            data = get_q19_data(settings.COMPETITION_ID)
         case 'get_q20_data':
             data = get_q20_data(settings.COMPETITION_ID)
         case 'membership_fee':
