@@ -14,7 +14,9 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q15DetachmentReport, Q17DetachmentReport,
                                  Q17EventLink, Q17Ranking, Q17TandemRanking, Q20TandemRanking,
                                  Q20Ranking, Q20Report, Q16Ranking, Q16TandemRanking, Q16Report,
-                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport,)
+                                 Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
+                                 Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
+                                 Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
 from headquarters.count_hq_members import count_headquarter_participants
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
@@ -890,7 +892,7 @@ def get_q19_data(competition_id: int) -> list:
                 ))
 
     return rows
-  
+
 
 def get_q20_data(competition_id: int) -> list:
     tandem_rankings = {tr.detachment_id: tr for tr in Q20TandemRanking.objects.all()}
