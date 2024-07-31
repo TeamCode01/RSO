@@ -466,6 +466,13 @@ class BasePositionViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
+    def filter_by_user_id(self, queryset):
+        """Фильтрация участников структурной единицы по user_id."""
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
     def filter_by_name(self, queryset):
         """Фильтрация участников структурной единицы по имени (first_name)."""
         search_by_name = self.request.query_params.get('search', None)
@@ -499,6 +506,7 @@ class CentralPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -508,11 +516,11 @@ class CentralPositionViewSet(BasePositionViewSet):
     ordering_fields = ('user__last_name', 'user__date_of_birth',)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(get_headquarter_users_positions_queryset(
             self,
             CentralHeadquarter,
             UserCentralHeadquarterPosition
-        )
+        ))
 
     @method_decorator(cache_page(settings.CENTRALHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -525,6 +533,7 @@ class DistrictPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
 
@@ -533,11 +542,11 @@ class DistrictPositionViewSet(BasePositionViewSet):
     serializer_class = DistrictPositionSerializer
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(get_headquarter_users_positions_queryset(
             self,
             DistrictHeadquarter,
             UserDistrictHeadquarterPosition
-        )
+        ))
 
     @method_decorator(cache_page(settings.DISTRCICTHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -550,6 +559,7 @@ class RegionalPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -561,11 +571,11 @@ class RegionalPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(get_headquarter_users_positions_queryset(
             self,
             RegionalHeadquarter,
             UserRegionalHeadquarterPosition
-        )
+        ))
 
 
 class LocalPositionViewSet(BasePositionViewSet):
@@ -574,6 +584,7 @@ class LocalPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -585,11 +596,11 @@ class LocalPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(get_headquarter_users_positions_queryset(
             self,
             LocalHeadquarter,
             UserLocalHeadquarterPosition
-        )
+        ))
 
 
 class EducationalPositionViewSet(BasePositionViewSet):
@@ -598,6 +609,7 @@ class EducationalPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -609,11 +621,11 @@ class EducationalPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(get_headquarter_users_positions_queryset(
             self,
             EducationalHeadquarter,
             UserEducationalHeadquarterPosition
-        )
+        ))
 
 
 class DetachmentPositionViewSet(BasePositionViewSet):
@@ -621,9 +633,10 @@ class DetachmentPositionViewSet(BasePositionViewSet):
 
     Доступно только командиру.
 
-    Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен поиск по username, first_name, last_name, patronymic_name.
+    Доступен фильтр по user_id: `?user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
-    user__last_name, user__date_of_birth
+    user__last_name, user__date_of_birth.
     """
 
     serializer_class = DetachmentPositionSerializer
@@ -633,11 +646,11 @@ class DetachmentPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(get_headquarter_users_positions_queryset(
             self,
             Detachment,
             UserDetachmentPosition
-        )
+        ))
 
 
 class BaseAcceptRejectViewSet(CreateDeleteViewSet):
