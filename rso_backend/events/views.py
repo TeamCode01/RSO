@@ -20,12 +20,9 @@ from api.mixins import (CreateListRetrieveDestroyViewSet,
                         ListRetrieveDestroyViewSet,
                         RetrieveUpdateDestroyViewSet)
 from api.permissions import (IsApplicantOrOrganizer,
-                             IsAuthorMultiEventApplication, IsCommander,
-                             IsDetachmentCommander, IsDistrictCommander,
-                             IsEducationalCommander, IsEventAuthor,
+                             IsAuthorMultiEventApplication, IsCommander, IsEventAuthor,
                              IsEventOrganizer, IsEventOrganizerOrAuthor,
-                             IsLocalCommander, IsRegionalCommander,
-                             IsStuffOrCentralCommander, IsVerifiedPermission)
+                             IsVerifiedPermission)
 from events.constants import EVENT_APPLICATIONS_MODEL
 from events.filters import EventFilter
 from events.models import (Event, EventAdditionalIssue, EventApplications,
@@ -33,6 +30,8 @@ from events.models import (Event, EventAdditionalIssue, EventApplications,
                            EventOrganizationData, EventParticipants,
                            EventTimeData, EventUserDocument,
                            GroupEventApplicant, GroupEventApplication)
+from events.permissions import IsLocalCommanderOrLower, IsEducationalCommanderOrLower, IsRegionalCommanderOrLower, \
+    IsDistrictCommanderOrLower, IsCentralCommanderOrLower, IsDetachmentCommander
 from events.serializers import (AnswerSerializer,
                                 CreateMultiEventApplicationSerializer,
                                 EventAdditionalIssueSerializer,
@@ -95,11 +94,11 @@ class EventViewSet(viewsets.ModelViewSet):
     search_fields = ('name', 'address', 'description',)
 
     _PERMISSIONS_MAPPING = {
-        'Всероссийское': IsStuffOrCentralCommander,
-        'Окружное': IsDistrictCommander,
-        'Региональное': IsRegionalCommander,
-        'Городское': IsLocalCommander,
-        'Образовательное': IsEducationalCommander,
+        'Всероссийское': IsCentralCommanderOrLower,
+        'Окружное': IsDistrictCommanderOrLower,
+        'Региональное': IsRegionalCommanderOrLower,
+        'Городское': IsLocalCommanderOrLower,
+        'Образовательное': IsEducationalCommanderOrLower,
         'Отрядное': IsDetachmentCommander,
     }
 

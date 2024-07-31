@@ -1,21 +1,29 @@
 from django.urls import path
 
-from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, CompetitionParticipantView,
-                           DetachmentQResultsView, ExportAttributesOfUniformView,
+from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
+                           DetachmentQResultsView,
                            ExportCommanderSchoolDataView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
                            ExportDetachmentQResultsView,
-                           ExportMembershipFeeDataView, 
-                           ExportRegionsUserDataView,
-                           ExportSafetyTestResultsView, ReportView,MembershipFeeDataView,
-                           SafetyTestResultsView, TaskStatusView, ExportQ5DataView, ExportQ15DataView,
-                           ExportQ16DataView, ExportQ17DataView, ExportQ20DataView, ExportQ18DataView)
+                           ExportMembershipFeeDataView,
+                           ExportSafetyTestResultsView,
+                           ReportView, MembershipFeeDataView,
+                           SafetyTestResultsView, TaskStatusView,
+                           ExportQ5DataView, ExportQ15DataView,
+                           ExportQ16DataView, ExportQ17DataView,
+                           ExportQ20DataView, ExportQ18DataView,
+                           CompetitionParticipantView,
+                           ExportAttributesOfUniformView,)
 
 
 urlpatterns = [
     path('', ReportView.as_view(), name='reports'),
-    path('task-status/<str:task_id>/', TaskStatusView.as_view(), name='task_status'),
+    path(
+        'task-status/<str:task_id>/',
+        TaskStatusView.as_view(),
+        name='task_status'
+    ),
     path(
         'safety_test_results/',
         SafetyTestResultsView.as_view(),
@@ -50,11 +58,6 @@ urlpatterns = [
         'competition_participants/contact_data/export/',
         ExportCompetitionParticipantsContactData.as_view(),
         name='competition_participants_contact_data'
-    ),
-    path(
-        'users_data_by_regions/',
-        ExportRegionsUserDataView.as_view(),
-        name='regions_users_data'
     ),
     path(
         'commander_shool/export/',

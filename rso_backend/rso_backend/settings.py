@@ -111,7 +111,8 @@ INSTALLED_APPS += [
     'events.apps.EventsConfig',
     'competitions.apps.CompetitionsConfig',
     'questions.apps.QuestionsConfig',
-    'regional_competitions.apps.RegionalCompetitionsConfig'
+    'regional_competitions.apps.RegionalCompetitionsConfig',
+    'services.apps.ServicesConfig',
 ]
 
 MIDDLEWARE = [
@@ -379,6 +380,14 @@ else:
                 minute=0,
                 day_of_month=1,
                 month_of_year=10,
+            )
+        },
+        'delete_front_logs': {
+            'task': 'services.tasks.delete_front_logs',
+            'schedule': crontab(
+                hour=0,
+                minute=0,
+                day_of_week='sunday'
             )
         },
         'delete_temp_reports': {
