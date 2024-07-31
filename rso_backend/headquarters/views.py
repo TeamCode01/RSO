@@ -27,6 +27,7 @@ from headquarters.filters import (DetachmentFilter,
                                   LocalHeadquarterFilter,
                                   RegionalHeadquarterFilter,
                                   DetachmentListFilter)
+from headquarters.mixins import ApplicationsMixin, VerificationsMixin
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -99,13 +100,14 @@ class PositionViewSet(ListRetrieveViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class CentralViewSet(ListRetrieveUpdateViewSet):
+class CentralViewSet(ApplicationsMixin, ListRetrieveUpdateViewSet):
     """Представляет центральные штабы.
 
     При операции чтения доступно число количества участников в структурной
     единице по ключу members_count, а также список всех участников по ключу
     members.
     Доступен поиск по name при передаче ?search=<value> query-параметра.
+    Доступна сортировка по ключу user_id для applications.
     """
 
     queryset = CentralHeadquarter.objects.all()
@@ -124,34 +126,17 @@ class CentralViewSet(ListRetrieveUpdateViewSet):
             permission_classes = (IsStuffOrCentralCommanderOrTrusted,)
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserCentralApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserCentralApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserCentralApplication
 
-    @action(detail=True, methods=['get', ], url_path='applications_short')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications_short(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserCentralApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserCentralApplicationShortReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_serializer(self):
+        return UserCentralApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserCentralApplicationShortReadSerializer
 
 
-class DistrictViewSet(viewsets.ModelViewSet):
+class DistrictViewSet(ApplicationsMixin, viewsets.ModelViewSet):
     """Представляет окружные штабы.
 
     Привязывается к центральному штабу по ключу central_headquarter.
@@ -163,6 +148,7 @@ class DistrictViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна сортировка по ключу user_id для applications.
     """
 
     queryset = DistrictHeadquarter.objects.all()
@@ -193,34 +179,17 @@ class DistrictViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserDistrictApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserDistrictApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserDistrictApplication
 
-    @action(detail=True, methods=['get', ], url_path='applications_short')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications_short(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserDistrictApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserDistrictApplicationShortReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_serializer(self):
+        return UserDistrictApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserDistrictApplicationShortReadSerializer
 
 
-class RegionalViewSet(viewsets.ModelViewSet):
+class RegionalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):
     """Представляет региональные штабы.
 
     Привязывается к окружному штабу по ключу district_headquarter (id).
@@ -239,6 +208,7 @@ class RegionalViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна сортировка для applications и verifications по ключу user_id.
     """
 
     queryset = RegionalHeadquarter.objects.all()
@@ -274,47 +244,20 @@ class RegionalViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @action(detail=True, methods=['get', ], url_path='verifications')
-    def get_verifications(self, request, pk=None):
-        """
-        Получить список пользователей, подавших заявку на верификацию,
-        у которых совпадает регион с регионом текущего РШ.
-        """
-        headquarter = self.get_object()
-        members_to_verify = get_regional_hq_members_to_verify(headquarter)
-        serializer = UserVerificationReadSerializer(
-            instance=members_to_verify, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserRegionalApplication
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserRegionalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserRegionalApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_serializer(self):
+        return UserRegionalApplicationReadSerializer
 
-    @action(detail=True, methods=['get', ], url_path='applications_short')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications_short(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserRegionalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserRegionalApplicationShortReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_short_serializer(self):
+        return UserRegionalApplicationShortReadSerializer
+
+    def get_regional_hq_members_to_verify(self):
+        return get_detachment_members_to_verify
 
 
-class LocalViewSet(viewsets.ModelViewSet):
+class LocalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):
     """Представляет местные штабы.
 
     Привязывается к региональному штабу по ключу regional_headquarter (id).
@@ -328,6 +271,7 @@ class LocalViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна сортировка по ключу user_id для applications.
     """
 
     queryset = LocalHeadquarter.objects.all()
@@ -359,31 +303,14 @@ class LocalViewSet(viewsets.ModelViewSet):
             permission_classes = (IsLocalCommander,)
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserLocalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserLocalApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserLocalApplication
 
-    @action(detail=True, methods=['get', ], url_path='applications_short')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications_short(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserLocalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserLocalApplicationShortReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_serializer(self):
+        return UserLocalApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserLocalApplicationShortReadSerializer
 
 
 class EducationalViewSet(viewsets.ModelViewSet):
@@ -405,6 +332,7 @@ class EducationalViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна сортировка по ключу user_id для applications.
     """
 
     queryset = EducationalHeadquarter.objects.all()
@@ -436,31 +364,14 @@ class EducationalViewSet(viewsets.ModelViewSet):
             permission_classes = (IsEducationalCommander,)
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserEducationalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserEducationalApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserEducationalApplication
 
-    @action(detail=True, methods=['get', ], url_path='applications_short')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications_short(self, request, pk=None):
-        """Получить список заявок на вступление в штаб c мин. инф о юзере."""
-        headquarter = self.get_object()
-        applications = UserEducationalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserEducationalApplicationShortReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_serializer(self):
+        return UserEducationalApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserEducationalApplicationShortReadSerializer
 
 
 class DetachmentViewSet(viewsets.ModelViewSet):
@@ -487,6 +398,7 @@ class DetachmentViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна сортировка для applications и verifications по ключу user_id.
     """
 
     queryset = Detachment.objects.all()
@@ -520,44 +432,17 @@ class DetachmentViewSet(viewsets.ModelViewSet):
         permission_classes = (IsDetachmentCommander, )
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в отряд."""
-        detachment = self.get_object()
-        applications = UserDetachmentApplication.objects.filter(
-            detachment=detachment
-        )
-        serializer = UserDetachmentApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserDetachmentApplication
 
-    @action(detail=True, methods=['get', ], url_path='applications_short')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications_short(self, request, pk=None):
-        """
+    def get_application_serializer(self):
+        return UserDetachmentApplicationReadSerializer
 
-        Получить список заявок на вступление в отряд с минимум инф о юзере.
-        """
-        detachment = self.get_object()
-        applications = UserDetachmentApplication.objects.filter(
-            detachment=detachment
-        )
-        serializer = UserDetachmentApplicationShortReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_short_serializer(self):
+        return UserDetachmentApplicationShortReadSerializer
 
-    @action(detail=True, methods=['get', ], url_path='verifications')
-    def get_verifications(self, request, pk=None):
-        """Получить список членов отряда, подавших заявку на верификацию."""
-        detachment = self.get_object()
-        members_to_verify = get_detachment_members_to_verify(detachment)
-        serializer = UserVerificationReadSerializer(
-            instance=members_to_verify, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_func_members_to_verify(self):
+        return get_detachment_members_to_verify
 
 
 class BasePositionViewSet(viewsets.ModelViewSet):

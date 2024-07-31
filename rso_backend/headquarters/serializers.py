@@ -736,6 +736,7 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
             dt.datetime.now().year - settings.CENTRAL_HEADQUARTER_FOUNDING_DATE
         )  
 
+
 class DistrictHeadquarterSerializer(BaseUnitSerializer):
     """Сериализатор для окружного штаба.
 
@@ -760,7 +761,6 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
         fields = BaseUnitSerializer.Meta.fields + (
             'central_headquarter',
             'founding_date',
-            'members',
             'regional_headquarters',
             'local_headquarters',
             'educational_headquarters',
