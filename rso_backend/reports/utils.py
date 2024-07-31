@@ -743,9 +743,8 @@ def get_q17_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
-                        event_link.link,
                         str(event_link.detachment_report),
-                        'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                        event_link.link,
                         place
                     ))
 
@@ -762,9 +761,8 @@ def get_q17_data(competition_id: int) -> list:
                             junior_detachment.name,
                             junior_detachment.region.name if junior_detachment.region else '-',
                             'Тандем',
-                            event_link.link,
                             str(event_link.detachment_report),
-                            'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                            event_link.link,
                             place
                         ))
     except Exception as e:
@@ -781,9 +779,8 @@ def get_q17_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
-                        event_link.link,
                         str(event_link.detachment_report),
-                        'Верифицирован' if event_link.is_verified else 'Не верифицирован',
+                        event_link.link,
                         place
                     ))
 
