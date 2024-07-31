@@ -144,6 +144,7 @@ class RSOUserViewSet(RetrieveUpdateViewSet):
             )
         return [permission() for permission in permission_classes]
 
+    @method_decorator(cache_page(settings.USER_ME_TTL, key_prefix="user_me"))
     @action(
         detail=False,
         methods=['get', 'patch'],

@@ -728,7 +728,6 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
             'working_years',
             'detachments_appearance_year',
             'rso_founding_congress_date',
-            'members',
         )
 
     @staticmethod
@@ -750,10 +749,6 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
     )
     commander = serializers.PrimaryKeyRelatedField(
         queryset=RSOUser.objects.all(),
-    )
-    members = DistrictPositionSerializer(
-        many=True,
-        read_only=True
     )
     regional_headquarters = serializers.SerializerMethodField()
     local_headquarters = serializers.SerializerMethodField()
