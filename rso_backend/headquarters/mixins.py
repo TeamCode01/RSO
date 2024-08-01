@@ -1,13 +1,10 @@
-from django.utils.decorators import method_decorator
-from django.conf import settings
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets, permissions
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 
-from headquarters.models import UserDetachmentPosition
 from headquarters.swagger_schemas import applications_response
+from headquarters.models import UserDetachmentApplication
 
 
 class ApplicationsMixin:
@@ -27,7 +24,7 @@ class ApplicationsMixin:
         headquarter = self.get_object()
         user_id = request.query_params.get('user_id')
         application_model = self.get_application_model()
-        if isinstance(application_model, UserDetachmentPosition):
+        if application_model is UserDetachmentApplication:
             applications = application_model.objects.filter(
                 detachment=headquarter
             )
@@ -46,9 +43,15 @@ class ApplicationsMixin:
         """Получить список заявок на вступление в штаб c мин. инф о юзере."""
         headquarter = self.get_object()
         user_id = request.query_params.get('user_id')
-        applications = self.get_application_model().objects.filter(
-            headquarter=headquarter
-        )
+        application_model = self.get_application_model()
+        if application_model is UserDetachmentApplication:
+            applications = application_model.objects.filter(
+                detachment=headquarter
+            )
+        else:
+            applications = application_model.objects.filter(
+                headquarter=headquarter
+            )
         if user_id:
             applications = applications.filter(user_id=user_id)
         serializer = self.get_application_short_serializer()(instance=applications, many=True)
