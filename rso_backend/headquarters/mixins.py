@@ -28,11 +28,11 @@ class ApplicationsMixin:
         user_id = request.query_params.get('user_id')
         application_model = self.get_application_model()
         if isinstance(application_model, UserDetachmentPosition):
-            applications = self.application_model.objects.filter(
+            applications = application_model.objects.filter(
                 detachment=headquarter
             )
         else:
-            applications = self.application_model.objects.filter(
+            applications = application_model.objects.filter(
                 headquarter=headquarter
             )
         if user_id:
