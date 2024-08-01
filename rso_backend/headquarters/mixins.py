@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 
+from headquarters.models import UserDetachmentPosition
 from headquarters.swagger_schemas import applications_response
 
 
@@ -25,9 +26,15 @@ class ApplicationsMixin:
         """Получить список заявок на вступление в штаб."""
         headquarter = self.get_object()
         user_id = request.query_params.get('user_id')
-        applications = self.get_application_model().objects.filter(
-            headquarter=headquarter
-        )
+        application_model = self.get_application_model()
+        if isinstance(application_model, UserDetachmentPosition):
+            applications = self.application_model.objects.filter(
+                detachment=headquarter
+            )
+        else:
+            applications = self.application_model.objects.filter(
+                headquarter=headquarter
+            )
         if user_id:
             applications = applications.filter(user_id=user_id)
         serializer = self.get_application_serializer()(instance=applications, many=True)
