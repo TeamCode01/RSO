@@ -26,7 +26,8 @@ from headquarters.filters import (DetachmentFilter,
                                   EducationalHeadquarterFilter,
                                   LocalHeadquarterFilter,
                                   RegionalHeadquarterFilter,
-                                  DetachmentListFilter)
+                                  DetachmentListFilter,
+                                  SubCommanderListFilter)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -74,7 +75,10 @@ from headquarters.serializers import (
     UserLocalApplicationReadSerializer,
     UserRegionalApplicationReadSerializer,
     UserRegionalApplicationShortReadSerializer,
-    UserCentralApplicationShortReadSerializer,)
+    UserCentralApplicationShortReadSerializer,
+    CentralSubCommanderSerializer, RegionalSubCommanderSerializer,
+    DistrictSubCommanderSerializer, EducationalSubCommanderSerializer,
+    LocalSubCommanderSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1250,3 +1254,142 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         return queryset
+
+
+class CentralSubCommanderViewSet(BasePositionViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
+    filter_class = SubCommanderListFilter
+    search_fields = ('name',)
+    permission_classes = (IsStuffOrCentralCommander,)
+    serializer_class = CentralSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            CentralHeadquarter,
+            UserCentralHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        return queryset
+
+    def filter_by_user_id(self, queryset):
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    def retrieve(self, request, *args, **kwargs):
+        central_hq_pk = kwargs.get('pk')
+        sub_commander_pk = kwargs.get('sub_commander_pk')
+        try:
+            instance = self.get_queryset().get(
+                headquarter_id=central_hq_pk,
+                user_id=sub_commander_pk
+            )
+        except UserCentralHeadquarterPosition.DoesNotExist:
+            return Response({'detail': 'Не найдено.'}, status=404)
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+class DistrictSubCommanderViewSet(BasePositionViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
+    filter_class = SubCommanderListFilter
+    search_fields = ('name',)
+    permission_classes = (IsStuffOrCentralCommander,)
+    serializer_class = DistrictSubCommanderSerializer
+
+    def filter_by_user_id(self, queryset):
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+class RegionalSubCommanderViewSet(BasePositionViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
+    filter_class = SubCommanderListFilter
+    search_fields = ('name',)
+    permission_classes = (IsStuffOrCentralCommander,)
+    serializer_class = RegionalSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            CentralHeadquarter,
+            UserCentralHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        return queryset
+
+    def filter_by_user_id(self, queryset):
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+class LocalSubCommanderViewSet(BasePositionViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
+    filter_class = SubCommanderListFilter
+    search_fields = ('name',)
+    permission_classes = (IsStuffOrCentralCommander,)
+    serializer_class = LocalSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            CentralHeadquarter,
+            UserCentralHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        return queryset
+
+    def filter_by_user_id(self, queryset):
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+class EducationalSubCommanderViewSet(BasePositionViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
+    filter_class = SubCommanderListFilter
+    search_fields = ('name',)
+    permission_classes = (IsStuffOrCentralCommander,)
+    serializer_class = EducationalSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            CentralHeadquarter,
+            UserCentralHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        return queryset
+
+    def filter_by_user_id(self, queryset):
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

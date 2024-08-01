@@ -175,3 +175,71 @@ class DetachmentListFilter(filters.FilterSet):
             'local_headquarter__name',
             'educational_headquarter__name',
         )
+
+
+class SubCommanderListFilter(filters.FilterSet):
+    central_headquarter__id = filters.CharFilter(
+        field_name='central_headquarter__id',
+        lookup_expr='iexact',
+        label='id центрального штаба'
+    )
+    district_headquarter__id = filters.CharFilter(
+        field_name='regional_headquarter__district_headquarter__id',
+        lookup_expr='iexact',
+        label='id окружного штаба'
+    )
+    regional_headquarter__id = filters.CharFilter(
+        field_name='regional_headquarter__id',
+        lookup_expr='iexact',
+        label='id регионального штаба'
+    )
+    local_headquarter__id = filters.CharFilter(
+        field_name='local_headquarter__id',
+        lookup_expr='iexact',
+        label='id местного штаба'
+    )
+    educational_headquarter__id = filters.CharFilter(
+        field_name='educational_headquarter__id',
+        lookup_expr='iexact',
+        label='id образовательного штаба'
+    )
+    central_headquarter__name = filters.CharFilter(
+        field_name='central_headquarter__name',
+        lookup_expr='iexact',
+        label='Название центрального штаба'
+    )
+    district_headquarter__name = filters.CharFilter(
+        field_name='regional_headquarter__district_headquarter__name',
+        lookup_expr='iexact',
+        label='Название окружного штаба'
+    )
+    regional_headquarter__name = filters.CharFilter(
+        field_name='regional_headquarter__name',
+        lookup_expr='iexact',
+        label='Название регионального штаба'
+    )
+    local_headquarter__name = filters.CharFilter(
+        field_name='local_headquarter__name',
+        lookup_expr='iexact',
+        label='Название местного штаба'
+    )
+    educational_headquarter__name = filters.CharFilter(
+        field_name='educational_headquarter__name',
+        lookup_expr='iexact',
+        label='Название образовательного штаба'
+    )
+
+    class Meta:
+        model = Detachment
+        fields = (
+            'central_headquarter__id',
+            'district_headquarter__id',
+            'regional_headquarter__id',
+            'local_headquarter__id',
+            'educational_headquarter__id',
+            'central_headquarter__name',
+            'district_headquarter__name',
+            'regional_headquarter__name',
+            'local_headquarter__name',
+            'educational_headquarter__name',
+        )
