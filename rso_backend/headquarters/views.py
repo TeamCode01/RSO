@@ -374,7 +374,7 @@ class EducationalViewSet(ApplicationsMixin, viewsets.ModelViewSet):
         return UserEducationalApplicationShortReadSerializer
 
 
-class DetachmentViewSet(ApplicationsMixin, viewsets.ModelViewSet):
+class DetachmentViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):
     """Представляет информацию об отряде.
 
     Может привязываться к местному штабу по ключу local_headquarter (id).
