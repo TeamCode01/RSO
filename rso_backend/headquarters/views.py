@@ -107,7 +107,7 @@ class CentralViewSet(ApplicationsMixin, ListRetrieveUpdateViewSet):
     единице по ключу members_count, а также список всех участников по ключу
     members.
     Доступен поиск по name при передаче ?search=<value> query-параметра.
-    Доступна сортировка по ключу user_id для applications.
+    Доступна фильтрация по ключу user_id для applications.
     """
 
     queryset = CentralHeadquarter.objects.all()
@@ -148,7 +148,7 @@ class DistrictViewSet(ApplicationsMixin, viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
-    Доступна сортировка по ключу user_id для applications.
+    Доступна фильтрация по ключу user_id для applications.
     """
 
     queryset = DistrictHeadquarter.objects.all()
@@ -208,7 +208,7 @@ class RegionalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewS
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
-    Доступна сортировка для applications и verifications по ключу user_id.
+    Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
     queryset = RegionalHeadquarter.objects.all()
@@ -271,7 +271,7 @@ class LocalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet)
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
-    Доступна сортировка по ключу user_id для applications.
+    Доступна фильтрация по ключу user_id для applications.
     """
 
     queryset = LocalHeadquarter.objects.all()
@@ -332,7 +332,7 @@ class EducationalViewSet(ApplicationsMixin, viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
-    Доступна сортировка по ключу user_id для applications.
+    Доступна фильтрация по ключу user_id для applications.
     """
 
     queryset = EducationalHeadquarter.objects.all()
@@ -398,7 +398,7 @@ class DetachmentViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelVie
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
-    Доступна сортировка для applications и verifications по ключу user_id.
+    Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
     queryset = Detachment.objects.all()
