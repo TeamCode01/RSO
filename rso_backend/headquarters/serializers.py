@@ -494,7 +494,6 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
             'working_years',
             'detachments_appearance_year',
             'rso_founding_congress_date',
-            'members',
         )
 
     @staticmethod
@@ -502,6 +501,7 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
         return (
             dt.datetime.now().year - settings.CENTRAL_HEADQUARTER_FOUNDING_DATE
         )  
+
 
 class DistrictHeadquarterSerializer(BaseUnitSerializer):
     """Сериализатор для окружного штаба.
@@ -517,10 +517,6 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
     commander = serializers.PrimaryKeyRelatedField(
         queryset=RSOUser.objects.all(),
     )
-    members = DistrictPositionSerializer(
-        many=True,
-        read_only=True
-    )
     regional_headquarters = serializers.SerializerMethodField()
     local_headquarters = serializers.SerializerMethodField()
     educational_headquarters = serializers.SerializerMethodField()
@@ -531,7 +527,6 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
         fields = BaseUnitSerializer.Meta.fields + (
             'central_headquarter',
             'founding_date',
-            'members',
             'regional_headquarters',
             'local_headquarters',
             'educational_headquarters',
