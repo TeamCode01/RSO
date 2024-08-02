@@ -228,6 +228,22 @@ class SubCommanderListFilter(filters.FilterSet):
         lookup_expr='iexact',
         label='Название образовательного штаба'
     )
+    user_id = filters.NumberFilter(
+        field_name='user_id',
+        lookup_expr='exact'
+        )
+    first_name = filters.CharFilter(
+        field_name='user__first_name',
+          lookup_expr='icontains'
+          )
+    last_name = filters.CharFilter(
+        field_name='user__last_name',
+        lookup_expr='icontains'
+        )
+    patronymic_name = filters.CharFilter(
+        field_name='user__patronymic_name', 
+        lookup_expr='icontains'
+        )
 
     class Meta:
         model = Detachment
@@ -242,4 +258,8 @@ class SubCommanderListFilter(filters.FilterSet):
             'regional_headquarter__name',
             'local_headquarter__name',
             'educational_headquarter__name',
+            'user_id',
+            'first_name',
+            'last_name',
+            'patronymic_name',
         )

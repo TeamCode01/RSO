@@ -91,11 +91,16 @@ router.register(r'rsousers', RSOUserViewSet, basename='rsousers')
 router.register(r'regions', RegionViewSet)
 router.register(r'areas', AreaViewSet)
 router.register(r'districts', DistrictViewSet, basename='districts')
+router.register(r'districts', DistrictSubCommanderViewSet, basename='district/sub_commander')
 router.register(r'regionals', RegionalViewSet, basename='regionals')
+router.register(r'regionals', RegionalSubCommanderViewSet, basename='regionals/sub_commander')
 router.register(r'educationals', EducationalViewSet)
+router.register(r'educationals', EducationalSubCommanderViewSet, basename='educationals/sub_commander')
 router.register(r'locals', LocalViewSet)
+router.register(r'locals', LocalSubCommanderViewSet, basename='locals/sub_commander')
 router.register(r'detachments', DetachmentViewSet)
 router.register(r'centrals', CentralViewSet, basename='centrals')
+router.register(r'centrals', CentralSubCommanderViewSet, basename='central/sub_commander')
 router.register(r'positions', PositionViewSet)
 router.register(
     'eduicational_institutions',
@@ -343,32 +348,22 @@ EducationalPositionListVS = EducationalPositionViewSet.as_view(LIST)
 EducationalPositionUpdateDeleteVS = EducationalPositionViewSet.as_view(
     UPDATE_DELETE_RETRIEVE
 )
-EducationalSubCommanderListVS =EducationalSubCommanderViewSet.as_view(LIST)
-EducationalSubCommanderVS =EducationalSubCommanderViewSet.as_view(UPDATE_RETRIEVE)
 LocalAcceptVS = LocalAcceptViewSet.as_view(CREATE_DELETE)
 LocalApplicationVS = LocalApplicationViewSet.as_view(CREATE_DELETE)
 LocalPositionListVS = LocalPositionViewSet.as_view(LIST)
 LocalPositionUpdateDeleteVS = LocalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-LocalSubCommanderListVS = LocalSubCommanderViewSet.as_view(LIST)
-LocalSubCommanderVS = LocalSubCommanderViewSet.as_view(UPDATE_RETRIEVE)
 RegionalAcceptVS = RegionalAcceptViewSet.as_view(CREATE_DELETE)
 RegionalApplicationVS = RegionalApplicationViewSet.as_view(CREATE_DELETE)
 RegionalPositionListVS = RegionalPositionViewSet.as_view(LIST)
 RegionalPositionUpdateDeleteVS = RegionalPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-RegionalSubCommanderListVS = RegionalSubCommanderViewSet.as_view(LIST)
-RegionalSubCommanderVS = RegionalSubCommanderViewSet.as_view(UPDATE_RETRIEVE)
 DistrictAcceptVS = DistrictAcceptViewSet.as_view(CREATE_DELETE)
 DistrictApplicationVS = DistrictApplicationViewSet.as_view(CREATE_DELETE)
 DistrictPositionListVS = DistrictPositionViewSet.as_view(LIST)
 DistrictPositionUpdateDeleteVS = DistrictPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-DistrictSubCommanderListVS = DistrictSubCommanderViewSet.as_view(LIST)
-DistrictSubCommanderVS = DistrictSubCommanderViewSet.as_view(UPDATE_RETRIEVE)
 CentralAcceptVS = CentralAcceptViewSet.as_view(CREATE_DELETE)
 CentralApplicationVS = CentralApplicationViewSet.as_view(CREATE_DELETE)
 CentralPositionListVS = CentralPositionViewSet.as_view(LIST)
 CentralPositionUpdateDeleteVS = CentralPositionViewSet.as_view(UPDATE_DELETE_RETRIEVE)
-CentralSubCommanderListVS = CentralSubCommanderViewSet.as_view(LIST)
-CentralSubCommanderVS = CentralSubCommanderViewSet.as_view(UPDATE_RETRIEVE)
 EventOrganizationDataListVS = EventOrganizationDataViewSet.as_view(LIST_CREATE)
 EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
     UPDATE_DELETE
@@ -503,16 +498,6 @@ user_nested_urls = [
         name='educational-members-update'
     ),
     path(
-        'educationals/<int:pk>/sub_commanders/',
-        RegionalSubCommanderListVS,
-        name='regional-sub-commanders-list'
-    ),
-    path(
-        'educationals/<int:pk>/sub_commanders/<int:sub_commander_pk>/',
-        EducationalSubCommanderVS,
-        name='educational-sub-commander-list-retrieve'
-    ),
-    path(
         'locals/<int:pk>/members/',
         LocalPositionListVS,
         name='local-members-list'
@@ -531,16 +516,6 @@ user_nested_urls = [
         'locals/<int:pk>/applications/<int:application_pk>/accept/',
         LocalAcceptVS,
         name='user-local-apply'
-    ),
-    path(
-        'locals/<int:pk>/sub_commanders/',
-        RegionalSubCommanderListVS,
-        name='regional-sub-commanders-list'
-    ),
-    path(
-        'locals/<int:pk>/sub_commanders/<int:sub_commander_pk>/',
-        LocalSubCommanderVS,
-        name='local-sub-commander-list-retrieve'
     ),
     path(
         'regionals/<int:pk>/members/',
@@ -563,16 +538,6 @@ user_nested_urls = [
         name='user-regional-apply'
     ),
     path(
-        'regionals/<int:pk>/sub_commanders/',
-        RegionalSubCommanderListVS,
-        name='regional-sub-commanders-list'
-    ),
-    path(
-        'regionals/<int:pk>/sub_commanders/<int:sub_commander_pk>/',
-        RegionalSubCommanderVS,
-        name='regional-sub-commander-list-retrieve'
-    ),
-    path(
         'districts/<int:pk>/members/',
         DistrictPositionListVS,
         name='district-members-list'
@@ -591,16 +556,6 @@ user_nested_urls = [
         'districts/<int:pk>/applications/<int:application_pk>/accept/',
         DistrictAcceptVS,
         name='user-district-apply'
-    ),
-    path(
-        'districts/<int:pk>/sub_commanders/',
-        DistrictSubCommanderListVS,
-        name='district-sub-commander-list'
-    ),
-    path(
-        'districts/<int:pk>/sub_commanders/<int:sub_commander_pk>/',
-        DistrictSubCommanderVS,
-        name='district-sub-commander-list-retrieve'
     ),
     path(
         'centrals/<int:pk>/members/',
@@ -622,16 +577,6 @@ user_nested_urls = [
         CentralAcceptVS,
         name='user-central-apply'
     ),
-    path(
-        'centrals/<int:pk>/sub_commanders/',
-        CentralSubCommanderListVS,
-        name='central-sub-commander-list'
-     ),
-    path(
-        'centrals/<int:pk>/sub_commanders/<int:sub_commander_pk>/',
-        CentralSubCommanderVS,
-        name='central-sub-commander-list'
-     ),
     path(
         'rsousers/me/professional_education/',
         UserProfEduRetrieveCreateVS,
