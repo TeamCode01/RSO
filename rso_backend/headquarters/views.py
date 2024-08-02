@@ -26,7 +26,9 @@ from headquarters.filters import (DetachmentFilter,
                                   EducationalHeadquarterFilter,
                                   LocalHeadquarterFilter,
                                   RegionalHeadquarterFilter,
-                                  DetachmentListFilter)
+                                  DetachmentListFilter,
+                                  SubCommanderListFilter)
+
 from headquarters.mixins import ApplicationsMixin, VerificationsMixin
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
@@ -75,7 +77,10 @@ from headquarters.serializers import (
     UserLocalApplicationReadSerializer,
     UserRegionalApplicationReadSerializer,
     UserRegionalApplicationShortReadSerializer,
-    UserCentralApplicationShortReadSerializer,)
+    UserCentralApplicationShortReadSerializer,
+    CentralSubCommanderSerializer, RegionalSubCommanderSerializer,
+    DistrictSubCommanderSerializer, EducationalSubCommanderSerializer,
+    LocalSubCommanderSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1160,4 +1165,121 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
                 educational_headquarter=educational_headquarter
             )
 
+        return queryset
+
+
+class BaseSubCommanderViewSet(viewsets.ModelViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter,)
+    filter_class = SubCommanderListFilter
+    search_fields = ('user__first_name', 'user__last_name', 'user__patronymic_name', 'user__id')
+    permission_classes = (IsStuffOrCentralCommander,)
+
+    def filter_by_user_id(self, queryset):
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    def filter_by_name(self, queryset):
+        first_name = self.request.query_params.get('first_name', None)
+        last_name = self.request.query_params.get('last_name', None)
+        patronymic_name = self.request.query_params.get('patronymic_name', None)
+        if first_name:
+            queryset = queryset.filter(user__first_name__icontains=first_name)
+        if last_name:
+            queryset = queryset.filter(user__last_name__icontains=last_name)
+        if patronymic_name:
+            queryset = queryset.filter(user__patronymic_name__icontains=patronymic_name)
+        return queryset
+
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @action(detail=True, methods=['get'], url_path='sub_commanders')
+    def retrieve_sub_commanders(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        sub_commanders = serializer.data['sub_commanders']
+        return Response(sub_commanders)
+
+    @action(detail=True, methods=['get'], url_path=r'sub_commanders/(?P<user_pk>\d+)')
+    def retrieve_sub_commander_by_user_pk(self, request, pk=None, user_pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        sub_commanders = serializer.data['sub_commanders']
+        filtered_sub_commanders = [sc for sc in sub_commanders if sc['id'] == int(user_pk)]
+        if filtered_sub_commanders:
+            return Response(filtered_sub_commanders)
+        else:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CentralSubCommanderViewSet(BaseSubCommanderViewSet):
+    serializer_class = CentralSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            CentralHeadquarter,
+            UserCentralHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        queryset = self.filter_by_name(queryset)
+        return queryset
+
+    
+class DistrictSubCommanderViewSet(BaseSubCommanderViewSet):
+    serializer_class = DistrictSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            DistrictHeadquarter,
+            UserDistrictHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        queryset = self.filter_by_name(queryset)
+        return queryset
+
+
+class RegionalSubCommanderViewSet(BaseSubCommanderViewSet):
+    serializer_class = RegionalSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            RegionalHeadquarter,
+            UserRegionalHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        queryset = self.filter_by_name(queryset)
+        return queryset
+
+
+class LocalSubCommanderViewSet(BaseSubCommanderViewSet):
+    serializer_class = LocalSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            LocalHeadquarter,
+            UserLocalHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        queryset = self.filter_by_name(queryset)
+        return queryset
+
+
+class EducationalSubCommanderViewSet(BaseSubCommanderViewSet):
+    serializer_class = EducationalSubCommanderSerializer
+
+    def get_queryset(self):
+        queryset = get_headquarter_users_positions_queryset(
+            self,
+            EducationalHeadquarter,
+            UserEducationalHeadquarterPosition
+        )
+        queryset = self.filter_by_user_id(queryset)
+        queryset = self.filter_by_name(queryset)
         return queryset
