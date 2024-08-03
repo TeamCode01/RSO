@@ -4,7 +4,7 @@ from api.utils import create_first_or_exception
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
-from regional_competitions.models import (CHqRejectingLog, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR4,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
@@ -242,7 +242,7 @@ class BaseEventSerializer(serializers.ModelSerializer):
             'end_date',
             'regulations',
         )
-        read_only_fields = ('id', 'regional_r4')
+        read_only_fields = ('id',)
 
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
@@ -365,6 +365,13 @@ class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
         return RegionalR7Place.objects.create(
             regional_r7=created_objects, **place_data
         )
+
+
+class RegionalR12Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR12
+        fields = BaseRSerializer.Meta.fields + ('amount_of_money', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR16LinkSerializer(serializers.ModelSerializer):

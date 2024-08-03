@@ -3,21 +3,23 @@ import json
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from api.mixins import CreateViewSet
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR4,
                                           RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
                                           RegionalR101)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR4Serializer, RegionalR5Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer,
+    RegionalR12Serializer, RegionalR4Serializer, RegionalR5Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer,
     RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer,)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
@@ -433,6 +435,20 @@ class RegionalR102MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR102
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR12ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR12.objects.all()
+    serializer_class = RegionalR12Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+    parser_classes = (MultiPartParser, FormParser)
+
+
+class RegionalR12MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR12
+    queryset = RegionalR12.objects.all()
+    serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 

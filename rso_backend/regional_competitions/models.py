@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 
@@ -135,13 +136,12 @@ class BaseLink(models.Model):
 class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         abstract = True
-    
+
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
 
 
 class BaseEventOrProject(models.Model):
-            
     start_date = models.DateField(
         verbose_name='Дата начала проведения мероприятия'
     )
@@ -154,6 +154,7 @@ class BaseEventOrProject(models.Model):
         blank=True,
         null=True
     )
+
     class Meta:
         abstract = True
 
@@ -333,7 +334,8 @@ class RegionalR5Link(BaseLink):
 class RegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 7 показателю'
-        verbose_name_plural = 'Отчеты по 7 показателю'                                                                                  
+        verbose_name_plural = 'Отчеты по 7 показателю'
+
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
 
@@ -414,6 +416,23 @@ class RegionalR102Link(models.Model):
 
     def __str__(self):
         return f'ID {self.id}'
+
+
+class RegionalR12(BaseEventProjectR):
+    """
+    Объем средств, собранных бойцами РО РСО во Всероссийском дне ударного труда.
+    """
+    amount_of_money = models.FloatField(
+        validators=[MinValueValidator(0)],
+        verbose_name='Объем средств собранных бойцами РО РСО')
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скан подтверждающего документа'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 12 показателю'
+        verbose_name_plural = 'Отчеты по 12 показателю'
 
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
