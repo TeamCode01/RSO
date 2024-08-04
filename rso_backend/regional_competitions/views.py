@@ -13,13 +13,13 @@ from api.mixins import CreateViewSet
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR13, RegionalR4,
                                           RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
                                           RegionalR101)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR12Serializer, RegionalR4Serializer, RegionalR5Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer,
+    RegionalR12Serializer, RegionalR13Serializer, RegionalR4Serializer, RegionalR5Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer,
     RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer,)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
@@ -449,6 +449,20 @@ class RegionalR12MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR12
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR13ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR13.objects.all()
+    serializer_class = RegionalR13Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+    parser_classes = (MultiPartParser, FormParser)
+
+
+class RegionalR13MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR13
+    queryset = RegionalR13.objects.all()
+    serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 

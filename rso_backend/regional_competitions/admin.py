@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR4, RegionalR7,
+from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR13, RegionalR4, RegionalR7,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR7Place, RegionalR5Link, RegionalR5Event,
                                           StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
@@ -264,6 +264,23 @@ class RegionalR12Admin(admin.ModelAdmin):
         'regional_headquarter',
         'score',
         'amount_of_money',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(RegionalR13)
+class RegionalR13Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'number_of_members',
         'verified_by_chq',
         'verified_by_dhq',
         'created_at',

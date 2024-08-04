@@ -434,6 +434,58 @@ class RegionalR12(BaseEventProjectR):
         verbose_name = 'Отчет по 12 показателю'
         verbose_name_plural = 'Отчеты по 12 показателю'
 
+    def __str__(self):
+        return f'Отчет 12 РО {self.regional_headquarter.name}'
+
+
+class RegionalR13(BaseEventProjectR):
+    """
+    Охват членов РО РСО, принявших участие во Всероссийском дне ударного труда «К».
+    """
+    number_of_members = models.PositiveSmallIntegerField(
+        verbose_name='Количество членов РО РСО, принявших участие'
+    )
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скан подтверждающего документа'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 13 показателю'
+        verbose_name_plural = 'Отчеты по 13 показателю'
+
+    def __str__(self):
+        return f'Отчет 13 РО {self.regional_headquarter.name}'
+
+
+class RegionalR14(BaseScore):
+    """
+    Этот показатель считается на основании верифицированных 12 и 13 показателей.
+    Заполняется таской.
+
+    Заполняется один раз, без периодического пересчета,
+    т.к. нет редактирования верифицированных отчетов.
+    """
+    report_12 = models.ForeignKey(
+        'RegionalR12',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет 12',
+        related_name='report_14'
+    )
+    report_13 = models.ForeignKey(
+        'RegionalR13',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет 13',
+        related_name='report_14'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 14 показателю'
+        verbose_name_plural = 'Отчеты по 14 показателю'
+
+    def __str__(self):
+        return f'Отчет 14 РО {self.report_12.regional_headquarter.name}'
+
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
