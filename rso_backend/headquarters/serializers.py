@@ -1138,8 +1138,8 @@ class DetachmentSerializer(BaseUnitSerializer):
         position_instance = self._get_position_instance()
         leaders = position_instance.objects.filter(
             Q(headquarter=instance) &
-            Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
-            Q(position__name=settings.COMMISSIONER_POSITION_NAME)
+            (Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
+            Q(position__name=settings.COMMISSIONER_POSITION_NAME))
         )
         return serializer(leaders, many=True).data
 
