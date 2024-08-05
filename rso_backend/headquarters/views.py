@@ -1202,14 +1202,14 @@ class BaseSubCommanderViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
     
-    @action(detail=True, methods=['get'], url_path='sub_commanders')
+    @action(detail=True, methods=['get'], url_path='')
     def retrieve_sub_commanders(self, request, pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         sub_commanders = serializer.data['sub_commanders']
         return Response(sub_commanders)
 
-    @action(detail=True, methods=['get'], url_path=r'sub_commanders/(?P<user_pk>\d+)')
+    @action(detail=True, methods=['get'], url_path=r'(?P<user_pk>\d+)')
     def retrieve_sub_commander_by_user_pk(self, request, pk=None, user_pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
