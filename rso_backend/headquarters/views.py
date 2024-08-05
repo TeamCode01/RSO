@@ -1168,7 +1168,7 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class BaseSubCommanderViewSet(viewsets.ModelViewSet):
+class BaseSubCommanderViewSet(viewsets.GenericViewSet):
     filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SubCommanderListFilter
     search_fields = ('user__first_name', 'user__last_name', 'user__patronymic_name', 'user__id')
@@ -1192,18 +1192,16 @@ class BaseSubCommanderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user__patronymic_name__icontains=patronymic_name)
         return queryset
 
+    @action(detail=True, methods=['get'], url_path='members')
     @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-    
-    @action(detail=True, methods=['get'], url_path='sub_commanders')
     def retrieve_sub_commanders(self, request, pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         sub_commanders = serializer.data['sub_commanders']
         return Response(sub_commanders)
 
-    @action(detail=True, methods=['get'], url_path=r'sub_commanders/(?P<user_pk>\d+)')
+    @action(detail=True, methods=['get'], url_path=r'members/(?P<user_pk>\d+)')
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
     def retrieve_sub_commander_by_user_pk(self, request, pk=None, user_pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
