@@ -66,7 +66,10 @@ from headquarters.views import (CentralAcceptViewSet,
                                 LocalApplicationViewSet,
                                 EducationalAcceptViewSet,
                                 EducationalApplicationViewSet,
-                                get_structural_units, DetachmentListViewSet)
+                                get_structural_units, DetachmentListViewSet,
+                                CentralSubCommanderViewSet, EducationalSubCommanderViewSet,
+                                LocalSubCommanderViewSet,DistrictSubCommanderViewSet,
+                                RegionalSubCommanderViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from regional_competitions.views import StatisticalRegionalViewSet
 from services.views import VKLoginAPIView, FrontReportsViewSet
@@ -88,11 +91,16 @@ router.register(r'rsousers', RSOUserViewSet, basename='rsousers')
 router.register(r'regions', RegionViewSet)
 router.register(r'areas', AreaViewSet)
 router.register(r'districts', DistrictViewSet, basename='districts')
+router.register(r'districts', DistrictSubCommanderViewSet, basename='district/sub_commander')
 router.register(r'regionals', RegionalViewSet, basename='regionals')
+router.register(r'regionals', RegionalSubCommanderViewSet, basename='regionals/sub_commander')
 router.register(r'educationals', EducationalViewSet)
+router.register(r'educationals', EducationalSubCommanderViewSet, basename='educationals/sub_commander')
 router.register(r'locals', LocalViewSet)
+router.register(r'locals', LocalSubCommanderViewSet, basename='locals/sub_commander')
 router.register(r'detachments', DetachmentViewSet)
 router.register(r'centrals', CentralViewSet, basename='centrals')
+router.register(r'centrals', CentralSubCommanderViewSet, basename='central/sub_commander')
 router.register(r'positions', PositionViewSet)
 router.register(
     'eduicational_institutions',
