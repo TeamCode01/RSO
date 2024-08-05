@@ -69,7 +69,7 @@ class BasePositionSerializer(serializers.ModelSerializer):
 
 class CentralPositionSerializer(BasePositionSerializer):
     """Сериализатор для вывода участников при получении центрального штаба."""
-    
+
     class Meta:
         model = UserCentralHeadquarterPosition
         fields = BasePositionSerializer.Meta.fields
@@ -500,8 +500,8 @@ class CentralHeadquarterSerializer(BaseUnitSerializer):
     @staticmethod
     def get_working_years(instance):
         return (
-            dt.datetime.now().year - settings.CENTRAL_HEADQUARTER_FOUNDING_DATE
-        )  
+                dt.datetime.now().year - settings.CENTRAL_HEADQUARTER_FOUNDING_DATE
+        )
 
 
 class DistrictHeadquarterSerializer(BaseUnitSerializer):
@@ -583,7 +583,7 @@ class DistrictHeadquarterSerializer(BaseUnitSerializer):
         """Для очищения кэша перед началом сериализации."""
         self._cached_units = None
         return super().to_representation(obj)
-    
+
 
 class RegionalHeadquarterSerializer(BaseUnitSerializer):
     """Сериализатор для регионального штаба.
@@ -1138,33 +1138,35 @@ class DetachmentSerializer(BaseUnitSerializer):
         position_instance = self._get_position_instance()
         leaders = position_instance.objects.filter(
             Q(headquarter=instance) &
-            (Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
-            Q(position__name=settings.COMMISSIONER_POSITION_NAME))
+            (
+                    Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
+                    Q(position__name=settings.COMMISSIONER_POSITION_NAME)
+            )
         )
         return serializer(leaders, many=True).data
 
     def get_status(self, obj):
         if not CompetitionParticipants.objects.filter(
-            Q(detachment=obj) & Q(junior_detachment__isnull=False) |
-            Q(detachment__isnull=False) & Q(junior_detachment=obj)
+                Q(detachment=obj) & Q(junior_detachment__isnull=False) |
+                Q(detachment__isnull=False) & Q(junior_detachment=obj)
         ).exists():
             return None
         if CompetitionParticipants.objects.filter(
-            Q(detachment=obj) & Q(junior_detachment__isnull=False)
+                Q(detachment=obj) & Q(junior_detachment__isnull=False)
         ).exists():
             return 'Наставник'
         return 'Старт'
 
     def get_nomination(self, obj):
         if not CompetitionParticipants.objects.filter(
-            Q(detachment=obj) & Q(junior_detachment__isnull=False) |
-            Q(detachment__isnull=False) & Q(junior_detachment=obj) |
-            Q(junior_detachment=obj)
+                Q(detachment=obj) & Q(junior_detachment__isnull=False) |
+                Q(detachment__isnull=False) & Q(junior_detachment=obj) |
+                Q(junior_detachment=obj)
         ).exists():
             return None
         if CompetitionParticipants.objects.filter(
-            Q(detachment=obj) & Q(junior_detachment__isnull=False) |
-            Q(detachment__isnull=False) & Q(junior_detachment=obj)
+                Q(detachment=obj) & Q(junior_detachment__isnull=False) |
+                Q(detachment__isnull=False) & Q(junior_detachment=obj)
         ).exists():
             return 'Тандем'
         return 'Дебют'
@@ -1208,7 +1210,9 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer):
                 commanders.append({
                     'id': district_hq.commander.id,
                     'type': 'DistrictHeadquarter',
-                    'commander': district_hq.commander.get_full_name() if hasattr(district_hq.commander, 'get_full_name') else str(district_hq.commander),
+                    'commander': district_hq.commander.get_full_name() if hasattr(district_hq.commander,
+                                                                                  'get_full_name') else str(
+                        district_hq.commander),
                     'unit': district_hq.name
                 })
 
@@ -1218,7 +1222,9 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer):
                     commanders.append({
                         'id': regional_hq.commander.id,
                         'type': 'RegionalHeadquarter',
-                        'commander': regional_hq.commander.get_full_name() if hasattr(regional_hq.commander, 'get_full_name') else str(regional_hq.commander),
+                        'commander': regional_hq.commander.get_full_name() if hasattr(regional_hq.commander,
+                                                                                      'get_full_name') else str(
+                            regional_hq.commander),
                         'unit': regional_hq.name
                     })
 
@@ -1228,7 +1234,9 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer):
                         commanders.append({
                             'id': detachment.commander.id,
                             'type': 'Detachment',
-                            'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                            'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
+                                                                                         'get_full_name') else str(
+                                detachment.commander),
                             'unit': detachment.name
                         })
 
@@ -1238,7 +1246,9 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer):
                         commanders.append({
                             'id': local_hq.commander.id,
                             'type': 'LocalHeadquarter',
-                            'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander),
+                            'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander,
+                                                                                       'get_full_name') else str(
+                                local_hq.commander),
                             'unit': local_hq.name
                         })
 
@@ -1248,12 +1258,14 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer):
                         commanders.append({
                             'id': edu_hq.commander.id,
                             'type': 'EducationalHeadquarter',
-                            'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
+                            'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
+                                                                                     'get_full_name') else str(
+                                edu_hq.commander),
                             'unit': edu_hq.name
                         })
 
         return commanders
-    
+
 
 class DistrictSubCommanderSerializer(serializers.ModelSerializer):
     sub_commanders = serializers.SerializerMethodField(read_only=True)
@@ -1267,10 +1279,12 @@ class DistrictSubCommanderSerializer(serializers.ModelSerializer):
         commanders = []
         district_headquarter = obj.headquarter
         regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_headquarter)
-     
+
         for regional_hq in regional_headquarters:
             if regional_hq.commander and (user_id is None or regional_hq.commander.id == user_id):
-                commander_name = regional_hq.commander.get_full_name() if hasattr(regional_hq.commander, 'get_full_name') else str(regional_hq.commander)
+                commander_name = regional_hq.commander.get_full_name() if hasattr(regional_hq.commander,
+                                                                                  'get_full_name') else str(
+                    regional_hq.commander)
                 commanders.append({
                     'id': regional_hq.commander.id,
                     'type': 'RegionalHeadquarter',
@@ -1281,7 +1295,9 @@ class DistrictSubCommanderSerializer(serializers.ModelSerializer):
             detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
             for detachment in detachments:
                 if detachment.commander and (user_id is None or detachment.commander.id == user_id):
-                    commander_name = detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander)
+                    commander_name = detachment.commander.get_full_name() if hasattr(detachment.commander,
+                                                                                     'get_full_name') else str(
+                        detachment.commander)
                     commanders.append({
                         'id': detachment.commander.id,
                         'type': 'Detachment',
@@ -1292,7 +1308,9 @@ class DistrictSubCommanderSerializer(serializers.ModelSerializer):
                 local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
                 for local_hq in local_headquarters:
                     if local_hq.commander and (user_id is None or local_hq.commander.id == user_id):
-                        commander_name = local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander)
+                        commander_name = local_hq.commander.get_full_name() if hasattr(local_hq.commander,
+                                                                                       'get_full_name') else str(
+                            local_hq.commander)
                         commanders.append({
                             'id': local_hq.commander.id,
                             'type': 'LocalHeadquarter',
@@ -1303,7 +1321,9 @@ class DistrictSubCommanderSerializer(serializers.ModelSerializer):
                     educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
                     for edu_hq in educational_headquarters:
                         if edu_hq.commander and (user_id is None or edu_hq.commander.id == user_id):
-                            commander_name = edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander)
+                            commander_name = edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
+                                                                                         'get_full_name') else str(
+                                edu_hq.commander)
                             commanders.append({
                                 'id': edu_hq.commander.id,
                                 'type': 'EducationalHeadquarter',
@@ -1331,7 +1351,9 @@ class RegionalSubCommanderSerializer(serializers.ModelSerializer):
                 commander_info = {
                     'id': detachment.commander.id,
                     'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
+                                                                                 'get_full_name') else str(
+                        detachment.commander),
                     'unit': detachment.name
                 }
                 commanders.append(commander_info)
@@ -1342,7 +1364,9 @@ class RegionalSubCommanderSerializer(serializers.ModelSerializer):
                 commander_info = {
                     'id': local_hq.commander.id,
                     'type': 'LocalHeadquarter',
-                    'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander, 'get_full_name') else str(local_hq.commander),
+                    'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander,
+                                                                               'get_full_name') else str(
+                        local_hq.commander),
                     'unit': local_hq.name
                 }
                 commanders.append(commander_info)
@@ -1353,7 +1377,9 @@ class RegionalSubCommanderSerializer(serializers.ModelSerializer):
                     commander_info = {
                         'id': edu_hq.commander.id,
                         'type': 'EducationalHeadquarter',
-                        'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
+                        'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
+                                                                                 'get_full_name') else str(
+                            edu_hq.commander),
                         'unit': edu_hq.name
                     }
                     commanders.append(commander_info)
@@ -1378,7 +1404,9 @@ class LocalSubCommanderSerializer(serializers.ModelSerializer):
                 commander_info = ({
                     'id': detachment.commander.id,
                     'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
+                                                                                 'get_full_name') else str(
+                        detachment.commander),
                     'unit': detachment.name
                 })
                 commanders.append(commander_info)
@@ -1389,7 +1417,9 @@ class LocalSubCommanderSerializer(serializers.ModelSerializer):
                 commander_info = {
                     'id': edu_hq.commander.id,
                     'type': 'EducationalHeadquarter',
-                    'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander, 'get_full_name') else str(edu_hq.commander),
+                    'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
+                                                                             'get_full_name') else str(
+                        edu_hq.commander),
                     'unit': edu_hq.name
                 }
                 commanders.append(commander_info)
@@ -1415,7 +1445,9 @@ class EducationalSubCommanderSerializer(serializers.ModelSerializer):
                 commander_info = {
                     'id': detachment.commander.id,
                     'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander, 'get_full_name') else str(detachment.commander),
+                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
+                                                                                 'get_full_name') else str(
+                        detachment.commander),
                     'unit': detachment.name
                 }
                 commanders.append(commander_info)
