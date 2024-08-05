@@ -1,3 +1,5 @@
+from typing import Callable
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -59,7 +61,7 @@ class ApplicationsMixin:
 
 
 class VerificationsMixin:
-    def get_func_members_to_verify(self):
+    def get_func_members_to_verify(self) -> Callable:
         raise NotImplementedError("Необходимо определить метод get_members_to_verify")
 
     def get_verification_model(self):
@@ -76,7 +78,7 @@ class VerificationsMixin:
         """
         headquarter = self.get_object()
         user_id = request.query_params.get('user_id')
-        members_to_verify = self.get_members_to_verify()(headquarter)
+        members_to_verify = self.get_func_members_to_verify()(headquarter)
         if user_id:
             members_to_verify = members_to_verify.filter(user_id=user_id)
         serializer = self.get_verification_serializer()(instance=members_to_verify, many=True)
