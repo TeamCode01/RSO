@@ -1192,7 +1192,11 @@ class DetachmentListSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'local_headquarter', 'educational_headquarter', 'regional_headquarter')
 
 
-class SubCommanderMixin():
+class BaseSubCommanderSerializer(serializers.ModelSerializer):
+    sub_commanders = serializers.SerializerMethodField(read_only=True)
+
+
+class SubCommanderMixin:
     def add_commanders(self, headquarters, user_id, commanders, hq_type):
         for hq in headquarters:
             if hq.commander and (user_id is None or hq.commander.id == int(user_id)):
@@ -1204,24 +1208,23 @@ class SubCommanderMixin():
                 })
         return commanders
 
-    def get_district_hq(self, district_headquarters, user_id, commanders):
+    def append_district_hqs(self, district_headquarters, user_id, commanders):
         return self.add_commanders(district_headquarters, user_id, commanders, 'DistrictHeadquarter')
     
-    def get_regional_hq(self, regional_headquarters, user_id, commanders):
+    def append_regional_hqs(self, regional_headquarters, user_id, commanders):
         return self.add_commanders(regional_headquarters, user_id, commanders, 'RegionalHeadquarter')
 
-    def get_detachment_hq(self, detachments, user_id, commanders):
+    def append_detachment_hqs(self, detachments, user_id, commanders):
         return self.add_commanders(detachments, user_id, commanders, 'Detachment')
 
-    def get_local_hq(self, local_headquarters, user_id, commanders):
+    def append_local_hqs(self, local_headquarters, user_id, commanders):
         return self.add_commanders(local_headquarters, user_id, commanders, 'LocalHeadquarter')
 
-    def get_educational_hq(self, educational_headquarters, user_id, commanders):
+    def append_educational_hqs(self, educational_headquarters, user_id, commanders):
         return self.add_commanders(educational_headquarters, user_id, commanders, 'EducationalHeadquarter')
 
-class CentralSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMixin):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
 
+class CentralSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
     class Meta:
         model = UserCentralHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1231,27 +1234,27 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMix
         commanders = []
         central_headquarter = obj.headquarter
 
-        district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=central_headquarter)
-        self.get_district_hq(district_headquarters, user_id, commanders)
+        district_headquarters = DistrictHeadquarter.objects.filter(
+            central_headquarter=central_headquarter
+            )
+        self.append_district_hqs(district_headquarters, user_id, commanders)
 
         regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter__central_headquarter=central_headquarter)
-        self.get_regional_hq(regional_headquarters, user_id, commanders)
+        self.append_regional_hqs(regional_headquarters, user_id, commanders)
 
         detachments = Detachment.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
-        self.get_detachment_hq(detachments, user_id, commanders)
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
         local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
-        self.get_local_hq(local_headquarters, user_id, commanders)
+        self.append_local_hqs(local_headquarters, user_id, commanders)
 
         educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
-        self.get_educational_hq(educational_headquarters, user_id, commanders)
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class DistrictSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMixin):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class DistrictSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
     class Meta:
         model = UserDistrictHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1261,24 +1264,26 @@ class DistrictSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMi
         commanders = []
         district_headquarter = obj.headquarter
 
-        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_headquarter)
-        self.get_regional_hq(regional_headquarters, user_id, commanders)
+        regional_headquarters = RegionalHeadquarter.objects.filter(
+            district_headquarter=district_headquarter
+            )
+        self.append_regional_hqs(regional_headquarters, user_id, commanders)
 
-        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
-        self.get_detachment_hq(detachments, user_id, commanders)
+        detachments = Detachment.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+            )
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
         local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
-        self.get_local_hq(local_headquarters, user_id, commanders)
+        self.append_local_hqs(local_headquarters, user_id, commanders)
 
         educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
-        self.get_educational_hq(educational_headquarters, user_id, commanders)
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class RegionalSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMixin):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class RegionalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
     class Meta:
         model = UserRegionalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1289,20 +1294,20 @@ class RegionalSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMi
         regional_headquarter = obj.headquarter
 
         detachments = Detachment.objects.filter(regional_headquarter=regional_headquarter)
-        self.get_detachment_hq(detachments, user_id, commanders)
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
         local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
-        self.get_local_hq(local_headquarters, user_id, commanders)
+        self.append_local_hqs(local_headquarters, user_id, commanders)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
-        self.get_educational_hq(educational_headquarters, user_id, commanders)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter=regional_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class LocalSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMixin):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class LocalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
     class Meta:
         model = UserLocalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1313,17 +1318,17 @@ class LocalSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMixin
         local_headquarter = obj.headquarter
 
         detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
-        self.get_detachment_hq(detachments, user_id, commanders)
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=local_headquarter)
-        self.get_educational_hq(educational_headquarters, user_id, commanders)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            local_headquarter=local_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class EducationalSubCommanderSerializer(serializers.ModelSerializer, SubCommanderMixin):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class EducationalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
     class Meta:
         model = UserEducationalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1334,6 +1339,6 @@ class EducationalSubCommanderSerializer(serializers.ModelSerializer, SubCommande
         educational_headquarter = obj.headquarter
 
         detachments = Detachment.objects.filter(educational_headquarter=educational_headquarter)
-        self.get_detachment_hq(detachments, user_id, commanders)
+        self.append_detachment_hqs(detachments, user_id, commanders)
         
         return commanders
