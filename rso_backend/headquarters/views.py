@@ -258,6 +258,9 @@ class RegionalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewS
     def get_application_short_serializer(self):
         return UserRegionalApplicationShortReadSerializer
 
+    def get_verification_serializer(self):
+        return UserVerificationReadSerializer
+
     def get_func_members_to_verify(self):
         return get_regional_hq_members_to_verify
 
@@ -442,6 +445,9 @@ class DetachmentViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelVie
 
     def get_application_serializer(self):
         return UserDetachmentApplicationReadSerializer
+
+    def get_verification_serializer(self):
+        return UserVerificationReadSerializer
 
     def get_application_short_serializer(self):
         return UserDetachmentApplicationShortReadSerializer
