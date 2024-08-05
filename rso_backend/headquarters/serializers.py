@@ -1208,19 +1208,19 @@ class SubCommanderMixin:
                 })
         return commanders
 
-    def append_district_hqs(self, district_headquarters, user_id, commanders):
+    def append_district_hqs(self, district_headquarters, user_id:int, commanders:list)->None:
         return self.add_commanders(district_headquarters, user_id, commanders, 'DistrictHeadquarter')
     
-    def append_regional_hqs(self, regional_headquarters, user_id, commanders):
+    def append_regional_hqs(self, regional_headquarters, user_id:int, commanders:list)->None:
         return self.add_commanders(regional_headquarters, user_id, commanders, 'RegionalHeadquarter')
 
-    def append_detachment_hqs(self, detachments, user_id, commanders):
+    def append_detachment_hqs(self, detachments, user_id:int, commanders:list)->None:
         return self.add_commanders(detachments, user_id, commanders, 'Detachment')
 
-    def append_local_hqs(self, local_headquarters, user_id, commanders):
+    def append_local_hqs(self, local_headquarters, user_id:int, commanders:list)->None:
         return self.add_commanders(local_headquarters, user_id, commanders, 'LocalHeadquarter')
 
-    def append_educational_hqs(self, educational_headquarters, user_id, commanders):
+    def append_educational_hqs(self, educational_headquarters, user_id:int, commanders:list)->None:
         return self.add_commanders(educational_headquarters, user_id, commanders, 'EducationalHeadquarter')
 
 
