@@ -4,12 +4,12 @@ from api.utils import create_first_or_exception
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
-from regional_competitions.models import (CHqRejectingLog, RegionalR4, RegionalR5Event,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
-                                          RegionalR102Link, RegionalR102)
+                                          RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -242,7 +242,14 @@ class BaseEventSerializer(serializers.ModelSerializer):
             'end_date',
             'regulations',
         )
-        read_only_fields = ('id', 'regional_r4')
+        read_only_fields = ('id',)
+
+
+class RegionalR1Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR1
+        fields = BaseRSerializer.Meta.fields + ('comment', 'amount_of_money', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
@@ -297,10 +304,10 @@ class RegionalR5LinkSerializer(BaseLinkSerializer):
     class Meta:
         model = RegionalR5Link
         fields = BaseLinkSerializer.Meta.fields + (
-            'regional_r5',
+            'regional_r5_event',
         )
         read_only_fields = BaseLinkSerializer.Meta.read_only_fields + (
-            'regional_r5',
+            'regional_r5_event',
         )
 
 
@@ -317,56 +324,28 @@ class RegionalR5EventSerializer(BaseEventSerializer):
         read_only_fields = ('id', 'regional_r5')
 
 
-class RegionalR5Serializer(BaseRSerializer):
-    projects = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
+class RegionalR5Serializer(
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
+):
+    events = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
+
+    objects_name = 'projects'
+    nested_objects_name = 'links'
 
     class Meta:
         model = RegionalR5
-        fields = BaseRSerializer.Meta.fields + (
-            'comment',
-            'projects',
-        )
+        fields = BaseRSerializer.Meta.fields + ('comment', 'projects',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
-    def create(self, validated_data):
-        events_data = validated_data.pop('projects', [])
-        regional_r5 = RegionalR5.objects.create(**validated_data)
-        self._create_or_update_events(regional_r5, events_data)
-        return regional_r5
+    def create_objects(self, created_objects, event_data):
+        return RegionalR5Event.objects.create(
+            regional_r5=created_objects, **event_data
+        )
 
-    def update(self, instance, validated_data):
-        events_data = validated_data.pop('projects', [])
-        instance = super().update(instance, validated_data)
-        self._create_or_update_events(instance, events_data)
-        return instance
-
-    def _create_or_update_events(self, regional_r5, events_data):
-        existing_events = {event.id: event for event in regional_r5.events.all()}
-        for event_data in events_data:
-            links_data = event_data.pop('links', [])
-            event_id = event_data.get('id', None)
-            if event_id and event_id in existing_events:
-                RegionalR5Event.objects.filter(id=event_id).update(**event_data)
-                event = RegionalR5Event.objects.get(id=event_id)
-                self._create_or_update_links(event, links_data)
-                existing_events.pop(event_id)
-            else:
-                event = RegionalR5Event.objects.create(regional_r5=regional_r5, **event_data)
-                self._create_or_update_links(event, links_data)
-        for event in existing_events.values():
-            event.delete()
-
-    def _create_or_update_links(self, event, links_data):
-        existing_links = {link.id: link for link in event.links.all()}
-        for link_data in links_data:
-            link_id = link_data.get('id', None)
-            if link_id and link_id in existing_links:
-                RegionalR4Link.objects.filter(id=link_id).update(**link_data)
-                existing_links.pop(link_id)
-            else:
-                RegionalR4Link.objects.create(regional_r4_event=event, **link_data)
-        for link in existing_links.values():
-            link.delete()
+    def create_nested_objects(self, parent_obj, obj_data):
+        return RegionalR5Link.objects.create(
+            regional_r5_project=parent_obj, **obj_data
+        )
 
 
 class RegionalR7PlaceSerializer(serializers.ModelSerializer):
@@ -393,6 +372,27 @@ class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
         return RegionalR7Place.objects.create(
             regional_r7=created_objects, **place_data
         )
+
+
+class RegionalR11Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR11
+        fields = BaseRSerializer.Meta.fields + ('comment', 'participants_number', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR12Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR12
+        fields = BaseRSerializer.Meta.fields + ('comment', 'amount_of_money', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR13Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR13
+        fields = BaseRSerializer.Meta.fields + ('comment', 'number_of_members', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR16LinkSerializer(serializers.ModelSerializer):

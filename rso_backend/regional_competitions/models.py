@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 
@@ -126,6 +127,8 @@ class BaseComment(models.Model):
 class BaseLink(models.Model):
     link = models.URLField(
         verbose_name='URL-адрес',
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -135,18 +138,21 @@ class BaseLink(models.Model):
 class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         abstract = True
-    
+
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
 
 
 class BaseEventOrProject(models.Model):
-            
     start_date = models.DateField(
-        verbose_name='Дата начала проведения мероприятия'
+        verbose_name='Дата начала проведения мероприятия',
+        blank=True,
+        null=True
     )
     end_date = models.DateField(
-        verbose_name='Дата окончания проведения мероприятия'
+        verbose_name='Дата окончания проведения мероприятия',
+        blank=True,
+        null=True
     )
     regulations = models.FileField(
         verbose_name='Положение о мероприятии',
@@ -154,6 +160,7 @@ class BaseEventOrProject(models.Model):
         blank=True,
         null=True
     )
+
     class Meta:
         abstract = True
 
@@ -244,6 +251,30 @@ class CHqRejectingLog(models.Model):
         )
 
 
+class RegionalR1(BaseEventProjectR):
+    """
+    Численность членов РО РСО в соответствии с объемом уплаченных членских взносов.
+    """
+    amount_of_money = models.FloatField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Сумма уплаченных членских взносов')
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
+        verbose_name='Скан подтверждающего документа'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 1 показателю'
+        verbose_name_plural = 'Отчеты по 1 показателю'
+
+    def __str__(self):
+        return f'Отчет 1 РО {self.regional_headquarter.name}'
+
+
 class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'
@@ -263,7 +294,9 @@ class RegionalR4Event(BaseEventOrProject):
     )
     participants_number = PositiveSmallIntegerField(
         verbose_name='Количество участников',
-        default=0
+        default=0,
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -291,8 +324,8 @@ class RegionalR5(BaseEventProjectR):
     трудовых проектов РСО.
     """
     class Meta:
-        verbose_name = 'Проект по 5 показателю'
-        verbose_name_plural = 'Проекты по 5 показателям'
+        verbose_name = 'Отчет по 5 показателю'
+        verbose_name_plural = 'Отчеты по 5 показателю'
 
 
 class RegionalR5Event(BaseEventOrProject):
@@ -302,19 +335,25 @@ class RegionalR5Event(BaseEventOrProject):
         verbose_name='Отчет',
         related_name='events'
     )
-    ro_participants_number = models.PositiveIntegerField(
-        verbose_name='Количество человек из своего региона, принявших участие в трудовом проекте'
+    participants_number = PositiveSmallIntegerField(
+        verbose_name='Общее количество участников',
+        default=0,
+        blank=True,
+        null=True
     )
-    regulations = models.FileField(
-        verbose_name='Положение о мероприятии',
-        upload_to=regional_comp_regulations_files_path,
+    ro_participants_number = models.PositiveIntegerField(
+        verbose_name=(
+            'Количество человек из своего региона, '
+            'принявших участие в трудовом проекте'
+        ),
+        default=0,
         blank=True,
         null=True
     )
 
     class Meta:
-        verbose_name = 'Мероприятие по 5 показателю'
-        verbose_name_plural = 'Мероприятия по 5 показателю'
+        verbose_name = 'Проект  5-го показателя'
+        verbose_name_plural = 'Проекты 5-го показателя'
 
     def __str__(self):
         return f'ID {self.id}'
@@ -332,7 +371,8 @@ class RegionalR5Link(BaseLink):
 class RegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 7 показателю'
-        verbose_name_plural = 'Отчеты по 7 показателю'                                                                                  
+        verbose_name_plural = 'Отчеты по 7 показателю'
+
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
 
@@ -382,7 +422,11 @@ class RegionalR101Link(models.Model):
         verbose_name='Отчет',
         related_name='links'
     )
-    link = models.URLField(verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции')
+    link = models.URLField(
+        verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = 'Ссылка по 10 показателю - "Снежный Десант"'
@@ -405,7 +449,11 @@ class RegionalR102Link(models.Model):
         verbose_name='Отчет',
         related_name='links'
     )
-    link = models.URLField(verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции')
+    link = models.URLField(
+        verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = 'Ссылка по 10 показателю - "Поклонимся Великим годам"'
@@ -415,9 +463,110 @@ class RegionalR102Link(models.Model):
         return f'ID {self.id}'
 
 
+class RegionalR11(BaseEventProjectR):
+    """Активность РО РСО в социальных сетях 'К'"""
+
+    participants_number = models.PositiveIntegerField(
+        verbose_name=(
+            'Количество человек, входящих в группу '
+            'РО РСО в социальной сети "ВКонтакте"'
+        ),
+        blank=True,
+        null=True
+    )
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скриншот численности группы РО РСО',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 11 показателю'
+        verbose_name_plural = 'Отчеты по 11 показателю'
+
+
+class RegionalR12(BaseEventProjectR):
+    """
+    Объем средств, собранных бойцами РО РСО во Всероссийском дне ударного труда.
+    """
+    amount_of_money = models.FloatField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Объем средств собранных бойцами РО РСО')
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
+        verbose_name='Скан подтверждающего документа'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 12 показателю'
+        verbose_name_plural = 'Отчеты по 12 показателю'
+
+    def __str__(self):
+        return f'Отчет 12 РО {self.regional_headquarter.name}'
+
+
+class RegionalR13(BaseEventProjectR):
+    """
+    Охват членов РО РСО, принявших участие во Всероссийском дне ударного труда «К».
+    """
+    number_of_members = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество членов РО РСО, принявших участие'
+    )
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
+        verbose_name='Скан подтверждающего документа'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 13 показателю'
+        verbose_name_plural = 'Отчеты по 13 показателю'
+
+    def __str__(self):
+        return f'Отчет 13 РО {self.regional_headquarter.name}'
+
+
+class RegionalR14(BaseScore):
+    """
+    Этот показатель считается на основании верифицированных 12 и 13 показателей.
+    Заполняется таской.
+
+    Заполняется один раз, без периодического пересчета,
+    т.к. нет редактирования верифицированных отчетов.
+    """
+    report_12 = models.ForeignKey(
+        'RegionalR12',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет 12',
+        related_name='report_14'
+    )
+    report_13 = models.ForeignKey(
+        'RegionalR13',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет 13',
+        related_name='report_14'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 14 показателю'
+        verbose_name_plural = 'Отчеты по 14 показателю'
+
+    def __str__(self):
+        return f'Отчет 14 РО {self.report_12.regional_headquarter.name}'
+
+
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
-        verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу'
+        verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу',
+        default=False
     )
 
     class Meta:
@@ -441,11 +590,17 @@ class RegionalR16Project(models.Model):
         verbose_name='Отчет',
         related_name='projects'
     )
-    name = models.TextField(verbose_name='Наименование проекта, в котором ЛСО РО одержал победу')
+    name = models.TextField(
+        verbose_name='Наименование проекта, в котором ЛСО РО одержал победу',
+        blank=True,
+        null=True
+    )
     project_scale = models.CharField(
         max_length=30,
         choices=ProjectScale.choices,
-        verbose_name='Масштаб проекта'
+        verbose_name='Масштаб проекта',
+        blank=True,
+        null=True
     )
     regulations = models.FileField(
         upload_to=regional_comp_regulations_files_path,
@@ -471,6 +626,8 @@ class RegionalR16Link(models.Model):
     )
     link = models.URLField(
         verbose_name='Ссылка на группу проекта в социальных сетях',
+        blank=True,
+        null=True
     )
 
     class Meta:
