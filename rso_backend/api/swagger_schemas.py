@@ -1,7 +1,4 @@
 from drf_yasg import openapi
-from rest_framework import serializers, status
-
-from events.models import Event
 
 properties = {
         'cert_start_date': openapi.Schema(

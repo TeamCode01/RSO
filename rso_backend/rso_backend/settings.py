@@ -13,6 +13,7 @@ CENTRAL_HQ_ID = 1
 
 # Redis cache TTL
 DETANCHMENT_LIST_CACHE_TTL = 120
+SUB_COMMANDER_LIST_TTL = 120
 DETACHMENT_LIST_TTL = 120
 EDUCATIONALS_LIST_TTL = 120
 LOCALS_LIST_TTL = 240
@@ -30,6 +31,7 @@ DISTRCICTHQ_MEMBERS_CACHE_TTL = 40
 CENTRALHQ_MEMBERS_CACHE_TTL = 180
 EVENTS_CACHE_TTL = 45
 EDU_INST_CACHE_TTL = 180
+USER_ME_TTL = 20
 
 
 MIN_FOUNDING_DATE = 1000
@@ -111,7 +113,8 @@ INSTALLED_APPS += [
     'events.apps.EventsConfig',
     'competitions.apps.CompetitionsConfig',
     'questions.apps.QuestionsConfig',
-    'regional_competitions.apps.RegionalCompetitionsConfig'
+    'regional_competitions.apps.RegionalCompetitionsConfig',
+    'services.apps.ServicesConfig',
 ]
 
 MIDDLEWARE = [
@@ -379,6 +382,14 @@ else:
                 minute=0,
                 day_of_month=1,
                 month_of_year=10,
+            )
+        },
+        'delete_front_logs': {
+            'task': 'services.tasks.delete_front_logs',
+            'schedule': crontab(
+                hour=0,
+                minute=0,
+                day_of_week='sunday'
             )
         },
         'delete_temp_reports': {

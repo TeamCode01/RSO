@@ -10,12 +10,14 @@ class EducationalInstitution(models.Model):
     short_name = models.CharField(
         max_length=100,
         verbose_name='Короткое название образовательной '
-                     'организации (например, РГГУ)'
+                     'организации (например, РГГУ)',
+        db_index=True
     )
     name = models.CharField(
         max_length=300,
         unique=True,
         verbose_name='Полное название образовательной организации',
+        db_index=True
     )
     rector = models.CharField(
         max_length=250,
@@ -52,6 +54,7 @@ class Region(models.Model):
     code = models.SmallIntegerField(
         blank=True,
         null=True,
+        db_index=True,
         verbose_name='Код региона'
     )
 
@@ -67,7 +70,8 @@ class Area(models.Model):
     name = models.CharField(
         max_length=50,
         blank=False,
-        verbose_name='Название направления'
+        verbose_name='Название направления',
+        db_index=True
     )
 
     class Meta:
@@ -83,7 +87,8 @@ class Unit(models.Model):
 
     name = models.CharField(
         max_length=100,
-        verbose_name='Название'
+        verbose_name='Название',
+        db_index=True
     )
     commander = models.OneToOneField(
         'users.RSOUser',
@@ -592,6 +597,7 @@ class Position(models.Model):
         verbose_name='Должность',
         max_length=150,
         unique=True,
+        db_index=True
     )
 
     def __str__(self):

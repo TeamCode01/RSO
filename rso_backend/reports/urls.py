@@ -1,21 +1,31 @@
 from django.urls import path
 
-from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, CompetitionParticipantView,
-                           DetachmentQResultsView, ExportAttributesOfUniformView,
+from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
+                           DetachmentQResultsView,
                            ExportCommanderSchoolDataView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
                            ExportDetachmentQResultsView,
-                           ExportMembershipFeeDataView, 
-                           ExportRegionsUserDataView,
-                           ExportSafetyTestResultsView, ReportView,MembershipFeeDataView,
-                           SafetyTestResultsView, TaskStatusView, ExportQ5DataView, ExportQ7DataView, ExportQ8DataView, ExportQ9DataView, ExportQ15DataView,
-                           ExportQ16DataView, ExportQ17DataView, ExportQ20DataView, ExportQ18DataView)
+                           ExportMembershipFeeDataView,
+                           ExportSafetyTestResultsView,
+                           ReportView, MembershipFeeDataView,
+                           SafetyTestResultsView, TaskStatusView,
+                           ExportQ5DataView,ExportQ7DataView, ExportQ8DataView, ExportQ9DataView, ExportQ15DataView,
+                           ExportQ16DataView, ExportQ17DataView,
+                           ExportQ20DataView, ExportQ18DataView,
+                           CompetitionParticipantView,
+                           ExportAttributesOfUniformView,
+                           ExportQ13DataView, ExportQ14DataView,
+                           ExportQ19DataView)
 
 
 urlpatterns = [
     path('', ReportView.as_view(), name='reports'),
-    path('task-status/<str:task_id>/', TaskStatusView.as_view(), name='task_status'),
+    path(
+        'task-status/<str:task_id>/',
+        TaskStatusView.as_view(),
+        name='task_status'
+    ),
     path(
         'safety_test_results/',
         SafetyTestResultsView.as_view(),
@@ -52,11 +62,6 @@ urlpatterns = [
         name='competition_participants_contact_data'
     ),
     path(
-        'users_data_by_regions/',
-        ExportRegionsUserDataView.as_view(),
-        name='regions_users_data'
-    ),
-    path(
         'commander_shool/export/',
         ExportCommanderSchoolDataView.as_view(),
         name='export_commander_school_results'
@@ -71,7 +76,7 @@ urlpatterns = [
         ExportQ5DataView.as_view(),
         name='export_q5_data'
     ),
-    path(
+     path(
         'get_q7_data/export/',
         ExportQ7DataView.as_view(),
         name='export_q7_data'
@@ -85,6 +90,16 @@ urlpatterns = [
         'get_q9_data/export/',
         ExportQ9DataView.as_view(),
         name='export_q9_data'
+    ),
+    path(
+        'get_q13_data/export/',
+        ExportQ13DataView.as_view(),
+        name='export_q13_data'
+    ),
+    path(
+        'get_q14_data/export/',
+        ExportQ14DataView.as_view(),
+        name='export_q14_data'
     ),
     path(
         'get_q15_data/export/',
@@ -105,6 +120,11 @@ urlpatterns = [
         'get_q18_data/export/',
         ExportQ18DataView.as_view(),
         name='export_q18_data'
+    ),
+    path(
+        'get_q19_data/export/',
+        ExportQ19DataView.as_view(),
+        name='export_q19_data'
     ),
     path(
         'get_q20_data/export/',

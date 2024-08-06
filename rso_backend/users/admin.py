@@ -2,8 +2,6 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
@@ -12,10 +10,8 @@ from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
 from headquarters.utils import create_central_hq_member
 from import_export.admin import ImportExportModelAdmin
 from openpyxl import Workbook
-from reports.constants import REGION_USERS_DATA_HEADERS
-from reports.tasks import generate_excel_file
+from users.constants import REGION_USERS_DATA_HEADERS
 from rest_framework.authtoken.models import TokenProxy
-from urllib.parse import unquote
 
 from headquarters.models import Detachment
 from users.models import (RSOUser, UserDocuments,
@@ -155,7 +151,10 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
         response = HttpResponse(
             file_content.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content_type=(
+                'application/vnd.openxmlformats-officedocument'
+                '.spreadsheetml.sheet'
+            )
         )
         response['Content-Disposition'] = (
             'attachment; filename=users_data.xlsx'

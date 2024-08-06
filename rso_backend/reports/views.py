@@ -12,18 +12,21 @@ from urllib.parse import quote
 from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
-from reports.constants import (ATTRIBUTION_DATA_HEADERS, COMMANDER_SCHOOL_DATA_HEADERS,
+from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                COMPETITION_PARTICIPANTS_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
                                MEMBERSHIP_FEE_DATA_HEADERS,
-                               REGION_USERS_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
                                COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS,
                                Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS,
-                               Q18_DATA_HEADERS)
+                               Q18_DATA_HEADERS,
+                               COMMANDER_SCHOOL_DATA_HEADERS,
+                               Q13_DATA_HEADERS, Q14_DATA_HEADERS,
+                               Q19_DATA_HEADERS)
 
 from reports.utils import (
-    get_attributes_of_uniform_data, get_commander_school_data, get_competition_users, get_detachment_q_results,
+    get_attributes_of_uniform_data, get_commander_school_data,
+    get_competition_users, get_detachment_q_results,
     adapt_attempts, get_membership_fee_data
 )
 
@@ -248,6 +251,36 @@ class ExportQ9DataView(BaseExcelExportView):
     def get_data_func(self):
         return 'get_q9_data'       
 
+class ExportQ13DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q13_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Организац_собств_мероприятий_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Организация мероприятий'
+
+    def get_data_func(self):
+        return 'get_q13_data'    
+    
+
+class ExportQ14DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q14_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Отнош_колва_бойцов_отраб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Отношение отработавших'
+
+    def get_data_func(self):
+        return 'get_q14_data'
+    
+
 class ExportQ15DataView(BaseExcelExportView):
 
     def get_headers(self):
@@ -307,6 +340,20 @@ class ExportQ18DataView(BaseExcelExportView):
         return 'get_q18_data'
     
 
+class ExportQ19DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q19_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Отсутствие_нарушений_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Отсутствие нарушений'
+
+    def get_data_func(self):
+        return 'get_q19_data'
+    
+
 class ExportQ20DataView(BaseExcelExportView):
 
     def get_headers(self):
@@ -336,21 +383,6 @@ class CommanderSchoolView(View):
         context = {'sample_results': results,
                    'columns': COMMANDER_SCHOOL_DATA_HEADERS}
         return render(request, self.template_name, context)
-
-
-class ExportRegionsUserDataView(BaseExcelExportView):
-
-    def get_headers(self):
-        return REGION_USERS_DATA_HEADERS
-
-    def get_filename(self):
-        return f'юзеры_по_регионам_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'Данные пользователей по регионам'
-
-    def get_data_func(self):
-        return 'regions_users_data'
 
 
 class ExportMembershipFeeDataView(BaseExcelExportView):
