@@ -80,7 +80,9 @@ from headquarters.serializers import (
     UserCentralApplicationShortReadSerializer,
     CentralSubCommanderSerializer, RegionalSubCommanderSerializer,
     DistrictSubCommanderSerializer, EducationalSubCommanderSerializer,
-    LocalSubCommanderSerializer)
+    LocalSubCommanderSerializer, BaseLeadershipSerializer,
+    CentralLeadershipSerializer, LocalLeadershipSerializer, EducationalLeadershipSerializer,
+    DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1287,3 +1289,54 @@ class EducationalSubCommanderViewSet(BaseSubCommanderViewSet):
         queryset = self.filter_by_user_id(queryset)
         queryset = self.filter_by_name(queryset)
         return queryset
+    
+
+class BaseLeadershipViewSet(viewsets.GenericViewSet):
+    serializer_class = BaseLeadershipSerializer
+
+    @action(detail=True, methods=['get'], url_path='members')
+    def add_leadership(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='members/(?P<user_pk>\d+)')
+    def retrieve_leadership_by_user_pk(self, request, pk=None, user_pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        leadership = serializer.data['leadership']
+        filtered_leadership = [l for l in leadership if l['user']['id'] == int(user_pk)]
+        if filtered_leadership:
+            return Response(filtered_leadership)
+        else:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+
+class CentralLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = CentralHeadquarter.objects.all()
+    serializer_class = CentralLeadershipSerializer
+
+
+class DistrictLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = DistrictHeadquarter.objects.all()
+    serializer_class = DistrictLeadershipSerializer
+
+
+class RegionalLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = RegionalHeadquarter.objects.all()
+    serializer_class = RegionalLeadershipSerializer
+
+
+class LocalLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = LocalHeadquarter.objects.all()
+    serializer_class = LocalLeadershipSerializer
+
+
+class EducationalLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = EducationalHeadquarter.objects.all()
+    serializer_class = EducationalLeadershipSerializer
+    
+
+class DetancmentLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = Detachment.objects.all()
+    serializer_class = DetachmentLeadershipSerializer

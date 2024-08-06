@@ -348,7 +348,6 @@ class BaseUnitSerializer(serializers.ModelSerializer):
     )
     members_count = serializers.SerializerMethodField(read_only=True)
     participants_count = serializers.SerializerMethodField(read_only=True)
-    leadership = serializers.SerializerMethodField(read_only=True)
     events_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -367,7 +366,6 @@ class BaseUnitSerializer(serializers.ModelSerializer):
             'members_count',
             'participants_count',
             'events_count',
-            'leadership',
         )
 
     def to_representation(self, instance):
@@ -377,46 +375,6 @@ class BaseUnitSerializer(serializers.ModelSerializer):
         if commander:
             serialized_data['commander'] = ShortUserSerializer(commander).data
         return serialized_data
-
-    def _get_position_instance(self):
-        if isinstance(self.instance, QuerySet):
-            instance_type = type(self.instance.first())
-        else:
-            instance_type = type(self.instance)
-
-        for model_class, (
-                position_model, _
-        ) in self._POSITIONS_MAPPING.items():
-            if issubclass(instance_type, model_class):
-                return position_model
-
-    def _get_position_serializer(self):
-        if isinstance(self.instance, QuerySet):
-            instance_type = type(self.instance.first())
-        else:
-            instance_type = type(self.instance)
-
-        for model_class, (
-                _, serializer_class
-        ) in self._POSITIONS_MAPPING.items():
-            if issubclass(instance_type, model_class):
-                return serializer_class
-
-    def get_leadership(self, instance):
-        """
-        Вывод руководство отряда - всех, кроме указанных в настройках
-        должностей.
-        """
-        serializer = self._get_position_serializer()
-        position_instance = self._get_position_instance()
-        leaders = position_instance.objects.filter(
-            headquarter=instance
-        ).exclude(
-            Q(position__name__in=settings.NOT_LEADERSHIP_POSITIONS) |
-            Q(position__isnull=True)
-        )
-
-        return serializer(leaders, many=True).data
 
     def get_events_count(self, instance):
         return instance.events.count()
@@ -1128,22 +1086,6 @@ class DetachmentSerializer(BaseUnitSerializer):
         serialized_data['region'] = RegionSerializer(region).data
         return serialized_data
 
-    def get_leadership(self, instance):
-        """
-        Вывод руководства отряда (пользователи с должностями "Мастер
-        (методист)" и "Комиссар", точные названия которых прописаны
-        в настройках).
-        """
-        serializer = self._get_position_serializer()
-        position_instance = self._get_position_instance()
-        leaders = position_instance.objects.filter(
-            Q(headquarter=instance) &
-            (
-                    Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
-                    Q(position__name=settings.COMMISSIONER_POSITION_NAME)
-            )
-        )
-        return serializer(leaders, many=True).data
 
     def get_status(self, obj):
         if not CompetitionParticipants.objects.filter(
@@ -1224,7 +1166,7 @@ class SubCommanderMixin:
         return self.add_commanders(educational_headquarters, user_id, commanders, 'EducationalHeadquarter')
 
 
-class CentralSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
+class CentralSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserCentralHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1254,7 +1196,7 @@ class CentralSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixi
         return commanders
 
 
-class DistrictSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
+class DistrictSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserDistrictHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1283,7 +1225,7 @@ class DistrictSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMix
         return commanders
 
 
-class RegionalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
+class RegionalSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserRegionalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1307,7 +1249,7 @@ class RegionalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMix
         return commanders
 
 
-class LocalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
+class LocalSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserLocalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1328,7 +1270,7 @@ class LocalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin)
         return commanders
 
 
-class EducationalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommanderMixin):
+class EducationalSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserEducationalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1342,3 +1284,119 @@ class EducationalSubCommanderSerializer(BaseSubCommanderSerializer, SubCommander
         self.append_detachment_hqs(detachments, user_id, commanders)
         
         return commanders
+
+
+class BaseLeadershipSerializer(serializers.ModelSerializer):
+    leadership = serializers.SerializerMethodField(read_only=True)
+
+    _POSITIONS_MAPPING = {
+        CentralHeadquarter: (
+            UserCentralHeadquarterPosition, CentralPositionSerializer
+        ),
+        DistrictHeadquarter: (
+            UserDistrictHeadquarterPosition, DistrictPositionSerializer
+        ),
+        RegionalHeadquarter: (
+            UserRegionalHeadquarterPosition, RegionalPositionSerializer
+        ),
+        LocalHeadquarter: (
+            UserLocalHeadquarterPosition, LocalPositionSerializer
+        ),
+        EducationalHeadquarter: (
+            UserEducationalHeadquarterPosition, EducationalPositionSerializer
+        ),
+        Detachment: (UserDetachmentPosition, DetachmentPositionSerializer),
+    }
+
+    class Meta:
+        model = None
+        fields = ('leadership',)
+
+    def _get_position_instance(self):
+        if isinstance(self.instance, QuerySet):
+            instance_type = type(self.instance.first())
+        else:
+            instance_type = type(self.instance)
+
+        for model_class, (
+                position_model, _
+        ) in self._POSITIONS_MAPPING.items():
+            if issubclass(instance_type, model_class):
+                return position_model
+
+    def _get_position_serializer(self):
+        if isinstance(self.instance, QuerySet):
+            instance_type = type(self.instance.first())
+        else:
+            instance_type = type(self.instance)
+
+        for model_class, (
+                _, serializer_class
+        ) in self._POSITIONS_MAPPING.items():
+            if issubclass(instance_type, model_class):
+                return serializer_class
+
+    def get_leadership(self, instance):
+        """
+        Вывод руководство отряда - всех, кроме указанных в настройках
+        должностей.
+        """
+        serializer = self._get_position_serializer()
+        position_instance = self._get_position_instance()
+        leaders = position_instance.objects.filter(
+            headquarter=instance
+        ).exclude(
+            Q(position__name__in=settings.NOT_LEADERSHIP_POSITIONS) |
+            Q(position__isnull=True)
+        )
+
+        return serializer(leaders, many=True).data
+    
+
+class CentralLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = CentralHeadquarter
+        fields = ('leadership',)
+
+class DistrictLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = DistrictHeadquarter
+        fields = ('leadership',)
+
+class RegionalLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = RegionalHeadquarter
+        fields = ('leadership',)
+
+class LocalLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = LocalHeadquarter
+        fields = ('leadership',)
+
+class EducationalLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = EducationalHeadquarter
+        fields = ('leadership',)
+
+
+class DetachmentLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+         model = Detachment
+         fields = ('leadership',)
+
+    def get_leadership(self, instance):
+        """
+        Вывод руководства отряда (пользователи с должностями "Мастер
+        (методист)" и "Комиссар", точные названия которых прописаны
+        в настройках).
+        """
+        serializer = self._get_position_serializer()
+        position_instance = self._get_position_instance()
+        leaders = position_instance.objects.filter(
+            Q(headquarter=instance) &
+            (
+                Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
+                Q(position__name=settings.COMMISSIONER_POSITION_NAME)
+            )
+        )
+        return serializer(leaders, many=True).data
