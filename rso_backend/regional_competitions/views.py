@@ -16,11 +16,12 @@ from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR13, RegionalR4,
                                           RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
-                                          RegionalR101)
+                                          RegionalR101, RegionalR11)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR12Serializer, RegionalR13Serializer, RegionalR4Serializer, RegionalR5Serializer, StatisticalRegionalReportSerializer, RegionalR7Serializer,
-    RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer,)
+    RegionalR12Serializer, RegionalR13Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    StatisticalRegionalReportSerializer, RegionalR7Serializer,
+    RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer, RegionalR11Serializer, )
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
@@ -433,6 +434,21 @@ class RegionalR102MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR102
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+
+class RegionalR11ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR11.objects.all()
+    serializer_class = RegionalR11Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+    parser_classes = (MultiPartParser, FormParser)
+
+
+class RegionalR11MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR11
+    queryset = RegionalR11.objects.all()
+    serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 

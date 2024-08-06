@@ -418,6 +418,29 @@ class RegionalR102Link(models.Model):
         return f'ID {self.id}'
 
 
+class RegionalR11(BaseEventProjectR):
+    """Активность РО РСО в социальных сетях 'К'"""
+
+    participants_number = models.PositiveIntegerField(
+        verbose_name=(
+            'Количество человек, входящих в группу '
+            'РО РСО в социальной сети "ВКонтакте"'
+        ),
+        blank=True,
+        null=True
+    )
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скриншот численности группы РО РСО',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 11 показателю'
+        verbose_name_plural = 'Отчеты по 11 показателю'
+
+
 class RegionalR12(BaseEventProjectR):
     """
     Объем средств, собранных бойцами РО РСО во Всероссийском дне ударного труда.

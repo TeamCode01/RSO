@@ -9,7 +9,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR12, Regional
                                           RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
-                                          RegionalR102Link, RegionalR102, RegionalR5Event)
+                                          RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -365,6 +365,13 @@ class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
         return RegionalR7Place.objects.create(
             regional_r7=created_objects, **place_data
         )
+
+
+class RegionalR11Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR11
+        fields = BaseRSerializer.Meta.fields + ('comment', 'participants_number', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR12Serializer(BaseRSerializer):
