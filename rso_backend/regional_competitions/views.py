@@ -16,12 +16,13 @@ from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
-                                          RegionalR101, RegionalR11)
+                                          RegionalR101, RegionalR11, RegionalR17, RegionalR19)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
     RegionalR12Serializer, RegionalR13Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     StatisticalRegionalReportSerializer, RegionalR7Serializer,
-    RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer, RegionalR11Serializer, )
+    RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer, RegionalR11Serializer,
+    RegionalR17Serializer, RegionalR19Serializer, )
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
@@ -503,4 +504,31 @@ class RegionalR16MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR16
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR17ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR17.objects.all()
+    serializer_class = RegionalR17Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+    parser_classes = (MultiPartParser, FormParser)
+
+
+class RegionalR17MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR17
+    queryset = RegionalR17.objects.all()
+    serializer_class = RegionalR17Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR19ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR19.objects.all()
+    serializer_class = RegionalR19Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR19
+    queryset = RegionalR19.objects.all()
+    serializer_class = RegionalR19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)

@@ -1,12 +1,13 @@
 from django.contrib import admin
 
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR14, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR14,
+                                          RegionalR4,
                                           RegionalR7,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR7Place, RegionalR5Link, RegionalR5Event,
                                           StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
                                           RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16,
-                                          RegionalR11)
+                                          RegionalR11, RegionalR17, RegionalR19)
 
 
 @admin.register(StatisticalRegionalReport)
@@ -378,3 +379,35 @@ class RegionalR16Admin(admin.ModelAdmin):
     list_filter = ('is_project', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [RegionalR16ProjectInline]
+
+
+@admin.register(RegionalR17)
+class RegionalR17Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(RegionalR19)
+class RegionalR19Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
