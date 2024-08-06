@@ -127,6 +127,8 @@ class BaseComment(models.Model):
 class BaseLink(models.Model):
     link = models.URLField(
         verbose_name='URL-адрес',
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -143,10 +145,14 @@ class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
 
 class BaseEventOrProject(models.Model):
     start_date = models.DateField(
-        verbose_name='Дата начала проведения мероприятия'
+        verbose_name='Дата начала проведения мероприятия',
+        blank=True,
+        null=True
     )
     end_date = models.DateField(
-        verbose_name='Дата окончания проведения мероприятия'
+        verbose_name='Дата окончания проведения мероприятия',
+        blank=True,
+        null=True
     )
     regulations = models.FileField(
         verbose_name='Положение о мероприятии',
@@ -264,7 +270,9 @@ class RegionalR4Event(BaseEventOrProject):
     )
     participants_number = PositiveSmallIntegerField(
         verbose_name='Количество участников',
-        default=0
+        default=0,
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -305,13 +313,18 @@ class RegionalR5Event(BaseEventOrProject):
     )
     participants_number = PositiveSmallIntegerField(
         verbose_name='Общее количество участников',
-        default=0
+        default=0,
+        blank=True,
+        null=True
     )
     ro_participants_number = models.PositiveIntegerField(
         verbose_name=(
             'Количество человек из своего региона, '
             'принявших участие в трудовом проекте'
-        )
+        ),
+        default=0,
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -385,7 +398,11 @@ class RegionalR101Link(models.Model):
         verbose_name='Отчет',
         related_name='links'
     )
-    link = models.URLField(verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции')
+    link = models.URLField(
+        verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = 'Ссылка по 10 показателю - "Снежный Десант"'
@@ -408,7 +425,11 @@ class RegionalR102Link(models.Model):
         verbose_name='Отчет',
         related_name='links'
     )
-    link = models.URLField(verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции')
+    link = models.URLField(
+        verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = 'Ссылка по 10 показателю - "Поклонимся Великим годам"'
@@ -489,7 +510,8 @@ class RegionalR14(BaseScore):
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
-        verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу'
+        verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу',
+        default=False
     )
 
     class Meta:
@@ -513,11 +535,17 @@ class RegionalR16Project(models.Model):
         verbose_name='Отчет',
         related_name='projects'
     )
-    name = models.TextField(verbose_name='Наименование проекта, в котором ЛСО РО одержал победу')
+    name = models.TextField(
+        verbose_name='Наименование проекта, в котором ЛСО РО одержал победу',
+        blank=True,
+        null=True
+    )
     project_scale = models.CharField(
         max_length=30,
         choices=ProjectScale.choices,
-        verbose_name='Масштаб проекта'
+        verbose_name='Масштаб проекта',
+        blank=True,
+        null=True
     )
     regulations = models.FileField(
         upload_to=regional_comp_regulations_files_path,
@@ -543,6 +571,8 @@ class RegionalR16Link(models.Model):
     )
     link = models.URLField(
         verbose_name='Ссылка на группу проекта в социальных сетях',
+        blank=True,
+        null=True
     )
 
     class Meta:
