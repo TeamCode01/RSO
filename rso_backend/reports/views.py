@@ -214,10 +214,10 @@ class ExportQ7DataView(BaseExcelExportView):
         return Q7_DATA_HEADERS
 
     def get_filename(self):
-        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+        return f'Участие_членов_студ_отр_во_всерос_мероприятиях_РСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
     def get_worksheet_title(self):
-        return 'Школа командиров'
+        return 'Участие членов студенческого отряда во всероссийских мероприятиях РСО'
 
     def get_data_func(self):
         return 'get_q7_data'       
@@ -227,10 +227,10 @@ class ExportQ8DataView(BaseExcelExportView):
         return Q8_DATA_HEADERS
 
     def get_filename(self):
-        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+        return f'Призовые_места_отр_в_окруж_межрег_конк_РСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
     def get_worksheet_title(self):
-        return 'Школа командиров'
+        return 'Призовые места отряда в окружных и межрегиональных мероприятиях и конкурсах РСО'
 
     def get_data_func(self):
         return 'get_q8_data'       
@@ -240,10 +240,10 @@ class ExportQ9DataView(BaseExcelExportView):
         return Q9_DATA_HEADERS
 
     def get_filename(self):
-        return f'Процент_членов_отр_проф_обуч_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+        return f'Призовые_места_отр_во_всеросс_мероп_и конк_РСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
     def get_worksheet_title(self):
-        return 'Школа командиров'
+        return 'Призовые места отряда во всероссийских мероприятиях и конкурсах РСО'
 
     def get_data_func(self):
         return 'get_q9_data'       

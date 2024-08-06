@@ -481,28 +481,31 @@ def get_q5_data(competition_id: int) -> list:
 
 def get_q7_data(competition_id: int) -> list:
     rows = []
-#в доработке
+
     detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
     reports = Q7Report.objects.all().select_related('detachment')
     participations = Q7.objects.select_related('detachment_report').all()
+    links = {l.event_id: l for l in LinksQ7.objects.all()}
     tandem_rankings = {tr.detachment_id: tr for tr in Q7TandemRanking.objects.all()}
     individual_rankings = {ir.detachment_id: ir for ir in Q7Ranking.objects.all()}
-    links = LinksQ7.objects.all()
 
     for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
         detachment = detachments.get(participant.detachment_id)
         if detachment:
             for report in reports.filter(detachment_id=detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
-                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
-                    event_links = links.filter(event_id=participation.id)
-                    link_urls = ', '.join([f'https://{settings.DEFAULT_SITE_URL}{link.link}' for link in event_links])
+                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else '-'
+                    social_link = links.get(participation.id).link if participation.id in links else '-'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
-                        participation.number_of_participants,
-                        link_urls if link_urls else '-',
+                        participation.event_name if participation.event_name else '-',
+                        participation.number_of_participants if participation.number_of_participants else '-',
+                        social_link,
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -511,15 +514,18 @@ def get_q7_data(competition_id: int) -> list:
         if junior_detachment:
             for report in reports.filter(detachment_id=junior_detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
-                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
-                    event_links = links.filter(event_id=participation.id)
-                    link_urls = ', '.join([f'https://{settings.DEFAULT_SITE_URL}{link.link}' for link in event_links])
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else '-'
+                    social_link = links.get(participation.id).link if participation.id in links else '-'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
-                        participation.number_of_participants,
-                        link_urls if link_urls else '-',
+                        participation.event_name if participation.event_name else '-',
+                        participation.number_of_participants if participation.number_of_participants else '-',
+                        social_link,
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -528,15 +534,18 @@ def get_q7_data(competition_id: int) -> list:
         if detachment:
             for report in reports.filter(detachment_id=detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
-                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
-                    event_links = links.filter(event_id=participation.id)
-                    link_urls = ', '.join([f'https://{settings.DEFAULT_SITE_URL}{link.link}' for link in event_links])
+                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else '-'
+                    social_link = links.get(participation.id).link if participation.id in links else '-'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
-                        participation.number_of_participants,
-                        link_urls if link_urls else '-',
+                        participation.event_name if participation.event_name else '-',
+                        participation.number_of_participants if participation.number_of_participants else '-',
+                        social_link,
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -544,28 +553,28 @@ def get_q7_data(competition_id: int) -> list:
 
 def get_q8_data(competition_id: int) -> list:
     rows = []
-#в доработке
+
     detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
     reports = Q8Report.objects.all().select_related('detachment')
     participations = Q8.objects.select_related('detachment_report').all()
     tandem_rankings = {tr.detachment_id: tr for tr in Q8TandemRanking.objects.all()}
     individual_rankings = {ir.detachment_id: ir for ir in Q8Ranking.objects.all()}
-    links = LinksQ8.objects.all()
 
     for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
         detachment = detachments.get(participant.detachment_id)
         if detachment:
             for report in reports.filter(detachment_id=detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
-                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
-                    event_links = links.filter(event_id=participation.id)
-                    link_urls = ', '.join([f'https://{settings.DEFAULT_SITE_URL}{link.link}' for link in event_links])
+                    place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else '-'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
-                        participation.number_of_participants,
-                        link_urls if link_urls else '-',
+                        participation.event_name if participation.event_name else '-',
+                        participation.number_of_participants if participation.number_of_participants else '-',
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -574,15 +583,16 @@ def get_q8_data(competition_id: int) -> list:
         if junior_detachment:
             for report in reports.filter(detachment_id=junior_detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
-                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
-                    event_links = links.filter(event_id=participation.id)
-                    link_urls = ', '.join([f'https://{settings.DEFAULT_SITE_URL}{link.link}' for link in event_links])
+                    place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else '-'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
-                        participation.number_of_participants,
-                        link_urls if link_urls else '-',
+                        participation.event_name if participation.event_name else '-',
+                        participation.number_of_participants if participation.number_of_participants else '-',
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -591,15 +601,16 @@ def get_q8_data(competition_id: int) -> list:
         if detachment:
             for report in reports.filter(detachment_id=detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
-                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
-                    event_links = links.filter(event_id=participation.id)
-                    link_urls = ', '.join([f'https://{settings.DEFAULT_SITE_URL}{link.link}' for link in event_links])
+                    place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else '-'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
-                        participation.number_of_participants,
-                        link_urls if link_urls else '-',
+                        participation.event_name if participation.event_name else '-',
+                        participation.number_of_participants if participation.number_of_participants else '-',
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -607,26 +618,28 @@ def get_q8_data(competition_id: int) -> list:
 
 def get_q9_data(competition_id: int) -> list:
     rows = []
-#в доработке
+
     detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
     reports = Q9Report.objects.all().select_related('detachment')
     participations = Q9.objects.select_related('detachment_report').all()
     tandem_rankings = {tr.detachment_id: tr for tr in Q9TandemRanking.objects.all()}
     individual_rankings = {ir.detachment_id: ir for ir in Q9Ranking.objects.all()}
 
-    
     for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
         detachment = detachments.get(participant.detachment_id)
         if detachment:
             for report in reports.filter(detachment_id=detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
                     place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
-                        participation.prize_place,
-                        report.score,
+                        participation.event_name if participation.event_name else '-',
+                        participation.prize_place if participation.prize_place else '-',
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -636,12 +649,15 @@ def get_q9_data(competition_id: int) -> list:
             for report in reports.filter(detachment_id=junior_detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
                     place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
-                        participation.prize_place,
-                        report.score,
+                        participation.event_name if participation.event_name else '-',
+                        participation.prize_place if participation.prize_place else '-',
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
@@ -651,12 +667,15 @@ def get_q9_data(competition_id: int) -> list:
             for report in reports.filter(detachment_id=detachment.id):
                 for participation in participations.filter(detachment_report_id=report.id):
                     place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
+                    certificate_link = f'https://{settings.DEFAULT_SITE_URL}{participation.certificate_scans.url}' if participation.certificate_scans else '-'
                     rows.append((
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
-                        participation.prize_place,
-                        report.score,
+                        participation.event_name if participation.event_name else '-',
+                        participation.prize_place if participation.prize_place else '-',
+                        certificate_link,
+                        report.score if report.score else '-',
                         place
                     ))
 
