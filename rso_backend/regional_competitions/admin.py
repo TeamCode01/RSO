@@ -1,10 +1,12 @@
 from django.contrib import admin
 
-from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR13, RegionalR4, RegionalR7,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR14, RegionalR4,
+                                          RegionalR7,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR7Place, RegionalR5Link, RegionalR5Event,
                                           StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
-                                          RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16)
+                                          RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16,
+                                          RegionalR11)
 
 
 @admin.register(StatisticalRegionalReport)
@@ -116,6 +118,23 @@ class CHqRejectingLogAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         queryset = queryset.select_related('user')
         return queryset
+
+
+@admin.register(RegionalR1)
+class RegionalR1Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'amount_of_money',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
 
 
 class RegionalR4LinkInline(admin.TabularInline):
@@ -257,6 +276,23 @@ class RegionalR102Admin(admin.ModelAdmin):
     inlines = [RegionalR102LinkInline]
 
 
+@admin.register(RegionalR11)
+class RegionalR11Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'participants_number',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+
+
 @admin.register(RegionalR12)
 class RegionalR12Admin(admin.ModelAdmin):
     list_display = (
@@ -289,6 +325,17 @@ class RegionalR13Admin(admin.ModelAdmin):
     search_fields = ('comment', 'regional_headquarter__name')
     list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(RegionalR14)
+class RegionalR14Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'report_12',
+        'report_13',
+        'score'
+    )
+    search_fields = ('id', 'report_12__regional_headquarter__name')
 
 
 class RegionalR16LinkInline(admin.TabularInline):

@@ -4,12 +4,12 @@ from api.utils import create_first_or_exception
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
-from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR13, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
-                                          RegionalR102Link, RegionalR102, RegionalR5Event)
+                                          RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -245,6 +245,13 @@ class BaseEventSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
+class RegionalR1Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR1
+        fields = BaseRSerializer.Meta.fields + ('comment', 'amount_of_money', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
 class RegionalR4LinkSerializer(BaseLinkSerializer):
     class Meta:
         model = RegionalR4Link
@@ -365,6 +372,13 @@ class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
         return RegionalR7Place.objects.create(
             regional_r7=created_objects, **place_data
         )
+
+
+class RegionalR11Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR11
+        fields = BaseRSerializer.Meta.fields + ('comment', 'participants_number', 'scan_file')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR12Serializer(BaseRSerializer):
