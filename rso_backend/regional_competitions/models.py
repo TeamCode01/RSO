@@ -636,3 +636,44 @@ class RegionalR16Link(models.Model):
 
     def __str__(self):
         return f'ID {self.id}'
+
+
+class RegionalR17(BaseEventProjectR):
+    """Дислокация студенческих отрядов РО РСО"""
+
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Документ',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 17 показателю'
+        verbose_name_plural = 'Отчеты по 17 показателю'
+
+
+class RegionalR19(BaseEventProjectR):
+    """Трудоустройство"""
+
+    employed_student_start = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=(
+            'Фактическое количество трудоустроенных студентов '
+            'в третий трудовой семестр'
+        )
+    )
+    employed_student_end = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=(
+            'Фактическое количество трудоустроенных в штат '
+            'принимающей организации по итогам третьего '
+            'трудового семестра'
+        )
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 19 показателю'
+        verbose_name_plural = 'Отчеты по 19 показателю'

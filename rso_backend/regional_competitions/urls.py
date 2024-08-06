@@ -3,13 +3,15 @@ from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
 from regional_competitions.views import (RegionalR12MeViewSet, RegionalR12ViewSet, RegionalR13MeViewSet,
-                                         RegionalR13ViewSet, RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR4MeViewSet, RegionalR5MeViewSet,
+                                         RegionalR13ViewSet, RegionalR1MeViewSet, RegionalR1ViewSet,
+                                         RegionalR4MeViewSet, RegionalR5MeViewSet,
                                          RegionalR4ViewSet, RegionalR5ViewSet,
                                          StatisticalRegionalViewSet, RegionalR7ViewSet, RegionalR7MeViewSet,
                                          RegionalR16ViewSet, RegionalR16MeViewSet, RegionalR101ViewSet,
                                          RegionalR102ViewSet, RegionalR101MeViewSet, RegionalR102MeViewSet,
                                          RegionalR5ViewSet, RegionalR5MeViewSet, RegionalR11ViewSet,
-                                         RegionalR11MeViewSet)
+                                         RegionalR11MeViewSet, RegionalR17ViewSet, RegionalR19ViewSet,
+                                         RegionalR17MeViewSet, RegionalR19MeViewSet)
 
 
 class MeRouter(SimpleRouter):
@@ -60,6 +62,9 @@ router.register(r'reports/11', RegionalR11ViewSet, basename='r11')
 router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')
 router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
+router.register(r'reports/17', RegionalR17ViewSet, basename='r17')
+router.register(r'reports/19', RegionalR19ViewSet, basename='r19')
+
 
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
@@ -71,6 +76,9 @@ me_router.register(r'reports/11', RegionalR11MeViewSet, basename='r11_me')
 me_router.register(r'reports/12', RegionalR12MeViewSet, basename='r12_me')
 me_router.register(r'reports/13', RegionalR13MeViewSet, basename='r13_me')
 me_router.register(r'reports/16', RegionalR16MeViewSet, basename='r16_me')
+me_router.register(r'reports/17', RegionalR17MeViewSet, basename='r17_me')
+me_router.register(r'reports/19', RegionalR19MeViewSet, basename='r19_me')
+
 
 urlpatterns = [
     path('', include(router.urls)),

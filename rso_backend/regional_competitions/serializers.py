@@ -9,7 +9,8 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
-                                          RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11)
+                                          RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11, RegionalR19,
+                                          RegionalR17)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -272,8 +273,9 @@ class RegionalR4EventSerializer(BaseEventSerializer):
             'links',
             'regional_r4',
             'is_interregional',
+            'participants_number'
         )
-        read_only_fields = ('id', 'regional_r4')
+        read_only_fields = ('id', 'regional_r4', 'participants_number')
 
 
 class RegionalR4Serializer(
@@ -319,7 +321,8 @@ class RegionalR5EventSerializer(BaseEventSerializer):
         fields = BaseEventSerializer.Meta.fields + (
             'links',
             'regional_r5',
-            'is_interregional',
+            'participants_number',
+            'ro_participants_number'
         )
         read_only_fields = ('id', 'regional_r5')
 
@@ -327,7 +330,7 @@ class RegionalR5EventSerializer(BaseEventSerializer):
 class RegionalR5Serializer(
     BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
 ):
-    events = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
+    projects = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
 
     objects_name = 'projects'
     nested_objects_name = 'links'
@@ -496,3 +499,17 @@ class RegionalR102Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMi
         return RegionalR102Link.objects.create(
             regional_r102=created_objects, **link_data
         )
+
+
+class RegionalR17Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR17
+        fields = BaseRSerializer.Meta.fields + ('scan_file',)
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR19Serializer(BaseRSerializer):
+    class Meta:
+        model = RegionalR19
+        fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
