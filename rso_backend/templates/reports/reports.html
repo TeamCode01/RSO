@@ -22,7 +22,6 @@
 			<button class="button" id="downloadQ18DataButton">Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)</button>
             <button class="button" id="downloadQ19DataButton">Отсутствие нарушений техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре
             (файл)</button>
-			<button class="button" id="downloadQ20DataButton">Соответствие требованиям и положению символики и атрибутике форменнойодежды и символики отрядов (файл)</button>
 {#            <a href="/report2" class="button">Отчет 2</a>#}
 {#            <a href="/report3" class="button">Отчет 3</a>#}
 {#            <a href="/report1" class="button">Отчет 1</a>#}
@@ -36,7 +35,7 @@
 {#            <a href="/report3" class="button">Отчет 3</a>#}
             <a href="{% url 'commander_school' %}" class="button">Прохождение Командиром и Комиссаром школы командирского состава</a>
             <a href="{% url 'membership_fee' %}" class="button">Численность членов отряда в соответствии с объемом уплаченных членских взносов</a>
-            <a href="{% url 'attributes_of_uniform' %}" class="button">Атрибуты форменной одежды и символики отрядов</a>
+            <a href="{% url 'attributes_of_uniform' %}" class="button">Соответствие требованиям и положению символики и атрибутике форменнойодежды и символики отрядов</a>
             <!-- отчеты размещать здесь -->
         </div>
     </div>
@@ -80,7 +79,6 @@
         setupDownloadButton('downloadQ17DataButton', '{% url "export_q17_data" %}', 'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)')
         setupDownloadButton('downloadQ18DataButton', '{% url "export_q18_data" %}', 'Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)')
         setupDownloadButton('downloadQ19DataButton', '{% url "export_q19_data" %}', 'Отсутствие нарушений техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре (файл)');
-        setupDownloadButton('downloadQ20DataButton', '{% url "export_q20_data" %}', 'Соответствие требованиям и положению символики и атрибутике форменной одежды и символики отрядов (файл)')
     
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');
