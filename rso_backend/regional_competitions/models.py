@@ -245,6 +245,30 @@ class CHqRejectingLog(models.Model):
         )
 
 
+class RegionalR1(BaseEventProjectR):
+    """
+    Численность членов РО РСО в соответствии с объемом уплаченных членских взносов.
+    """
+    amount_of_money = models.FloatField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Сумма уплаченных членских взносов')
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
+        verbose_name='Скан подтверждающего документа'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 1 показателю'
+        verbose_name_plural = 'Отчеты по 1 показателю'
+
+    def __str__(self):
+        return f'Отчет 1 РО {self.regional_headquarter.name}'
+
+
 class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'
@@ -447,9 +471,13 @@ class RegionalR12(BaseEventProjectR):
     """
     amount_of_money = models.FloatField(
         validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
         verbose_name='Объем средств собранных бойцами РО РСО')
     scan_file = models.FileField(
         upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
         verbose_name='Скан подтверждающего документа'
     )
 
@@ -466,10 +494,14 @@ class RegionalR13(BaseEventProjectR):
     Охват членов РО РСО, принявших участие во Всероссийском дне ударного труда «К».
     """
     number_of_members = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
         verbose_name='Количество членов РО РСО, принявших участие'
     )
     scan_file = models.FileField(
         upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
         verbose_name='Скан подтверждающего документа'
     )
 

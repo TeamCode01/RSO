@@ -292,7 +292,7 @@ if DEBUG:
         },
         'calculate_q14_report_task': {
             'task': 'regional_competitions.tasks.calculate_q14_report_task',
-            'schedule': timedelta(minutes=3)
+            'schedule': timedelta(hours=12)  # пока только дев
         },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',

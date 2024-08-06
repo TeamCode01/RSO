@@ -13,13 +13,13 @@ from api.mixins import CreateViewSet
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR12, RegionalR13, RegionalR4,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
                                           RegionalR101, RegionalR11)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR12Serializer, RegionalR13Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    RegionalR12Serializer, RegionalR13Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     StatisticalRegionalReportSerializer, RegionalR7Serializer,
     RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer, RegionalR11Serializer, )
 from regional_competitions.utils import (
@@ -28,7 +28,7 @@ from regional_competitions.utils import (
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 
 
-class StatisticalRegionalViewSet(CreateViewSet):
+class StatisticalRegionalViewSet(CreateViewSet):  # TODO: для просмотра ЦШ нужно добавить ретрив метод
     queryset = StatisticalRegionalReport.objects.all()
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander,)
     serializer_class = StatisticalRegionalReportSerializer
@@ -372,6 +372,20 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class RegionalR1ViewSet(BaseRegionalRViewSet):
+    queryset = RegionalR1.objects.all()
+    serializer_class = RegionalR1Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+    parser_classes = (MultiPartParser, FormParser)
+
+
+class RegionalR1MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR1
+    queryset = RegionalR1.objects.all()
+    serializer_class = RegionalR1Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
 class RegionalR4ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
@@ -435,7 +449,6 @@ class RegionalR102MeViewSet(BaseRegionalRMeViewSet):
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-
 
 
 class RegionalR11ViewSet(BaseRegionalRViewSet):
