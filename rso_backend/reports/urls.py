@@ -10,7 +10,7 @@ from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
                            ExportSafetyTestResultsView,
                            ReportView, MembershipFeeDataView,
                            SafetyTestResultsView, TaskStatusView,
-                           ExportQ5DataView, ExportQ15DataView,
+                           ExportQ5DataView,ExportQ7DataView, ExportQ8DataView, ExportQ9DataView, ExportQ15DataView,
                            ExportQ16DataView, ExportQ17DataView,
                            ExportQ20DataView, ExportQ18DataView,
                            CompetitionParticipantView,
@@ -75,6 +75,21 @@ urlpatterns = [
         'get_q5_data/export/',
         ExportQ5DataView.as_view(),
         name='export_q5_data'
+    ),
+     path(
+        'get_q7_data/export/',
+        ExportQ7DataView.as_view(),
+        name='export_q7_data'
+    ),
+    path(
+        'get_q8_data/export/',
+        ExportQ8DataView.as_view(),
+        name='export_q8_data'
+    ),
+    path(
+        'get_q9_data/export/',
+        ExportQ9DataView.as_view(),
+        name='export_q9_data'
     ),
     path(
         'get_q13_data/export/',

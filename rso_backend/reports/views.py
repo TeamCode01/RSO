@@ -9,7 +9,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from celery.result import AsyncResult
 from urllib.parse import quote
-
 from reports.tasks import generate_excel_file
 from competitions.models import CompetitionParticipants
 from questions.models import Attempt
@@ -18,10 +17,9 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
                                MEMBERSHIP_FEE_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
-                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS,
-                               Q15_DATA_HEADERS, Q16_DATA_HEADERS,
-                               Q17_DATA_HEADERS, Q20_DATA_HEADERS,
-                               Q18_DATA_HEADERS, Q5_DATA_HEADERS,
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS,
+                               Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS, Q20_DATA_HEADERS,
+                               Q18_DATA_HEADERS,
                                COMMANDER_SCHOOL_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
                                Q19_DATA_HEADERS)
@@ -213,7 +211,45 @@ class ExportQ5DataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_q5_data'
-    
+
+class ExportQ7DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q7_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Участие_членов_студ_отр_во_всерос_мероприятиях_РСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Участие членов студенческого отряда во всероссийских мероприятиях РСО'
+
+    def get_data_func(self):
+        return 'get_q7_data'       
+
+class ExportQ8DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q8_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Призовые_места_отр_в_окруж_межрег_конк_РСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Призовые места отряда в окружных и межрегиональных мероприятиях и конкурсах РСО'
+
+    def get_data_func(self):
+        return 'get_q8_data'       
+
+class ExportQ9DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q9_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Призовые_места_отр_во_всеросс_мероп_и конк_РСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Призовые места отряда во всероссийских мероприятиях и конкурсах РСО'
+
+    def get_data_func(self):
+        return 'get_q9_data'       
 
 class ExportQ13DataView(BaseExcelExportView):
 
