@@ -13,7 +13,7 @@ from reports.utils import (
     get_regions_users_data, get_safety_results,
     get_competition_participants_contact_data,
     get_competition_participants_data, get_q5_data, get_q7_data, get_q8_data, get_q9_data,
-    get_q15_data, get_q16_data, get_q17_data, get_q20_data, get_q18_data,
+    get_q15_data, get_q16_data, get_q17_data, get_q18_data,
     get_competition_participants_data, get_q5_data,
     get_q15_data, get_q16_data, get_q17_data, get_q18_data,
     get_q13_data, get_q14_data, get_q19_data
