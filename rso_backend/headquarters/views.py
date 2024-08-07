@@ -1180,7 +1180,7 @@ class BaseSubCommanderViewSet(viewsets.GenericViewSet):
     filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SubCommanderListFilter
     search_fields = ('user__first_name', 'user__last_name', 'user__patronymic_name', 'user__id')
-    permission_classes = (IsStuffOrCentralCommander,)
+    permission_classes = ()
 
     def filter_by_user_id(self, queryset):
         user_id = self.request.query_params.get('user_id', None)
@@ -1223,6 +1223,7 @@ class BaseSubCommanderViewSet(viewsets.GenericViewSet):
 
 class CentralSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = CentralSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1237,6 +1238,7 @@ class CentralSubCommanderViewSet(BaseSubCommanderViewSet):
     
 class DistrictSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = DistrictSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1251,6 +1253,7 @@ class DistrictSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class RegionalSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = RegionalSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1265,6 +1268,7 @@ class RegionalSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class LocalSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = LocalSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1279,6 +1283,7 @@ class LocalSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class EducationalSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = EducationalSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1293,6 +1298,7 @@ class EducationalSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class BaseLeadershipViewSet(viewsets.GenericViewSet):
     serializer_class = BaseLeadershipSerializer
+    permission_classes = ()
 
     @action(detail=True, methods=['get'], url_path='members')
     def add_leadership(self, request, pk=None):
@@ -1315,28 +1321,34 @@ class BaseLeadershipViewSet(viewsets.GenericViewSet):
 class CentralLeadershipViewSet(BaseLeadershipViewSet):
     queryset = CentralHeadquarter.objects.all()
     serializer_class = CentralLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class DistrictLeadershipViewSet(BaseLeadershipViewSet):
     queryset = DistrictHeadquarter.objects.all()
     serializer_class = DistrictLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class RegionalLeadershipViewSet(BaseLeadershipViewSet):
     queryset = RegionalHeadquarter.objects.all()
     serializer_class = RegionalLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class LocalLeadershipViewSet(BaseLeadershipViewSet):
     queryset = LocalHeadquarter.objects.all()
     serializer_class = LocalLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class EducationalLeadershipViewSet(BaseLeadershipViewSet):
     queryset = EducationalHeadquarter.objects.all()
     serializer_class = EducationalLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
     
 
-class DetancmentLeadershipViewSet(BaseLeadershipViewSet):
+class DetachmentLeadershipViewSet(BaseLeadershipViewSet):
     queryset = Detachment.objects.all()
     serializer_class = DetachmentLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)

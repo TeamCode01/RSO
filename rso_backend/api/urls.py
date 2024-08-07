@@ -72,7 +72,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 RegionalSubCommanderViewSet, CentralLeadershipViewSet,
                                 DistrictLeadershipViewSet, RegionalLeadershipViewSet,
                                 EducationalLeadershipViewSet, LocalLeadershipViewSet,
-                                DetachmentLeadershipSerializer)
+                                DetachmentLeadershipViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from regional_competitions.views import StatisticalRegionalViewSet
 from services.views import VKLoginAPIView, FrontReportsViewSet
@@ -106,7 +106,7 @@ router.register(r'locals', LocalViewSet)
 router.register(r'locals/sub_commanders', LocalSubCommanderViewSet, basename='locals_sub_commanders')
 router.register(r'locals/leadership', LocalLeadershipViewSet, basename='locals_leadership')
 router.register(r'detachments', DetachmentViewSet)
-# router.register(r'detachments/leadership', DetachmentLeadershipSerializer, basename='detachments_leadersership')
+router.register(r'detachments/leadership', DetachmentLeadershipViewSet, basename='detachments_leadersership')
 router.register(r'centrals', CentralViewSet, basename='centrals')
 router.register(r'centrals/sub_commanders', CentralSubCommanderViewSet, basename='centrals_sub_commanders')
 router.register(r'centrals/leadership', CentralLeadershipViewSet, basename='centrals_leadership')
