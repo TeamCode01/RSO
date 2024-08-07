@@ -352,21 +352,6 @@ class ExportQ19DataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_q19_data'
-    
-
-class ExportQ20DataView(BaseExcelExportView):
-
-    def get_headers(self):
-        return Q20_DATA_HEADERS
-
-    def get_filename(self):
-        return f'Соотвецтв_требованиям_и_полож_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'Соответствование требованиям'
-
-    def get_data_func(self):
-        return 'get_q20_data'
 
 
 @method_decorator(login_required, name='dispatch')
