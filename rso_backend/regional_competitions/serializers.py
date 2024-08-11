@@ -273,9 +273,8 @@ class RegionalR4EventSerializer(BaseEventSerializer):
             'links',
             'regional_r4',
             'is_interregional',
-            'participants_number'
         )
-        read_only_fields = ('id', 'regional_r4', 'participants_number')
+        read_only_fields = ('id', 'regional_r4',)
 
 
 class RegionalR4Serializer(
@@ -321,7 +320,6 @@ class RegionalR5EventSerializer(BaseEventSerializer):
         fields = BaseEventSerializer.Meta.fields + (
             'links',
             'regional_r5',
-            'participants_number',
             'ro_participants_number'
         )
         read_only_fields = ('id', 'regional_r5')
@@ -330,14 +328,14 @@ class RegionalR5EventSerializer(BaseEventSerializer):
 class RegionalR5Serializer(
     BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
 ):
-    projects = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
+    events = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
 
-    objects_name = 'projects'
+    objects_name = 'events'
     nested_objects_name = 'links'
 
     class Meta:
         model = RegionalR5
-        fields = BaseRSerializer.Meta.fields + ('comment', 'projects',)
+        fields = BaseRSerializer.Meta.fields + ('comment', 'events',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
     def create_objects(self, created_objects, event_data):
@@ -347,7 +345,7 @@ class RegionalR5Serializer(
 
     def create_nested_objects(self, parent_obj, obj_data):
         return RegionalR5Link.objects.create(
-            regional_r5_project=parent_obj, **obj_data
+            regional_r5_event=parent_obj, **obj_data
         )
 
 

@@ -401,6 +401,30 @@ class RegionalR4MeViewSet(BaseRegionalRMeViewSet):
 
 
 class RegionalR5ViewSet(BaseRegionalRViewSet):
+    """
+    Организация всероссийских (международных) (организатор – региональное отделение РСО),
+    окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
+    трудовых проектов РСО.
+
+    Принимает JSON:
+    {
+    "comment": "комментарий согласующего",
+    "events": [ - проекты передаются в списке
+        {
+        "participants_number": 10 - Общее количество участников,
+        "start_date": "ГГГГ-ММ-ДД", - Дата начала проекта
+        "end_date": "ГГГГ-ММ-ДД", - Дата окончания проекта
+        "links": [
+            {
+            "link": "https://your.site.com", - URL-адрес
+            }
+        ],
+        "ro_participants_number": 5 - Количество участников РО
+        }
+    ]
+    }
+    """
+
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
