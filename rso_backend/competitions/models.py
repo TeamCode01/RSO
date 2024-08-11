@@ -654,8 +654,8 @@ class WorkingSemesterOpeningBlock(models.Model):
     is_verified = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = '6 показатель - отчет по блоку трудовой недели'
-        verbose_name_plural = '6 показатель - отчеты по блоку трудовой недели'
+        verbose_name = '6 показатель - отчет по блоку трудового семестра'
+        verbose_name_plural = '6 показатель - отчеты по блоку трудового семестра'
 
 
 class CreativeFestivalBlock(models.Model):
@@ -664,8 +664,8 @@ class CreativeFestivalBlock(models.Model):
     is_verified = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = '6 показатель - отчет по блоку трудовой недели'
-        verbose_name_plural = '6 показатель - отчеты по блоку трудовой недели'
+        verbose_name = '6 показатель - отчет по блоку участия в творческом фестивале'
+        verbose_name_plural = '6 показатель - отчеты по блоку участия в творческом фестивале'
 
 
 class ProfessionalCompetitionBlock(models.Model):
@@ -713,13 +713,15 @@ class Q7Report(CalcBase, QBaseReport):
     Очки - сумма участий sum(number_of_participants).
     Отчет имеет методы для подсчета очков (из абстрактной модели).
     """
+
+
     score = (
         models.PositiveSmallIntegerField(
             verbose_name='Общее количество участий',
             default=0  # чем больше, тем выше итоговое место в рейтинге
         )
     )
-
+    
     class Meta:
         verbose_name = 'Отчет по 7 показателю'
         verbose_name_plural = 'Отчеты по 7 показателю'
