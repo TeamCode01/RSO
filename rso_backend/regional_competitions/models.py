@@ -4,7 +4,9 @@ from django.db import models
 from django.db.models import PositiveSmallIntegerField
 
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
-                                             REPORT_SENT_MESSAGE)
+                                             REPORT_SENT_MESSAGE,
+                                             R9_EVENTS_NAMES)
+from regional_competitions.factories import RModelFactory
 from regional_competitions.utils import regional_comp_regulations_files_path
 
 
@@ -50,7 +52,7 @@ class StatisticalRegionalReport(models.Model):
         verbose_name = 'Статистический отчет РШ'
 
     def __str__(self):
-        return f'Отчет {self.regional_headquarter.name}'
+        return f'Отчет отряда {self.regional_headquarter.name}'
 
 
 class BaseRegionalR(models.Model):
@@ -87,6 +89,9 @@ class BaseRegionalR(models.Model):
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return f'Отчет отряда {self.regional_headquarter.name}'
 
 
 class BaseScore(models.Model):
@@ -138,9 +143,6 @@ class BaseLink(models.Model):
 class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         abstract = True
-
-    def __str__(self):
-        return f'Отчет отряда {self.regional_headquarter.name}'
 
 
 class BaseEventOrProject(models.Model):
@@ -271,9 +273,6 @@ class RegionalR1(BaseEventProjectR):
         verbose_name = 'Отчет по 1 показателю'
         verbose_name_plural = 'Отчеты по 1 показателю'
 
-    def __str__(self):
-        return f'Отчет 1 РО {self.regional_headquarter.name}'
-
 
 class RegionalR4(BaseEventProjectR):
     class Meta:
@@ -373,9 +372,6 @@ class RegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
         verbose_name = 'Отчет по 7 показателю'
         verbose_name_plural = 'Отчеты по 7 показателю'
 
-    def __str__(self):
-        return f'Отчет отряда {self.regional_headquarter.name}'
-
 
 class RegionalR7Place(models.Model):
     regional_r7 = models.ForeignKey(
@@ -392,6 +388,31 @@ class RegionalR7Place(models.Model):
 
     def __str__(self):
         return f'ID {self.id}'
+
+
+class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    event_happened = models.BooleanField(
+        verbose_name='Проведение акции',
+        default=False,
+    )
+    document = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скан документа, подтверждающего проведение мероприятия',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        abstract = True
+
+
+r9_models_factory = RModelFactory(
+    base_r_model=BaseRegionalR9,
+    base_link_model=BaseLink,
+    r_number=9,
+    event_names=R9_EVENTS_NAMES
+)
+r9_models_factory.create_models()
 
 
 class BaseRegionalR10(models.Model):
@@ -506,9 +527,6 @@ class RegionalR12(BaseEventProjectR):
         verbose_name = 'Отчет по 12 показателю'
         verbose_name_plural = 'Отчеты по 12 показателю'
 
-    def __str__(self):
-        return f'Отчет 12 РО {self.regional_headquarter.name}'
-
 
 class RegionalR13(BaseEventProjectR):
     """
@@ -529,9 +547,6 @@ class RegionalR13(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 13 показателю'
         verbose_name_plural = 'Отчеты по 13 показателю'
-
-    def __str__(self):
-        return f'Отчет 13 РО {self.regional_headquarter.name}'
 
 
 class RegionalR14(BaseScore):
@@ -559,9 +574,6 @@ class RegionalR14(BaseScore):
         verbose_name = 'Отчет по 14 показателю'
         verbose_name_plural = 'Отчеты по 14 показателю'
 
-    def __str__(self):
-        return f'Отчет 14 РО {self.report_12.regional_headquarter.name}'
-
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
@@ -572,9 +584,6 @@ class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 16 показателю'
         verbose_name_plural = 'Отчеты по 16 показателю'
-
-    def __str__(self):
-        return f'Отчет отряда {self.regional_headquarter.name}'
 
 
 class RegionalR16Project(models.Model):

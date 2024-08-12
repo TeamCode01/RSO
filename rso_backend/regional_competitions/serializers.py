@@ -4,13 +4,14 @@ from api.utils import create_first_or_exception
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
+from regional_competitions.factories import RSerializerFactory
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR5Link,
                                           StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
                                           RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11, RegionalR19,
-                                          RegionalR17)
+                                          RegionalR17, r9_models_factory)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -375,6 +376,77 @@ class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
         )
 
 
+class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    objects_name = 'links'
+
+    class Meta:
+        link_model = None
+        model = None
+        fields = BaseRSerializer.Meta.fields + ('event_happened', 'document', 'links')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+r9_serializers_factory = RSerializerFactory(
+    r9_models_factory.models,
+    BaseRegionalR9Serializer
+)
+r9_serializers_factory.create_serializer_classes()
+
+
+class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    objects_name = 'links'
+
+    class Meta:
+        link_model = None
+        model = None
+        fields = BaseRSerializer.Meta.fields + ('event_happened', 'document', 'links')
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR101LinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegionalR101Link
+        fields = ('id', 'regional_r101', 'link')
+        read_only_fields = ('id', 'regional_r101')
+
+
+class RegionalR101Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMixin):
+    links = RegionalR101LinkSerializer(many=True, allow_null=True, required=False)
+
+    class Meta:
+        link_model = RegionalR101Link
+        model = RegionalR101
+        fields = BaseRSerializer.Meta.fields + BaseRegionalR10Serializer.Meta.fields
+        read_only_fields = BaseRSerializer.Meta.read_only_fields + BaseRegionalR10Serializer.Meta.read_only_fields
+
+    def create_objects(self, created_objects, link_data):
+        return RegionalR101Link.objects.create(
+            regional_r101=created_objects, **link_data
+        )
+
+
+class RegionalR102LinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegionalR102Link
+        fields = ('id', 'regional_r102', 'link')
+        read_only_fields = ('id', 'regional_r102')
+
+
+class RegionalR102Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMixin):
+    links = RegionalR102LinkSerializer(many=True, allow_null=True, required=False)
+
+    class Meta:
+        link_model = RegionalR102Link
+        model = RegionalR102
+        fields = BaseRegionalR10Serializer.Meta.fields
+        read_only_fields = BaseRegionalR10Serializer.Meta.read_only_fields
+
+    def create_objects(self, created_objects, link_data):
+        return RegionalR102Link.objects.create(
+            regional_r102=created_objects, **link_data
+        )
+
+
 class RegionalR11Serializer(BaseRSerializer):
     class Meta:
         model = RegionalR11
@@ -442,60 +514,6 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
     def create_nested_objects(self, parent_obj, obj_data):
         return RegionalR16Link.objects.create(
             regional_r16_project=parent_obj, **obj_data
-        )
-
-
-class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
-    objects_name = 'links'
-
-    class Meta:
-        link_model = None
-        model = None
-        fields = BaseRSerializer.Meta.fields + ('event_happened', 'document', 'links')
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
-
-
-class RegionalR101LinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RegionalR101Link
-        fields = ('id', 'regional_r101', 'link')
-        read_only_fields = ('id', 'regional_r101')
-
-
-class RegionalR101Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMixin):
-    links = RegionalR101LinkSerializer(many=True, allow_null=True, required=False)
-
-    class Meta:
-        link_model = RegionalR101Link
-        model = RegionalR101
-        fields = BaseRSerializer.Meta.fields + BaseRegionalR10Serializer.Meta.fields
-        read_only_fields = BaseRSerializer.Meta.read_only_fields + BaseRegionalR10Serializer.Meta.read_only_fields
-
-    def create_objects(self, created_objects, link_data):
-        return RegionalR101Link.objects.create(
-            regional_r101=created_objects, **link_data
-        )
-
-
-class RegionalR102LinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RegionalR102Link
-        fields = ('id', 'regional_r102', 'link')
-        read_only_fields = ('id', 'regional_r102')
-
-
-class RegionalR102Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMixin):
-    links = RegionalR102LinkSerializer(many=True, allow_null=True, required=False)
-
-    class Meta:
-        link_model = RegionalR102Link
-        model = RegionalR102
-        fields = BaseRegionalR10Serializer.Meta.fields
-        read_only_fields = BaseRegionalR10Serializer.Meta.read_only_fields
-
-    def create_objects(self, created_objects, link_data):
-        return RegionalR102Link.objects.create(
-            regional_r102=created_objects, **link_data
         )
 
 

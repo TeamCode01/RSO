@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from regional_competitions.factories import RAdminFactory
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR14,
                                           RegionalR4,
                                           RegionalR7,
@@ -7,7 +8,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RVerificationLog, RegionalR7Place, RegionalR5Link, RegionalR5Event,
                                           StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
                                           RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16,
-                                          RegionalR11, RegionalR17, RegionalR19)
+                                          RegionalR11, RegionalR17, RegionalR19, r9_models_factory)
 
 
 @admin.register(StatisticalRegionalReport)
@@ -225,6 +226,31 @@ class RegionalR5Admin(admin.ModelAdmin):
 class RegionalR7PlaceInline(admin.TabularInline):
     model = RegionalR7Place
     extra = 0
+
+
+r9_list_display = (
+    'regional_headquarter',
+    'id',
+    'event_happened',
+    'document',
+    'verified_by_chq',
+    'verified_by_dhq',
+    'score',
+    'created_at',
+    'updated_at'
+)
+r9_list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+r9_search_fields = ('comment',)
+r9_readonly_fields = ('created_at', 'updated_at')
+
+r9_admin_factory = RAdminFactory(
+    models=r9_models_factory.models,
+    list_display=r9_list_display,
+    list_filter=r9_list_filter,
+    search_fields=r9_search_fields,
+    readonly_fields=r9_readonly_fields
+)
+r9_admin_factory.create_admin_classes()
 
 
 @admin.register(RegionalR7)

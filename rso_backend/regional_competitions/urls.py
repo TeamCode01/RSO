@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
+from regional_competitions.factories import register_factory_view_sets
 from regional_competitions.views import (RegionalR12MeViewSet, RegionalR12ViewSet, RegionalR13MeViewSet,
                                          RegionalR13ViewSet, RegionalR1MeViewSet, RegionalR1ViewSet,
                                          RegionalR4MeViewSet, RegionalR5MeViewSet,
@@ -11,7 +12,7 @@ from regional_competitions.views import (RegionalR12MeViewSet, RegionalR12ViewSe
                                          RegionalR102ViewSet, RegionalR101MeViewSet, RegionalR102MeViewSet,
                                          RegionalR5ViewSet, RegionalR5MeViewSet, RegionalR11ViewSet,
                                          RegionalR11MeViewSet, RegionalR17ViewSet, RegionalR19ViewSet,
-                                         RegionalR17MeViewSet, RegionalR19MeViewSet)
+                                         RegionalR17MeViewSet, RegionalR19MeViewSet, r9_view_sets_factory)
 
 
 class MeRouter(SimpleRouter):
@@ -56,6 +57,9 @@ router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 router.register(r'reports/7', RegionalR7ViewSet, basename='r7')
+register_factory_view_sets(
+    router, 'reports/9', r9_view_sets_factory.view_set_names, r9_view_sets_factory.r_view_sets
+)
 router.register(r'reports/10/1', RegionalR101ViewSet, basename='r10-1')
 router.register(r'reports/10/2', RegionalR102ViewSet, basename='r10-2')
 router.register(r'reports/11', RegionalR11ViewSet, basename='r11')
@@ -70,6 +74,9 @@ me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
 me_router.register(r'reports/7', RegionalR7MeViewSet, basename='r7_me')
+register_factory_view_sets(
+    me_router, 'reports/9', r9_view_sets_factory.me_view_set_names, r9_view_sets_factory.r_me_view_sets
+)
 me_router.register(r'reports/10/1', RegionalR101MeViewSet, basename='r10-1_me')
 me_router.register(r'reports/10/2', RegionalR102MeViewSet, basename='r10-2_me')
 me_router.register(r'reports/11', RegionalR11MeViewSet, basename='r11_me')
