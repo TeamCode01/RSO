@@ -1400,3 +1400,97 @@ class DetachmentLeadershipSerializer(BaseLeadershipSerializer):
             )
         )
         return serializer(leaders, many=True).data
+
+
+class SubControlHeadquartersMixin:
+    def append_sub_controls(self, headquarters, sub_control):
+        for hq in headquarters:
+            sub_control.append({
+                'id': hq.id,
+                'name': hq.name
+            })
+        return sub_control
+
+
+class DistrictSubRegionalSerializer(SubControlHeadquartersMixin, serializers.ModelSerializer):
+    sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = DistrictHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=obj)
+        self.append_sub_controls(regional_headquarters, sub_control)
+        return sub_control
+    
+
+class DistrictSubLocalSerializer(SubControlHeadquartersMixin, serializers.ModelSerializer):
+    sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = DistrictHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=obj)
+        self.append_sub_controls(local_headquarters, sub_control)
+        return sub_control
+
+
+class DistrictSubEducationalSerializer(SubControlHeadquartersMixin, serializers.ModelSerializer):
+    sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = DistrictHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=obj)
+        self.append_sub_controls(educational_headquarters, sub_control)
+        return sub_control
+
+
+class RegionalSubLocalSerializer(SubControlHeadquartersMixin, serializers.ModelSerializer):
+    sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = RegionalHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=obj)
+        self.append_sub_controls(local_headquarters, sub_control)
+        return sub_control
+
+
+class RegionalSubEducationalSerializer(SubControlHeadquartersMixin, serializers.ModelSerializer):
+    sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = RegionalHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=obj)
+        self.append_sub_controls(educational_headquarters, sub_control)
+        return sub_control
+
+
+class LocalSubEducationalSerializer(SubControlHeadquartersMixin, serializers.ModelSerializer):
+    sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = LocalHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=obj)
+        self.append_sub_controls(educational_headquarters, sub_control)
+        return sub_control

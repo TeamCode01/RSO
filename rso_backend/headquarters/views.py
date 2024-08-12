@@ -10,7 +10,7 @@ from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets, mixins
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 
@@ -82,7 +82,10 @@ from headquarters.serializers import (
     DistrictSubCommanderSerializer, EducationalSubCommanderSerializer,
     LocalSubCommanderSerializer, BaseLeadershipSerializer,
     CentralLeadershipSerializer, LocalLeadershipSerializer, EducationalLeadershipSerializer,
-    DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer)
+    DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer,
+    DistrictSubLocalSerializer, DistrictSubRegionalSerializer,
+    LocalSubEducationalSerializer, RegionalSubEducationalSerializer, RegionalSubLocalSerializer,
+    DistrictSubEducationalSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1351,4 +1354,66 @@ class EducationalLeadershipViewSet(BaseLeadershipViewSet):
 class DetachmentLeadershipViewSet(BaseLeadershipViewSet):
     queryset = Detachment.objects.all()
     serializer_class = DetachmentLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class BaseSubControlViewSet(viewsets.GenericViewSet):
+    serializer_class = None
+
+    def get_queryset(self):
+        return self.serializer_class.Meta.model.objects.all()
+
+    @action(detail=True, methods=['get'], url_path='sub-controls')
+    def list_sub_controls(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='sub-controls/(?P<sub_control_id>[^/.]+)')
+    def retrieve_sub_control(self, request, pk=None, sub_control_id=None):
+        instance = self.get_object()
+        sub_controls = self.get_serializer(instance).data.get('sub_control_headquarters', [])
+
+        sub_control = next((item for item in sub_controls if str(item['id']) == str(sub_control_id)), None)
+
+        if sub_control:
+            return Response(sub_control)
+        else:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ViewSets для каждого уровня
+class DistrictSubRegionalViewSet(BaseSubControlViewSet):
+    queryset = DistrictHeadquarter.objects.all()
+    serializer_class = DistrictSubRegionalSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class DistrictSubLocalViewSet(BaseSubControlViewSet):
+    queryset = DistrictHeadquarter.objects.all()
+    serializer_class = DistrictSubLocalSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class DistrictSubEducationalViewSet(BaseSubControlViewSet):
+    queryset = DistrictHeadquarter.objects.all()
+    serializer_class = DistrictSubEducationalSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class RegionalSubLocalViewSet(BaseSubControlViewSet):
+    queryset = RegionalHeadquarter.objects.all()
+    serializer_class = RegionalSubLocalSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class RegionalSubEducationalViewSet(BaseSubControlViewSet):
+    queryset = RegionalHeadquarter.objects.all()
+    serializer_class = RegionalSubEducationalSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class LocalSubEducationalViewSet(BaseSubControlViewSet):
+    queryset = LocalHeadquarter.objects.all()
+    serializer_class = LocalSubEducationalSerializer
     permission_classes = (permissions.IsAuthenticated,)

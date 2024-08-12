@@ -72,7 +72,10 @@ from headquarters.views import (CentralAcceptViewSet,
                                 RegionalSubCommanderViewSet, CentralLeadershipViewSet,
                                 DistrictLeadershipViewSet, RegionalLeadershipViewSet,
                                 EducationalLeadershipViewSet, LocalLeadershipViewSet,
-                                DetachmentLeadershipViewSet)
+                                DetachmentLeadershipViewSet, DistrictSubEducationalViewSet,
+                                DistrictSubRegionalViewSet, DistrictSubLocalViewSet,
+                                RegionalSubEducationalViewSet, RegionalSubLocalViewSet,
+                                LocalSubEducationalViewSet)
 from questions.views import QuestionsView, get_attempts_status, submit_answers
 from regional_competitions.views import StatisticalRegionalViewSet
 from services.views import VKLoginAPIView, FrontReportsViewSet
@@ -94,15 +97,21 @@ router.register(r'rsousers', RSOUserViewSet, basename='rsousers')
 router.register(r'regions', RegionViewSet)
 router.register(r'areas', AreaViewSet)
 router.register(r'districts', DistrictViewSet, basename='districts')
+router.register(r'districts/sub_regionals', DistrictSubRegionalViewSet, basename='districts_sub_regionals')
+router.register(r'districts/sub_locals', DistrictSubLocalViewSet, basename='districts_sub_locals')
+router.register(r'districts/sub_educationals', DistrictSubEducationalViewSet, basename='districts_sub_educationals')
 router.register(r'districts/sub_commanders', DistrictSubCommanderViewSet, basename='district_sub_commanders')
 router.register(r'districts/leadership', DistrictLeadershipViewSet, basename='district_leadership')
 router.register(r'regionals', RegionalViewSet, basename='regionals')
+router.register(r'regionals/sub_locals', RegionalSubLocalViewSet, basename='regionals_sub_locals')
+router.register(r'regionals/sub_educationals', RegionalSubEducationalViewSet, basename='regionals_sub_educationals')
 router.register(r'regionals/sub_commanders', RegionalSubCommanderViewSet, basename='regionals_sub_commanders')
 router.register(r'regionals/leadership', RegionalLeadershipViewSet, basename='regionals_leadership')
 router.register(r'educationals', EducationalViewSet)
 router.register(r'educationals/sub_commanders', EducationalSubCommanderViewSet, basename='educationals_sub_commanders')
 router.register(r'educationals/leadership', EducationalLeadershipViewSet, basename='educationals_leadership')
 router.register(r'locals', LocalViewSet)
+router.register(r'locals/sub_educationals', LocalSubEducationalViewSet, basename='locals_sub_educationals')
 router.register(r'locals/sub_commanders', LocalSubCommanderViewSet, basename='locals_sub_commanders')
 router.register(r'locals/leadership', LocalLeadershipViewSet, basename='locals_leadership')
 router.register(r'detachments', DetachmentViewSet)
