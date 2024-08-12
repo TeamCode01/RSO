@@ -542,6 +542,11 @@ class RegionalR16MeViewSet(BaseRegionalRMeViewSet):
 
 
 class RegionalR17ViewSet(BaseRegionalRViewSet):
+    """Дислокация студенческих отрядов РО РСО.
+
+    file_size выводится в мегабайтах.
+    """
+
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -556,6 +561,8 @@ class RegionalR17MeViewSet(BaseRegionalRMeViewSet):
 
 
 class RegionalR19ViewSet(BaseRegionalRViewSet):
+    """Трудоустройство."""
+
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
