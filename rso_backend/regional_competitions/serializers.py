@@ -43,6 +43,15 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
         )
 
 
+class FileScanSizeSerializerMixin:
+    """Миксин для добавления свойств размера и типа файла в сериализатор."""
+    file_size = serializers.ReadOnlyField()
+    file_type = serializers.ReadOnlyField()
+
+    class Meta:
+        fields = ('file_size', 'file_type')
+
+
 class NestedCreateUpdateMixin:
     """
     Миксин для сериализаторов, которые реализуют логику
@@ -247,10 +256,13 @@ class BaseEventSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class RegionalR1Serializer(BaseRSerializer):
+class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR1
-        fields = BaseRSerializer.Meta.fields + ('comment', 'amount_of_money', 'scan_file')
+        fields = (
+            BaseRSerializer.Meta.fields
+            + ('comment', 'amount_of_money')
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
@@ -440,24 +452,36 @@ class RegionalR102Serializer(BaseRegionalR10Serializer, CreateUpdateSerializerMi
         )
 
 
-class RegionalR11Serializer(BaseRSerializer):
+class RegionalR11Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR11
-        fields = BaseRSerializer.Meta.fields + ('comment', 'participants_number', 'scan_file')
+        fields = (
+            BaseRSerializer.Meta.fields
+            + FileScanSizeSerializerMixin.Meta.fields
+            + ('comment', 'participants_number', 'scan_file')
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
-class RegionalR12Serializer(BaseRSerializer):
+class RegionalR12Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR12
-        fields = BaseRSerializer.Meta.fields + ('comment', 'amount_of_money', 'scan_file')
+        fields = (
+            BaseRSerializer.Meta.fields
+            + FileScanSizeSerializerMixin.Meta.fields
+            + ('comment', 'amount_of_money', 'scan_file')
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
-class RegionalR13Serializer(BaseRSerializer):
+class RegionalR13Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR13
-        fields = BaseRSerializer.Meta.fields + ('comment', 'number_of_members', 'scan_file')
+        fields = (
+            BaseRSerializer.Meta.fields
+            + FileScanSizeSerializerMixin.Meta.fields
+            + ('comment', 'number_of_members', 'scan_file')
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
@@ -510,15 +534,20 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(BaseRSerializer):
+class RegionalR17Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
+
     class Meta:
         model = RegionalR17
-        fields = BaseRSerializer.Meta.fields + ('scan_file',)
+        fields = (
+            BaseRSerializer.Meta.fields
+            + FileScanSizeSerializerMixin.Meta.fields
+            + ('scan_file', 'comment',)
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR19Serializer(BaseRSerializer):
     class Meta:
         model = RegionalR19
-        fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end')
+        fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end', 'comment',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields

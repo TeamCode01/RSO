@@ -7,6 +7,7 @@ from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              R9_EVENTS_NAMES, R7_EVENT_NAMES)
 from regional_competitions.factories import RModelFactory
+from regional_competitions.mixins import FileScanSizeMixin
 from regional_competitions.utils import regional_comp_regulations_files_path
 
 
@@ -506,7 +507,7 @@ class RegionalR102Link(models.Model):
         return f'ID {self.id}'
 
 
-class RegionalR11(BaseEventProjectR):
+class RegionalR11(BaseEventProjectR, FileScanSizeMixin):
     """Активность РО РСО в социальных сетях 'К'"""
 
     participants_number = models.PositiveIntegerField(
@@ -529,7 +530,7 @@ class RegionalR11(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 11 показателю'
 
 
-class RegionalR12(BaseEventProjectR):
+class RegionalR12(BaseEventProjectR, FileScanSizeMixin):
     """
     Объем средств, собранных бойцами РО РСО во Всероссийском дне ударного труда.
     """
@@ -550,7 +551,7 @@ class RegionalR12(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 12 показателю'
 
 
-class RegionalR13(BaseEventProjectR):
+class RegionalR13(BaseEventProjectR, FileScanSizeMixin):
     """
     Охват членов РО РСО, принявших участие во Всероссийском дне ударного труда «К».
     """
@@ -669,7 +670,7 @@ class RegionalR16Link(models.Model):
         return f'ID {self.id}'
 
 
-class RegionalR17(BaseEventProjectR):
+class RegionalR17(BaseEventProjectR, FileScanSizeMixin):
     """Дислокация студенческих отрядов РО РСО"""
 
     scan_file = models.FileField(
