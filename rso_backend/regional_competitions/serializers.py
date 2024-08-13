@@ -1,17 +1,23 @@
+from api.utils import create_first_or_exception
 from rest_framework import serializers
 
-from api.utils import create_first_or_exception
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
-                                          RegionalR4Event, RegionalR4Link, RegionalR5,
-                                          RVerificationLog, RegionalR5Link,
-                                          StatisticalRegionalReport, RegionalR16Project,
-                                          RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
-                                          RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11, RegionalR19,
-                                          RegionalR17, r9_models_factory, r7_models_factory)
+from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+                                          RegionalR4, RegionalR4Event,
+                                          RegionalR4Link, RegionalR5,
+                                          RegionalR5Event, RegionalR5Link,
+                                          RegionalR11, RegionalR12,
+                                          RegionalR13, RegionalR16,
+                                          RegionalR16Link, RegionalR16Project,
+                                          RegionalR17, RegionalR19,
+                                          RegionalR101, RegionalR101Link,
+                                          RegionalR102, RegionalR102Link,
+                                          RVerificationLog,
+                                          StatisticalRegionalReport,
+                                          r7_models_factory, r9_models_factory)
 from regional_competitions.utils import get_report_number_by_class_name
 
 

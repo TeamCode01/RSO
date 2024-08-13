@@ -1,7 +1,8 @@
-from regional_competitions.constants import ROUND_2_SIGNS, CONVERT_TO_MB
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin, UpdateModelMixin)
 from rest_framework.viewsets import GenericViewSet
+
+from regional_competitions.constants import CONVERT_TO_MB, ROUND_2_SIGNS
 
 
 class RegionalRMixin(RetrieveModelMixin, ListModelMixin, CreateModelMixin, GenericViewSet):

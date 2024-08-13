@@ -1,13 +1,19 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR14,
-                                          RegionalR4,
-                                          RegionalR4Event, RegionalR4Link, RegionalR5,
-                                          RVerificationLog, RegionalR5Link, RegionalR5Event,
-                                          StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
-                                          RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16,
-                                          RegionalR11, RegionalR17, RegionalR19, r9_models_factory, r7_models_factory)
+from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+                                          RegionalR4, RegionalR4Event,
+                                          RegionalR4Link, RegionalR5,
+                                          RegionalR5Event, RegionalR5Link,
+                                          RegionalR11, RegionalR12,
+                                          RegionalR13, RegionalR14,
+                                          RegionalR16, RegionalR16Link,
+                                          RegionalR16Project, RegionalR17,
+                                          RegionalR19, RegionalR101,
+                                          RegionalR101Link, RegionalR102,
+                                          RegionalR102Link, RVerificationLog,
+                                          StatisticalRegionalReport,
+                                          r7_models_factory, r9_models_factory)
 
 
 @admin.register(StatisticalRegionalReport)

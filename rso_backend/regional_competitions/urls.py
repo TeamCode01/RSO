@@ -3,17 +3,31 @@ from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
 from regional_competitions.factories import register_factory_view_sets
-from regional_competitions.views import (RegionalR12MeViewSet, RegionalR12ViewSet, RegionalR13MeViewSet,
-                                         RegionalR13ViewSet, RegionalR1MeViewSet, RegionalR1ViewSet,
+from regional_competitions.views import (RegionalR1MeViewSet,
+                                         RegionalR1ViewSet,
                                          RegionalR4MeViewSet,
                                          RegionalR4ViewSet,
+                                         RegionalR5MeViewSet,
+                                         RegionalR5ViewSet,
+                                         RegionalR11MeViewSet,
+                                         RegionalR11ViewSet,
+                                         RegionalR12MeViewSet,
+                                         RegionalR12ViewSet,
+                                         RegionalR13MeViewSet,
+                                         RegionalR13ViewSet,
+                                         RegionalR16MeViewSet,
+                                         RegionalR16ViewSet,
+                                         RegionalR17MeViewSet,
+                                         RegionalR17ViewSet,
+                                         RegionalR19MeViewSet,
+                                         RegionalR19ViewSet,
+                                         RegionalR101MeViewSet,
+                                         RegionalR101ViewSet,
+                                         RegionalR102MeViewSet,
+                                         RegionalR102ViewSet,
                                          StatisticalRegionalViewSet,
-                                         RegionalR16ViewSet, RegionalR16MeViewSet, RegionalR101ViewSet,
-                                         RegionalR102ViewSet, RegionalR101MeViewSet, RegionalR102MeViewSet,
-                                         RegionalR5ViewSet, RegionalR5MeViewSet, RegionalR11ViewSet,
-                                         RegionalR11MeViewSet, RegionalR17ViewSet, RegionalR19ViewSet,
-                                         RegionalR17MeViewSet, RegionalR19MeViewSet, r9_view_sets_factory,
-                                         r7_view_sets_factory)
+                                         r7_view_sets_factory,
+                                         r9_view_sets_factory)
 
 
 class MeRouter(SimpleRouter):

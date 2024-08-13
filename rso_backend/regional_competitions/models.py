@@ -3,9 +3,9 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 
-from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
-                                             REPORT_SENT_MESSAGE,
-                                             R9_EVENTS_NAMES, R7_EVENT_NAMES)
+from regional_competitions.constants import (R7_EVENT_NAMES, R9_EVENTS_NAMES,
+                                             REPORT_EXISTS_MESSAGE,
+                                             REPORT_SENT_MESSAGE)
 from regional_competitions.factories import RModelFactory
 from regional_competitions.mixins import FileScanSizeMixin
 from regional_competitions.utils import regional_comp_regulations_files_path

@@ -1,30 +1,34 @@
 import json
 
+from api.mixins import CreateViewSet
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import permissions, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-
-from api.mixins import CreateViewSet
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
+
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
-                                          RVerificationLog, RegionalR5,
-                                          StatisticalRegionalReport, RegionalR16, RegionalR102,
-                                          RegionalR101, RegionalR11, RegionalR17, RegionalR19, r9_models_factory,
-                                          r7_models_factory)
+from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+                                          RegionalR4, RegionalR5, RegionalR11,
+                                          RegionalR12, RegionalR13,
+                                          RegionalR16, RegionalR17,
+                                          RegionalR19, RegionalR101,
+                                          RegionalR102, RVerificationLog,
+                                          StatisticalRegionalReport,
+                                          r7_models_factory, r9_models_factory)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR12Serializer, RegionalR13Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
-    StatisticalRegionalReportSerializer,
-    RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer, RegionalR11Serializer,
-    RegionalR17Serializer, RegionalR19Serializer, r9_serializers_factory, r7_serializers_factory, )
+    RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
+    RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
+    RegionalR101Serializer, RegionalR102Serializer,
+    StatisticalRegionalReportSerializer, r7_serializers_factory,
+    r9_serializers_factory)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,

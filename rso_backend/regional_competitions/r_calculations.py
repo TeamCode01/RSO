@@ -1,9 +1,11 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 
 from headquarters.models import RegionalHeadquarter
-from regional_competitions.models import RegionalR12, RegionalR13, RegionalR14, RegionalR5, RegionalR5Event
 
+from regional_competitions.models import (RegionalR5, RegionalR5Event,
+                                          RegionalR12, RegionalR13,
+                                          RegionalR14)
 
 logger = logging.getLogger('tasks')
 
