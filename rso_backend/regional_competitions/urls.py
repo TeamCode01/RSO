@@ -5,14 +5,15 @@ from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
 from regional_competitions.factories import register_factory_view_sets
 from regional_competitions.views import (RegionalR12MeViewSet, RegionalR12ViewSet, RegionalR13MeViewSet,
                                          RegionalR13ViewSet, RegionalR1MeViewSet, RegionalR1ViewSet,
-                                         RegionalR4MeViewSet, RegionalR5MeViewSet,
-                                         RegionalR4ViewSet, RegionalR5ViewSet,
-                                         StatisticalRegionalViewSet, RegionalR7ViewSet, RegionalR7MeViewSet,
+                                         RegionalR4MeViewSet,
+                                         RegionalR4ViewSet,
+                                         StatisticalRegionalViewSet,
                                          RegionalR16ViewSet, RegionalR16MeViewSet, RegionalR101ViewSet,
                                          RegionalR102ViewSet, RegionalR101MeViewSet, RegionalR102MeViewSet,
                                          RegionalR5ViewSet, RegionalR5MeViewSet, RegionalR11ViewSet,
                                          RegionalR11MeViewSet, RegionalR17ViewSet, RegionalR19ViewSet,
-                                         RegionalR17MeViewSet, RegionalR19MeViewSet, r9_view_sets_factory)
+                                         RegionalR17MeViewSet, RegionalR19MeViewSet, r9_view_sets_factory,
+                                         r7_view_sets_factory)
 
 
 class MeRouter(SimpleRouter):
@@ -56,9 +57,11 @@ router.register(r'statistical_report', StatisticalRegionalViewSet, basename='sta
 router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
-router.register(r'reports/7', RegionalR7ViewSet, basename='r7')
 register_factory_view_sets(
-    router, 'reports/9', r9_view_sets_factory.view_set_names, r9_view_sets_factory.r_view_sets
+    router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_me_view_sets
+)
+register_factory_view_sets(
+    router, 'reports/9', r9_view_sets_factory.view_set_names, r9_view_sets_factory.r_me_view_sets
 )
 router.register(r'reports/10/1', RegionalR101ViewSet, basename='r10-1')
 router.register(r'reports/10/2', RegionalR102ViewSet, basename='r10-2')
@@ -73,9 +76,11 @@ router.register(r'reports/19', RegionalR19ViewSet, basename='r19')
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
-me_router.register(r'reports/7', RegionalR7MeViewSet, basename='r7_me')
 register_factory_view_sets(
-    me_router, 'reports/9', r9_view_sets_factory.me_view_set_names, r9_view_sets_factory.r_me_view_sets
+    me_router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_me_view_sets
+)
+register_factory_view_sets(
+    me_router, 'reports/9', r9_view_sets_factory.view_set_names, r9_view_sets_factory.r_me_view_sets
 )
 me_router.register(r'reports/10/1', RegionalR101MeViewSet, basename='r10-1_me')
 me_router.register(r'reports/10/2', RegionalR102MeViewSet, basename='r10-2_me')

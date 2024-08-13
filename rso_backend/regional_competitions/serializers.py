@@ -8,10 +8,10 @@ from regional_competitions.factories import RSerializerFactory
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RegionalR4Event, RegionalR4Link, RegionalR5,
                                           RVerificationLog, RegionalR5Link,
-                                          StatisticalRegionalReport, RegionalR7, RegionalR7Place, RegionalR16Project,
+                                          StatisticalRegionalReport, RegionalR16Project,
                                           RegionalR16, RegionalR16Link, RegionalR101, RegionalR101Link,
                                           RegionalR102Link, RegionalR102, RegionalR5Event, RegionalR11, RegionalR19,
-                                          RegionalR17, r9_models_factory)
+                                          RegionalR17, r9_models_factory, r7_models_factory)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -350,30 +350,23 @@ class RegionalR5Serializer(
         )
 
 
-class RegionalR7PlaceSerializer(serializers.ModelSerializer):
+class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    objects_name = 'links'
+
     class Meta:
-        model = RegionalR7Place
-        fields = (
-            'id',
-            'regional_r7',
-            'place'
+        link_model = None
+        model = None
+        fields = BaseRSerializer.Meta.fields + (
+            'prize_place', 'document', 'event_date', 'event_location', 'links',
         )
-        read_only_fields = ('id', 'regional_r7', )
-
-
-class RegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
-    places = RegionalR7PlaceSerializer(many=True, allow_null=True, required=False)
-    objects_name = 'places'
-
-    class Meta:
-        model = RegionalR7
-        fields = BaseRSerializer.Meta.fields + ('places',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
-    def create_objects(self, created_objects, place_data):
-        return RegionalR7Place.objects.create(
-            regional_r7=created_objects, **place_data
-        )
+
+r7_serializers_factory = RSerializerFactory(
+    models=r7_models_factory.models,
+    base_r_serializer=BaseRegionalR7Serializer
+)
+r7_serializers_factory.create_serializer_classes()
 
 
 class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin):

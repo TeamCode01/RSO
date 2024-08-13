@@ -16,14 +16,15 @@ from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RVerificationLog, RegionalR5,
-                                          StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
-                                          RegionalR101, RegionalR11, RegionalR17, RegionalR19, r9_models_factory)
+                                          StatisticalRegionalReport, RegionalR16, RegionalR102,
+                                          RegionalR101, RegionalR11, RegionalR17, RegionalR19, r9_models_factory,
+                                          r7_models_factory)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
     RegionalR12Serializer, RegionalR13Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
-    StatisticalRegionalReportSerializer, RegionalR7Serializer,
+    StatisticalRegionalReportSerializer,
     RegionalR102Serializer, RegionalR101Serializer, RegionalR16Serializer, RegionalR11Serializer,
-    RegionalR17Serializer, RegionalR19Serializer, r9_serializers_factory, )
+    RegionalR17Serializer, RegionalR19Serializer, r9_serializers_factory, r7_serializers_factory, )
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
@@ -330,8 +331,12 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
         Метод идемпотентен. Поддерживается динамическое обновление
         """
-        self.get_object()
-        return super().update(*args, **kwargs)
+        serializer = self.get_serializer(
+            self.get_object(), data=self.request.data, partial=kwargs.get('partial', False)
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         """Возвращает актуальную версию отчета для командира регионального штаба.
@@ -438,17 +443,13 @@ class RegionalR5MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR7ViewSet(BaseRegionalRViewSet):
-    queryset = RegionalR7.objects.all()
-    serializer_class = RegionalR7Serializer
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-
-
-class RegionalR7MeViewSet(BaseRegionalRMeViewSet):
-    model = RegionalR7
-    queryset = RegionalR7.objects.all()
-    serializer_class = RegionalR7Serializer
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+r7_view_sets_factory = RViewSetFactory(
+    models=r7_models_factory.models,
+    serializers=r7_serializers_factory.serializers,
+    base_r_view_set=BaseRegionalRViewSet,
+    base_r_me_view_set=BaseRegionalRMeViewSet,
+)
+r7_view_sets_factory.create_view_sets()
 
 
 r9_view_sets_factory = RViewSetFactory(

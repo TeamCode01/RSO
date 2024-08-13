@@ -5,7 +5,7 @@ from django.db.models import PositiveSmallIntegerField
 
 from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE,
-                                             R9_EVENTS_NAMES)
+                                             R9_EVENTS_NAMES, R7_EVENT_NAMES)
 from regional_competitions.factories import RModelFactory
 from regional_competitions.utils import regional_comp_regulations_files_path
 
@@ -367,27 +367,49 @@ class RegionalR5Link(BaseLink):
     )
 
 
-class RegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
-    class Meta:
-        verbose_name = 'Отчет по 7 показателю'
-        verbose_name_plural = 'Отчеты по 7 показателю'
+class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    PRIZE_PLACE_CHOICES = [
+        ('1', '1'),
+        ('2', '2'),
+        ('3', '3'),
+        ('Нет', 'Нет'),
+    ]
 
-
-class RegionalR7Place(models.Model):
-    regional_r7 = models.ForeignKey(
-        'RegionalR7',
-        on_delete=models.CASCADE,
-        verbose_name='Отчет',
-        related_name='places'
+    prize_place = models.CharField(
+        max_length=3,
+        choices=PRIZE_PLACE_CHOICES,
+        default='Нет',
+        verbose_name='Призовое место'
     )
-    place = models.PositiveSmallIntegerField(verbose_name='Призовое место')
+    document = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скан подтверждающего документа',
+        blank=True,
+        null=True
+    )
+    event_date = models.DateField(
+        verbose_name='Дата проведения',
+        blank=True,
+        null=True
+    )
+    event_location = models.CharField(
+        max_length=255,
+        verbose_name='Место проведения',
+        blank=True,
+        null=True
+    )
 
     class Meta:
-        verbose_name = 'Данные по призовому месту по 7 показателю'
-        verbose_name_plural = 'Данные по призовым местам по 7 показателю'
+        abstract = True
 
-    def __str__(self):
-        return f'ID {self.id}'
+
+r7_models_factory = RModelFactory(
+    r_number=7,
+    base_r_model=BaseRegionalR7,
+    base_link_model=BaseLink,
+    event_names=R7_EVENT_NAMES,
+)
+r7_models_factory.create_models()
 
 
 class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
