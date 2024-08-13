@@ -329,8 +329,12 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
         Метод идемпотентен. Поддерживается динамическое обновление
         """
-        self.get_object()
-        return super().update(*args, **kwargs)
+        serializer = self.get_serializer(
+            self.get_object(), data=self.request.data, partial=kwargs.get('partial', False)
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         """Возвращает актуальную версию отчета для командира регионального штаба.
