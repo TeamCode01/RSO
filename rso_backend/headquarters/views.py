@@ -29,7 +29,7 @@ from headquarters.filters import (DetachmentFilter,
                                   DetachmentListFilter,
                                   SubCommanderListFilter)
 
-from headquarters.mixins import ApplicationsMixin, VerificationsMixin
+from headquarters.mixins import ApplicationsMixin, VerificationsMixin, SubControlHeadquartersMixin
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -83,9 +83,7 @@ from headquarters.serializers import (
     LocalSubCommanderSerializer, BaseLeadershipSerializer,
     CentralLeadershipSerializer, LocalLeadershipSerializer, EducationalLeadershipSerializer,
     DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer,
-    DistrictSubLocalSerializer, DistrictSubRegionalSerializer,
-    LocalSubEducationalSerializer, RegionalSubEducationalSerializer, RegionalSubLocalSerializer,
-    DistrictSubEducationalSerializer)
+    DistrictSubControlSerializer, RegionalSubControlSerializer, LocalSubControlSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -146,7 +144,7 @@ class CentralViewSet(ApplicationsMixin, ListRetrieveUpdateViewSet):
         return UserCentralApplicationShortReadSerializer
 
 
-class DistrictViewSet(ApplicationsMixin, viewsets.ModelViewSet):
+class DistrictViewSet(ApplicationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
     """Представляет окружные штабы.
 
     Привязывается к центральному штабу по ключу central_headquarter.
@@ -197,9 +195,12 @@ class DistrictViewSet(ApplicationsMixin, viewsets.ModelViewSet):
 
     def get_application_short_serializer(self):
         return UserDistrictApplicationShortReadSerializer
+    
+    def get_sub_control_serializer(self):
+        return DistrictSubControlSerializer
+    
 
-
-class RegionalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):
+class RegionalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
     """Представляет региональные штабы.
 
     Привязывается к окружному штабу по ключу district_headquarter (id).
@@ -268,9 +269,12 @@ class RegionalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewS
 
     def get_func_members_to_verify(self):
         return get_regional_hq_members_to_verify
+    
+    def get_sub_control_serializer(self):
+        return RegionalSubControlSerializer
 
 
-class LocalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):
+class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
     """Представляет местные штабы.
 
     Привязывается к региональному штабу по ключу regional_headquarter (id).
@@ -324,6 +328,9 @@ class LocalViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet)
 
     def get_application_short_serializer(self):
         return UserLocalApplicationShortReadSerializer
+    
+    def get_sub_control_serializer(self):
+        return LocalSubControlSerializer
 
 
 class EducationalViewSet(ApplicationsMixin, viewsets.ModelViewSet):
@@ -1354,66 +1361,4 @@ class EducationalLeadershipViewSet(BaseLeadershipViewSet):
 class DetachmentLeadershipViewSet(BaseLeadershipViewSet):
     queryset = Detachment.objects.all()
     serializer_class = DetachmentLeadershipSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-
-class BaseSubControlViewSet(viewsets.GenericViewSet):
-    serializer_class = None
-
-    def get_queryset(self):
-        return self.serializer_class.Meta.model.objects.all()
-
-    @action(detail=True, methods=['get'], url_path='sub-controls')
-    def list_sub_controls(self, request, pk=None):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['get'], url_path='sub-controls/(?P<sub_control_id>[^/.]+)')
-    def retrieve_sub_control(self, request, pk=None, sub_control_id=None):
-        instance = self.get_object()
-        sub_controls = self.get_serializer(instance).data.get('sub_control_headquarters', [])
-
-        sub_control = next((item for item in sub_controls if str(item['id']) == str(sub_control_id)), None)
-
-        if sub_control:
-            return Response(sub_control)
-        else:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-
-# ViewSets для каждого уровня
-class DistrictSubRegionalViewSet(BaseSubControlViewSet):
-    queryset = DistrictHeadquarter.objects.all()
-    serializer_class = DistrictSubRegionalSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-
-class DistrictSubLocalViewSet(BaseSubControlViewSet):
-    queryset = DistrictHeadquarter.objects.all()
-    serializer_class = DistrictSubLocalSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-
-class DistrictSubEducationalViewSet(BaseSubControlViewSet):
-    queryset = DistrictHeadquarter.objects.all()
-    serializer_class = DistrictSubEducationalSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-
-class RegionalSubLocalViewSet(BaseSubControlViewSet):
-    queryset = RegionalHeadquarter.objects.all()
-    serializer_class = RegionalSubLocalSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-
-class RegionalSubEducationalViewSet(BaseSubControlViewSet):
-    queryset = RegionalHeadquarter.objects.all()
-    serializer_class = RegionalSubEducationalSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-
-
-class LocalSubEducationalViewSet(BaseSubControlViewSet):
-    queryset = LocalHeadquarter.objects.all()
-    serializer_class = LocalSubEducationalSerializer
     permission_classes = (permissions.IsAuthenticated,)

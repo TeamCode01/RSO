@@ -83,3 +83,46 @@ class VerificationsMixin:
             members_to_verify = members_to_verify.filter(user_id=user_id)
         serializer = self.get_verification_serializer()(instance=members_to_verify, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SubControlHeadquartersMixin: 
+    def get_sub_control_serializer(self):
+        raise NotImplementedError("Необходимо определить метод get_headquarter_serializer")
+    
+    @action(detail=True, methods=['get'], url_path='sub_regionals')
+    def districts_sub_regionals_headquarters(self, request, pk=None):
+        district = self.get_object()
+        serializer = self.get_serializer(district, context={'type': 'regional'})
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='sub_locals')
+    def districts_sub_locals_headquarters(self, request, pk=None):
+        district = self.get_object()
+        serializer = self.get_serializer(district, context={'type': 'local'})
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='sub_educationals')
+    def districts_sub_educationals_headquarters(self, request, pk=None):
+        district = self.get_object()
+        serializer = self.get_serializer(district, context={'type': 'educational'})
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='sub_locals')
+    def regional_sub_locals_headquarters(self, request, pk=None):
+        regional = self.get_object()
+        serializer = self.get_serializer(regional, context={'type': 'local'})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='sub_educationals')
+    def regional_sub_educationals_headquarters(self, request, pk=None):
+        regional = self.get_object()
+        serializer = self.get_serializer(regional, context={'type': 'educational'})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='sub_educationals')
+    def local_sub_educationals_headquarters(self, request, pk=None):
+        local = self.get_object()
+        serializer = self.get_serializer(local, context={'type': 'educational'})
+        return Response(serializer.data)
+    
+    
