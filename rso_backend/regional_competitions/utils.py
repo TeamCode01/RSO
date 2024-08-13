@@ -69,4 +69,4 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     Сохраняем в users/{user_id}/photo
     """
     filename = filename.split('.')
-    return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.id}/{filename[0][:25]}.{filename[1]}'
+    return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.regional_headquarter.id}/{filename[0][:25]}.{filename[1]}'
