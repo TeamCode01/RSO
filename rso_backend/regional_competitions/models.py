@@ -254,7 +254,7 @@ class CHqRejectingLog(models.Model):
         )
 
 
-class RegionalR1(BaseEventProjectR):
+class RegionalR1(BaseEventProjectR, FileScanSizeMixin):
     """
     Численность членов РО РСО в соответствии с объемом уплаченных членских взносов.
     """

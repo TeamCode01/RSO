@@ -266,7 +266,7 @@ class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR1
         fields = (
-            BaseRSerializer.Meta.fields
+            BaseRSerializer.Meta.fields + FileScanSizeSerializerMixin.Meta.fields
             + ('comment', 'amount_of_money')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
