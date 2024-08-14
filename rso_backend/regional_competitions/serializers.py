@@ -1,8 +1,9 @@
-from api.utils import create_first_or_exception
+from django.db import models
 from rest_framework import serializers
 
-from regional_competitions.constants import (REPORT_EXISTS_MESSAGE,
-                                             REPORT_SENT_MESSAGE,
+from api.utils import create_first_or_exception
+from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE,
+                                             REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
 from regional_competitions.models import (CHqRejectingLog, RegionalR1,
@@ -55,13 +56,43 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
         )
 
 
-class FileScanSizeSerializerMixin:
+class FileScanSizeSerializerMixin(serializers.ModelSerializer):
     """Миксин для добавления свойств размера и типа файла в сериализатор."""
-    file_size = serializers.ReadOnlyField()
-    file_type = serializers.ReadOnlyField()
+    file_size = serializers.SerializerMethodField()
+    file_type = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('file_size', 'file_type')
+        model = None
+
+    def get_file_field(self):
+        """Автоматически находит поле типа FileField в модели."""
+        if not hasattr(self, '_file_field_name'):
+            for field in self.Meta.model._meta.fields:
+                if isinstance(field, models.FileField):
+                    self._file_field_name = field.name
+                    break
+            else:
+                self._file_field_name = None
+        return self._file_field_name
+
+    def get_file_size(self, obj):
+        file_field_name = self.get_file_field()
+        if not file_field_name:
+            return None
+        check_file = getattr(obj, file_field_name)
+        if check_file:
+            return round(check_file.size / CONVERT_TO_MB, ROUND_2_SIGNS)
+        return None
+
+    def get_file_type(self, obj):
+        file_field_name = self.get_file_field()
+        if not file_field_name:
+            return None
+        check_file = getattr(obj, file_field_name)
+        if check_file:
+            return check_file.name.split('.')[-1]
+        return None
 
 
 class NestedCreateUpdateMixin:
@@ -374,14 +405,16 @@ class RegionalR5Serializer(
         )
 
 
-class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
     objects_name = 'links'
 
     class Meta:
         link_model = None
         model = None
-        fields = BaseRSerializer.Meta.fields + (
-            'prize_place', 'document', 'event_date', 'event_location', 'links',
+        fields = (
+            BaseRSerializer.Meta.fields
+            + ('prize_place', 'document', 'event_date', 'event_location', 'links',)
+            + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -393,13 +426,17 @@ r7_serializers_factory = RSerializerFactory(
 r7_serializers_factory.create_serializer_classes()
 
 
-class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
     objects_name = 'links'
 
     class Meta:
         link_model = None
         model = None
-        fields = BaseRSerializer.Meta.fields + ('event_happened', 'document', 'links')
+        fields = (
+            BaseRSerializer.Meta.fields
+            + ('event_happened', 'document', 'links')
+            + FileScanSizeSerializerMixin.Meta.fields
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
@@ -410,13 +447,17 @@ r9_serializers_factory = RSerializerFactory(
 r9_serializers_factory.create_serializer_classes()
 
 
-class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
     objects_name = 'links'
 
     class Meta:
         link_model = None
         model = None
-        fields = BaseRSerializer.Meta.fields + ('event_happened', 'document', 'links')
+        fields = (
+            BaseRSerializer.Meta.fields
+            + ('event_happened', 'document', 'links')
+            + FileScanSizeSerializerMixin.Meta.fields
+        )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
@@ -508,7 +549,7 @@ class RegionalR16LinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'regional_r16_project',)
 
 
-class RegionalR16ProjectSerializer(serializers.ModelSerializer):
+class RegionalR16ProjectSerializer(FileScanSizeSerializerMixin):
     links = RegionalR16LinkSerializer(many=True, allow_null=True, required=False)
 
     class Meta:
@@ -520,7 +561,7 @@ class RegionalR16ProjectSerializer(serializers.ModelSerializer):
             'project_scale',
             'regulations',
             'links'
-        )
+        ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = ('id', 'regional_r16', )
 
 
