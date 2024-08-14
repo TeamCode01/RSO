@@ -12,7 +12,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from regional_competitions.factories import RViewSetFactory
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
+from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
@@ -35,10 +35,30 @@ from regional_competitions.utils import (
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 
 
-class StatisticalRegionalViewSet(CreateViewSet):  # TODO: для просмотра ЦШ нужно добавить ретрив метод
+class StatisticalRegionalViewSet(RetrieveCreateMixin):
+    """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
     queryset = StatisticalRegionalReport.objects.all()
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander,)
     serializer_class = StatisticalRegionalReportSerializer
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return (permissions.IsAuthenticated(),)
+        return permissions.IsAuthenticated(), IsRegionalCommander()
+
+    def retrieve(self, request, *args, **kwargs):
+        regional_headquarter_id = kwargs.get('pk')
+        statistical_report = StatisticalRegionalReport.objects.filter(
+            regional_headquarter_id=regional_headquarter_id
+        ).last()
+
+        if not statistical_report:
+            return Response(
+                {"detail": "Отчет не найден."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(statistical_report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=False,

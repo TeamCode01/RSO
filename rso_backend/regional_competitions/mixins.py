@@ -11,3 +11,7 @@ class RegionalRMixin(RetrieveModelMixin, ListModelMixin, CreateModelMixin, Gener
 
 class RegionalRMeMixin(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     pass
+
+
+class RetrieveCreateMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
+    pass

@@ -40,6 +40,12 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'employed_top',
         )
         read_only_fields = ('id', 'regional_headquarter')
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'regional_headquarter': {
+                'help_text': 'ID регионального штаба для которого создается или запрашивается отчет.'
+            },
+        }
 
     def create(self, validated_data):
         return create_first_or_exception(
