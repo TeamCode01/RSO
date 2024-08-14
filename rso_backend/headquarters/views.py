@@ -83,7 +83,7 @@ from headquarters.serializers import (
     LocalSubCommanderSerializer, BaseLeadershipSerializer,
     CentralLeadershipSerializer, LocalLeadershipSerializer, EducationalLeadershipSerializer,
     DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer,
-    DistrictSubControlSerializer, RegionalSubControlSerializer, LocalSubControlSerializer)
+    DistrictSubControlSerializer, RegionalSubControlSerializer, LocalSubControlSerializer, EducationalSubControlSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -333,7 +333,7 @@ class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquarters
         return LocalSubControlSerializer
 
 
-class EducationalViewSet(ApplicationsMixin, viewsets.ModelViewSet):
+class EducationalViewSet(ApplicationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
     """Представляет образовательные штабы.
 
     Может привязываться к местному штабу по ключу local_headquarter (id).
@@ -392,6 +392,9 @@ class EducationalViewSet(ApplicationsMixin, viewsets.ModelViewSet):
 
     def get_application_short_serializer(self):
         return UserEducationalApplicationShortReadSerializer
+    
+    def get_sub_control_serializer(self):
+        return EducationalSubControlSerializer
 
 
 class DetachmentViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):

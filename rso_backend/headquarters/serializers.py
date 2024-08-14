@@ -1406,7 +1406,7 @@ class DetachmentLeadershipSerializer(BaseLeadershipSerializer):
         return serializer(leaders, many=True).data
 
 
-class BaseSubCntrolSerializer(serializers.ModelSerializer):
+class BaseSubControlSerializer(serializers.ModelSerializer):
     sub_control_headquarters = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -1422,7 +1422,7 @@ class BaseSubCntrolSerializer(serializers.ModelSerializer):
         return sub_control
     
     
-class DistrictSubControlSerializer(BaseSubCntrolSerializer):
+class DistrictSubControlSerializer(BaseSubControlSerializer):
     class Meta:
         model = DistrictHeadquarter
         fields = ('id', 'name', 'sub_control_headquarters')
@@ -1440,11 +1440,14 @@ class DistrictSubControlSerializer(BaseSubCntrolSerializer):
         elif type == 'educational':
             educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=obj)
             self.append_sub_controls(educational_headquarters, sub_control)
+        elif type == 'detachment':
+            detachment_headquarters = Detachment.objects.filter(regional_headquarter__district_headquarter=obj)
+            self.append_sub_controls(detachment_headquarters, sub_control)
 
         return sub_control
 
 
-class RegionalSubControlSerializer(BaseSubCntrolSerializer):
+class RegionalSubControlSerializer(BaseSubControlSerializer):
     class Meta:
         model = RegionalHeadquarter
         fields = ('id', 'name', 'sub_control_headquarters')
@@ -1456,20 +1459,45 @@ class RegionalSubControlSerializer(BaseSubCntrolSerializer):
         if type == 'local':
             local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=obj)
             self.append_sub_controls(local_headquarters, sub_control)
-        elif type == 'eucational':
+        elif type == 'educational':
             educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=obj)
             self.append_sub_controls(educational_headquarters, sub_control)
+        elif type == 'detachment':
+            detachment_headquarters = Detachment.objects.filter(regional_headquarter=obj)
+            self.append_sub_controls(detachment_headquarters, sub_control)
 
         return sub_control
 
 
-class LocalSubControlSerializer(BaseSubCntrolSerializer):
+class LocalSubControlSerializer(BaseSubControlSerializer):
     class Meta:
         model = LocalHeadquarter
         fields = ('id', 'name', 'sub_control_headquarters')
 
     def get_sub_control_headquarters(self, obj):
         sub_control = []
-        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=obj)
-        self.append_sub_controls(educational_headquarters, sub_control)
+        type = self.context.get('type')
+        
+        if type == 'educational':
+            educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=obj)
+            self.append_sub_controls(educational_headquarters, sub_control)
+        elif type == 'detachment':
+            detachment_headquarters = Detachment.objects.filter(local_headquarter=obj)
+            self.append_sub_controls(detachment_headquarters, sub_control)
+
+        return sub_control
+
+class EducationalSubControlSerializer(BaseSubControlSerializer):
+    class Meta:
+        model = EducationalHeadquarter
+        fields = ('id', 'name', 'sub_control_headquarters')
+
+    def get_sub_control_headquarters(self, obj):
+        sub_control = []
+        type = self.context.get('type')
+        
+        if type == 'detachment':
+            detachment_headquarters = Detachment.objects.filter(educational_headquarter=obj)
+            self.append_sub_controls(detachment_headquarters, sub_control)
+        
         return sub_control

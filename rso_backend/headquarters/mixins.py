@@ -86,6 +86,7 @@ class VerificationsMixin:
 
 
 class SubControlHeadquartersMixin: 
+    
     def get_sub_control_serializer(self):
         raise NotImplementedError("Необходимо определить метод get_headquarter_serializer")
     
@@ -107,6 +108,12 @@ class SubControlHeadquartersMixin:
         serializer = self.get_serializer(district, context={'type': 'educational'})
         return Response(serializer.data)
     
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def districts_sub_detachments_headquarters(self, request, pk=None):
+        district = self.get_object()
+        serializer = self.get_serializer(district, context={'type': 'detachment'})
+        return Response(serializer.data)
+    
     @action(detail=True, methods=['get'], url_path='sub_locals')
     def regional_sub_locals_headquarters(self, request, pk=None):
         regional = self.get_object()
@@ -118,6 +125,12 @@ class SubControlHeadquartersMixin:
         regional = self.get_object()
         serializer = self.get_serializer(regional, context={'type': 'educational'})
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def regional_sub_detachments_headquarters(self, request, pk=None):
+        regional = self.get_object()
+        serializer = self.get_serializer(regional, context={'type': 'detachment'})
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='sub_educationals')
     def local_sub_educationals_headquarters(self, request, pk=None):
@@ -125,4 +138,26 @@ class SubControlHeadquartersMixin:
         serializer = self.get_serializer(local, context={'type': 'educational'})
         return Response(serializer.data)
     
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def local_sub_detachments_headquarters(self, request, pk=None):
+        local = self.get_object()
+        serializer = self.get_serializer(local, context={'type': 'detachment'})
+        return Response(serializer.data)
     
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def educational_sub_detachments_headquarters(self, request, pk=None):
+        educational = self.get_object()
+        serializer = self.get_serializer(educational, context={'type': 'detachment'})
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='sub_control/(?P<sub_control_id>[^/.]+)')
+    def retrieve_sub_control(self, request, pk=None, sub_control_id=None):
+        instance = self.get_object()
+        sub_controls = self.get_serializer(instance).data.get('sub_control_headquarters', [])
+
+        sub_control = next((item for item in sub_controls if str(item['id']) == str(sub_control_id)), None)
+
+        if sub_control:
+            return Response(sub_control)
+        else:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
