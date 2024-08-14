@@ -1,6 +1,5 @@
-from rest_framework import permissions
-
 from headquarters.models import RegionalHeadquarter
+from rest_framework import permissions
 
 
 class IsRegionalCommander(permissions.BasePermission):
