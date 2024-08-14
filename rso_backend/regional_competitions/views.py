@@ -3,16 +3,14 @@ import json
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from api.mixins import CreateViewSet
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
+from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
                                           RVerificationLog, RegionalR5,
                                           StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
@@ -29,10 +27,33 @@ from regional_competitions.utils import (
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 
 
-class StatisticalRegionalViewSet(CreateViewSet):  # TODO: для просмотра ЦШ нужно добавить ретрив метод
+class StatisticalRegionalViewSet(RetrieveCreateMixin):
+    """Отчет 1 часть. Для get-запроса необходимо передавать ID РШ.
+
+    Доступы:
+    """
     queryset = StatisticalRegionalReport.objects.all()
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander,)
     serializer_class = StatisticalRegionalReportSerializer
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), IsRegionalCommander()]
+
+    def retrieve(self, request, *args, **kwargs):
+        regional_headquarter_id = kwargs.get('pk')
+        statistical_report = StatisticalRegionalReport.objects.filter(
+            regional_headquarter_id=regional_headquarter_id
+        ).last()
+
+        if not statistical_report:
+            return Response(
+                {"detail": "Отчет для данного РШ не найден."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(statistical_report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
@@ -40,23 +61,26 @@ class StatisticalRegionalViewSet(CreateViewSet):  # TODO: для просмот�
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
-        regional_headquarter = RegionalHeadquarter.objects.get(
-            commander=self.request.user
-        )
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+
         if request.method == "GET":
             return Response(
                 data=self.get_serializer(statistical_report).data,
                 status=status.HTTP_200_OK
             )
-        # TODO: Ограничение на изменение отчета (нельзя редактировать, если первый показатель отправлен is_sent=True)
+
+        # TODO: Ограничение на изменение отчета
+
         serializer = self.get_serializer(
-            request.user,
+            statistical_report,
             data=request.data,
             partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
