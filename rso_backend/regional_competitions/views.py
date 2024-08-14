@@ -11,13 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
-                                 UserDistrictHeadquarterPosition)
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR4,
-                                          RVerificationLog, RegionalR5,
-                                          StatisticalRegionalReport, RegionalR7, RegionalR16, RegionalR102,
-                                          RegionalR101, RegionalR11, RegionalR17, RegionalR19)
+from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1,
                                           RegionalR4, RegionalR5, RegionalR11,
@@ -25,47 +19,26 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1,
                                           RegionalR16, RegionalR17,
                                           RegionalR19, RegionalR101,
                                           RegionalR102, RVerificationLog,
-                                          StatisticalRegionalReport,)
+                                          StatisticalRegionalReport,
+                                          r7_models_factory, r9_models_factory)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
-    StatisticalRegionalReportSerializer)
+    StatisticalRegionalReportSerializer, r7_serializers_factory,
+    r9_serializers_factory)
 from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 
 
-class StatisticalRegionalViewSet(RetrieveCreateMixin):
-    """Отчет 1 часть. Для get-запроса необходимо передавать ID РШ.
-
-    Доступы:
-    """
+class StatisticalRegionalViewSet(CreateViewSet):  # TODO: для просмотра ЦШ нужно добавить ретрив метод
     queryset = StatisticalRegionalReport.objects.all()
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander,)
     serializer_class = StatisticalRegionalReportSerializer
-
-    def get_permissions(self):
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsRegionalCommander()]
-
-    def retrieve(self, request, *args, **kwargs):
-        regional_headquarter_id = kwargs.get('pk')
-        statistical_report = StatisticalRegionalReport.objects.filter(
-            regional_headquarter_id=regional_headquarter_id
-        ).last()
-
-        if not statistical_report:
-            return Response(
-                {"detail": "Отчет для данного РШ не найден."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = self.get_serializer(statistical_report)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
@@ -73,26 +46,23 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
-        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        regional_headquarter = RegionalHeadquarter.objects.get(
+            commander=self.request.user
+        )
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
-
         if request.method == "GET":
             return Response(
                 data=self.get_serializer(statistical_report).data,
                 status=status.HTTP_200_OK
             )
-
-        # TODO: Ограничение на изменение отчета
-
+        # TODO: Ограничение на изменение отчета (нельзя редактировать, если первый показатель отправлен is_sent=True)
         serializer = self.get_serializer(
-            statistical_report,
+            request.user,
             data=request.data,
             partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
