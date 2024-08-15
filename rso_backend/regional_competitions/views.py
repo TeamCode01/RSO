@@ -1,7 +1,8 @@
 import json
 
-from api.mixins import CreateViewSet
-from django.conf import settings
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
@@ -33,9 +34,16 @@ from regional_competitions.utils import (
     get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
+from pdfrw import PdfWriter, PdfReader
+import os
+from django.conf import settings
 
 
-class StatisticalRegionalViewSet(RetrieveCreateMixin):
+class StatisticalRegionalViewSet(RetrieveCreateMixin):  # TODO: для просмотра ЦШ нужно добавить ретрив метод
     """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
@@ -85,7 +93,72 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
         serializer.save()
 
     def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+        report = serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+        # pdf_file_path = self.generate_pdf(report)  # TODO: Finish logic with pdf
+
+    def generate_pdf(self, report):
+        # File path
+        pdf_file_name = f"StatisticalReport_{report.id}.pdf"
+        pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
+
+        # Register a font that supports Unicode
+        pdfmetrics.registerFont(TTFont(
+            'Times_New_Roman',
+            os.path.join(
+                str(settings.BASE_DIR),
+                'templates',
+                'samples',
+                'fonts',
+                'times.ttf'
+            )
+        )
+        )
+
+        doc = SimpleDocTemplate(pdf_file_path, pagesize=A4)
+        elements = []
+
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(name='Times_New_Roman', fontName='Times_New_Roman'))
+
+        elements.append(
+            Paragraph(f"Statistical Report for {report.regional_headquarter.name}", styles['Times_New_Roman']))
+
+        data = [["Field", "Value"]]
+
+        for field in report._meta.fields:
+            field_name = field.verbose_name
+            field_value = getattr(report, field.name, '')
+            if isinstance(field_value, str):
+                field_value = field_value
+            elif isinstance(field_value, (int, float)):
+                field_value = str(field_value)
+            elif field_value is None:
+                field_value = ''
+            else:
+                field_value = str(field_value)
+
+            data.append([field_name, field_value])
+
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        elements.append(table)
+
+        doc.build(elements)
+
+        reader = PdfReader(pdf_file_path)
+        writer = PdfWriter()
+        writer.addpages(reader.pages)
+        writer.write(pdf_file_path)
+
+        return pdf_file_path
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
@@ -474,7 +547,6 @@ r7_view_sets_factory = RViewSetFactory(
     base_r_me_view_set=BaseRegionalRMeViewSet,
 )
 r7_view_sets_factory.create_view_sets()
-
 
 r9_view_sets_factory = RViewSetFactory(
     models=r9_models_factory.models,
