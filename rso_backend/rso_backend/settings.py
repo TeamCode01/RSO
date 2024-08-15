@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'import_export',
     'rest_framework_simplejwt',
+    'log_viewer'
 ]
 
 INSTALLED_APPS += [
@@ -126,6 +127,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'requestlogs.middleware.RequestLogsMiddleware',
 ]
 
 ROOT_URLCONF = 'rso_backend.urls'
@@ -238,6 +240,13 @@ LOGGING = {
             'level': 'INFO',
             'formatter': 'verbose',
         },
+        'requestlogs_to_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': 'logs/request_logs.log',
+            'when': 'midnight',
+            'backupCount': 90,
+        },
     },
 
     'loggers': {
@@ -249,6 +258,11 @@ LOGGING = {
             'handlers': ['console', 'django'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'requestlogs': {
+            'handlers': ['requestlogs_to_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     }
 }
@@ -599,6 +613,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'api.utils.Limit255OffsetPagination',
+    'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
 }
 
 # For VK ID
@@ -679,3 +694,24 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+REQUESTLOGS = {
+    'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
+    'ENTRY_CLASS': 'requestlogs.entries.RequestLogEntry',
+    'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
+    'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
+    'ATTRIBUTE_NAME': '_requestlog',
+    'METHODS': ('GET', 'PUT', 'PATCH', 'POST', 'DELETE'),
+    'JSON_ENSURE_ASCII': True,
+    'IGNORE_USER_FIELD': None,
+    'IGNORE_USERS': [],
+    'IGNORE_PATHS': None,
+}
+
+LOG_VIEWER_FILES_PATTERN = '*.log*'
+LOG_VIEWER_FILES_DIR = 'logs/'
+LOG_VIEWER_PAGE_LENGTH = 50
+LOG_VIEWER_MAX_READ_LINES = 100_000_000
+LOG_VIEWER_FILE_LIST_MAX_ITEMS_PER_PAGE = 25
+LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL', "{'action_name':"]
+LOG_VIEWER_EXCLUDE_TEXT_PATTERN = None
