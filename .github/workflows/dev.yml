@@ -38,7 +38,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "/dev/docker-compose.yml"
+          source: "dev_infra/docker-compose.yml"
           target: /root/rso_dev
       - name: Copy nginx.conf
         uses: appleboy/scp-action@v0.1.7
@@ -47,7 +47,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "/dev_infra/nginx.conf"
+          source: "dev_infra/nginx.conf"
           target: /root/rso_dev
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
