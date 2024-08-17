@@ -30,7 +30,7 @@ from regional_competitions.serializers import (
     StatisticalRegionalReportSerializer, r7_serializers_factory,
     r9_serializers_factory)
 from regional_competitions.utils import (
-    get_report_number_by_class_name, swagger_schema_for_central_review,
+    get_calculation, get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 
@@ -261,6 +261,9 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
             report.verified_by_chq = True
             report.save()
+
+            #Вызываем функцию подсчета очков
+            get_calculation(report=report, report_number=self.get_report_number())
 
             RVerificationLog.objects.create(
                 user=user,

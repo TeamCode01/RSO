@@ -3,14 +3,13 @@ from datetime import datetime
 
 from headquarters.models import RegionalHeadquarter
 
-from regional_competitions.models import (RegionalR5, RegionalR5Event,
-                                          RegionalR12, RegionalR13,
-                                          RegionalR14)
+# from regional_competitions.models import (RegionalR12, RegionalR13,
+#                                           RegionalR14)
 
 logger = logging.getLogger('tasks')
 
 
-def calculate_r5_score():
+def calculate_r5_score(report):
     """Считает  очки по 5 показателю.
 
     P= ((x1-z1)*y1+((xn-zn)yn
@@ -25,48 +24,39 @@ def calculate_r5_score():
     Все цифры в формулу берутся из корректировок ЦШ.
 
     """
-    
-    #TODO: написать функцию расчёта мест, создать таску.
-    
+
+    #TODO: написать функцию расчёта мест, указать запуск калькуляции после верификации
+
     logger.info('Выполняется подсчет отчета по r5 показателю')
 
-    # в переменную записываем id рег штабов, у которых уже есть верифицированный отчет по 5 показателю
-    verified_reports_ro_ids = RegionalR5.objects.filter(verified_by_chq=True).values_list(
-        'regional_headquarter__id', flat=True
+
+    # for ro_id in verified_reports_ro_ids:
+    ro_id = report.regional_headquarter.id
+    logger.info(f'Выполняется подсчет очков для рег штаба {ro_id}')
+    ro_score = 0
+    # в ro_events получаем список кортежей.
+    # Пример - [(34, 18, 2024-07-29, 2024-07-29), (4, 2, 2024-08-29, 2024-08-29),]
+
+    ro_events = report.events.values_list(
+        'participants_number',
+        'ro_participants_number',
+        'start_date',
+        'end_date'
     )
-    if verified_reports_ro_ids:
-        logger.info(f'Найдено {len(verified_reports_ro_ids)} верифицированных отчетов по 5 показателю')
-    else:
-        logger.info('Ни одного верифицированного отчета по 5 показателю не найдено')
-        return None
+    print('ro_events', ro_events)
+    # вычисляем сумму очков, после цикла записываем в таблицу
+    for item in ro_events:
+        print('item', item)
+        date_start = datetime.strptime(item[2], '%Y-%m-%d').date()
+        date_end = datetime.strptime(item[3], '%Y-%m-%d').date()
 
-    for ro_id in verified_reports_ro_ids:
-        logger.info(f'Выполняется подсчет очков для рег штаба {ro_id}')
-        ro_score = 0
-        # в ro_events получаем список кортежей.
-        # Пример - [(34, 18, 2024-07-29, 2024-07-29), (4, 2, 2024-08-29, 2024-08-29),]
-        ro_events = RegionalR5Event.objects.filter(
-            regional_r5__regional_headquarter__id=ro_id
-        ).values_list(
-            'participants_number',
-            'ro_participants_number',
-            'start_date',
-            'end_date'
-        )
-        # вычисляем сумму очков, после цикла записываем в таблицу
-        for item in ro_events:
-
-            date_start = datetime.strptime(item[2], '%Y-%m-%d').date()
-            date_end = datetime.strptime(item[3], '%Y-%m-%d').date()
-
-            days_diff = (date_end - date_start).days + 1
-            ro_score += (item[0] - item[1]) * days_diff
-        instance = RegionalR5.objects.get(regional_headquarter__id=ro_id)
-        instance.score = ro_score
-        instance.save()
-        logger.info(f'Подсчитали очки для рег штаба {ro_id}. Очки: {ro_score}')
-
-    logger.info('Подсчет очков по 5 показателю завершен')
+        days_diff = (date_end - date_start).days + 1
+        ro_score += (item[0] - item[1]) * days_diff
+        print('ro_score', ro_score)
+    report.score = ro_score
+    report.save()
+    print(report.score)
+    logger.info(f'Подсчитали очки 5го показателя для рег штаба {ro_id}. Очки: {ro_score}')
 
 
 def calculate_r14():
