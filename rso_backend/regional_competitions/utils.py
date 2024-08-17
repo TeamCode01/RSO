@@ -3,6 +3,8 @@ from functools import wraps
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 
+from regional_competitions.r_calculations import calculate_r5_score
+
 
 def swagger_schema_for_retrieve_method(serializer_cls):
     """Создает декоратор для метода retrieve, генерирующий Swagger схему."""
@@ -70,3 +72,13 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     """
     filename = filename.split('.')
     return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.regional_headquarter.id}/{filename[0][:25]}.{filename[1]}'
+
+
+def get_calculation(report, report_number):
+    """Функция вызова калькуляции очков при совпадении номера показателя."""
+
+    match report_number:
+        case '5':
+            return calculate_r5_score(report)
+        case '':
+            return None
