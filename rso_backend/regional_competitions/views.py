@@ -14,6 +14,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
+from api.utils import get_calculation
 from regional_competitions.constants import R6_EVENT_NAMES, R7_EVENT_NAMES, R9_EVENTS_NAMES
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
@@ -34,7 +35,7 @@ from regional_competitions.serializers import (
     StatisticalRegionalReportSerializer, r7_serializers_factory,
     r9_serializers_factory)
 from regional_competitions.utils import (
-    get_calculation, get_report_number_by_class_name, swagger_schema_for_central_review,
+    get_report_number_by_class_name, get_report_xlsx, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 
@@ -387,6 +388,18 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
     def perform_create(self, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+
+    def get_report_number(self):
+        return get_report_number_by_class_name(self)
+
+    @action(
+        detail=True,
+        methods=['GET',],
+        url_path='download_report_data',
+    )
+    def download_report_data(self, request, pk=None):
+        """Скачивание данных отчета в формате XLSX."""
+        return get_report_xlsx(self)
 
 
 class BaseRegionalRMeWithSendViewSet(BaseRegionalRViewSet):
