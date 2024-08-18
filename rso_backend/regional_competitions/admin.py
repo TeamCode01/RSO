@@ -1,13 +1,19 @@
 from django.contrib import admin
 
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR12, RegionalR13, RegionalR14,
-                                          RegionalR4,
-                                          RegionalR7,
-                                          RegionalR4Event, RegionalR4Link, RegionalR5,
-                                          RVerificationLog, RegionalR7Place, RegionalR5Link, RegionalR5Event,
-                                          StatisticalRegionalReport, RegionalR102, RegionalR102Link, RegionalR101,
-                                          RegionalR101Link, RegionalR16Link, RegionalR16Project, RegionalR16,
-                                          RegionalR11, RegionalR17, RegionalR19)
+from regional_competitions.factories import RAdminFactory
+from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+                                          RegionalR4, RegionalR4Event,
+                                          RegionalR4Link, RegionalR5,
+                                          RegionalR5Event, RegionalR5Link,
+                                          RegionalR11, RegionalR12,
+                                          RegionalR13, RegionalR14,
+                                          RegionalR16, RegionalR16Link,
+                                          RegionalR16Project, RegionalR17,
+                                          RegionalR19, RegionalR101,
+                                          RegionalR101Link, RegionalR102,
+                                          RegionalR102Link, RVerificationLog,
+                                          StatisticalRegionalReport,
+                                          r7_models_factory, r9_models_factory)
 
 
 @admin.register(StatisticalRegionalReport)
@@ -198,7 +204,7 @@ class RegionalR5EventAdminInline(admin.StackedInline):
 
 @admin.register(RegionalR5Event)
 class RegionalR5EventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'regional_r5', 'participants_number', 'ro_participants_number','start_date', 'end_date',)
+    list_display = ('id', 'regional_r5', 'participants_number', 'ro_participants_number', 'start_date', 'end_date',)
     search_fields = ('regional_r5__id',)
     list_filter = ('start_date', 'end_date', 'regional_r5')
     inlines = [RegionalR5LinkInline]
@@ -222,27 +228,64 @@ class RegionalR5Admin(admin.ModelAdmin):
     inlines = [RegionalR5EventAdminInline]
 
 
-class RegionalR7PlaceInline(admin.TabularInline):
-    model = RegionalR7Place
-    extra = 0
+r7_list_display = (
+    'regional_headquarter',
+    'id',
+    'event_date',
+    'event_location',
+    'prize_place',
+    'document',
+    'verified_by_chq',
+    'verified_by_dhq',
+    'score',
+    'created_at',
+    'updated_at'
+)
+
+r7_list_filter = (
+    'event_date',
+    'prize_place',
+    'verified_by_chq',
+    'verified_by_dhq'
+)
+
+r7_search_fields = ('comment', 'event_location')
+
+r7_readonly_fields = ('created_at', 'updated_at')
+
+r7_admin_factory = RAdminFactory(
+    models=r7_models_factory.models,
+    list_display=r7_list_display,
+    list_filter=r7_list_filter,
+    search_fields=r7_search_fields,
+    readonly_fields=r7_readonly_fields
+)
+r7_admin_factory.create_admin_classes()
 
 
-@admin.register(RegionalR7)
-class RegionalR7Admin(admin.ModelAdmin):
-    list_display = (
-        'regional_headquarter',
-        'id',
-        'is_sent',
-        'verified_by_chq',
-        'verified_by_dhq',
-        'created_at',
-        'updated_at',
-        'score',
-    )
-    readonly_fields = ('created_at', 'updated_at')
-    search_fields = ('regional_headquarter__name', 'comment')
-    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
-    inlines = [RegionalR7PlaceInline]
+r9_list_display = (
+    'regional_headquarter',
+    'id',
+    'event_happened',
+    'document',
+    'verified_by_chq',
+    'verified_by_dhq',
+    'score',
+    'created_at',
+    'updated_at'
+)
+r9_list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+r9_search_fields = ('comment',)
+r9_readonly_fields = ('created_at', 'updated_at')
+
+r9_admin_factory = RAdminFactory(
+    models=r9_models_factory.models,
+    list_display=r9_list_display,
+    list_filter=r9_list_filter,
+    search_fields=r9_search_fields,
+    readonly_fields=r9_readonly_fields
+)
+r9_admin_factory.create_admin_classes()
 
 
 class RegionalR101LinkInline(admin.TabularInline):

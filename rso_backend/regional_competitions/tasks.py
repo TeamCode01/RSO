@@ -1,11 +1,10 @@
 import logging
-from datetime import date, timedelta, datetime
+from datetime import date, datetime, timedelta
 
 from celery import shared_task
 from django.conf import settings
 
 from regional_competitions.r_calculations import calculate_r14
-
 
 logger = logging.getLogger('tasks')
 
