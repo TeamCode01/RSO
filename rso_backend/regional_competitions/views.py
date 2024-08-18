@@ -2,15 +2,19 @@ import json
 
 from api.mixins import CreateViewSet
 from django.conf import settings
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
 from rest_framework.decorators import action
+from rest_framework.mixins import ListModelMixin
+from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
+from regional_competitions.constants import R6_EVENT_NAMES, R7_EVENT_NAMES, R9_EVENTS_NAMES
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1,
@@ -23,7 +27,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1,
                                           r7_models_factory, r9_models_factory)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    EventNameSerializer, MassSendSerializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
@@ -384,6 +388,9 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
     def perform_create(self, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
+
+class BaseRegionalRMeWithSendViewSet(BaseRegionalRViewSet):
+
     @action(
         detail=True,
         methods=['POST'],
@@ -406,7 +413,98 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class RegionalR1ViewSet(BaseRegionalRViewSet):
+class MassSendViewSet(GenericViewSet):
+    serializer_class = MassSendSerializer
+
+    def send_reports(self, request, factory):
+        current_regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=request.user)
+        models = factory.models
+        events_to_update = []
+        for name, model in models.items():
+            print(f'Тип модели: {type(model)}')
+            print(f'Модель: {model}')
+            if name[-4:] == 'Link':
+                continue
+            event_obj = model.objects.filter(
+                regional_headquarter=current_regional_headquarter, is_sent=False
+            ).last()
+            if event_obj:
+                events_to_update.append(event_obj)
+        if events_to_update:
+            try:
+                with transaction.atomic():
+                    for event_obj in events_to_update:
+                        event_obj.is_sent = True
+                        event_obj.save()
+            except Exception as e:
+                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+                {'detail': 'Данные отправлены на верификацию окружному штабу'},
+                status=status.HTTP_200_OK
+            )
+
+    @action(
+        detail=False,
+        methods=['POST'],
+        url_path='7/send',
+    )
+    def r7_mass_send_for_verification(self, request):
+        """Отправляет все отчеты по 7 показателю на верификацию.
+
+        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
+        """
+        return self.send_reports(request, r7_models_factory)
+
+    @action(
+        detail=False,
+        methods=['POST'],
+        url_path='9/send',
+    )
+    def r9_mass_send_for_verification(self, request):
+        """Отправляет отчеты по 9 показателю на верификацию.
+
+        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
+        """
+        return self.send_reports(request, r9_models_factory)
+
+
+class RegionalEventNamesRViewSet(GenericViewSet):
+    """
+    Вьюсет для получения списка названий событий по показателям.
+
+    Доступ: все пользователи.
+    """
+    serializer_class = EventNameSerializer
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r6-event-names',
+    )
+    def get_event_names_r6(self, request):  # TODO: исправить, когда будет список с месяцем и городом
+        event_data = [{'id': id, 'name': name} for id, name in R6_EVENT_NAMES.items()]
+        return Response(event_data)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r7-event-names',
+    )
+    def get_event_names_r7(self, request):   # TODO: исправить, когда будет список с месяцем и городом
+        event_data = [{'id': id, 'name': name} for id, name in R7_EVENT_NAMES.items()]
+        return Response(event_data)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r9-event-names',
+    )
+    def get_event_names_r9(self, request):
+        event_data = [{'id': id, 'name': name} for id, name in R9_EVENTS_NAMES.items()]
+        return Response(event_data)
+
+
+class RegionalR1ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -420,7 +518,7 @@ class RegionalR1MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4ViewSet(BaseRegionalRViewSet):
+class RegionalR4ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -433,7 +531,7 @@ class RegionalR4MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5ViewSet(BaseRegionalRViewSet):
+class RegionalR5ViewSet(BaseRegionalRMeWithSendViewSet):
     """
     Организация всероссийских (международных) (организатор – региональное отделение РСО),
     окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
@@ -488,7 +586,7 @@ r9_view_sets_factory = RViewSetFactory(
 r9_view_sets_factory.create_view_sets()
 
 
-class RegionalR101ViewSet(BaseRegionalRViewSet):
+class RegionalR101ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -501,7 +599,7 @@ class RegionalR101MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102ViewSet(BaseRegionalRViewSet):
+class RegionalR102ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -514,7 +612,7 @@ class RegionalR102MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11ViewSet(BaseRegionalRViewSet):
+class RegionalR11ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -528,7 +626,7 @@ class RegionalR11MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR12ViewSet(BaseRegionalRViewSet):
+class RegionalR12ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -542,7 +640,7 @@ class RegionalR12MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR13ViewSet(BaseRegionalRViewSet):
+class RegionalR13ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -556,7 +654,7 @@ class RegionalR13MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16ViewSet(BaseRegionalRViewSet):
+class RegionalR16ViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -569,7 +667,7 @@ class RegionalR16MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR17ViewSet(BaseRegionalRViewSet):
+class RegionalR17ViewSet(BaseRegionalRMeWithSendViewSet):
     """Дислокация студенческих отрядов РО РСО.
 
     file_size выводится в мегабайтах.
@@ -588,7 +686,7 @@ class RegionalR17MeViewSet(BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR19ViewSet(BaseRegionalRViewSet):
+class RegionalR19ViewSet(BaseRegionalRMeWithSendViewSet):
     """Трудоустройство."""
 
     queryset = RegionalR19.objects.all()
