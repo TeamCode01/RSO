@@ -3,7 +3,7 @@ from functools import wraps
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 
-from regional_competitions.r_calculations import calculate_r5_score
+# from regional_competitions.r_calculations import calculate_r5_score
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):

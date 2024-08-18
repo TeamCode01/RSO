@@ -604,3 +604,12 @@ class RegionalR19Serializer(BaseRSerializer):
         model = RegionalR19
         fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end', 'comment',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class EventNameSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+
+class MassSendSerializer(serializers.Serializer):
+    detail = serializers.CharField(read_only=True)

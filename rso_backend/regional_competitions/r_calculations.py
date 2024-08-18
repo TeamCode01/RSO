@@ -3,8 +3,8 @@ from datetime import datetime
 
 from headquarters.models import RegionalHeadquarter
 
-# from regional_competitions.models import (RegionalR12, RegionalR13,
-#                                           RegionalR14)
+from regional_competitions.models import (RegionalR12, RegionalR13,
+                                          RegionalR14)
 
 logger = logging.getLogger('tasks')
 
