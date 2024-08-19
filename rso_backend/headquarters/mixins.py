@@ -112,28 +112,28 @@ class SubDistrictHqsMixin(SubControlBaseMixin):
         district_hq = self.get_object()
         regionals = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
         sub_control_data = self.get_sub_controls(regionals)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_locals')
     def get_sub_locals(self, request, pk=None):
         district_hq = self.get_object()
         locals = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_hq)
         sub_control_data = self.get_sub_controls(locals)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_educationals')
     def get_sub_educationals(self, request, pk=None):
         district_hq = self.get_object()
         educationals = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_hq)
         sub_control_data = self.get_sub_controls(educationals)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_detachments')
     def get_sub_detachments(self, request, pk=None):
         district_hq = self.get_object()
         detachments = Detachment.objects.filter(regional_headquarter__district_headquarter=district_hq)
         sub_control_data = self.get_sub_controls(detachments)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
 
 class SubRegionalHqsMixin(SubControlBaseMixin):
@@ -143,21 +143,21 @@ class SubRegionalHqsMixin(SubControlBaseMixin):
         regional_hq = self.get_object()
         locals = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
         sub_control_data = self.get_sub_controls(locals)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_educationals')
     def get_sub_educationals(self, request, pk=None):
         regional_hq = self.get_object()
         educationals = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
         sub_control_data = self.get_sub_controls(educationals)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_detachments')
     def get_sub_detachments(self, request, pk=None):
         regional_hq = self.get_object()
         detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
         sub_control_data = self.get_sub_controls(detachments)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
 
 class SubLocalHqsMixin(SubControlBaseMixin):
@@ -167,14 +167,14 @@ class SubLocalHqsMixin(SubControlBaseMixin):
         local_hq = self.get_object()
         educationals = EducationalHeadquarter.objects.filter(local_headquarter=local_hq)
         sub_control_data = self.get_sub_controls(educationals)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_detachments')
     def get_sub_detachments(self, request, pk=None):
         local_hq = self.get_object()
         detachments = Detachment.objects.filter(local_headquarter=local_hq)
         sub_control_data = self.get_sub_controls(detachments)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
 
 
 class SubEducationalHqsMixin(SubControlBaseMixin):
@@ -184,7 +184,7 @@ class SubEducationalHqsMixin(SubControlBaseMixin):
         educational_hq = self.get_object()
         detachments = Detachment.objects.filter(educational_headquarter=educational_hq)
         sub_control_data = self.get_sub_controls(detachments)
-        return Response(sub_control_data)
+        return Response(sub_control_data, status=status.HTTP_200_OK)
     
 
 class BaseLeadershipMixin:
@@ -238,7 +238,7 @@ class BaseLeadershipMixin:
     def leadership_action(self, request, pk=None):
         instance = self.get_object()
         leadership_data = self.get_leadership(instance)
-        return Response(leadership_data)
+        return Response(leadership_data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['get'], url_path='leadership/(?P<user_pk>\d+)')
     def retrieve_leadership_by_user_pk(self, request, pk=None, user_pk=None):
@@ -246,7 +246,7 @@ class BaseLeadershipMixin:
         leadership_data = self.get_leadership(instance)
         filtered_leadership = [leader for leader in leadership_data if leader['user']['id'] == int(user_pk)]
         if filtered_leadership:
-            return Response(filtered_leadership)
+            return Response(filtered_leadership, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -304,7 +304,7 @@ class BaseSubCommanderMixin:
     def retrieve_sub_commanders(self, request, pk=None):
         instance = self.get_object()
         commanders = self.get_sub_commanders(instance)
-        return Response(commanders)
+        return Response(commanders, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='sub_commanders/(?P<user_pk>\d+)')
     def retrieve_sub_commander_by_user_pk(self, request, pk=None, user_pk=None):
@@ -312,7 +312,7 @@ class BaseSubCommanderMixin:
         commanders = self.get_sub_commanders(instance)
         filtered_commanders = [cmd for cmd in commanders if cmd['id'] == int(user_pk)]
         if filtered_commanders:
-            return Response(filtered_commanders)
+            return Response(filtered_commanders, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
 
