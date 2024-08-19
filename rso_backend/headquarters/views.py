@@ -29,7 +29,8 @@ from headquarters.filters import (DetachmentFilter,
                                   DetachmentListFilter,
                                   SubCommanderListFilter)
 
-from headquarters.mixins import ApplicationsMixin, VerificationsMixin, SubControlHeadquartersMixin
+from headquarters.mixins import (ApplicationsMixin, VerificationsMixin, SubRegionalHqsMixin,
+                                 SubDistrictHqsMixin, SubLocalHqsMixin, SubEducationalHqsMixin)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -82,8 +83,7 @@ from headquarters.serializers import (
     DistrictSubCommanderSerializer, EducationalSubCommanderSerializer,
     LocalSubCommanderSerializer, BaseLeadershipSerializer,
     CentralLeadershipSerializer, LocalLeadershipSerializer, EducationalLeadershipSerializer,
-    DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer,
-    DistrictSubControlSerializer, RegionalSubControlSerializer, LocalSubControlSerializer, EducationalSubControlSerializer)
+    DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer,)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -144,7 +144,7 @@ class CentralViewSet(ApplicationsMixin, ListRetrieveUpdateViewSet):
         return UserCentralApplicationShortReadSerializer
 
 
-class DistrictViewSet(ApplicationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
+class DistrictViewSet(ApplicationsMixin, SubDistrictHqsMixin, viewsets.ModelViewSet):
     """Представляет окружные штабы.
 
     Привязывается к центральному штабу по ключу central_headquarter.
@@ -196,11 +196,9 @@ class DistrictViewSet(ApplicationsMixin, SubControlHeadquartersMixin, viewsets.M
     def get_application_short_serializer(self):
         return UserDistrictApplicationShortReadSerializer
     
-    def get_sub_control_serializer(self):
-        return DistrictSubControlSerializer
     
 
-class RegionalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
+class RegionalViewSet(ApplicationsMixin, VerificationsMixin, SubRegionalHqsMixin, viewsets.ModelViewSet):
     """Представляет региональные штабы.
 
     Привязывается к окружному штабу по ключу district_headquarter (id).
@@ -269,12 +267,9 @@ class RegionalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquart
 
     def get_func_members_to_verify(self):
         return get_regional_hq_members_to_verify
-    
-    def get_sub_control_serializer(self):
-        return RegionalSubControlSerializer
 
 
-class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
+class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubLocalHqsMixin, viewsets.ModelViewSet):
     """Представляет местные штабы.
 
     Привязывается к региональному штабу по ключу regional_headquarter (id).
@@ -328,12 +323,9 @@ class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubControlHeadquarters
 
     def get_application_short_serializer(self):
         return UserLocalApplicationShortReadSerializer
-    
-    def get_sub_control_serializer(self):
-        return LocalSubControlSerializer
 
 
-class EducationalViewSet(ApplicationsMixin, SubControlHeadquartersMixin, viewsets.ModelViewSet):
+class EducationalViewSet(ApplicationsMixin, SubEducationalHqsMixin, viewsets.ModelViewSet):
     """Представляет образовательные штабы.
 
     Может привязываться к местному штабу по ключу local_headquarter (id).
@@ -392,9 +384,6 @@ class EducationalViewSet(ApplicationsMixin, SubControlHeadquartersMixin, viewset
 
     def get_application_short_serializer(self):
         return UserEducationalApplicationShortReadSerializer
-    
-    def get_sub_control_serializer(self):
-        return EducationalSubControlSerializer
 
 
 class DetachmentViewSet(ApplicationsMixin, VerificationsMixin, viewsets.ModelViewSet):

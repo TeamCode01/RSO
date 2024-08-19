@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 
 from headquarters.swagger_schemas import applications_response
-from headquarters.models import UserDetachmentApplication
+from headquarters.models import UserDetachmentApplication, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Detachment
 
 
 class ApplicationsMixin:
@@ -85,79 +85,94 @@ class VerificationsMixin:
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class SubControlHeadquartersMixin: 
+class SubControlBaseMixin:
+    def get_sub_controls(self, headquarters):
+        sub_control = []
+        for hq in headquarters:
+            sub_control.append({
+                'id': hq.id,
+                'name': hq.name,
+            })
+        return sub_control
     
-    def get_sub_control_serializer(self):
-        raise NotImplementedError("Необходимо определить метод get_headquarter_serializer")
+
+class SubDistrictHqsMixin(SubControlBaseMixin):
     
     @action(detail=True, methods=['get'], url_path='sub_regionals')
-    def districts_sub_regionals_headquarters(self, request, pk=None):
-        district = self.get_object()
-        serializer = self.get_serializer(district, context={'type': 'regional'})
-        return Response(serializer.data)
+    def get_sub_regionals(self, request, pk=None):
+        district_hq = self.get_object()
+        regionals = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
+        sub_control_data = self.get_sub_controls(regionals)
+        return Response(sub_control_data)
+
+    @action(detail=True, methods=['get'], url_path='sub_locals')
+    def get_sub_locals(self, request, pk=None):
+        district_hq = self.get_object()
+        locals = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_hq)
+        sub_control_data = self.get_sub_controls(locals)
+        return Response(sub_control_data)
+
+    @action(detail=True, methods=['get'], url_path='sub_educationals')
+    def get_sub_educationals(self, request, pk=None):
+        district_hq = self.get_object()
+        educationals = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_hq)
+        sub_control_data = self.get_sub_controls(educationals)
+        return Response(sub_control_data)
+
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def get_sub_detachments(self, request, pk=None):
+        district_hq = self.get_object()
+        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter=district_hq)
+        sub_control_data = self.get_sub_controls(detachments)
+        return Response(sub_control_data)
+
+
+class SubRegionalHqsMixin(SubControlBaseMixin):
     
     @action(detail=True, methods=['get'], url_path='sub_locals')
-    def districts_sub_locals_headquarters(self, request, pk=None):
-        district = self.get_object()
-        serializer = self.get_serializer(district, context={'type': 'local'})
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path='sub_educationals')
-    def districts_sub_educationals_headquarters(self, request, pk=None):
-        district = self.get_object()
-        serializer = self.get_serializer(district, context={'type': 'educational'})
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path='sub_detachments')
-    def districts_sub_detachments_headquarters(self, request, pk=None):
-        district = self.get_object()
-        serializer = self.get_serializer(district, context={'type': 'detachment'})
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path='sub_locals')
-    def regional_sub_locals_headquarters(self, request, pk=None):
-        regional = self.get_object()
-        serializer = self.get_serializer(regional, context={'type': 'local'})
-        return Response(serializer.data)
+    def get_sub_locals(self, request, pk=None):
+        regional_hq = self.get_object()
+        locals = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
+        sub_control_data = self.get_sub_controls(locals)
+        return Response(sub_control_data)
 
     @action(detail=True, methods=['get'], url_path='sub_educationals')
-    def regional_sub_educationals_headquarters(self, request, pk=None):
-        regional = self.get_object()
-        serializer = self.get_serializer(regional, context={'type': 'educational'})
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path='sub_detachments')
-    def regional_sub_detachments_headquarters(self, request, pk=None):
-        regional = self.get_object()
-        serializer = self.get_serializer(regional, context={'type': 'detachment'})
-        return Response(serializer.data)
+    def get_sub_educationals(self, request, pk=None):
+        regional_hq = self.get_object()
+        educationals = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
+        sub_control_data = self.get_sub_controls(educationals)
+        return Response(sub_control_data)
 
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def get_sub_detachments(self, request, pk=None):
+        regional_hq = self.get_object()
+        detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
+        sub_control_data = self.get_sub_controls(detachments)
+        return Response(sub_control_data)
+
+
+class SubLocalHqsMixin(SubControlBaseMixin):
+    
     @action(detail=True, methods=['get'], url_path='sub_educationals')
-    def local_sub_educationals_headquarters(self, request, pk=None):
-        local = self.get_object()
-        serializer = self.get_serializer(local, context={'type': 'educational'})
-        return Response(serializer.data)
+    def get_sub_educationals(self, request, pk=None):
+        local_hq = self.get_object()
+        educationals = EducationalHeadquarter.objects.filter(local_headquarter=local_hq)
+        sub_control_data = self.get_sub_controls(educationals)
+        return Response(sub_control_data)
+
+    @action(detail=True, methods=['get'], url_path='sub_detachments')
+    def get_sub_detachments(self, request, pk=None):
+        local_hq = self.get_object()
+        detachments = Detachment.objects.filter(local_headquarter=local_hq)
+        sub_control_data = self.get_sub_controls(detachments)
+        return Response(sub_control_data)
+
+
+class SubEducationalHqsMixin(SubControlBaseMixin):
     
     @action(detail=True, methods=['get'], url_path='sub_detachments')
-    def local_sub_detachments_headquarters(self, request, pk=None):
-        local = self.get_object()
-        serializer = self.get_serializer(local, context={'type': 'detachment'})
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path='sub_detachments')
-    def educational_sub_detachments_headquarters(self, request, pk=None):
-        educational = self.get_object()
-        serializer = self.get_serializer(educational, context={'type': 'detachment'})
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path='sub_control/(?P<sub_control_id>[^/.]+)')
-    def retrieve_sub_control(self, request, pk=None, sub_control_id=None):
-        instance = self.get_object()
-        sub_controls = self.get_serializer(instance).data.get('sub_control_headquarters', [])
-
-        sub_control = next((item for item in sub_controls if str(item['id']) == str(sub_control_id)), None)
-
-        if sub_control:
-            return Response(sub_control)
-        else:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    def get_sub_detachments(self, request, pk=None):
+        educational_hq = self.get_object()
+        detachments = Detachment.objects.filter(educational_headquarter=educational_hq)
+        sub_control_data = self.get_sub_controls(detachments)
+        return Response(sub_control_data)
