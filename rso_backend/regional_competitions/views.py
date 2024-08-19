@@ -402,7 +402,7 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         return get_report_xlsx(self)
 
 
-class BaseRegionalRMeWithSendViewSet(BaseRegionalRViewSet):
+class BaseRegionalRMeWithSendViewSet(BaseRegionalRMeViewSet):
 
     @action(
         detail=True,
@@ -434,8 +434,6 @@ class MassSendViewSet(GenericViewSet):
         models = factory.models
         events_to_update = []
         for name, model in models.items():
-            print(f'Тип модели: {type(model)}')
-            print(f'Модель: {model}')
             if name[-4:] == 'Link':
                 continue
             event_obj = model.objects.filter(
@@ -517,34 +515,34 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         return Response(event_data)
 
 
-class RegionalR1ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR1ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR1MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR1MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR1
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR4ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR4MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR5ViewSet(BaseRegionalRViewSet):
     """
     Организация всероссийских (международных) (организатор – региональное отделение РСО),
     окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
@@ -574,7 +572,7 @@ class RegionalR5ViewSet(BaseRegionalRMeWithSendViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR5MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR5
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
@@ -599,88 +597,88 @@ r9_view_sets_factory = RViewSetFactory(
 r9_view_sets_factory.create_view_sets()
 
 
-class RegionalR101ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR101ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR101MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR101MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR101
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR102ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR102MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR102
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR11ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR11MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR11MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR11
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR12ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR12ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR12MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR12MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR12
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR13ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR13ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR13MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR13MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR13
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR16ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR16MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR16
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR17ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR17ViewSet(BaseRegionalRViewSet):
     """Дислокация студенческих отрядов РО РСО.
 
     file_size выводится в мегабайтах.
@@ -692,14 +690,14 @@ class RegionalR17ViewSet(BaseRegionalRMeWithSendViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR17MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR17MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR17
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR19ViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR19ViewSet(BaseRegionalRViewSet):
     """Трудоустройство."""
 
     queryset = RegionalR19.objects.all()
@@ -707,7 +705,7 @@ class RegionalR19ViewSet(BaseRegionalRMeWithSendViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR19MeViewSet(BaseRegionalRMeWithSendViewSet):
     model = RegionalR19
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer

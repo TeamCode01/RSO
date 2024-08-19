@@ -89,7 +89,7 @@ router.register(r'reports/17', RegionalR17ViewSet, basename='r17')
 router.register(r'reports/19', RegionalR19ViewSet, basename='r19')
 
 router.register(r'reports/event_names', RegionalEventNamesRViewSet, basename='event_names')
-router.register(r'reports', MassSendViewSet, basename='mass_send_reports')
+router.register(r'me/reports', MassSendViewSet, basename='mass_send_reports')
 
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
