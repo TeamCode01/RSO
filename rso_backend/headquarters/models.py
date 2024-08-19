@@ -1051,3 +1051,16 @@ class UserCentralApplication(models.Model):
         ]
         verbose_name_plural = 'Заявки на вступление в ЦШ'
         verbose_name = 'Заявка на вступление в ЦШ'
+
+
+class RegionalHeadquarterEmail(models.Model):
+    regional_headquarter = models.ForeignKey(
+        'RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='РШ'
+    )
+    email = models.EmailField()
+
+    class Meta:
+        verbose_name = 'Email Регионального Штаба'
+        verbose_name_plural = 'Email Региональных Штабов'
