@@ -14,9 +14,13 @@
             <a href="{% url 'detachment_q_results' %}" class="button">Общая выгрузка участников конкурса по всем показателям</a>
             <button class="button" id="downloadContactDataButton">Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)</button>
             <button class="button" id="downloadQ5DataButton">Процент членов студенческого отряда, прошедших профессиональное обучение (файл)</button>
+            <button class="button" id="downloadQ6DataButton">Участие членов студенческого отряда в обязательных общесистемных мероприятиях на региональном уровне (файл)</button>
             <button class="button" id="downloadQ7DataButton">Участие членов студенческого отряда в окружных и межрегиональных мероприятиях (файл)</button>
             <button class="button" id="downloadQ8DataButton">Участие членов студенческого отряда во всероссийских мероприятиях (файл)</button>
             <button class="button" id="downloadQ9DataButton">Призовые места отряда в окружных и межрегиональных мероприятиях и конкурсах РСО (файл)</button>
+            <button class="button" id="downloadQ10DataButton">Призовые места отряда во всероссийских мероприятиях и конкурсах РСО (файл)</button>
+            <button class="button" id="downloadQ11DataButton">Призовые места отряда в окружных и межрегиональных трудовых проектах (файл)</button>
+            <button class="button" id="downloadQ12DataButton">Призовые места отряда во всероссийских трудовых проектах (файл)</button>
                         <button class="button" id="downloadQ13DataButton">Организация собственных мероприятий отряда (файл)</button>
                         <button class="button" id="downloadQ14DataButton">Отношение количества бойцов, отработавших в летнем трудовом семестре к общему числу членов отряда (файл)</button>
 						<button class="button" id="downloadQ15DataButton">Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах(файл)</button>
@@ -74,9 +78,13 @@
     
         setupDownloadButton('downloadContactDataButton', '{% url "competition_participants_contact_data" %}', 'Выгрузка контактных данных руководства отрядов, участвующих в конкурсе (файл)');
         setupDownloadButton('downloadQ5DataButton', '{% url "export_q5_data" %}', 'Процент членов студенческого отряда, прошедших профессиональное обучение (файл)');
+        setupDownloadButton('downloadQ6DataButton', '{% url "export_q6_data" %}', 'Участие членов студенческого отряда в обязательных общесистемных мероприятиях на региональном уровне (файл)');
         setupDownloadButton('downloadQ7DataButton', '{% url "export_q7_data" %}', 'Участие членов студенческого отряда в окружных и межрегиональных мероприятиях (файл)');
         setupDownloadButton('downloadQ8DataButton', '{% url "export_q8_data" %}', 'Участие членов студенческого отряда во всероссийских мероприятиях (файл)');
         setupDownloadButton('downloadQ9DataButton', '{% url "export_q9_data" %}', 'Призовые места отряда в окружных и межрегиональных мероприятиях и конкурсах РСО (файл)');
+        setupDownloadButton('downloadQ10DataButton', '{% url "export_q10_data" %}', 'Призовые места отряда во всероссийских мероприятиях и конкурсах РСО (файл)');
+        setupDownloadButton('downloadQ11DataButton', '{% url "export_q11_data" %}', 'Призовые места отряда в окружных и межрегиональных трудовых проектах (файл)');
+        setupDownloadButton('downloadQ12DataButton', '{% url "export_q12_data" %}', 'Призовые места отряда во всероссийских трудовых проектах (файл)');
         setupDownloadButton('downloadQ13DataButton', '{% url "export_q13_data" %}', 'Организация собственных мероприятий отряда (файл)');
         setupDownloadButton('downloadQ14DataButton', '{% url "export_q14_data" %}', 'Отношение количества бойцов, отработавших в летнем трудовом семестре к общему числу членов отряда (файл)');
         setupDownloadButton('downloadQ15DataButton', '{% url "export_q15_data" %}','Победы членов отряда в региональных, окружных и всероссийских грантовых конкурсах (файл)');
