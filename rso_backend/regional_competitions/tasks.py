@@ -6,6 +6,7 @@ from celery import shared_task
 from django.conf import settings
 
 from headquarters.models import RegionalHeadquarterEmail
+from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE
 from regional_competitions.models import StatisticalRegionalReport
 from regional_competitions.r_calculations import calculate_r14
 from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails
@@ -22,7 +23,7 @@ def send_email_report_part_1(report_id: int):
         pdf_file = generate_pdf_report_part_1(report)
         send_email_with_attachment(
             subject='Получен отчет о деятельности регионального отделения РСО за 2024 год - часть 1',
-            message='PDF файл отправленного отчета доступен во вложении',
+            message=EMAIL_REPORT_PART_1_MESSAGE,
             recipients=get_emails(report),
             file_path=pdf_file
         )
