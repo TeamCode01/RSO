@@ -9,7 +9,7 @@ from regional_competitions.models import StatisticalRegionalReport
 from regional_competitions.r_calculations import calculate_r14
 from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails
 
-logger = logging.getLogger('tasks')
+logger = logging.getLogger('regional_tasks')
 
 
 @shared_task
@@ -28,6 +28,11 @@ def send_email_report_part_1(report_id: int):
     except Exception as e:
         err_traceback = traceback.format_exc()
         logger.critical(f'UNEXPECTED ERROR send_email_report_part_1: {e}.\n{err_traceback}')
+
+
+@shared_task
+def send_email_report_part_2(report_id: int):
+    pass
 
 
 @shared_task

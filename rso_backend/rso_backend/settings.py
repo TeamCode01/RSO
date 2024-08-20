@@ -231,7 +231,16 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs/tasks_logs.log',
-            'maxBytes': 1024 * 1024 * 1024,
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 15,
+            'formatter': 'verbose',
+            'encoding': 'UTF-8',
+        },
+        'regional_tasks': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/regional_tasks_logs.log',
+            'maxBytes': 20 * 1024 * 1024,
             'backupCount': 15,
             'formatter': 'verbose',
             'encoding': 'UTF-8',
@@ -258,6 +267,10 @@ LOGGING = {
     'loggers': {
         'tasks': {
             'handlers': ['console', 'tasks'],
+            'level': 'DEBUG',
+        },
+        'regional_tasks': {
+            'handlers': ['console', 'regional_tasks'],
             'level': 'DEBUG',
         },
         'django': {
