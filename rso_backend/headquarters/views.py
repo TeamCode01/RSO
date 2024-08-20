@@ -106,7 +106,10 @@ class PositionViewSet(ListRetrieveViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class CentralViewSet(ApplicationsMixin, BaseLeadershipMixin, CentralSubCommanderMixin, ListRetrieveUpdateViewSet):
+class CentralViewSet(ApplicationsMixin, 
+                     BaseLeadershipMixin, 
+                     CentralSubCommanderMixin, 
+                     ListRetrieveUpdateViewSet):
     """Представляет центральные штабы.
 
     При операции чтения доступно число количества участников в структурной
@@ -142,7 +145,10 @@ class CentralViewSet(ApplicationsMixin, BaseLeadershipMixin, CentralSubCommander
         return UserCentralApplicationShortReadSerializer
 
 
-class DistrictViewSet(ApplicationsMixin, SubDistrictHqsMixin, BaseLeadershipMixin, DistrictSubCommanderMixin, 
+class DistrictViewSet(ApplicationsMixin, 
+                      SubDistrictHqsMixin, 
+                      BaseLeadershipMixin, 
+                      DistrictSubCommanderMixin, 
                       viewsets.ModelViewSet):
     """Представляет окружные штабы.
 
@@ -197,8 +203,12 @@ class DistrictViewSet(ApplicationsMixin, SubDistrictHqsMixin, BaseLeadershipMixi
     
     
 
-class RegionalViewSet(ApplicationsMixin, VerificationsMixin, SubRegionalHqsMixin, BaseLeadershipMixin,
-                        RegionalSubCommanderMixin, viewsets.ModelViewSet):
+class RegionalViewSet(ApplicationsMixin, 
+                      VerificationsMixin, 
+                      SubRegionalHqsMixin, 
+                      BaseLeadershipMixin,
+                      RegionalSubCommanderMixin, 
+                      viewsets.ModelViewSet):
     """Представляет региональные штабы.
 
     Привязывается к окружному штабу по ключу district_headquarter (id).
@@ -269,8 +279,12 @@ class RegionalViewSet(ApplicationsMixin, VerificationsMixin, SubRegionalHqsMixin
         return get_regional_hq_members_to_verify
 
 
-class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubLocalHqsMixin, BaseLeadershipMixin,
-                    LocalSubCommanderMixin, viewsets.ModelViewSet):
+class LocalViewSet(ApplicationsMixin, 
+                   VerificationsMixin, 
+                   SubLocalHqsMixin, 
+                   BaseLeadershipMixin,
+                   LocalSubCommanderMixin, 
+                   viewsets.ModelViewSet):
     """Представляет местные штабы.
 
     Привязывается к региональному штабу по ключу regional_headquarter (id).
@@ -326,8 +340,11 @@ class LocalViewSet(ApplicationsMixin, VerificationsMixin, SubLocalHqsMixin, Base
         return UserLocalApplicationShortReadSerializer
 
 
-class EducationalViewSet(ApplicationsMixin, SubEducationalHqsMixin, BaseLeadershipMixin, 
-                         EducationalSubCommanderMixin, viewsets.ModelViewSet):
+class EducationalViewSet(ApplicationsMixin, 
+                         SubEducationalHqsMixin, 
+                         BaseLeadershipMixin, 
+                         EducationalSubCommanderMixin, 
+                         viewsets.ModelViewSet):
     """Представляет образовательные штабы.
 
     Может привязываться к местному штабу по ключу local_headquarter (id).
@@ -388,7 +405,9 @@ class EducationalViewSet(ApplicationsMixin, SubEducationalHqsMixin, BaseLeadersh
         return UserEducationalApplicationShortReadSerializer
 
 
-class DetachmentViewSet(ApplicationsMixin, VerificationsMixin, DetachmentLeadershipMixin, 
+class DetachmentViewSet(ApplicationsMixin, 
+                        VerificationsMixin, 
+                        DetachmentLeadershipMixin, 
                         viewsets.ModelViewSet):
     """Представляет информацию об отряде.
 

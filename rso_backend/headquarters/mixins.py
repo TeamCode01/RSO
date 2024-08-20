@@ -124,7 +124,9 @@ class SubDistrictHqsMixin(SubControlBaseMixin):
     @action(detail=True, methods=['get'], url_path='sub_educationals')
     def get_sub_educationals(self, request, pk=None):
         district_hq = self.get_object()
-        educationals = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_hq)
+        educationals = EducationalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter=district_hq
+            )
         sub_control_data = self.get_sub_controls(educationals)
         return Response(sub_control_data, status=status.HTTP_200_OK)
 
@@ -347,10 +349,14 @@ class DistrictSubCommanderMixin(BaseSubCommanderMixin):
         commanders = []
         district_headquarter = obj
 
-        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_headquarter)
-        self.append_regional_hqs(regional_headquarters, user_id, commanders)
+        regional_headquarters = RegionalHeadquarter.objects.filter(
+            district_headquarter=district_headquarter)
+        self.append_regional_hqs(regional_headquarters, user_id, commanders
+            )
 
-        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
+        detachments = Detachment.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+            )
         self.append_detachment_hqs(detachments, user_id, commanders)
 
         local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
@@ -374,7 +380,9 @@ class RegionalSubCommanderMixin(BaseSubCommanderMixin):
         local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
         self.append_local_hqs(local_headquarters, user_id, commanders)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter=regional_headquarter
+            )
         self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
@@ -389,7 +397,9 @@ class LocalSubCommanderMixin(BaseSubCommanderMixin):
         detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
         self.append_detachment_hqs(detachments, user_id, commanders)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=local_headquarter)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            local_headquarter=local_headquarter
+            )
         self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
