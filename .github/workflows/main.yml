@@ -31,8 +31,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Executing remote ssh commands to deploy
-        uses: appleboy/ssh-action@master
       - name: Copy docker-compose.yml
         uses: appleboy/scp-action@v0.1.7
         with:
