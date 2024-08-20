@@ -570,6 +570,7 @@ if DEBUG:
         'task': 'users.tasks.debug_periodic_task',
         'schedule': timedelta(seconds=90),
     }
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
 # FOR LINUX:
 # celery -A rso_backend worker --loglevel=info
