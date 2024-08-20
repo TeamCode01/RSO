@@ -1,7 +1,5 @@
 import json
 
-from api.mixins import CreateViewSet
-from django.conf import settings
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -9,7 +7,6 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
