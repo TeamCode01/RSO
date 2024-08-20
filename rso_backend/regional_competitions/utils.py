@@ -89,9 +89,7 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
 
 def get_emails(report_instance) -> list:
     if settings.DEBUG:
-        addresses = [
-            'delightxxls@gmail.com'  # TODO: вынести в .env
-        ]
+        addresses = settings.TEST_EMAIL_ADDRESSES
     else:
         try:
             addresses = [

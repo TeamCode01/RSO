@@ -51,6 +51,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
 PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
 
+TEST_EMAIL_ADDRESSES = os.getenv('TEST_EMAIL_ADDRESSES').split(',')
+
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
     default='127.0.0.1,localhost,0.0.0.0'
