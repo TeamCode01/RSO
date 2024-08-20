@@ -1,7 +1,5 @@
 import json
 
-from api.mixins import CreateViewSet
-from django.conf import settings
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -9,7 +7,6 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
@@ -34,10 +31,12 @@ from regional_competitions.serializers import (
     RegionalR101Serializer, RegionalR102Serializer,
     StatisticalRegionalReportSerializer, r7_serializers_factory,
     r9_serializers_factory)
+from regional_competitions.tasks import send_email_report_part_1
 from regional_competitions.utils import (
     get_report_number_by_class_name, get_report_xlsx, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+from django.conf import settings
 
 
 class StatisticalRegionalViewSet(RetrieveCreateMixin):
@@ -90,7 +89,8 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
         serializer.save()
 
     def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+        report = serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+        send_email_report_part_1.delay(report.id)
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
@@ -110,12 +110,13 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context.update(
-            {
-                'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                'action': self.action
-            }
-        )
+        if self.action not in ('district_review', 'central_review'):
+            context.update(
+                {
+                    'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                    'action': self.action
+                }
+            )
         return context
 
     def perform_create(self, serializer):
@@ -614,7 +615,6 @@ r7_view_sets_factory = RViewSetFactory(
     base_r_me_view_set=BaseRegionalRMeViewSet,
 )
 r7_view_sets_factory.create_view_sets()
-
 
 r9_view_sets_factory = RViewSetFactory(
     models=r9_models_factory.models,
