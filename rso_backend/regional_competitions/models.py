@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 
-from regional_competitions.constants import (R6_EVENT_NAMES, R7_EVENT_NAMES, R9_EVENTS_NAMES,
+from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE)
 from regional_competitions.factories import RModelFactory
@@ -368,24 +368,25 @@ class RegionalR5Link(BaseLink):
     )
 
 
-# class BaseRegionalR6(BaseEventProjectR):
-#     """
-#     Участие бойцов студенческих отрядов РО РСО во всероссийских
-#     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
-#     """
-#     number_of_members = models.PositiveSmallIntegerField(
-#         blank=True,
-#         null=True,
-#         verbose_name='Количество человек принявших участие'
-#     )
+class BaseRegionalR6(BaseEventProjectR):
+    """
+    Участие бойцов студенческих отрядов РО РСО во всероссийских
+    (международных) мероприятиях и проектах (в том числе и трудовых) «К».
+    """
+    number_of_members = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество человек принявших участие'
+    )
 
-# r6_models_factory = RModelFactory(
-#     r_number=6,
-#     base_r_model=BaseRegionalR6,
-#     base_link_model=BaseLink,
-#     event_names=R6_EVENT_NAMES,
-# )
-# r6_models_factory.create_models()
+
+r6_models_factory = RModelFactory(
+    r_number=6,
+    base_r_model=BaseRegionalR6,
+    base_link_model=BaseLink,
+    event_names={id: name for tup in R6_DATA for id, name in tup[0].items()},
+)
+r6_models_factory.create_models()
 
 
 class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
@@ -428,7 +429,7 @@ r7_models_factory = RModelFactory(
     r_number=7,
     base_r_model=BaseRegionalR7,
     base_link_model=BaseLink,
-    event_names=R7_EVENT_NAMES,
+    event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
 )
 r7_models_factory.create_models()
 

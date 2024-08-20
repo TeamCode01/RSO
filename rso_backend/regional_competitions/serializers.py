@@ -18,6 +18,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RegionalR102, RegionalR102Link,
                                           RVerificationLog,
                                           StatisticalRegionalReport,
+                                          r6_models_factory,
                                           r7_models_factory, r9_models_factory)
 from regional_competitions.utils import get_report_number_by_class_name
 
@@ -403,6 +404,26 @@ class RegionalR5Serializer(
         return RegionalR5Link.objects.create(
             regional_r5_event=parent_obj, **obj_data
         )
+
+
+class BaseRegionalR6Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    objects_name = 'links'
+
+    class Meta:
+        link_model = None
+        model = None
+        fields = (
+            BaseRSerializer.Meta.fields
+            + ('number_of_members', 'links', 'comment')
+        )
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+r6_serializers_factory = RSerializerFactory(
+    models=r6_models_factory.models,
+    base_r_serializer=BaseRegionalR6Serializer
+)
+r6_serializers_factory.create_serializer_classes()
 
 
 class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):

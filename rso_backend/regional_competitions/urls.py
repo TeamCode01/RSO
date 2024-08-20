@@ -30,6 +30,7 @@ from regional_competitions.views import (MassSendViewSet,
                                          RegionalR102MeViewSet,
                                          RegionalR102ViewSet,
                                          StatisticalRegionalViewSet,
+                                         r6_view_sets_factory,
                                          r7_view_sets_factory,
                                          r9_view_sets_factory)
 
@@ -76,6 +77,9 @@ router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 register_factory_view_sets(
+    router, 'reports/6', r6_view_sets_factory.view_set_names, r6_view_sets_factory.r_view_sets
+)
+register_factory_view_sets(
     router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_view_sets
 )
 register_factory_view_sets(
@@ -97,6 +101,9 @@ router.register(r'me/reports', MassSendViewSet, basename='mass_send_reports')
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
+register_factory_view_sets(
+    me_router, 'reports/6', r6_view_sets_factory.view_set_names, r6_view_sets_factory.r_me_view_sets
+)
 register_factory_view_sets(
     me_router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_me_view_sets
 )
