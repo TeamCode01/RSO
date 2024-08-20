@@ -711,6 +711,74 @@ class RegionalR17(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 17 показателю'
 
 
+class RegionalR18(models.Model):
+    """Количество научных работ и публикаций по теме СО, выпущенных в текущем году."""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+    comment = models.TextField(
+        verbose_name='Комментарий',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 18 показателю'
+        verbose_name_plural = 'Отчеты по 18 показателю'
+
+
+class RegionalR18Project(models.Model):
+    regional_r18 = models.ForeignKey(
+        'RegionalR18',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='projects'
+    )
+    file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Файл',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Проект по 18 показателю'
+        verbose_name_plural = 'Проекты по 18 показателю'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR18Link(models.Model):
+    regional_r18_project = models.ForeignKey(
+        'RegionalR18Project',
+        on_delete=models.CASCADE,
+        verbose_name='Проект',
+        related_name='links',
+    )
+    link = models.URLField(
+        verbose_name='Ссылка на публикацию',
+    )
+
+    class Meta:
+        verbose_name = 'Ссылка по 18 показателю'
+        verbose_name_plural = 'Ссылки по 18 показателю'
+
+    def __str__(self):
+        return f'Ссылка ID {self.id}'
+
+
 class RegionalR19(BaseEventProjectR):
     """Трудоустройство"""
 
