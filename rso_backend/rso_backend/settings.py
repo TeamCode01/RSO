@@ -51,6 +51,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
 PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
 
+TEST_EMAIL_ADDRESSES = os.getenv('TEST_EMAIL_ADDRESSES').split(',')
+
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
     default='127.0.0.1,localhost,0.0.0.0'
@@ -127,8 +129,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'requestlogs.middleware.RequestLogsMiddleware',
 ]
+if not DEBUG:
+    MIDDLEWARE += ['requestlogs.middleware.RequestLogsMiddleware',]
 
 ROOT_URLCONF = 'rso_backend.urls'
 
@@ -231,6 +234,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 1024,
             'backupCount': 15,
             'formatter': 'verbose',
+            'encoding': 'UTF-8',
         },
         'django': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -239,6 +243,7 @@ LOGGING = {
             'backupCount': LOGS_BACKUP_COUNT,
             'level': 'INFO',
             'formatter': 'verbose',
+            'encoding': 'UTF-8',
         },
         'requestlogs_to_file': {
             'level': 'DEBUG',
@@ -246,6 +251,7 @@ LOGGING = {
             'filename': 'logs/request_logs.log',
             'when': 'midnight',
             'backupCount': 90,
+            'encoding': 'UTF-8',
         },
     },
 
@@ -708,10 +714,10 @@ REQUESTLOGS = {
     'IGNORE_PATHS': None,
 }
 
-LOG_VIEWER_FILES_PATTERN = '*.log*'
+LOG_VIEWER_FILES_PATTERN = '*'
 LOG_VIEWER_FILES_DIR = LOGS_PATH
-LOG_VIEWER_PAGE_LENGTH = 50
-LOG_VIEWER_MAX_READ_LINES = 100_000_000
+LOG_VIEWER_PAGE_LENGTH = 75
+LOG_VIEWER_MAX_READ_LINES = 12000
 LOG_VIEWER_FILE_LIST_MAX_ITEMS_PER_PAGE = 25
 LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL', "{'action_name':"]
 LOG_VIEWER_EXCLUDE_TEXT_PATTERN = None
