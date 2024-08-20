@@ -80,7 +80,9 @@ from headquarters.serializers import (
     UserCentralApplicationShortReadSerializer,
     CentralSubCommanderSerializer, RegionalSubCommanderSerializer,
     DistrictSubCommanderSerializer, EducationalSubCommanderSerializer,
-    LocalSubCommanderSerializer)
+    LocalSubCommanderSerializer, BaseLeadershipSerializer,
+    CentralLeadershipSerializer, LocalLeadershipSerializer, EducationalLeadershipSerializer,
+    DistrictLeadershipSerializer, RegionalLeadershipSerializer, DetachmentLeadershipSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1174,11 +1176,11 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class BaseSubCommanderViewSet(viewsets.ModelViewSet):
+class BaseSubCommanderViewSet(viewsets.GenericViewSet):
     filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SubCommanderListFilter
     search_fields = ('user__first_name', 'user__last_name', 'user__patronymic_name', 'user__id')
-    permission_classes = (IsStuffOrCentralCommander,)
+    permission_classes = ()
 
     def filter_by_user_id(self, queryset):
         user_id = self.request.query_params.get('user_id', None)
@@ -1198,18 +1200,16 @@ class BaseSubCommanderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user__patronymic_name__icontains=patronymic_name)
         return queryset
 
+    @action(detail=True, methods=['get'], url_path='members')
     @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-    
-    @action(detail=True, methods=['get'], url_path='')
     def retrieve_sub_commanders(self, request, pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         sub_commanders = serializer.data['sub_commanders']
         return Response(sub_commanders)
 
-    @action(detail=True, methods=['get'], url_path=r'(?P<user_pk>\d+)')
+    @action(detail=True, methods=['get'], url_path=r'members/(?P<user_pk>\d+)')
+    @method_decorator(cache_page(settings.SUB_COMMANDER_LIST_TTL))
     def retrieve_sub_commander_by_user_pk(self, request, pk=None, user_pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
@@ -1223,6 +1223,7 @@ class BaseSubCommanderViewSet(viewsets.ModelViewSet):
 
 class CentralSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = CentralSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1237,6 +1238,7 @@ class CentralSubCommanderViewSet(BaseSubCommanderViewSet):
     
 class DistrictSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = DistrictSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1251,6 +1253,7 @@ class DistrictSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class RegionalSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = RegionalSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1265,6 +1268,7 @@ class RegionalSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class LocalSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = LocalSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1279,6 +1283,7 @@ class LocalSubCommanderViewSet(BaseSubCommanderViewSet):
 
 class EducationalSubCommanderViewSet(BaseSubCommanderViewSet):
     serializer_class = EducationalSubCommanderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         queryset = get_headquarter_users_positions_queryset(
@@ -1289,3 +1294,61 @@ class EducationalSubCommanderViewSet(BaseSubCommanderViewSet):
         queryset = self.filter_by_user_id(queryset)
         queryset = self.filter_by_name(queryset)
         return queryset
+    
+
+class BaseLeadershipViewSet(viewsets.GenericViewSet):
+    serializer_class = BaseLeadershipSerializer
+    permission_classes = ()
+
+    @action(detail=True, methods=['get'], url_path='members')
+    def add_leadership(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='members/(?P<user_pk>\d+)')
+    def retrieve_leadership_by_user_pk(self, request, pk=None, user_pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        leadership = serializer.data['leadership']
+        filtered_leadership = [l for l in leadership if l['user']['id'] == int(user_pk)]
+        if filtered_leadership:
+            return Response(filtered_leadership)
+        else:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+
+class CentralLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = CentralHeadquarter.objects.all()
+    serializer_class = CentralLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class DistrictLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = DistrictHeadquarter.objects.all()
+    serializer_class = DistrictLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class RegionalLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = RegionalHeadquarter.objects.all()
+    serializer_class = RegionalLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class LocalLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = LocalHeadquarter.objects.all()
+    serializer_class = LocalLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class EducationalLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = EducationalHeadquarter.objects.all()
+    serializer_class = EducationalLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    
+
+class DetachmentLeadershipViewSet(BaseLeadershipViewSet):
+    queryset = Detachment.objects.all()
+    serializer_class = DetachmentLeadershipSerializer
+    permission_classes = (permissions.IsAuthenticated,)

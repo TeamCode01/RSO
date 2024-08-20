@@ -62,6 +62,7 @@ urlpatterns = [
     ),
     path('accounts/', include('django.contrib.auth.urls')),
     path('reports/', include('reports.urls')),
+    path('logs/', include('log_viewer.urls')),
     path('', include('headquarters.urls')),
     path('', include('events.urls')),
     path('', include('users.urls')),

@@ -1,7 +1,22 @@
+import logging
 from functools import wraps
 
 from drf_yasg.utils import swagger_auto_schema
+from django.conf import settings
+from django.core.mail import EmailMessage
 from rest_framework import status
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak
+from pdfrw import PdfWriter, PdfReader, PageMerge
+import os
+
+from headquarters.models import RegionalHeadquarterEmail
+
+logger = logging.getLogger('tasks')
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -69,4 +84,123 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     Сохраняем в users/{user_id}/photo
     """
     filename = filename.split('.')
-    return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.id}/{filename[0][:25]}.{filename[1]}'
+    return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.regional_headquarter.id}/{filename[0][:25]}.{filename[1]}'
+
+
+def get_emails(report_instance) -> list:
+    if settings.DEBUG:
+        addresses = settings.TEST_EMAIL_ADDRESSES
+    else:
+        try:
+            addresses = [
+                RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
+            ]
+        except RegionalHeadquarterEmail.DoesNotExist:
+            logger.warning(
+                f'Не найден почтовый адрес в RegionalHeadquarterEmail для РШ ID {report_instance.regional_headquarter.id}')
+            return []
+    return addresses
+
+
+def send_email_with_attachment(subject: str, message: str, recipients: list, file_path: str):
+    mail = EmailMessage(
+        subject=subject,
+        body=message,
+        from_email=settings.EMAIL_HOST_USER,
+        to=recipients
+    )
+    with open(file_path, 'rb') as f:
+        file_name_start = file_path.find('О')
+        mail.attach(file_path.split('/')[-1][file_name_start:], f.read(), 'application/octet-stream')
+    mail.send()
+
+
+def generate_pdf_report_part_1(report):
+    pdf_file_name = f"Отчет_ч1_РСО_{report.regional_headquarter}.pdf"
+    pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
+
+    pdfmetrics.registerFont(TTFont(
+        'Times_New_Roman',
+        os.path.join(
+            str(settings.BASE_DIR),
+            'templates',
+            'samples',
+            'fonts',
+            'times.ttf'
+        )
+    ))
+
+    temp_pdf_file_path = os.path.join(settings.MEDIA_ROOT, f"Temp_{pdf_file_name}")
+    doc = SimpleDocTemplate(temp_pdf_file_path, pagesize=A4)
+    elements = []
+
+    styles = getSampleStyleSheet()
+
+    styles.add(ParagraphStyle(name='CustomTitle', fontName='Times_New_Roman', fontSize=18, spaceAfter=20,
+                              alignment=1, leading=24))
+    styles.add(ParagraphStyle(name='Times_New_Roman', fontName='Times_New_Roman', fontSize=12))
+
+    elements.append(Spacer(1, 60))
+
+    elements.append(
+        Paragraph("Отчет о деятельности регионального отделения за 2024 год. Часть 1.", styles['CustomTitle'])
+    )
+
+    elements.append(Spacer(1, 20))
+
+    data = [["Поле", "Значение"]]
+
+    for field in report._meta.fields:
+        if field.name == 'id':
+            continue
+        field_name = field.verbose_name
+        field_value = getattr(report, field.name, '')
+        if isinstance(field_value, str):
+            field_value = field_value
+        elif isinstance(field_value, (int, float)):
+            field_value = str(field_value)
+        elif field_value is None:
+            field_value = ''
+        else:
+            field_value = str(field_value)
+
+        data.append(
+            [Paragraph(field_name, styles['Times_New_Roman']), Paragraph(field_value, styles['Times_New_Roman'])])
+
+    table = Table(data, colWidths=[150, 350], repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6699CC')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(table)
+
+    elements.append(PageBreak())
+
+    doc.build(elements)
+
+    template_pdf_path = os.path.join(
+        str(settings.BASE_DIR),
+        'templates',
+        'samples',
+        'header_regional_r.pdf'
+    )
+    template_reader = PdfReader(template_pdf_path)
+    content_reader = PdfReader(temp_pdf_file_path)
+
+    writer = PdfWriter()
+
+    for template_page, content_page in zip(template_reader.pages, content_reader.pages):
+        PageMerge(template_page).add(content_page, prepend=False).render()
+
+        writer.addpage(template_page)
+
+    writer.write(pdf_file_path)
+    os.remove(temp_pdf_file_path)
+    return pdf_file_path

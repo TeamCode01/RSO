@@ -51,6 +51,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
 PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
 
+TEST_EMAIL_ADDRESSES = os.getenv('TEST_EMAIL_ADDRESSES').split(',')
+
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
     default='127.0.0.1,localhost,0.0.0.0'
@@ -104,6 +106,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'import_export',
     'rest_framework_simplejwt',
+    'log_viewer'
 ]
 
 INSTALLED_APPS += [
@@ -127,6 +130,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+if not DEBUG:
+    MIDDLEWARE += ['requestlogs.middleware.RequestLogsMiddleware',]
 
 ROOT_URLCONF = 'rso_backend.urls'
 
@@ -238,6 +243,13 @@ LOGGING = {
             'level': 'INFO',
             'formatter': 'verbose',
         },
+        'requestlogs_to_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': 'logs/request_logs.log',
+            'when': 'midnight',
+            'backupCount': 90,
+        },
     },
 
     'loggers': {
@@ -249,6 +261,11 @@ LOGGING = {
             'handlers': ['console', 'django'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'requestlogs': {
+            'handlers': ['requestlogs_to_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     }
 }
@@ -291,6 +308,10 @@ if DEBUG:
                 day_of_month=1,
                 month_of_year=10,
             )
+        },
+        'calculate_q14_report_task': {
+            'task': 'regional_competitions.tasks.calculate_q14_report_task',
+            'schedule': timedelta(hours=12)  # пока только дев
         },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',
@@ -594,9 +615,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'MAX_PAGE_SIZE': 1000,
-    'PAGE_SIZE': 100
+    'DEFAULT_PAGINATION_CLASS': 'api.utils.Limit255OffsetPagination',
+    'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
 }
 
 # For VK ID
@@ -677,3 +697,24 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+REQUESTLOGS = {
+    'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
+    'ENTRY_CLASS': 'requestlogs.entries.RequestLogEntry',
+    'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
+    'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
+    'ATTRIBUTE_NAME': '_requestlog',
+    'METHODS': ('GET', 'PUT', 'PATCH', 'POST', 'DELETE'),
+    'JSON_ENSURE_ASCII': True,
+    'IGNORE_USER_FIELD': None,
+    'IGNORE_USERS': [],
+    'IGNORE_PATHS': None,
+}
+
+LOG_VIEWER_FILES_PATTERN = '*'
+LOG_VIEWER_FILES_DIR = LOGS_PATH
+LOG_VIEWER_PAGE_LENGTH = 50
+LOG_VIEWER_MAX_READ_LINES = 100_000_000
+LOG_VIEWER_FILE_LIST_MAX_ITEMS_PER_PAGE = 25
+LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL', "{'action_name':"]
+LOG_VIEWER_EXCLUDE_TEXT_PATTERN = None

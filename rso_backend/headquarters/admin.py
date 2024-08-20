@@ -23,7 +23,7 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition)
+                                 UserRegionalHeadquarterPosition, RegionalHeadquarterEmail)
 from headquarters.resources import (DistrictHeadquarterResource,
                                     EducationalInstitutionResource,
                                     RegionalHeadquarterResource,
@@ -293,3 +293,9 @@ class AreaAdmin(admin.ModelAdmin):
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
     search_fields = ('name',)
+
+
+@admin.register(RegionalHeadquarterEmail)
+class RegionalHeadquarterEmailAdmin(admin.ModelAdmin):
+    list_display = ('regional_headquarter', 'email')
+    search_fields = ('regional_headquarter__name', 'email')

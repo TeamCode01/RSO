@@ -348,7 +348,6 @@ class BaseUnitSerializer(serializers.ModelSerializer):
     )
     members_count = serializers.SerializerMethodField(read_only=True)
     participants_count = serializers.SerializerMethodField(read_only=True)
-    leadership = serializers.SerializerMethodField(read_only=True)
     events_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -367,7 +366,6 @@ class BaseUnitSerializer(serializers.ModelSerializer):
             'members_count',
             'participants_count',
             'events_count',
-            'leadership',
         )
 
     def to_representation(self, instance):
@@ -377,46 +375,6 @@ class BaseUnitSerializer(serializers.ModelSerializer):
         if commander:
             serialized_data['commander'] = ShortUserSerializer(commander).data
         return serialized_data
-
-    def _get_position_instance(self):
-        if isinstance(self.instance, QuerySet):
-            instance_type = type(self.instance.first())
-        else:
-            instance_type = type(self.instance)
-
-        for model_class, (
-                position_model, _
-        ) in self._POSITIONS_MAPPING.items():
-            if issubclass(instance_type, model_class):
-                return position_model
-
-    def _get_position_serializer(self):
-        if isinstance(self.instance, QuerySet):
-            instance_type = type(self.instance.first())
-        else:
-            instance_type = type(self.instance)
-
-        for model_class, (
-                _, serializer_class
-        ) in self._POSITIONS_MAPPING.items():
-            if issubclass(instance_type, model_class):
-                return serializer_class
-
-    def get_leadership(self, instance):
-        """
-        Вывод руководство отряда - всех, кроме указанных в настройках
-        должностей.
-        """
-        serializer = self._get_position_serializer()
-        position_instance = self._get_position_instance()
-        leaders = position_instance.objects.filter(
-            headquarter=instance
-        ).exclude(
-            Q(position__name__in=settings.NOT_LEADERSHIP_POSITIONS) |
-            Q(position__isnull=True)
-        )
-
-        return serializer(leaders, many=True).data
 
     def get_events_count(self, instance):
         return instance.events.count()
@@ -1128,22 +1086,6 @@ class DetachmentSerializer(BaseUnitSerializer):
         serialized_data['region'] = RegionSerializer(region).data
         return serialized_data
 
-    def get_leadership(self, instance):
-        """
-        Вывод руководства отряда (пользователи с должностями "Мастер
-        (методист)" и "Комиссар", точные названия которых прописаны
-        в настройках).
-        """
-        serializer = self._get_position_serializer()
-        position_instance = self._get_position_instance()
-        leaders = position_instance.objects.filter(
-            Q(headquarter=instance) &
-            (
-                    Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
-                    Q(position__name=settings.COMMISSIONER_POSITION_NAME)
-            )
-        )
-        return serializer(leaders, many=True).data
 
     def get_status(self, obj):
         if not CompetitionParticipants.objects.filter(
@@ -1192,9 +1134,39 @@ class DetachmentListSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'local_headquarter', 'educational_headquarter', 'regional_headquarter')
 
 
-class CentralSubCommanderSerializer(serializers.ModelSerializer):
+class BaseSubCommanderSerializer(serializers.ModelSerializer):
     sub_commanders = serializers.SerializerMethodField(read_only=True)
 
+
+class SubCommanderMixin:
+    def add_commanders(self, headquarters, user_id, commanders, hq_type):
+        for hq in headquarters:
+            if hq.commander and (user_id is None or hq.commander.id == int(user_id)):
+                commanders.append({
+                    'id': hq.commander.id,
+                    'type': hq_type,
+                    'commander': hq.commander.get_full_name() if hasattr(hq.commander, 'get_full_name') else str(hq.commander),
+                    'unit': hq.name
+                })
+        return commanders
+
+    def append_district_hqs(self, district_headquarters, user_id:int, commanders:list)->None:
+        return self.add_commanders(district_headquarters, user_id, commanders, 'DistrictHeadquarter')
+    
+    def append_regional_hqs(self, regional_headquarters, user_id:int, commanders:list)->None:
+        return self.add_commanders(regional_headquarters, user_id, commanders, 'RegionalHeadquarter')
+
+    def append_detachment_hqs(self, detachments, user_id:int, commanders:list)->None:
+        return self.add_commanders(detachments, user_id, commanders, 'Detachment')
+
+    def append_local_hqs(self, local_headquarters, user_id:int, commanders:list)->None:
+        return self.add_commanders(local_headquarters, user_id, commanders, 'LocalHeadquarter')
+
+    def append_educational_hqs(self, educational_headquarters, user_id:int, commanders:list)->None:
+        return self.add_commanders(educational_headquarters, user_id, commanders, 'EducationalHeadquarter')
+
+
+class CentralSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserCentralHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1203,73 +1175,28 @@ class CentralSubCommanderSerializer(serializers.ModelSerializer):
         user_id = self.context.get('user_id', None)
         commanders = []
         central_headquarter = obj.headquarter
-        district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=central_headquarter)
 
-        for district_hq in district_headquarters:
-            if district_hq.commander and (user_id is None or district_hq.commander.id == int(user_id)):
-                commanders.append({
-                    'id': district_hq.commander.id,
-                    'type': 'DistrictHeadquarter',
-                    'commander': district_hq.commander.get_full_name() if hasattr(district_hq.commander,
-                                                                                  'get_full_name') else str(
-                        district_hq.commander),
-                    'unit': district_hq.name
-                })
+        district_headquarters = DistrictHeadquarter.objects.filter(
+            central_headquarter=central_headquarter
+            )
+        self.append_district_hqs(district_headquarters, user_id, commanders)
 
-            regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_hq)
-            for regional_hq in regional_headquarters:
-                if regional_hq.commander and (user_id is None or regional_hq.commander.id == int(user_id)):
-                    commanders.append({
-                        'id': regional_hq.commander.id,
-                        'type': 'RegionalHeadquarter',
-                        'commander': regional_hq.commander.get_full_name() if hasattr(regional_hq.commander,
-                                                                                      'get_full_name') else str(
-                            regional_hq.commander),
-                        'unit': regional_hq.name
-                    })
+        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter__central_headquarter=central_headquarter)
+        self.append_regional_hqs(regional_headquarters, user_id, commanders)
 
-                detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
-                for detachment in detachments:
-                    if detachment.commander and (user_id is None or detachment.commander.id == int(user_id)):
-                        commanders.append({
-                            'id': detachment.commander.id,
-                            'type': 'Detachment',
-                            'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
-                                                                                         'get_full_name') else str(
-                                detachment.commander),
-                            'unit': detachment.name
-                        })
+        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
-                local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                for local_hq in local_headquarters:
-                    if local_hq.commander and (user_id is None or local_hq.commander.id == int(user_id)):
-                        commanders.append({
-                            'id': local_hq.commander.id,
-                            'type': 'LocalHeadquarter',
-                            'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander,
-                                                                                       'get_full_name') else str(
-                                local_hq.commander),
-                            'unit': local_hq.name
-                        })
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
+        self.append_local_hqs(local_headquarters, user_id, commanders)
 
-                educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                for edu_hq in educational_headquarters:
-                    if edu_hq.commander and (user_id is None or edu_hq.commander.id == int(user_id)):
-                        commanders.append({
-                            'id': edu_hq.commander.id,
-                            'type': 'EducationalHeadquarter',
-                            'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
-                                                                                     'get_full_name') else str(
-                                edu_hq.commander),
-                            'unit': edu_hq.name
-                        })
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class DistrictSubCommanderSerializer(serializers.ModelSerializer):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class DistrictSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserDistrictHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1278,65 +1205,27 @@ class DistrictSubCommanderSerializer(serializers.ModelSerializer):
         user_id = self.context.get('user_id')
         commanders = []
         district_headquarter = obj.headquarter
-        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_headquarter)
 
-        for regional_hq in regional_headquarters:
-            if regional_hq.commander and (user_id is None or regional_hq.commander.id == user_id):
-                commander_name = regional_hq.commander.get_full_name() if hasattr(regional_hq.commander,
-                                                                                  'get_full_name') else str(
-                    regional_hq.commander)
-                commanders.append({
-                    'id': regional_hq.commander.id,
-                    'type': 'RegionalHeadquarter',
-                    'commander': commander_name,
-                    'unit': regional_hq.name
-                })
+        regional_headquarters = RegionalHeadquarter.objects.filter(
+            district_headquarter=district_headquarter
+            )
+        self.append_regional_hqs(regional_headquarters, user_id, commanders)
 
-            detachments = Detachment.objects.filter(regional_headquarter=regional_hq)
-            for detachment in detachments:
-                if detachment.commander and (user_id is None or detachment.commander.id == user_id):
-                    commander_name = detachment.commander.get_full_name() if hasattr(detachment.commander,
-                                                                                     'get_full_name') else str(
-                        detachment.commander)
-                    commanders.append({
-                        'id': detachment.commander.id,
-                        'type': 'Detachment',
-                        'commander': commander_name,
-                        'unit': detachment.name
-                    })
+        detachments = Detachment.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+            )
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
-                local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                for local_hq in local_headquarters:
-                    if local_hq.commander and (user_id is None or local_hq.commander.id == user_id):
-                        commander_name = local_hq.commander.get_full_name() if hasattr(local_hq.commander,
-                                                                                       'get_full_name') else str(
-                            local_hq.commander)
-                        commanders.append({
-                            'id': local_hq.commander.id,
-                            'type': 'LocalHeadquarter',
-                            'commander': commander_name,
-                            'unit': local_hq.name
-                        })
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
+        self.append_local_hqs(local_headquarters, user_id, commanders)
 
-                    educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_hq)
-                    for edu_hq in educational_headquarters:
-                        if edu_hq.commander and (user_id is None or edu_hq.commander.id == user_id):
-                            commander_name = edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
-                                                                                         'get_full_name') else str(
-                                edu_hq.commander)
-                            commanders.append({
-                                'id': edu_hq.commander.id,
-                                'type': 'EducationalHeadquarter',
-                                'commander': commander_name,
-                                'unit': edu_hq.name
-                            })
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class RegionalSubCommanderSerializer(serializers.ModelSerializer):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class RegionalSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserRegionalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1345,51 +1234,22 @@ class RegionalSubCommanderSerializer(serializers.ModelSerializer):
         user_id = self.context.get('user_id')
         commanders = []
         regional_headquarter = obj.headquarter
+
         detachments = Detachment.objects.filter(regional_headquarter=regional_headquarter)
-        for detachment in detachments:
-            if detachment.commander and (user_id is None or detachment.commander.id == user_id):
-                commander_info = {
-                    'id': detachment.commander.id,
-                    'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
-                                                                                 'get_full_name') else str(
-                        detachment.commander),
-                    'unit': detachment.name
-                }
-                commanders.append(commander_info)
+        self.append_detachment_hqs(detachments, user_id, commanders)
 
         local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
-        for local_hq in local_headquarters:
-            if local_hq.commander and (user_id is None or local_hq.commander.id == user_id):
-                commander_info = {
-                    'id': local_hq.commander.id,
-                    'type': 'LocalHeadquarter',
-                    'commander': local_hq.commander.get_full_name() if hasattr(local_hq.commander,
-                                                                               'get_full_name') else str(
-                        local_hq.commander),
-                    'unit': local_hq.name
-                }
-                commanders.append(commander_info)
+        self.append_local_hqs(local_headquarters, user_id, commanders)
 
-            educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
-            for edu_hq in educational_headquarters:
-                if edu_hq.commander and (user_id is None or edu_hq.commander.id == user_id):
-                    commander_info = {
-                        'id': edu_hq.commander.id,
-                        'type': 'EducationalHeadquarter',
-                        'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
-                                                                                 'get_full_name') else str(
-                            edu_hq.commander),
-                        'unit': edu_hq.name
-                    }
-                    commanders.append(commander_info)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter=regional_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class LocalSubCommanderSerializer(serializers.ModelSerializer):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class LocalSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserLocalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1398,38 +1258,19 @@ class LocalSubCommanderSerializer(serializers.ModelSerializer):
         user_id = self.context.get('user_id')
         commanders = []
         local_headquarter = obj.headquarter
-        detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
-        for detachment in detachments:
-            if detachment.commander and (user_id is None or detachment.commander.id == user_id):
-                commander_info = ({
-                    'id': detachment.commander.id,
-                    'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
-                                                                                 'get_full_name') else str(
-                        detachment.commander),
-                    'unit': detachment.name
-                })
-                commanders.append(commander_info)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=local_headquarter)
-        for edu_hq in educational_headquarters:
-            if edu_hq.commander and (user_id is None or edu_hq.commander.id == user_id):
-                commander_info = {
-                    'id': edu_hq.commander.id,
-                    'type': 'EducationalHeadquarter',
-                    'commander': edu_hq.commander.get_full_name() if hasattr(edu_hq.commander,
-                                                                             'get_full_name') else str(
-                        edu_hq.commander),
-                    'unit': edu_hq.name
-                }
-                commanders.append(commander_info)
+        detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
+        self.append_detachment_hqs(detachments, user_id, commanders)
+
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            local_headquarter=local_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
 
 
-class EducationalSubCommanderSerializer(serializers.ModelSerializer):
-    sub_commanders = serializers.SerializerMethodField(read_only=True)
-
+class EducationalSubCommanderSerializer(SubCommanderMixin, BaseSubCommanderSerializer):
     class Meta:
         model = UserEducationalHeadquarterPosition
         fields = ('sub_commanders',)
@@ -1438,18 +1279,124 @@ class EducationalSubCommanderSerializer(serializers.ModelSerializer):
         user_id = self.context.get('user_id')
         commanders = []
         educational_headquarter = obj.headquarter
+
         detachments = Detachment.objects.filter(educational_headquarter=educational_headquarter)
-
-        for detachment in detachments:
-            if detachment.commander and (user_id is None or detachment.commander.id == user_id):
-                commander_info = {
-                    'id': detachment.commander.id,
-                    'type': 'Detachment',
-                    'commander': detachment.commander.get_full_name() if hasattr(detachment.commander,
-                                                                                 'get_full_name') else str(
-                        detachment.commander),
-                    'unit': detachment.name
-                }
-                commanders.append(commander_info)
-
+        self.append_detachment_hqs(detachments, user_id, commanders)
+        
         return commanders
+
+
+class BaseLeadershipSerializer(serializers.ModelSerializer):
+    leadership = serializers.SerializerMethodField(read_only=True)
+
+    _POSITIONS_MAPPING = {
+        CentralHeadquarter: (
+            UserCentralHeadquarterPosition, CentralPositionSerializer
+        ),
+        DistrictHeadquarter: (
+            UserDistrictHeadquarterPosition, DistrictPositionSerializer
+        ),
+        RegionalHeadquarter: (
+            UserRegionalHeadquarterPosition, RegionalPositionSerializer
+        ),
+        LocalHeadquarter: (
+            UserLocalHeadquarterPosition, LocalPositionSerializer
+        ),
+        EducationalHeadquarter: (
+            UserEducationalHeadquarterPosition, EducationalPositionSerializer
+        ),
+        Detachment: (UserDetachmentPosition, DetachmentPositionSerializer),
+    }
+
+    class Meta:
+        model = None
+        fields = ('leadership',)
+
+    def _get_position_instance(self):
+        if isinstance(self.instance, QuerySet):
+            instance_type = type(self.instance.first())
+        else:
+            instance_type = type(self.instance)
+
+        for model_class, (
+                position_model, _
+        ) in self._POSITIONS_MAPPING.items():
+            if issubclass(instance_type, model_class):
+                return position_model
+
+    def _get_position_serializer(self):
+        if isinstance(self.instance, QuerySet):
+            instance_type = type(self.instance.first())
+        else:
+            instance_type = type(self.instance)
+
+        for model_class, (
+                _, serializer_class
+        ) in self._POSITIONS_MAPPING.items():
+            if issubclass(instance_type, model_class):
+                return serializer_class
+
+    def get_leadership(self, instance):
+        """
+        Вывод руководство отряда - всех, кроме указанных в настройках
+        должностей.
+        """
+        serializer = self._get_position_serializer()
+        position_instance = self._get_position_instance()
+        leaders = position_instance.objects.filter(
+            headquarter=instance
+        ).exclude(
+            Q(position__name__in=settings.NOT_LEADERSHIP_POSITIONS) |
+            Q(position__isnull=True)
+        )
+
+        return serializer(leaders, many=True).data
+    
+
+class CentralLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = CentralHeadquarter
+        fields = ('leadership',)
+
+class DistrictLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = DistrictHeadquarter
+        fields = ('leadership',)
+
+class RegionalLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = RegionalHeadquarter
+        fields = ('leadership',)
+
+class LocalLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = LocalHeadquarter
+        fields = ('leadership',)
+
+class EducationalLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+        model = EducationalHeadquarter
+        fields = ('leadership',)
+
+
+class DetachmentLeadershipSerializer(BaseLeadershipSerializer):
+    class Meta:
+         model = Detachment
+         fields = ('leadership',)
+
+    def get_leadership(self, instance):
+        """
+        Вывод руководства отряда (пользователи с должностями "Мастер
+        (методист)" и "Комиссар", точные названия которых прописаны
+        в настройках).
+        """
+        serializer = self._get_position_serializer()
+        position_instance = self._get_position_instance()
+        leaders = position_instance.objects.filter(
+            Q(headquarter=instance) &
+            (
+                Q(position__name=settings.MASTER_METHODIST_POSITION_NAME) |
+                Q(position__name=settings.COMMISSIONER_POSITION_NAME)
+            )
+        )
+        return serializer(leaders, many=True).data

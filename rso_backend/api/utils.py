@@ -11,6 +11,7 @@ from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
@@ -24,6 +25,10 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition)
 from users.models import RSOUser
+
+
+class Limit255OffsetPagination(LimitOffsetPagination):
+    max_limit = 255
 
 
 def create_first_or_exception(self, validated_data, instance, error_msg: str):

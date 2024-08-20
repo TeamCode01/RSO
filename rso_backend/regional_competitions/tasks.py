@@ -1,0 +1,47 @@
+import logging
+import traceback
+from datetime import date, datetime, timedelta
+
+from celery import shared_task
+from django.conf import settings
+
+from headquarters.models import RegionalHeadquarterEmail
+from regional_competitions.models import StatisticalRegionalReport
+from regional_competitions.r_calculations import calculate_r14
+from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails
+
+logger = logging.getLogger('tasks')
+
+
+@shared_task
+def send_email_report_part_1(report_id: int):
+    try:
+        logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}')
+        report = StatisticalRegionalReport.objects.get(pk=report_id)
+        logger.info(f'Нашли отчет с данным ID: {report}')
+        pdf_file = generate_pdf_report_part_1(report)
+        send_email_with_attachment(
+            subject='Получен отчет о деятельности регионального отделения РСО за 2024 год - часть 1',
+            message='PDF файл отправленного отчета доступен во вложении',
+            recipients=get_emails(report),
+            file_path=pdf_file
+        )
+    except Exception as e:
+        err_traceback = traceback.format_exc()
+        logger.critical(f'UNEXPECTED ERROR send_email_report_part_1: {e}.\n{err_traceback}')
+
+
+@shared_task
+def calculate_q14_report_task():
+    """
+    Считает отчет по 14 показателю.
+
+    Считает вплоть до 15 октября 2024 года включительно.
+    """
+    today = date.today()
+    cutoff_date = date(2024, 10, 15)
+
+    if today <= cutoff_date + timedelta(days=1):
+        calculate_r14()
+    else:
+        logger.warning('Истек срок выполнения подсчета по 14 показателю')
