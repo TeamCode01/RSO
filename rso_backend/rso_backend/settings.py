@@ -234,6 +234,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 1024,
             'backupCount': 15,
             'formatter': 'verbose',
+            'encoding': 'UTF-8',
         },
         'django': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -242,6 +243,7 @@ LOGGING = {
             'backupCount': LOGS_BACKUP_COUNT,
             'level': 'INFO',
             'formatter': 'verbose',
+            'encoding': 'UTF-8',
         },
         'requestlogs_to_file': {
             'level': 'DEBUG',
@@ -249,6 +251,7 @@ LOGGING = {
             'filename': 'logs/request_logs.log',
             'when': 'midnight',
             'backupCount': 90,
+            'encoding': 'UTF-8',
         },
     },
 
