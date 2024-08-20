@@ -102,9 +102,13 @@ def get_emails(report_instance) -> list:
             addresses = [
                 RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
             ]
+            if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
+                addresses.append("rso.71@yandex.ru")
         except RegionalHeadquarterEmail.DoesNotExist:
             logger.warning(
-                f'Не найден почтовый адрес в RegionalHeadquarterEmail для РШ ID {report_instance.regional_headquarter.id}')
+                f'Не найден почтовый адрес в RegionalHeadquarterEmail '
+                f'для РШ ID {report_instance.regional_headquarter.id}'
+            )
             return []
     return addresses
 
