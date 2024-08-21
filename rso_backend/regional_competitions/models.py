@@ -735,3 +735,23 @@ class RegionalR19(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 19 показателю'
         verbose_name_plural = 'Отчеты по 19 показателю'
+
+
+REPORTS_IS_SENT_MODELS = [
+    RegionalR1,
+    RegionalR4,
+    RegionalR5,
+    RegionalR101,
+    RegionalR102,
+    RegionalR11,
+    RegionalR12,
+    RegionalR13,
+    RegionalR16,
+]
+# REPORTS_IS_SENT_MODELS.extend(r6_models_factory.models)
+REPORTS_IS_SENT_MODELS.extend(
+    [model_class for model_name, model_class in r7_models_factory.models.items() if not model_name.endswith('Link')]
+)
+REPORTS_IS_SENT_MODELS.extend(
+    [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
+)

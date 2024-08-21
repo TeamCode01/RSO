@@ -613,3 +613,31 @@ class EventNameSerializer(serializers.Serializer):
 
 class MassSendSerializer(serializers.Serializer):
     detail = serializers.CharField(read_only=True)
+
+
+# Список сериализаторов для генерации PDF-файла по 2-й части отчета
+REPORTS_SERIALIZERS = [
+    RegionalR1Serializer,
+    RegionalR4Serializer,
+    RegionalR5Serializer,
+    RegionalR101Serializer,
+    RegionalR102Serializer,
+    RegionalR11Serializer,
+    RegionalR12Serializer,
+    RegionalR13Serializer,
+    RegionalR16Serializer,
+]
+# REPORTS_SERIALIZERS.extend(r6_serializers_factory.serializers)
+
+REPORTS_SERIALIZERS.extend(
+    [
+        serializer_class for serializer_name, serializer_class in r7_serializers_factory.serializers.items()
+        if not serializer_name.endswith('Link')
+    ]
+)
+REPORTS_SERIALIZERS.extend(
+    [
+        serializer_class for serializer_name, serializer_class in r9_serializers_factory.serializers.items()
+        if not serializer_name.endswith('Link')
+    ]
+)
