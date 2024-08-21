@@ -10,7 +10,7 @@ logger = logging.getLogger('tasks')
 
 
 def calculate_r5_score(report):
-    """Считает  очки по 5 показателю.
+    """Считает очки по 5 показателю.
 
     P= ((x1-z1)*y1+((xn-zn)yn
     ((xn-zn)yn - вычисление очков для всех мероприятий у РО.
