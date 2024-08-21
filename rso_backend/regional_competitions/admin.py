@@ -231,8 +231,6 @@ class RegionalR5Admin(admin.ModelAdmin):
 r7_list_display = (
     'regional_headquarter',
     'id',
-    'event_date',
-    'event_location',
     'prize_place',
     'document',
     'verified_by_chq',
@@ -243,7 +241,6 @@ r7_list_display = (
 )
 
 r7_list_filter = (
-    'event_date',
     'prize_place',
     'verified_by_chq',
     'verified_by_dhq'

@@ -409,17 +409,6 @@ class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
         blank=True,
         null=True
     )
-    event_date = models.DateField(
-        verbose_name='Дата проведения',
-        blank=True,
-        null=True
-    )
-    event_location = models.CharField(
-        max_length=255,
-        verbose_name='Место проведения',
-        blank=True,
-        null=True
-    )
 
     class Meta:
         abstract = True
