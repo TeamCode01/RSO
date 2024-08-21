@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 
-from regional_competitions.constants import (R6_EVENT_NAMES, R7_EVENT_NAMES, R9_EVENTS_NAMES,
+from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE)
 from regional_competitions.factories import RModelFactory
@@ -368,24 +368,25 @@ class RegionalR5Link(BaseLink):
     )
 
 
-# class BaseRegionalR6(BaseEventProjectR):
-#     """
-#     Участие бойцов студенческих отрядов РО РСО во всероссийских
-#     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
-#     """
-#     number_of_members = models.PositiveSmallIntegerField(
-#         blank=True,
-#         null=True,
-#         verbose_name='Количество человек принявших участие'
-#     )
+class BaseRegionalR6(BaseEventProjectR):
+    """
+    Участие бойцов студенческих отрядов РО РСО во всероссийских
+    (международных) мероприятиях и проектах (в том числе и трудовых) «К».
+    """
+    number_of_members = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество человек принявших участие'
+    )
 
-# r6_models_factory = RModelFactory(
-#     r_number=6,
-#     base_r_model=BaseRegionalR6,
-#     base_link_model=BaseLink,
-#     event_names=R6_EVENT_NAMES,
-# )
-# r6_models_factory.create_models()
+
+r6_models_factory = RModelFactory(
+    r_number=6,
+    base_r_model=BaseRegionalR6,
+    base_link_model=BaseLink,
+    event_names={id: name for tup in R6_DATA for id, name in tup[0].items()},
+)
+r6_models_factory.create_models()
 
 
 class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
@@ -428,7 +429,7 @@ r7_models_factory = RModelFactory(
     r_number=7,
     base_r_model=BaseRegionalR7,
     base_link_model=BaseLink,
-    event_names=R7_EVENT_NAMES,
+    event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
 )
 r7_models_factory.create_models()
 
@@ -709,6 +710,74 @@ class RegionalR17(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 17 показателю'
         verbose_name_plural = 'Отчеты по 17 показателю'
+
+
+class RegionalR18(models.Model):
+    """Количество научных работ и публикаций по теме СО, выпущенных в текущем году."""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+    comment = models.TextField(
+        verbose_name='Комментарий',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 18 показателю'
+        verbose_name_plural = 'Отчеты по 18 показателю'
+
+
+class RegionalR18Project(models.Model):
+    regional_r18 = models.ForeignKey(
+        'RegionalR18',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='projects'
+    )
+    file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Файл',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Проект по 18 показателю'
+        verbose_name_plural = 'Проекты по 18 показателю'
+
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR18Link(models.Model):
+    regional_r18_project = models.ForeignKey(
+        'RegionalR18Project',
+        on_delete=models.CASCADE,
+        verbose_name='Проект',
+        related_name='links',
+    )
+    link = models.URLField(
+        verbose_name='Ссылка на публикацию',
+    )
+
+    class Meta:
+        verbose_name = 'Ссылка по 18 показателю'
+        verbose_name_plural = 'Ссылки по 18 показателю'
+
+    def __str__(self):
+        return f'Ссылка ID {self.id}'
 
 
 class RegionalR19(BaseEventProjectR):

@@ -21,6 +21,8 @@ from regional_competitions.views import (MassSendViewSet,
                                          RegionalR16ViewSet,
                                          RegionalR17MeViewSet,
                                          RegionalR17ViewSet,
+                                         RegionalR18MeViewSet,
+                                         RegionalR18ViewSet,
                                          RegionalR19MeViewSet,
                                          RegionalR19ViewSet,
                                          RegionalR101MeViewSet,
@@ -28,6 +30,7 @@ from regional_competitions.views import (MassSendViewSet,
                                          RegionalR102MeViewSet,
                                          RegionalR102ViewSet,
                                          StatisticalRegionalViewSet,
+                                         r6_view_sets_factory,
                                          r7_view_sets_factory,
                                          r9_view_sets_factory)
 
@@ -74,6 +77,9 @@ router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 register_factory_view_sets(
+    router, 'reports/6', r6_view_sets_factory.view_set_names, r6_view_sets_factory.r_view_sets
+)
+register_factory_view_sets(
     router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_view_sets
 )
 register_factory_view_sets(
@@ -86,6 +92,7 @@ router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')
 router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
 router.register(r'reports/17', RegionalR17ViewSet, basename='r17')
+router.register(r'reports/18', RegionalR18ViewSet, basename='r18')
 router.register(r'reports/19', RegionalR19ViewSet, basename='r19')
 
 router.register(r'reports/event_names', RegionalEventNamesRViewSet, basename='event_names')
@@ -94,6 +101,9 @@ router.register(r'me/reports', MassSendViewSet, basename='mass_send_reports')
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
+register_factory_view_sets(
+    me_router, 'reports/6', r6_view_sets_factory.view_set_names, r6_view_sets_factory.r_me_view_sets
+)
 register_factory_view_sets(
     me_router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_me_view_sets
 )
@@ -107,6 +117,7 @@ me_router.register(r'reports/12', RegionalR12MeViewSet, basename='r12_me')
 me_router.register(r'reports/13', RegionalR13MeViewSet, basename='r13_me')
 me_router.register(r'reports/16', RegionalR16MeViewSet, basename='r16_me')
 me_router.register(r'reports/17', RegionalR17MeViewSet, basename='r17_me')
+me_router.register(r'reports/18', RegionalR18MeViewSet, basename='r18_me')
 me_router.register(r'reports/19', RegionalR19MeViewSet, basename='r19_me')
 
 

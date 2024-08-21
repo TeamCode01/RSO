@@ -18,24 +18,25 @@ from rest_framework.response import Response
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from api.utils import get_calculation
-from regional_competitions.constants import R6_EVENT_NAMES, R7_EVENT_NAMES, R9_EVENTS_NAMES
+from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
                                           RegionalR19, RegionalR101,
                                           RegionalR102, RVerificationLog,
                                           StatisticalRegionalReport,
+                                          r6_models_factory,
                                           r7_models_factory, r9_models_factory)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    EventNameSerializer, MassSendSerializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    EventNameSerializer, MassSendSerializer, RegionalR18Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
-    StatisticalRegionalReportSerializer, r7_serializers_factory,
+    StatisticalRegionalReportSerializer, r6_serializers_factory, r7_serializers_factory,
     r9_serializers_factory)
 from regional_competitions.tasks import send_email_report_part_1
 from regional_competitions.utils import (
@@ -336,6 +337,34 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_204_NO_CONTENT)
 
 
+class BaseRegionalRWithoutVerifViewSet(RegionalRMixin):
+    """
+    Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet,
+    которые не требуют верификации.
+    """
+    serializer_class = None
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+    def get_report_number(self):
+        return get_report_number_by_class_name(self)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update(
+            {
+                'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                # 'action': self.action
+            }
+        )
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+
+    def perform_update(self, request, serializer):
+        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+
+
 class BaseRegionalRMeViewSet(RegionalRMeMixin):
     """Базовый класс для вьюсетов шаблона RegionalR<int>MeViewSet."""
     model = None
@@ -477,6 +506,18 @@ class MassSendViewSet(GenericViewSet):
     @action(
         detail=False,
         methods=['POST'],
+        url_path='6/send',
+    )
+    def r6_mass_send_for_verification(self, request):
+        """Отправляет все отчеты по 6 показателю на верификацию.
+
+        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
+        """
+        return self.send_reports(request, r6_models_factory)
+
+    @action(
+        detail=False,
+        methods=['POST'],
         url_path='7/send',
     )
     def r7_mass_send_for_verification(self, request):
@@ -512,8 +553,8 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         methods=['GET'],
         url_path='r6-event-names',
     )
-    def get_event_names_r6(self, request):  # TODO: исправить, когда будет список с месяцем и городом
-        event_data = [{'id': id, 'name': name} for id, name in R6_EVENT_NAMES.items()]
+    def get_event_names_r6(self, request):
+        event_data = [{'id': list(tup[0].keys())[0], 'name': list(tup[0].values())[0], 'month': list(tup[1].values())[0], 'city': list(tup[2].values())[0]} for tup in R6_DATA]
         return Response(event_data)
 
     @action(
@@ -521,8 +562,8 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         methods=['GET'],
         url_path='r7-event-names',
     )
-    def get_event_names_r7(self, request):   # TODO: исправить, когда будет список с месяцем и городом
-        event_data = [{'id': id, 'name': name} for id, name in R7_EVENT_NAMES.items()]
+    def get_event_names_r7(self, request):
+        event_data = [{'id': list(tup[0].keys())[0], 'name': list(tup[0].values())[0], 'month': list(tup[1].values())[0], 'city': list(tup[2].values())[0]} for tup in R7_DATA]
         return Response(event_data)
 
     @action(
@@ -597,6 +638,15 @@ class RegionalR5MeViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+r6_view_sets_factory = RViewSetFactory(
+    models=r6_models_factory.models,
+    serializers=r6_serializers_factory.serializers,
+    base_r_view_set=BaseRegionalRViewSet,
+    base_r_me_view_set=BaseRegionalRMeViewSet,
+)
+r6_view_sets_factory.create_view_sets()
 
 
 r7_view_sets_factory = RViewSetFactory(
@@ -714,6 +764,59 @@ class RegionalR17MeViewSet(BaseRegionalRMeWithSendViewSet):
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR18ViewSet(BaseRegionalRWithoutVerifViewSet):
+    """Вьюсет для просмотра и создания отчета по 18 показателю.
+
+    Показатель не требует верификации.
+    Доступ - только региональным командирам.
+    """
+    queryset = RegionalR18.objects.all()
+    serializer_class = RegionalR18Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+    parser_classes = (MultiPartParser, FormParser)
+
+    def create(self, request, *args, **kwargs):
+        """Метод для создания отчета по 18 показателю.
+        Пример отчета:
+        ```json
+                {
+        "comment": "Комментарий",
+        "projects": [
+            {
+                "links": [
+                    {
+                    "link": "http://127.0.0.1:8000/swagger/"
+                    }
+                ]
+            }
+        ]
+        }
+        ```
+
+        Также стоят MultiPartParser, FormParser.
+        """
+        return super().create(request, *args, **kwargs)
+
+
+class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
+    """Вьюсет для просмотра и редактирования отчета по 18 показателю.
+
+    Показатель не требует верификации.
+    Доступ - только региональным командирам.
+    """
+    model = RegionalR18
+    queryset = RegionalR18.objects.all()
+    serializer_class = RegionalR18Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Просмотр отчета по 18 показателю.
+
+        Доступ - только региональным командирам.
+        """
+        return super().retrieve(request, *args, **kwargs)
 
 
 class RegionalR19ViewSet(BaseRegionalRViewSet):
