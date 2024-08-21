@@ -6,7 +6,7 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -18,6 +18,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1,
                                           RegionalR102, RegionalR102Link,
                                           RVerificationLog,
                                           StatisticalRegionalReport,
+                                          r6_models_factory,
                                           r7_models_factory, r9_models_factory)
 from regional_competitions.utils import get_report_number_by_class_name
 
@@ -405,6 +406,26 @@ class RegionalR5Serializer(
         )
 
 
+class BaseRegionalR6Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+    objects_name = 'links'
+
+    class Meta:
+        link_model = None
+        model = None
+        fields = (
+            BaseRSerializer.Meta.fields
+            + ('number_of_members', 'links', 'comment')
+        )
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+r6_serializers_factory = RSerializerFactory(
+    models=r6_models_factory.models,
+    base_r_serializer=BaseRegionalR6Serializer
+)
+r6_serializers_factory.create_serializer_classes()
+
+
 class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
     objects_name = 'links'
 
@@ -413,7 +434,7 @@ class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('prize_place', 'document', 'event_date', 'event_location', 'links',)
+            + ('prize_place', 'document', 'links',)
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -599,8 +620,104 @@ class RegionalR17Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
+class RegionalR18LinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegionalR18Link
+        fields = (
+            'id',
+            'regional_r18_project',
+            'link'
+        )
+        read_only_fields = ('id', 'regional_r18_project',)
+
+
+class RegionalR18ProjectSerializer(FileScanSizeSerializerMixin):
+    links = RegionalR18LinkSerializer(many=True, allow_null=True, required=False)
+
+    class Meta:
+        model = RegionalR18Project
+        fields = (
+            'id',
+            'regional_r18',
+            'file',
+            'links'
+        ) + FileScanSizeSerializerMixin.Meta.fields
+        read_only_fields = ('id', 'regional_r18',)
+
+
+class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
+    projects = RegionalR18ProjectSerializer(many=True, allow_null=True, required=False)
+
+    objects_name = 'projects'
+    nested_objects_name = 'links'
+
+    class Meta:
+        model = RegionalR18
+        fields = (
+            "id",
+            "regional_headquarter",
+            "created_at",
+            "updated_at",
+            "comment",
+            "projects",
+        )
+        read_only_fields = (
+            "id",
+            "regional_headquarter",
+            "created_at",
+            "updated_at",
+        )
+
+    def create_objects(self, created_objects, project_data):
+        return RegionalR18Project.objects.create(
+            regional_r18=created_objects, **project_data
+        )
+
+    def create_nested_objects(self, parent_obj, obj_data):
+        return RegionalR18Link.objects.create(
+            regional_r18_project=parent_obj, **obj_data
+        )
+
+
 class RegionalR19Serializer(BaseRSerializer):
     class Meta:
         model = RegionalR19
         fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end', 'comment',)
         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class EventNameSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+
+class MassSendSerializer(serializers.Serializer):
+    detail = serializers.CharField(read_only=True)
+
+
+# Список сериализаторов для генерации PDF-файла по 2-й части отчета
+REPORTS_SERIALIZERS = [
+    RegionalR1Serializer,
+    RegionalR4Serializer,
+    RegionalR5Serializer,
+    RegionalR101Serializer,
+    RegionalR102Serializer,
+    RegionalR11Serializer,
+    RegionalR12Serializer,
+    RegionalR13Serializer,
+    RegionalR16Serializer,
+]
+# REPORTS_SERIALIZERS.extend(r6_serializers_factory.serializers)
+
+REPORTS_SERIALIZERS.extend(
+    [
+        serializer_class for serializer_name, serializer_class in r7_serializers_factory.serializers.items()
+        if not serializer_name.endswith('Link')
+    ]
+)
+REPORTS_SERIALIZERS.extend(
+    [
+        serializer_class for serializer_name, serializer_class in r9_serializers_factory.serializers.items()
+        if not serializer_name.endswith('Link')
+    ]
+)

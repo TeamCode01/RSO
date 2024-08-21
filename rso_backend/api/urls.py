@@ -69,7 +69,6 @@ from headquarters.views import (CentralAcceptViewSet,
                                 get_structural_units, DetachmentListViewSet,
                                 )
 from questions.views import QuestionsView, get_attempts_status, submit_answers
-from regional_competitions.views import StatisticalRegionalViewSet
 from services.views import VKLoginAPIView, FrontReportsViewSet
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
