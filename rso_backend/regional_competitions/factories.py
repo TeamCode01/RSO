@@ -145,8 +145,8 @@ class RSerializerFactory:
         )
 
         def create_objects(self, created_objects, link_data):
-
-            return self.models[link_model_name].objects.create(
+            link_model = self.Meta.link_model
+            return link_model.objects.create(
                 **{regional_r_field_name: created_objects, **link_data}
             )
 
@@ -164,6 +164,7 @@ class RSerializerFactory:
                 'create_objects': create_objects
             }
         )
+
         self.serializers[model_name] = regional_r_serializer_class
 
 
