@@ -8,22 +8,24 @@ from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from django.core.mail import EmailMessage
 from openpyxl import Workbook
+from reportlab.lib.units import cm
 from rest_framework import status
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, PageBreak, HRFlowable
 from pdfrw import PdfWriter, PdfReader, PageMerge
 import os
 
-from headquarters.models import RegionalHeadquarterEmail
+from headquarters.models import RegionalHeadquarterEmail, RegionalHeadquarter
+# from regional_competitions.r_calculations import calculate_r5_score
+
+from rest_framework import serializers
 
 logger = logging.getLogger('tasks')
 
-# from regional_competitions.r_calculations import calculate_r5_score
-from rest_framework import serializers
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -46,7 +48,9 @@ def swagger_schema_for_district_review(serializer_cls):
         @wraps(func)
         def wrapped(*args, **kwargs):
             return func(*args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
@@ -56,7 +60,9 @@ def swagger_schema_for_central_review(serializer_cls):
         @wraps(func)
         def wrapped(*args, **kwargs):
             return func(*args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
@@ -66,7 +72,9 @@ def swagger_schema_for_create_and_update_methods(serializer_cls):
         @wraps(func)
         def wrapped(self, *args, **kwargs):
             return func(self, *args, **kwargs)
+
         return wrapped
+
     return decorator
 
 
@@ -88,10 +96,12 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     :param instance: Экземпляр модели.
     :param filename: Имя файла. Добавляем к имени текущую дату и время.
     :return: Путь к изображению.
-    Сохраняем в users/{user_id}/photo
     """
     filename = filename.split('.')
-    return f'regional_comp/regulations/{instance.__class__.__name__}/{instance.regional_headquarter.id}/{filename[0][:25]}.{filename[1]}'
+    return (
+        f'regional_comp/regulations/{instance.__class__.__name__}/'
+        f'{instance.regional_headquarter.id}/{filename[0][:25]}.{filename[1]}'
+    )
 
 
 def get_emails(report_instance) -> list:
@@ -217,7 +227,7 @@ def generate_pdf_report_part_1(report):
     return pdf_file_path
 
 
-def get_verbose_names_and_values(serializer):
+def get_verbose_names_and_values(serializer) -> dict:
     """Возвращает словарь с названиями полей и значениями полей из сериализатора."""
 
     verbose_names_and_values = {}
@@ -229,18 +239,16 @@ def get_verbose_names_and_values(serializer):
         field_value = getattr(instance, field_name, None)
 
         if isinstance(field, serializers.ListSerializer):
-            # Если поле является списком сериализаторов (many=True)
             nested_serializer_class = field.child.__class__
             nested_verbose_names_and_values = []
 
-            for nested_instance in field_value.all():  # Проходим по всем связанным объектам
+            for nested_instance in field_value.all():
                 nested_serializer = nested_serializer_class(nested_instance)
                 nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer))
 
             verbose_names_and_values[field_name] = nested_verbose_names_and_values
 
         elif isinstance(field, serializers.ModelSerializer):
-            # Если поле является вложенным сериализатором (один объект)
             nested_serializer = field.__class__(field_value)
             nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer)
 
@@ -264,8 +272,8 @@ def get_verbose_names_and_values(serializer):
 def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
     """Формирует плоский словарь для заголовков и значений листа Excel."""
 
-    #TODO: убрать полный путь для названий файлов
-    #TODO: True, False и None заменить на человекочитаемые значения
+    # TODO: убрать полный путь для названий файлов
+    # TODO: True, False и None заменить на человекочитаемые значения
     flat_dict = {}
 
     for value in fields_dict.values():
@@ -306,3 +314,190 @@ def get_report_xlsx(self):
     )
     response['Content-Disposition'] = (f'attachment; filename={title}.xlsx')
     return response
+
+
+def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
+    """Генерация общего PDF-файла для отчета по 2-й части."""
+    from regional_competitions.serializers import REPORTS_SERIALIZERS
+    pdf_file_name = f"Отчет_ч2_РСО_{regional_headquarter_id}.pdf"
+    pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
+
+    pdfmetrics.registerFont(TTFont(
+        'Times_New_Roman',
+        os.path.join(
+            str(settings.BASE_DIR),
+            'templates',
+            'samples',
+            'fonts',
+            'times.ttf'
+        )
+    ))
+
+    temp_pdf_file_path = os.path.join(settings.MEDIA_ROOT, f"Temp_{pdf_file_name}")
+    doc = SimpleDocTemplate(temp_pdf_file_path, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=30,
+                            bottomMargin=18)
+    elements = []
+
+    styles = getSampleStyleSheet()
+    styles.add(
+        ParagraphStyle(
+            name='CustomTitle', fontName='Times_New_Roman', fontSize=18, spaceAfter=20, alignment=1, leading=24
+        )
+    )
+    styles.add(
+        ParagraphStyle(name='Times_New_Roman', fontName='Times_New_Roman', fontSize=12)
+    )
+    styles.add(
+        ParagraphStyle(name='NestedField', fontName='Times_New_Roman', fontSize=12, leftIndent=20, spaceAfter=10)
+    )
+
+    try:
+        regional_hq = RegionalHeadquarter.objects.get(id=regional_headquarter_id).name
+    except RegionalHeadquarter.DoesNotExist:
+        regional_hq = ''
+
+    elements.append(Spacer(1, 90))
+    elements.append(
+        Paragraph(
+            f'Отчет о деятельности регионального отделения за 2024 год. Часть 2. {regional_hq}',
+            styles['CustomTitle']
+        )
+    )
+    elements.append(Spacer(1, 15))
+
+    first_block = True
+
+    for serializer_class in REPORTS_SERIALIZERS:
+        queryset = serializer_class.Meta.model.objects.filter(regional_headquarter_id=regional_headquarter_id)
+        for instance in queryset:
+            serializer = serializer_class(instance)
+            verbose_names_and_values = get_verbose_names_and_values(serializer)
+
+            if first_block:
+                elements.append(
+                    HRFlowable(
+                        width="100%", thickness=1, color=colors.HexColor('#003366'), spaceBefore=10, spaceAfter=10
+                    )
+                )
+                first_block = False
+
+            elements.append(Paragraph(serializer.Meta.model._meta.verbose_name, styles['CustomTitle']))
+            elements.append(Spacer(1, 10))
+
+            add_verbose_names_and_values_to_pdf(verbose_names_and_values, elements, styles)
+
+            elements.append(
+                HRFlowable(width="100%", thickness=1, color=colors.HexColor('#003366'), spaceBefore=10, spaceAfter=20)
+            )
+
+    doc.build(elements)
+
+    template_pdf_path = os.path.join(
+        str(settings.BASE_DIR),
+        'templates',
+        'samples',
+        'header_regional_r.pdf'
+    )
+    template_reader = PdfReader(template_pdf_path)
+    content_reader = PdfReader(temp_pdf_file_path)
+
+    writer = PdfWriter()
+    for i, content_page in enumerate(content_reader.pages):
+        if i == 0:
+            template_page = template_reader.pages[0]
+            PageMerge(template_page).add(content_page, prepend=False).render()
+            writer.addpage(template_page)
+        else:
+            writer.addpage(content_page)
+
+    writer.write(pdf_file_path)
+    os.remove(temp_pdf_file_path)
+    return pdf_file_path
+
+
+def add_verbose_names_and_values_to_pdf(
+        verbose_names_and_values: dict,
+        elements: list,
+        styles,
+        indent=0,
+        is_nested=False
+):
+    """Добавляет поля и значения в PDF с таблицами и улучшенным дизайном для вложенных структур."""
+
+    excluded_fields = [
+        'id',
+        'regional_headquarter',
+        'regional_r',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'score',
+        'updated_at',
+        'file_size',
+        'file_type',
+        'regional_version',
+        'district_version',
+        'central_version',
+        'rejecting_reasons'
+    ]
+
+    primary_color = colors.HexColor('#003366')
+    secondary_color = colors.HexColor('#99CCFF')
+    background_color = colors.HexColor('#E6F2FF')
+
+    data = []
+    nested_structures = []
+
+    nested_title_style = ParagraphStyle(
+        'NestedTitle',
+        parent=styles['Times_New_Roman'],
+        fontSize=14,
+        alignment=1,
+        textColor=primary_color,
+        spaceBefore=20,
+        spaceAfter=10
+    )
+
+    for field_name, field_value in verbose_names_and_values.items():
+        if any(field_name.startswith(excluded_field) for excluded_field in excluded_fields):
+            continue
+
+        if isinstance(field_value, list):
+            nested_structures.append((field_name, field_value))
+            continue
+
+        if isinstance(field_value, tuple) and len(field_value) == 2:
+            verbose_name, field_value_content = field_value
+        else:
+            logger.error(
+                f"Неправильное количество значений для распаковки в поле: {field_name}. Значение: {field_value}")
+            continue
+
+        if not isinstance(field_value_content, dict):
+            data.append([Paragraph(f"<b>{verbose_name}:</b>", styles['Times_New_Roman']),
+                         Paragraph(str(field_value_content), styles['Times_New_Roman'])])
+
+    if data:
+        table = Table(data, colWidths=[5 * cm, 10 * cm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), secondary_color),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('TEXTCOLOR', (0, 1), (-1, -1), primary_color),
+            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('BACKGROUND', (0, 1), (-1, -1), background_color),
+        ]))
+        elements.append(table)
+        elements.append(Spacer(1, 15))
+
+    for nested_name, nested_items in nested_structures:
+        verbose_nested_name = nested_name.replace('_', ' ').capitalize()
+        elements.append(Paragraph(verbose_nested_name, nested_title_style))
+        elements.append(Spacer(1, 5))
+
+        for item in nested_items:
+            if isinstance(item, dict):
+                add_verbose_names_and_values_to_pdf(item, elements, styles, indent + 1, is_nested=True)
+            elements.append(Spacer(1, 5))

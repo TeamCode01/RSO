@@ -1,8 +1,12 @@
+import datetime
 import json
+from contextlib import suppress
 
+import django.core.exceptions
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
@@ -10,6 +14,8 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
+
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from api.utils import get_calculation
 from regional_competitions.constants import R6_EVENT_NAMES, R7_EVENT_NAMES, R9_EVENTS_NAMES
@@ -268,7 +274,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
             report.verified_by_chq = True
             report.save()
 
-            #Вызываем функцию подсчета очков
+            # Вызываем функцию подсчета очков
             get_calculation(report=report, report_number=self.get_report_number())
 
             RVerificationLog.objects.create(
@@ -416,6 +422,19 @@ class BaseRegionalRMeWithSendViewSet(BaseRegionalRMeViewSet):
         Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
         """
         regional_r = self.get_object()
+        # TODO: Перенести в один из последних показателей и раскомментировать
+        # schedule, _ = IntervalSchedule.objects.get_or_create(
+        #     every=5,
+        #     period=IntervalSchedule.MINUTES,
+        # )
+        # with suppress(django.core.exceptions.ValidationError):
+        #     PeriodicTask.objects.get_or_create(
+        #         interval=schedule,
+        #         name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
+        #         task='regional_competitions.tasks.send_email_report_part_2',
+        #         args=json.dumps([regional_r.regional_headquarter.id]),
+        #         expire_seconds=3600
+        #     )
         if hasattr(regional_r, 'is_sent'):
             regional_r.is_sent = True
             regional_r.save()
