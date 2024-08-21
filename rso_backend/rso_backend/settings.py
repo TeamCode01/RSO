@@ -51,7 +51,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
 PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
 
-TEST_EMAIL_ADDRESSES = os.getenv('TEST_EMAIL_ADDRESSES').split(',')
+TEST_EMAIL_ADDRESSES = os.getenv('TEST_EMAIL_ADDRESSES', default='').split(',')
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
@@ -231,7 +231,16 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs/tasks_logs.log',
-            'maxBytes': 1024 * 1024 * 1024,
+            'maxBytes': 20 * 1024 * 1024,
+            'backupCount': 15,
+            'formatter': 'verbose',
+            'encoding': 'UTF-8',
+        },
+        'regional_tasks': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/regional_tasks_logs.log',
+            'maxBytes': 20 * 1024 * 1024,
             'backupCount': 15,
             'formatter': 'verbose',
             'encoding': 'UTF-8',
@@ -258,6 +267,10 @@ LOGGING = {
     'loggers': {
         'tasks': {
             'handlers': ['console', 'tasks'],
+            'level': 'DEBUG',
+        },
+        'regional_tasks': {
+            'handlers': ['console', 'regional_tasks'],
             'level': 'DEBUG',
         },
         'django': {
@@ -557,6 +570,7 @@ if DEBUG:
         'task': 'users.tasks.debug_periodic_task',
         'schedule': timedelta(seconds=90),
     }
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
 # FOR LINUX:
 # celery -A rso_backend worker --loglevel=info
