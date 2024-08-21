@@ -20,12 +20,10 @@ from pdfrw import PdfWriter, PdfReader, PageMerge
 import os
 
 from headquarters.models import RegionalHeadquarterEmail, RegionalHeadquarter
-# from regional_competitions.r_calculations import calculate_r5_score
 
 from rest_framework import serializers
 
 logger = logging.getLogger('tasks')
-
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -230,13 +228,25 @@ def generate_pdf_report_part_1(report):
 def get_verbose_names_and_values(serializer) -> dict:
     """Возвращает словарь с названиями полей и значениями полей из сериализатора."""
 
+    custom_verbose_names_dict = {
+        'events': 'Мероприятия/Проекты',
+        'links': 'Ссылки',
+    }
+    custom_values_dict = {
+        True: 'Да',
+        False: 'Нет',
+        None: 'Неизвестно',
+    }
     verbose_names_and_values = {}
     model_meta = serializer.Meta.model._meta
     instance = serializer.instance
-
     for field_name in serializer.Meta.fields:
-        field = serializer.fields[field_name]
+        field = serializer.fields.get(field_name)
+        if not field:
+            continue
         field_value = getattr(instance, field_name, None)
+        if field_value in custom_values_dict:
+            field_value = custom_values_dict[field_value]
 
         if isinstance(field, serializers.ListSerializer):
             nested_serializer_class = field.child.__class__
@@ -264,7 +274,8 @@ def get_verbose_names_and_values(serializer) -> dict:
             except FieldDoesNotExist:
                 pass
             except AttributeError:
-                verbose_names_and_values[field_name] = (field_name, field_value)
+                print(field_name)
+                verbose_names_and_values[field_name] = (custom_verbose_names_dict.get(str(field_name).lower(), field_name), field_value)
 
     return verbose_names_and_values
 

@@ -452,18 +452,18 @@ class BaseRegionalRMeWithSendViewSet(BaseRegionalRMeViewSet):
         """
         regional_r = self.get_object()
         # TODO: Перенести в один из последних показателей и раскомментировать
-        # schedule, _ = IntervalSchedule.objects.get_or_create(
-        #     every=5,
-        #     period=IntervalSchedule.MINUTES,
-        # )
-        # with suppress(django.core.exceptions.ValidationError):
-        #     PeriodicTask.objects.get_or_create(
-        #         interval=schedule,
-        #         name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
-        #         task='regional_competitions.tasks.send_email_report_part_2',
-        #         args=json.dumps([regional_r.regional_headquarter.id]),
-        #         expire_seconds=3600
-        #     )
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=5,
+            period=IntervalSchedule.MINUTES,
+        )
+        with suppress(django.core.exceptions.ValidationError):
+            PeriodicTask.objects.get_or_create(
+                interval=schedule,
+                name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
+                task='regional_competitions.tasks.send_email_report_part_2',
+                args=json.dumps([regional_r.regional_headquarter.id]),
+                expire_seconds=3600
+            )
         if hasattr(regional_r, 'is_sent'):
             regional_r.is_sent = True
             regional_r.save()

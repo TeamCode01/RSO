@@ -25,12 +25,10 @@ def calculate_r5_score(report):
 
     """
 
-    #TODO: написать функцию расчёта мест, указать запуск калькуляции после верификации
+    # TODO: написать функцию расчёта мест
 
     logger.info('Выполняется подсчет отчета по r5 показателю')
 
-
-    # for ro_id in verified_reports_ro_ids:
     ro_id = report.regional_headquarter.id
     logger.info(f'Выполняется подсчет очков для рег штаба {ro_id}')
     ro_score = 0
