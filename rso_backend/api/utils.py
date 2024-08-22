@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from regional_competitions.r_calculations import calculate_r5_score
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS
@@ -862,3 +863,14 @@ def get_user_detachment(user):
             detachment_position,
             'headquarter'
         ) else None
+
+
+def get_calculation(report, report_number):
+    """Функция вызова калькуляции очков при совпадении номера показателя."""
+
+    match report_number:
+        case '5':
+            return calculate_r5_score(report)
+        case '':
+            return None
+    return None

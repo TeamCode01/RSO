@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -231,8 +231,6 @@ class RegionalR5Admin(admin.ModelAdmin):
 r7_list_display = (
     'regional_headquarter',
     'id',
-    'event_date',
-    'event_location',
     'prize_place',
     'document',
     'verified_by_chq',
@@ -243,7 +241,6 @@ r7_list_display = (
 )
 
 r7_list_filter = (
-    'event_date',
     'prize_place',
     'verified_by_chq',
     'verified_by_dhq'
@@ -438,6 +435,40 @@ class RegionalR17Admin(admin.ModelAdmin):
     search_fields = ('comment', 'regional_headquarter__name')
     list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+
+class RegionalR18LinkInline(admin.TabularInline):
+    model = RegionalR18Link
+    extra = 0
+
+
+class RegionalR18ProjectInline(admin.TabularInline):
+    model = RegionalR18Project
+    extra = 0
+
+
+@admin.register(RegionalR18Project)
+class RegionalR18ProjectAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_r18',
+        'file',
+    )
+    search_fields = ('name',)
+    inlines = [RegionalR18LinkInline]
+
+
+@admin.register(RegionalR18)
+class RegionalR18Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment',)
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR18ProjectInline]
 
 
 @admin.register(RegionalR19)
