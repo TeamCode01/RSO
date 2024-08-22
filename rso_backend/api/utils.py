@@ -29,7 +29,7 @@ from users.models import RSOUser
 from rest_framework.pagination import LimitOffsetPagination
 
 
-class Limit255OffsetPagination(LimitOffsetPagination):
+class Limit250OffsetPagination(LimitOffsetPagination):
     default_limit = 100
     max_limit = 250
 
@@ -42,7 +42,7 @@ class Limit255OffsetPagination(LimitOffsetPagination):
         return super().paginate_queryset(queryset, request, view)
 
 
-class RegionOffsetPagination(Limit255OffsetPagination):
+class RegionOffsetPagination(Limit250OffsetPagination):
     def paginate_queryset(self, queryset, request, view=None):
         if request.query_params.get('limit') == '-1':
             self.limit = len(queryset)
