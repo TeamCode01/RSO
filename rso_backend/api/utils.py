@@ -26,9 +26,31 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserRegionalHeadquarterPosition)
 from users.models import RSOUser
 
+from rest_framework.pagination import LimitOffsetPagination
+
 
 class Limit255OffsetPagination(LimitOffsetPagination):
-    max_limit = 255
+    default_limit = 100
+    max_limit = 250
+
+    def paginate_queryset(self, queryset, request, view=None):
+        if request.user.is_authenticated and request.query_params.get('limit') == '-1':
+            self.limit = len(queryset)
+            self.offset = 0
+            self.count = len(queryset)
+            return list(queryset)
+        return super().paginate_queryset(queryset, request, view)
+
+
+class RegionOffsetPagination(Limit255OffsetPagination):
+    def paginate_queryset(self, queryset, request, view=None):
+        if request.query_params.get('limit') == '-1':
+            self.limit = len(queryset)
+            self.offset = 0
+            self.count = len(queryset)
+            return list(queryset)
+        return super().paginate_queryset(queryset, request, view)
+
 
 
 def create_first_or_exception(self, validated_data, instance, error_msg: str):
