@@ -82,7 +82,7 @@ def calculate_q6_places_task():
     if today <= COUNT_PLACES_DEADLINE:
         calculate_q6_place(competition_id=settings.COMPETITION_ID)
     else:
-        logger.warning('Истек срок выполнения подсчета по 5 показателю')
+        logger.warning('Истек срок выполнения подсчета по 6 показателю')
 
 
 @shared_task

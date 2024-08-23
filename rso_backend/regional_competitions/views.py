@@ -390,7 +390,10 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         return context
 
     def get_object(self):
-        regional_headquarter = RegionalHeadquarter.objects.get(commander=self.request.user)
+        regional_headquarter = get_object_or_404(
+            RegionalHeadquarter,
+            commander=self.request.user
+        )
         report = self.model.objects.filter(regional_headquarter=regional_headquarter).last()
         if report is None:
             raise Http404('Отчет по данному показателю не найден')

@@ -31,7 +31,7 @@ from api.serializers import (AreaSerializer, EducationalInstitutionSerializer,
                              MemberCertSerializer, RegionSerializer)
 from api.swagger_schemas import properties, properties_external
 from api.utils import (create_and_return_archive, get_user, get_user_by_id,
-                       text_to_lines)
+                       text_to_lines, RegionOffsetPagination)
 from headquarters.models import (Area, EducationalInstitution, Region,
                                  RegionalHeadquarter,
                                  UserRegionalHeadquarterPosition)
@@ -62,6 +62,7 @@ class RegionViewSet(ListRetrieveViewSet):
 
     queryset = Region.objects.all()
     serializer_class = RegionSerializer
+    pagination_class = RegionOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name', 'code')
     permission_classes = [IsStuffOrCentralCommander,]

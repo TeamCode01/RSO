@@ -17,7 +17,7 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
                                MEMBERSHIP_FEE_DATA_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
-                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS,
+                               COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS, Q6_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS, Q10_DATA_HEADERS, Q11_DATA_HEADERS, Q12_DATA_HEADERS,
                                Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS,
                                Q18_DATA_HEADERS,
                                COMMANDER_SCHOOL_DATA_HEADERS,
@@ -211,6 +211,20 @@ class ExportQ5DataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_q5_data'
+    
+class ExportQ6DataView(BaseExcelExportView):
+
+    def get_headers(self):
+        return Q6_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Участие_членов_студ_отр_в_обяз_общесис_мероп_на_рег_ур_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Участие членов студенческого отряда в обязательных общесистемных мероприятиях на региональном уровне'
+
+    def get_data_func(self):
+        return 'get_q6_data'
 
 class ExportQ7DataView(BaseExcelExportView):
     def get_headers(self):
@@ -250,6 +264,45 @@ class ExportQ9DataView(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_q9_data'       
+
+class ExportQ10DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q10_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Призовые_места_отр_на_окруж_и_межрегионал_труд_проектах_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Призовые места отряда на окружных и межрегиональных трудовых проектах'
+
+    def get_data_func(self):
+        return 'get_q10_data'       
+
+class ExportQ11DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q11_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Призовые_места_отр_на_всеросс_труд_проектах_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Призовые места отряда на всероссийских трудовых проектах'
+
+    def get_data_func(self):
+        return 'get_q11_data'       
+
+class ExportQ12DataView(BaseExcelExportView):
+    def get_headers(self):
+        return Q12_DATA_HEADERS
+
+    def get_filename(self):
+        return f'Организ_собственных_мероприятий_отр_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Организация собственных мероприятий отряда'
+
+    def get_data_func(self):
+        return 'get_q12_data'       
 
 class ExportQ13DataView(BaseExcelExportView):
 

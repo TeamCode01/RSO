@@ -4633,10 +4633,12 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
             score = 0
             if report.link_emblem and report.link_emblem_img:
                 score += 1
-            if report.link_flag and report.link_flag_img:
-                score += 1
-            if report.link_banner and report.link_banner_img:
-                score += 1
+            if report.link_flag and report.link_flag_img and report.link_banner and report.link_banner_img:
+                score += 2
+            elif report.link_flag and report.link_flag_img:
+                score += 2
+            elif report.link_banner and report.link_banner_img:
+                score += 2
             report.score = score
             report.save()
             QVerificationLog.objects.create(
