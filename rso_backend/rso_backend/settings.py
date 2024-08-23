@@ -632,7 +632,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'api.utils.Limit255OffsetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'api.utils.Limit250OffsetPagination',
     'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
 }
 
