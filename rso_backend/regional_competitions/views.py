@@ -1,11 +1,13 @@
 import datetime
 import json
+import traceback
 from contextlib import suppress
 
 import django.core.exceptions
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils.timezone import now
 
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
@@ -452,18 +454,29 @@ class BaseRegionalRMeWithSendViewSet(BaseRegionalRMeViewSet):
         """
         regional_r = self.get_object()
         # TODO: Перенести в один из последних показателей и раскомментировать
+        # TODO: Заменить принты на логи
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=5,
-            period=IntervalSchedule.MINUTES,
+            every=45,
+            period=IntervalSchedule.SECONDS,
         )
         with suppress(django.core.exceptions.ValidationError):
-            PeriodicTask.objects.get_or_create(
+            f, created = PeriodicTask.objects.get_or_create(
                 interval=schedule,
                 name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
                 task='regional_competitions.tasks.send_email_report_part_2',
-                args=json.dumps([regional_r.regional_headquarter.id]),
-                expire_seconds=3600
+                args=json.dumps([regional_r.regional_headquarter.id])
             )
+
+            print(f'Получили таску: {f}. created: {created}. task expires: {f.expires}')
+
+            if not f.expires or f.expires < now():
+                print('Таска истекла или нет времени истечения. Устанавливаем актуальное время истечения...')
+            elif created:
+                f.expires = now() + datetime.timedelta(seconds=3600)
+                f.save()
+                print(f'Новая таска создана. Expiration time: {f.expires}')
+            else:
+                print(f'Таска уже существует и еще не истекла. Expiration time: {f.expires}')
         if hasattr(regional_r, 'is_sent'):
             regional_r.is_sent = True
             regional_r.save()
