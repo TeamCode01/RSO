@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from api.utils import get_calculation
-from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES
+from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18,
@@ -34,17 +34,18 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           r7_models_factory, r9_models_factory)
 from regional_competitions.permissions import IsRegionalCommander
 from regional_competitions.serializers import (
-    EventNameSerializer, MassSendSerializer, RegionalR18Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    EventNameSerializer, MassSendSerializer, RegionalR18Serializer, 
+    RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
     StatisticalRegionalReportSerializer, r6_serializers_factory, r7_serializers_factory,
     r9_serializers_factory)
-from regional_competitions.tasks import send_email_report_part_1
+from regional_competitions.tasks import send_email_report_part_1, send_mail
 from regional_competitions.utils import (
     get_report_number_by_class_name, get_report_xlsx, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
-    swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+    swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 from django.conf import settings
 
 
@@ -211,7 +212,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         - DELETE для отклонения отчета с указанием причин.
 
         В теле запроса необходимо передать:
-        - `action`: с любым значением. Необязательное поле, указывающее на то, что Окружной Штаб верифицирует отчет
+        - `action`: с любым значением. Необязательное поле, указывающее на то, что Центральный Штаб верифицирует отчет
            без изменений. В таком случае нет необходимости передавать остальные поля отчета.
         - Стандартные поля отчета - будут использоваться для обновления отчета при отсутствии поля `action`.
         - `reasons`: словарь, обязательное поле для DELETE, содержащий причины отклонения, где ключи
@@ -332,6 +333,15 @@ class BaseRegionalRViewSet(RegionalRMixin):
                 report_number=self.get_report_number(),
                 report_id=report.id,
                 reasons=json.dumps(reasons, ensure_ascii=False)
+            )
+
+            # Отправляем email сообщение о необходимости внести изменения в отчет
+            send_mail.delay(
+                subject='Конкурсная комиссия Центрального штаба РСО внесла комментарии '
+                        'по 2 части отчета за 2024 год. Необходимо внести корректировки.',
+                message=EMAIL_REPORT_DECLINED_MESSAGE,
+                recipients=get_emails(report),
+                file_path=''
             )
 
             return Response({
