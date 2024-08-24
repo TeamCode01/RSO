@@ -284,13 +284,17 @@ def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
     """Формирует плоский словарь для заголовков и значений листа Excel."""
 
     # TODO: убрать полный путь для названий файлов
-    # TODO: True, False и None заменить на человекочитаемые значения
+
     flat_dict = {}
 
     for value in fields_dict.values():
         if isinstance(value, list):
             for item in value:
-                nested_prefix = f'{prefix}{item["id"][0]}_{item["id"][1]}.'
+                print(item)
+                try:
+                    nested_prefix = f'{prefix}{item["id"][0]}_{item["id"][1]}.'
+                except KeyError:
+                    nested_prefix = prefix
                 nested_dict = get_headers_values(fields_dict=item, prefix=nested_prefix)
                 flat_dict.update(nested_dict)
         elif isinstance(value, tuple):
