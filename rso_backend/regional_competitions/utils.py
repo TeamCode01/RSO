@@ -484,7 +484,8 @@ def add_verbose_names_and_values_to_pdf(
             verbose_name, field_value_content = field_value
         else:
             logger.error(
-                f"Неправильное количество значений для распаковки в поле: {field_name}. Значение: {field_value}")
+                f'Неправильное количество значений для распаковки в поле: {field_name}. Значение: {field_value}'
+            )
             continue
 
         if not isinstance(field_value_content, dict):
@@ -508,7 +509,16 @@ def add_verbose_names_and_values_to_pdf(
         elements.append(Spacer(1, 15))
 
     for nested_name, nested_items in nested_structures:
-        verbose_nested_name = nested_name.replace('_', ' ').capitalize()
+        match nested_name:
+            case "projects":
+                verbose_nested_name = "Проекты"
+            case "events":
+                verbose_nested_name = "Мероприятия"
+            case "links":
+                verbose_nested_name = "Ссылки"
+            case _:
+                verbose_nested_name = nested_name.replace('_', ' ').capitalize()
+
         elements.append(Paragraph(verbose_nested_name, nested_title_style))
         elements.append(Spacer(1, 5))
 
