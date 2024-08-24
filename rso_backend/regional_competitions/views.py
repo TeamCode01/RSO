@@ -626,7 +626,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
     трудовых проектов РСО.
 
     Принимает JSON:
-    {
+    ```{
     "comment": "комментарий согласующего",
     "events": [ - проекты передаются в списке
         {
@@ -641,7 +641,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
         "ro_participants_number": 5 - Количество участников РО
         }
     ]
-    }
+    }```
     """
 
     queryset = RegionalR5.objects.all()
