@@ -104,21 +104,21 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
 
 def get_emails(report_instance) -> list:
     if settings.DEBUG:
-        addresses = settings.TEST_EMAIL_ADDRESSES
-    else:
-        try:
-            addresses = [
-                RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
-            ]
-            if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
-                addresses.append("rso.71@yandex.ru")
-        except RegionalHeadquarterEmail.DoesNotExist:
-            logger.warning(
-                f'Не найден почтовый адрес в RegionalHeadquarterEmail '
-                f'для РШ ID {report_instance.regional_headquarter.id}'
-            )
-            return []
-    return addresses
+        return settings.TEST_EMAIL_ADDRESSES
+
+    try:
+        addresses = [
+            RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
+        ]
+        if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
+            addresses.append("rso.71@yandex.ru")
+        return addresses
+    except RegionalHeadquarterEmail.DoesNotExist:
+        logger.warning(
+            f'Не найден почтовый адрес в RegionalHeadquarterEmail '
+            f'для РШ ID {report_instance.regional_headquarter.id}'
+        )
+        return []
 
 
 def send_email_with_attachment(subject: str, message: str, recipients: list, file_path: str):
@@ -128,9 +128,10 @@ def send_email_with_attachment(subject: str, message: str, recipients: list, fil
         from_email=settings.EMAIL_HOST_USER,
         to=recipients
     )
-    with open(file_path, 'rb') as f:
-        file_name_start = file_path.find('О')
-        mail.attach(file_path.split('/')[-1][file_name_start:], f.read(), 'application/octet-stream')
+    if file_path:
+        with open(file_path, 'rb') as f:
+            file_name_start = file_path.find('О')
+            mail.attach(file_path.split('/')[-1][file_name_start:], f.read(), 'application/octet-stream')
     mail.send()
 
 

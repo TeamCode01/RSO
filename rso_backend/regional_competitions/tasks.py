@@ -103,6 +103,11 @@ def send_email_report_part_2(regional_headquarter_id: int):
 
 
 @shared_task
+def send_mail(subject: str, message: str, recipients: list, file_path: str):
+    send_email_with_attachment(subject=subject, message=message, recipients=recipients, file_path=file_path)
+
+
+@shared_task
 def calculate_q14_report_task():
     """
     Считает отчет по 14 показателю.
