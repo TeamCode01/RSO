@@ -3,12 +3,12 @@ import json
 import traceback
 from contextlib import suppress
 
-import django.core.exceptions
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 
+from api.mixins import SendMixin
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
@@ -349,7 +349,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_204_NO_CONTENT)
 
 
-class BaseRegionalRWithoutVerifViewSet(RegionalRMixin):
+class RegionalRNoVerifViewSet(RegionalRMixin):
     """
     Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet,
     которые не требуют верификации.
@@ -451,54 +451,6 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
     def download_report_data(self, request, pk=None):
         """Скачивание данных отчета в формате XLSX."""
         return get_report_xlsx(self)
-
-
-class BaseRegionalRMeWithSendViewSet(BaseRegionalRMeViewSet):
-
-    @action(
-        detail=True,
-        methods=['POST'],
-        url_path='send',
-    )
-    def send_for_verification(self, request, pk=None):
-        """Отправляет отчет на верификацию.
-
-        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
-        """
-        regional_r = self.get_object()
-        # TODO: Перенести в один из последних показателей и раскомментировать
-        # TODO: Заменить принты на логи
-        schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=45,
-            period=IntervalSchedule.SECONDS,
-        )
-        with suppress(django.core.exceptions.ValidationError):
-            f, created = PeriodicTask.objects.get_or_create(
-                interval=schedule,
-                name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
-                task='regional_competitions.tasks.send_email_report_part_2',
-                args=json.dumps([regional_r.regional_headquarter.id])
-            )
-
-            print(f'Получили таску: {f}. created: {created}. task expires: {f.expires}')
-
-            if not f.expires or f.expires < now():
-                print('Таска истекла или нет времени истечения. Устанавливаем актуальное время истечения...')
-            elif created:
-                f.expires = now() + datetime.timedelta(seconds=3600)
-                f.save()
-                print(f'Новая таска создана. Expiration time: {f.expires}')
-            else:
-                print(f'Таска уже существует и еще не истекла. Expiration time: {f.expires}')
-        if hasattr(regional_r, 'is_sent'):
-            regional_r.is_sent = True
-            regional_r.save()
-            return Response(
-                {'detail': 'Данные отправлены на верификацию окружному штабу'},
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class MassSendViewSet(GenericViewSet):
@@ -609,7 +561,7 @@ class RegionalR1ViewSet(BaseRegionalRViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR1MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR1MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR1
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
@@ -622,7 +574,7 @@ class RegionalR4ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR4MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
@@ -659,7 +611,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR5MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR5
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
@@ -698,7 +650,7 @@ class RegionalR101ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR101MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR101MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR101
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
@@ -711,7 +663,7 @@ class RegionalR102ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR102MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR102
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
@@ -725,7 +677,7 @@ class RegionalR11ViewSet(BaseRegionalRViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR11MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR11MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR11
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
@@ -739,7 +691,7 @@ class RegionalR12ViewSet(BaseRegionalRViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR12MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR12MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR12
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
@@ -753,7 +705,7 @@ class RegionalR13ViewSet(BaseRegionalRViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR13MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR13MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR13
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
@@ -766,7 +718,7 @@ class RegionalR16ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR16MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR16
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
@@ -785,14 +737,14 @@ class RegionalR17ViewSet(BaseRegionalRViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR17MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR17MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR17
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR18ViewSet(BaseRegionalRWithoutVerifViewSet):
+class RegionalR18ViewSet(RegionalRNoVerifViewSet):
     """Вьюсет для просмотра и создания отчета по 18 показателю.
 
     Показатель не требует верификации.
@@ -853,7 +805,7 @@ class RegionalR19ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR19MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR19MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR19
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer

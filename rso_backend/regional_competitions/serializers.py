@@ -434,7 +434,7 @@ class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('prize_place', 'document', 'links',)
+            + ('prize_place', 'document', 'links', 'comment')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
