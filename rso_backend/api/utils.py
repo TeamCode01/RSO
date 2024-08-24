@@ -10,7 +10,9 @@ from django.db.models import Q
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
-from regional_competitions.r_calculations import calculate_r5_score
+from regional_competitions.r_calculations import (calculate_r4_score, calculate_r5_score,
+                                                  calculate_r7_score, calculate_r9_r10_score,
+                                                  calculate_r14, calculate_r16_score)
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS
@@ -869,8 +871,15 @@ def get_calculation(report, report_number):
     """Функция вызова калькуляции очков при совпадении номера показателя."""
 
     match report_number:
+        case '4':
+            return calculate_r4_score(report)
         case '5':
             return calculate_r5_score(report)
+        case '7':
+            return calculate_r7_score(report)
+        case '9' | '10':
+            return calculate_r9_r10_score(report)
+        case '16':
+            return calculate_r16_score(report)
         case '':
-            return None
-    return None
+            return
