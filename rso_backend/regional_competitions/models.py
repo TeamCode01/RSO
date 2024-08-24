@@ -419,6 +419,7 @@ r7_models_factory = RModelFactory(
     base_r_model=BaseRegionalR7,
     base_link_model=BaseLink,
     event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
+    labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
 )
 r7_models_factory.create_models()
 

@@ -11,33 +11,40 @@ class RModelFactory:
             base_r_model,
             base_link_model,
             r_number: int,
-            event_names: Dict[int, str]
+            event_names: Dict[int, str],
+            labour_projects: Dict[int, bool] = None
     ):
         self.r_number = r_number
         self.base_r_model = base_r_model
         self.base_link_model = base_link_model
         self.event_names = event_names
+        self.labour_projects = labour_projects or {}
         self.models = {}
 
     def create_models(self):
-        for r_sub_number, value in self.event_names.items():
-            self._create_model(r_sub_number, value[0], value[1])
+        for r_sub_number, event_name in self.event_names.items():
+            is_labour_project = self.labour_projects.get(r_sub_number, False)
+            self._create_model(r_sub_number, event_name, is_labour_project)
 
     def _create_model(self, r_sub_number, event_name, is_labour_project):
         model_name = f'RegionalR{self.r_number}{r_sub_number}'
         link_model_name = f'{model_name}Link'
 
+        model_attrs = {
+            '__module__': __name__,
+            'Meta': type('Meta', (), {
+                'verbose_name': f'Отчет по {self.r_number} показателю - "{event_name}"',
+                'verbose_name_plural': f'Отчеты по {self.r_number} показателю - "{event_name}"'
+            })
+        }
+
+        if self.r_number == 7:
+            model_attrs['is_labour_project'] = is_labour_project
+
         self.models[model_name] = type(
             model_name,
             (self.base_r_model,),
-            {
-                '__module__': __name__,
-                'is_labour_project': is_labour_project,
-                'Meta': type('Meta', (), {
-                    'verbose_name': f'Отчет по {self.r_number} показателю - "{event_name}"',
-                    'verbose_name_plural': f'Отчеты по {self.r_number} показателю - "{event_name}"'
-                })
-            }
+            model_attrs
         )
 
         self.models[link_model_name] = type(
@@ -57,6 +64,7 @@ class RModelFactory:
                 })
             }
         )
+
 
 
 class RAdminFactory:
