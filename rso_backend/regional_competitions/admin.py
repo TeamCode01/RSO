@@ -13,6 +13,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RegionalR101Link, RegionalR102,
                                           RegionalR102Link, RVerificationLog,
                                           StatisticalRegionalReport,
+                                          r6_models_factory,
                                           r7_models_factory, r9_models_factory)
 
 
@@ -228,6 +229,36 @@ class RegionalR5Admin(admin.ModelAdmin):
     inlines = [RegionalR5EventAdminInline]
 
 
+r6_list_display = (
+    'regional_headquarter',
+    'id',
+    'number_of_members',
+    'verified_by_chq',
+    'verified_by_dhq',
+    'score',
+    'created_at',
+    'updated_at'
+)
+
+r6_list_filter = (
+    'verified_by_chq',
+    'verified_by_dhq'
+)
+
+r6_search_fields = ('comment', 'regional_headquarter__name')
+
+r6_readonly_fields = ('created_at', 'updated_at')
+
+r6_admin_factory = RAdminFactory(
+    models=r6_models_factory.models,
+    list_display=r6_list_display,
+    list_filter=r6_list_filter,
+    search_fields=r6_search_fields,
+    readonly_fields=r6_readonly_fields
+)
+r6_admin_factory.create_admin_classes()
+
+
 r7_list_display = (
     'regional_headquarter',
     'id',
@@ -246,7 +277,7 @@ r7_list_filter = (
     'verified_by_dhq'
 )
 
-r7_search_fields = ('comment', 'event_location')
+r7_search_fields = ('comment', 'regional_headquarter__name')
 
 r7_readonly_fields = ('created_at', 'updated_at')
 
