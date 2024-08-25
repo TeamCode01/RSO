@@ -234,35 +234,31 @@ def get_verbose_names_and_values(serializer) -> dict:
         'links': 'Ссылки',
     }
     custom_values_dict = {
-        True: 'Да',
-        False: 'Нет',
-        None: 'Неизвестно',
+        'True': 'Да',
+        'False': 'Нет',
+        'None': 'Неизвестно',
     }
     verbose_names_and_values = {}
     model_meta = serializer.Meta.model._meta
     instance = serializer.instance
-    for field_name in serializer.Meta.fields:
-        field = serializer.fields.get(field_name)
-        if not field:
-            continue
+
+    # Проходим по фактическим полям, используемым сериализатором
+    for field_name, field in serializer.fields.items():
         field_value = getattr(instance, field_name, None)
-        if field_value in custom_values_dict:
-            field_value = custom_values_dict[field_value]
+
+        if str(field_value) in custom_values_dict:
+            field_value = custom_values_dict[str(field_value)]
 
         if isinstance(field, serializers.ListSerializer):
-            nested_serializer_class = field.child.__class__
             nested_verbose_names_and_values = []
-
             for nested_instance in field_value.all():
-                nested_serializer = nested_serializer_class(nested_instance)
+                nested_serializer = field.child.__class__(nested_instance)
                 nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer))
-
             verbose_names_and_values[field_name] = nested_verbose_names_and_values
 
         elif isinstance(field, serializers.ModelSerializer):
             nested_serializer = field.__class__(field_value)
             nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer)
-
             for nested_field_name, nested_verbose_name_and_value in nested_verbose_names_and_values.items():
                 verbose_names_and_values[f"{field_name}.{nested_field_name}"] = nested_verbose_name_and_value
 
@@ -271,20 +267,20 @@ def get_verbose_names_and_values(serializer) -> dict:
                 verbose_name = model_meta.get_field(field_name).verbose_name
                 if hasattr(field_value, '__str__'):
                     field_value = str(field_value)
+                    if not field_value[:4] == 'http':
+                        field_value = os.path.basename(field_value)
                 verbose_names_and_values[field_name] = (verbose_name, field_value)
             except FieldDoesNotExist:
                 pass
             except AttributeError:
-                print(field_name)
                 verbose_names_and_values[field_name] = (custom_verbose_names_dict.get(str(field_name).lower(), field_name), field_value)
 
     return verbose_names_and_values
 
 
+
 def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
     """Формирует плоский словарь для заголовков и значений листа Excel."""
-
-    # TODO: убрать полный путь для названий файлов
 
     flat_dict = {}
 
