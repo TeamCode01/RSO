@@ -120,11 +120,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        context.update({'action': self.action})
         if self.action not in ('district_review', 'central_review'):
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                    'action': self.action
                 }
             )
         return context
