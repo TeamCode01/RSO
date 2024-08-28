@@ -717,7 +717,7 @@ SWAGGER_SETTINGS = {
 
 REQUESTLOGS = {
     'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
-    'ENTRY_CLASS': 'api.utils.CustomRequestLogEntry',
+    'ENTRY_CLASS': 'api.log_entries.CustomRequestLogEntry',
     'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
     'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
     'ATTRIBUTE_NAME': '_requestlog',
