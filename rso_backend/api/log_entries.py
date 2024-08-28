@@ -1,47 +1,18 @@
-import io
-import mimetypes
-import os
-import re
-import zipfile
-import datetime
 import time
+import datetime
+import traceback
 
 from django.utils import timezone
-from datetime import datetime
-
-from django.db import IntegrityError
-from django.db.models import Q
 from django.http import QueryDict
-from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
-
 from requestlogs.base import SETTINGS
 from requestlogs.logging import get_request_id
 from requestlogs.utils import get_client_ip, remove_secrets
 
-from regional_competitions.r_calculations import calculate_r5_score
 from rest_framework.request import Request
-from rest_framework import serializers, status
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
-from competitions.models import CompetitionParticipants
-from headquarters.models import (CentralHeadquarter, Detachment,
-                                 DistrictHeadquarter, RegionalHeadquarter,
-                                 UserCentralHeadquarterPosition,
-                                 UserDetachmentPosition,
-                                 UserDistrictHeadquarterPosition,
-                                 UserEducationalHeadquarterPosition,
-                                 UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition)
-from users.models import RSOUser
 
-from rest_framework.pagination import LimitOffsetPagination
-
-
-
-class RequestHandler(object):
+class RequestHandler:
     """
     Handles standard Django requests, providing necessary attributes for logging.
     """
@@ -51,53 +22,42 @@ class RequestHandler(object):
 
     @property
     def method(self):
-        """
-        Returns the HTTP method of the request.
-        """
         try:
             return self.request.method
         except Exception as e:
             print(f"Error retrieving request method: {e}")
+            print(traceback.format_exc())
             return None
 
     @property
     def data(self):
-        """
-        Returns None for Django requests (DRF requests are handled separately).
-        """
         return None
 
     @property
     def query_params(self):
-        """
-        Returns sanitized query parameters, with secrets removed.
-        """
         try:
             return remove_secrets(self.request.GET)
         except Exception as e:
             print(f"Error retrieving query parameters: {e}")
+            print(traceback.format_exc())
             return {}
 
     @property
     def full_path(self):
-        """
-        Returns the full request path.
-        """
         try:
             return self.request.get_full_path()
         except Exception as e:
             print(f"Error retrieving full request path: {e}")
+            print(traceback.format_exc())
             return ""
 
     @property
     def request_id(self):
-        """
-        Returns the unique request ID.
-        """
         try:
             return get_request_id()
         except Exception as e:
             print(f"Error retrieving request ID: {e}")
+            print(traceback.format_exc())
             return None
 
 
@@ -108,28 +68,32 @@ class DRFRequestHandler(RequestHandler):
 
     @property
     def data(self):
-        """
-        Returns sanitized request data, with secrets removed.
-        """
         try:
-            return remove_secrets(self.request.data)
+            data = self.request.data
+            # Skip over file-like objects that cannot be serialized
+            cleaned_data = {}
+            for key, value in data.items():
+                if hasattr(value, 'read'):  # Check if it's a file-like object
+                    print(f"Excluding file from log: {key}")
+                    continue  # Skip files
+                cleaned_data[key] = value
+            return remove_secrets(cleaned_data)
         except Exception as e:
             print(f"Error retrieving request data: {e}")
+            print(traceback.format_exc())
             return {}
 
     @property
     def query_params(self):
-        """
-        Returns query parameters from DRF request.
-        """
         try:
             return self.request.query_params
         except Exception as e:
             print(f"Error retrieving DRF query parameters: {e}")
+            print(traceback.format_exc())
             return {}
 
 
-class ResponseHandler(object):
+class ResponseHandler:
     """
     Handles the response for both Django and DRF requests, extracting status and data for logging.
     """
@@ -139,20 +103,15 @@ class ResponseHandler(object):
 
     @property
     def status_code(self):
-        """
-        Returns the HTTP status code of the response.
-        """
         try:
             return self.response.status_code
         except Exception as e:
             print(f"Error retrieving response status code: {e}")
+            print(traceback.format_exc())
             return None
 
     @property
     def data(self):
-        """
-        Returns sanitized response data, with secrets removed.
-        """
         try:
             data = getattr(self.response, 'data', None)
             if isinstance(data, dict):
@@ -160,10 +119,11 @@ class ResponseHandler(object):
             return data
         except Exception as e:
             print(f"Error retrieving response data: {e}")
+            print(traceback.format_exc())
             return None
 
 
-class CustomRequestLogEntry(object):
+class CustomRequestLogEntry:
     """
     Custom request log entry class to handle logging of requests and responses with error handling.
     """
@@ -188,7 +148,6 @@ class CustomRequestLogEntry(object):
         """
         try:
             renderer_context = getattr(response, 'renderer_context', {})
-
             self.view_obj = renderer_context.get('view')
 
             if not self.drf_request:
@@ -203,6 +162,7 @@ class CustomRequestLogEntry(object):
             self.store()
         except Exception as e:
             print(f"Error during log finalization: {e}")
+            print(traceback.format_exc())
 
     def store(self):
         """
@@ -213,6 +173,7 @@ class CustomRequestLogEntry(object):
             storage.store(self)
         except Exception as e:
             print(f"Error during storing log entry: {e}")
+            print(traceback.format_exc())
 
     @property
     def user(self):
@@ -220,19 +181,15 @@ class CustomRequestLogEntry(object):
         Returns the user information if the user is authenticated.
         """
         try:
-            ret = {
-                'id': None,
-                'username': None,
-            }
-
+            ret = {'id': None, 'username': None}
             user = self._user or getattr(self.django_request, 'user', None)
             if user and user.is_authenticated:
                 ret['id'] = user.id
                 ret['username'] = user.username
-
             return ret
         except Exception as e:
             print(f"Error retrieving user information: {e}")
+            print(traceback.format_exc())
             return {'id': None, 'username': None}
 
     @user.setter
@@ -266,6 +223,7 @@ class CustomRequestLogEntry(object):
                     pass
         except Exception as e:
             print(f"Error retrieving action name: {e}")
+            print(traceback.format_exc())
             return None
 
     @property
@@ -277,6 +235,7 @@ class CustomRequestLogEntry(object):
             return get_client_ip(self.django_request)
         except Exception as e:
             print(f"Error retrieving IP address: {e}")
+            print(traceback.format_exc())
             return None
 
     @property
@@ -288,6 +247,7 @@ class CustomRequestLogEntry(object):
             return timezone.now()
         except Exception as e:
             print(f"Error retrieving timestamp: {e}")
+            print(traceback.format_exc())
             return None
 
     @property
@@ -296,7 +256,8 @@ class CustomRequestLogEntry(object):
         Returns the execution time for the request.
         """
         try:
-            return datetime.timedelta(seconds=time.time() - self._initialized_at)
+            return datetime.timedelta(seconds=(time.time() - self._initialized_at))
         except Exception as e:
             print(f"Error calculating execution time: {e}")
+            print(traceback.format_exc())
             return None
