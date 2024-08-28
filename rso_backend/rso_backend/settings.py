@@ -130,8 +130,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-# if not DEBUG:
-#     MIDDLEWARE += ['api.middlewares.CustomRequestLogsMiddleware',]
+if not DEBUG:
+    MIDDLEWARE += ['requestlogs.middleware.RequestLogsMiddleware',]
 
 ROOT_URLCONF = 'rso_backend.urls'
 
@@ -717,7 +717,7 @@ SWAGGER_SETTINGS = {
 
 REQUESTLOGS = {
     'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
-    'ENTRY_CLASS': 'requestlogs.entries.RequestLogEntry',
+    'ENTRY_CLASS': 'api.utils.CustomRequestLogEntry',
     'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
     'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
     'ATTRIBUTE_NAME': '_requestlog',
