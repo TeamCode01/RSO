@@ -1,5 +1,5 @@
+from copy import deepcopy
 from requestlogs.middleware import RequestLogsMiddleware as BaseRequestLogsMiddleware, get_requestlog_entry, SETTINGS
-from requestlogs.middleware import RequestIdMiddleware as BaseRequestIdMiddleware
 from io import BufferedReader, BufferedRandom
 
 
@@ -8,8 +8,12 @@ class CustomRequestLogsMiddleware(BaseRequestLogsMiddleware):
         response = self.get_response(request)
 
         if request.method.upper() in tuple(m.upper() for m in SETTINGS['METHODS']):
-            self.clean_request_data(request)
-            get_requestlog_entry(request).finalize(response)
+            try:
+                self.clean_request_data(request)
+                get_requestlog_entry(request).finalize(response)
+            except Exception as e:
+                print(f"Error during request log finalization: {e}")
+                pass
 
         return response
 
@@ -17,19 +21,39 @@ class CustomRequestLogsMiddleware(BaseRequestLogsMiddleware):
         """
         Этот метод удаляет несериализуемые объекты (например, файлы и потоки) из данных запроса.
         """
-        # Проверяем наличие данных запроса и удаляем несериализуемые объекты
-        if hasattr(request, 'data') and isinstance(request.data, dict):
-            cleaned_data = {}
-            for key, value in request.data.items():
-                if isinstance(value, (BufferedReader, BufferedRandom)):
-                    continue  # Игнорируем файловые потоки
-                cleaned_data[key] = value
+        try:
+            if hasattr(request, 'data'):
+                request.data = self._clean_data(request.data)
+        except Exception as e:
+            print(f"Error cleaning request data: {e}")
+            pass
 
-            # Заменяем оригинальные данные на очищенные
-            request.data = cleaned_data
-        elif isinstance(request.POST, QueryDict):
-            # Если это form-data, также очищаем файлы
-            request.POST = request.POST.copy()
-            for key in list(request.POST.keys()):
-                if isinstance(request.POST[key], (BufferedReader, BufferedRandom)):
-                    del request.POST[key]
+    def _clean_data(self, data):
+        """
+        Рекурсивно очищаем данные от объектов, которые не могут быть сериализованы.
+        """
+        try:
+            if isinstance(data, dict):
+                cleaned_data = {}
+                for key, value in data.items():
+                    try:
+                        cleaned_data[key] = deepcopy(value)
+                    except (TypeError, ValueError):
+                        print(f"Skipping non-serializable object in key '{key}'")
+                        cleaned_data[key] = None
+                return cleaned_data
+
+            elif isinstance(data, list):
+                cleaned_list = []
+                for index, item in enumerate(data):
+                    try:
+                        cleaned_list.append(deepcopy(item))
+                    except (TypeError, ValueError):
+                        print(f"Skipping non-serializable object in list at index {index}")
+                        cleaned_list.append(None)
+                return cleaned_list
+
+            return data
+        except Exception as e:
+            print(f"Error during data cleaning: {e}")
+            return None
