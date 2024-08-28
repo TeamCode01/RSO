@@ -131,7 +131,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 if not DEBUG:
-    MIDDLEWARE += ['requestlogs.middleware.RequestLogsMiddleware',]
+    MIDDLEWARE += ['api.middlewares.CustomRequestLogsMiddleware',]
 
 ROOT_URLCONF = 'rso_backend.urls'
 
