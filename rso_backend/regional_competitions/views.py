@@ -77,9 +77,7 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
-        regional_headquarter = RegionalHeadquarter.objects.get(
-            commander=self.request.user
-        )
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
         if request.method == "GET":
             return Response(
