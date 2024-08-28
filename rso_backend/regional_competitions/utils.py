@@ -43,7 +43,7 @@ def swagger_schema_for_retrieve_method(serializer_cls):
 
 def swagger_schema_for_district_review(serializer_cls):
     def decorator(func):
-        @swagger_auto_schema(methods=['PATCH'], request_body=serializer_cls)
+        @swagger_auto_schema(methods=['PUT'], request_body=serializer_cls)
         @wraps(func)
         def wrapped(*args, **kwargs):
             return func(*args, **kwargs)
@@ -55,7 +55,7 @@ def swagger_schema_for_district_review(serializer_cls):
 
 def swagger_schema_for_central_review(serializer_cls):
     def decorator(func):
-        @swagger_auto_schema(methods=['PATCH', 'DELETE'], request_body=serializer_cls)
+        @swagger_auto_schema(methods=['PUT', 'DELETE'], request_body=serializer_cls)
         @wraps(func)
         def wrapped(*args, **kwargs):
             return func(*args, **kwargs)
