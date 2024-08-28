@@ -47,6 +47,15 @@ class StatisticalRegionalReport(models.Model):
     employed_top = models.PositiveIntegerField(
         verbose_name='Количество трудоустроенных, ТОП'
     )
+    employed_so_poo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ПОО'
+    )
+    employed_so_oovo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ООВО'
+    )
+    employed_ro_rso = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов РО РСО'
+    )
 
     class Meta:
         verbose_name_plural = 'Статистические отчеты РШ'
@@ -54,6 +63,24 @@ class StatisticalRegionalReport(models.Model):
 
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
+
+
+class AdditionalStatistic(models.Model):
+    statistical_report = models.ForeignKey(
+        'StatisticalRegionalReport',
+        on_delete=models.CASCADE,
+        related_name='additional_statistics',
+        verbose_name='Статистический отчет'
+    )
+    name = models.CharField(verbose_name='Наименование', max_length=255)
+    value = models.PositiveIntegerField(verbose_name='Значение')
+
+    class Meta:
+        verbose_name_plural = 'Свои варианты - статистические отчеты'
+        verbose_name = 'Свои варианты - статистический отчет'
+
+    def __str__(self):
+        return f'{self.name}: {self.value}'
 
 
 class BaseRegionalR(models.Model):

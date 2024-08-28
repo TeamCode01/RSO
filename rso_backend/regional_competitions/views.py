@@ -76,7 +76,7 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
 
     @action(
         detail=False,
-        methods=['GET', 'PATCH'],
+        methods=['GET', 'PUT'],
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
@@ -84,19 +84,21 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
             commander=self.request.user
         )
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+
         if request.method == "GET":
             return Response(
                 data=self.get_serializer(statistical_report).data,
                 status=status.HTTP_200_OK
             )
-        # TODO: Ограничение на изменение отчета (нельзя редактировать, если первый показатель отправлен is_sent=True)
+
         serializer = self.get_serializer(
-            request.user,
+            statistical_report,
             data=request.data,
-            partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
 
     def perform_create(self, serializer):
         report = serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
