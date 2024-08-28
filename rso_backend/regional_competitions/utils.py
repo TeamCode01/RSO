@@ -1,4 +1,5 @@
 import logging
+import traceback
 from functools import wraps
 from io import BytesIO
 
@@ -23,7 +24,7 @@ from headquarters.models import RegionalHeadquarterEmail, RegionalHeadquarter
 
 from rest_framework import serializers
 
-logger = logging.getLogger('tasks')
+logger = logging.getLogger('regional_tasks')
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -74,6 +75,18 @@ def swagger_schema_for_create_and_update_methods(serializer_cls):
         return wrapped
 
     return decorator
+
+
+def log_exception(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            trb = traceback.format_exc()
+            logger.exception(f'Возник Exception!!!: {e}\n{trb}')
+
+    return wrapped
 
 
 def get_report_number_by_class_name(link):
