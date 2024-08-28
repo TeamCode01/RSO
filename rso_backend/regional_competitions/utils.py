@@ -1,4 +1,5 @@
 import logging
+import traceback
 from functools import wraps
 from io import BytesIO
 from importlib import import_module
@@ -30,7 +31,7 @@ from rest_framework import serializers
 
 from regional_competitions.constants import MASS_REPORT_NUMBERS
 
-logger = logging.getLogger('tasks')
+logger = logging.getLogger('regional_tasks')
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -81,6 +82,18 @@ def swagger_schema_for_create_and_update_methods(serializer_cls):
         return wrapped
 
     return decorator
+
+
+def log_exception(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            trb = traceback.format_exc()
+            logger.exception(f'Возник Exception!!!: {e}\n{trb}')
+
+    return wrapped
 
 
 def get_report_number_by_class_name(link):
@@ -244,6 +257,9 @@ def get_verbose_names_and_values(serializer) -> dict:
         'True': 'Да',
         'False': 'Нет',
         'None': 'Неизвестно',
+        'True': 'Да',
+        'False': 'Нет',
+        'None': 'Неизвестно',
     }
     verbose_names_and_values = {}
     model_meta = serializer.Meta.model._meta
@@ -251,6 +267,9 @@ def get_verbose_names_and_values(serializer) -> dict:
 
     for field_name, field in serializer.fields.items():
         field_value = getattr(instance, field_name, None)
+
+        if str(field_value) in custom_values_dict:
+            field_value = custom_values_dict[str(field_value)]
 
         if str(field_value) in custom_values_dict:
             field_value = custom_values_dict[str(field_value)]
@@ -281,6 +300,8 @@ def get_verbose_names_and_values(serializer) -> dict:
                     field_value = str(field_value)
                     if not field_value[:4] == 'http':
                         field_value = os.path.basename(field_value)
+                    if not field_value[:4] == 'http':
+                        field_value = os.path.basename(field_value)
                 verbose_names_and_values[field_name] = (verbose_name, field_value)
             except FieldDoesNotExist:
                 pass
@@ -288,6 +309,7 @@ def get_verbose_names_and_values(serializer) -> dict:
                 verbose_names_and_values[field_name] = (custom_verbose_names_dict.get(str(field_name).lower(), field_name), field_value)
 
     return verbose_names_and_values
+
 
 
 def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:

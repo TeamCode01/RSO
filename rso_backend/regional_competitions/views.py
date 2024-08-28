@@ -120,11 +120,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        context.update({'action': self.action})
         if self.action not in ('district_review', 'central_review'):
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                    'action': self.action
                 }
             )
         return context
@@ -136,7 +136,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
     @action(
-        methods=['PATCH'],
+        methods=['PUT'],
         detail=True,
         url_path='district_review',
         permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
@@ -177,7 +177,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data, partial=True)
+            update_serializer = self.get_serializer(report, data=request.data)
 
             if update_serializer.is_valid():
                 update_serializer.save()
@@ -199,7 +199,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         }, status=status.HTTP_200_OK)
 
     @action(
-        methods=['PATCH', 'DELETE'],
+        methods=['PUT', 'DELETE'],
         detail=True,
         url_path='central_review',
         permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
@@ -207,8 +207,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
     def central_review(self, request, pk=None):
         """Обрабатывает верификацию или отклонение отчета Центральным Штабом.
 
-        Метод поддерживает обработку запросов PATCH и DELETE.
-        - PATCH для верификации отчета.
+        Метод поддерживает обработку запросов PUT и DELETE.
+        - PUT для верификации отчета.
         - DELETE для отклонения отчета с указанием причин.
 
         В теле запроса необходимо передать:
@@ -219,7 +219,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
            соответствуют полям отчета, а значения являются строками.
 
         При успешной обработке возвращает:
-        - `HTTP 200 OK` для PATCH.
+        - `HTTP 200 OK` для PUT.
         - `HTTP 204 No Content` для DELETE.
 
         Возвращает ошибку `HTTP 400 Bad Request` в случаях:
@@ -269,11 +269,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data, partial=True)
+            update_serializer = self.get_serializer(report, data=request.data)
             if update_serializer.is_valid():
                 update_serializer.save()
 
-        if request.method == 'PATCH':
+        if request.method == 'PUT':
 
             report.verified_by_chq = True
             report.save()
