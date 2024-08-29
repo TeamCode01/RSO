@@ -48,13 +48,19 @@ class StatisticalRegionalReport(models.Model):
         verbose_name='Количество трудоустроенных, ТОП'
     )
     employed_so_poo = models.PositiveIntegerField(
-        verbose_name='Количество работников штабов СО ПОО'
+        verbose_name='Количество работников штабов СО ПОО',
+        blank=True,
+        null=True
     )
     employed_so_oovo = models.PositiveIntegerField(
-        verbose_name='Количество работников штабов СО ООВО'
+        verbose_name='Количество работников штабов СО ООВО',
+        blank=True,
+        null=True
     )
     employed_ro_rso = models.PositiveIntegerField(
-        verbose_name='Количество работников штабов РО РСО'
+        verbose_name='Количество работников штабов РО РСО',
+        blank=True,
+        null=True
     )
 
     class Meta:
