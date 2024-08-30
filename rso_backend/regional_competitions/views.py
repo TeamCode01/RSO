@@ -44,7 +44,7 @@ from regional_competitions.serializers import (
     r9_serializers_factory)
 from regional_competitions.tasks import send_email_report_part_1, send_mail
 from regional_competitions.utils import (
-    get_report_number_by_class_name, get_report_xlsx, swagger_schema_for_central_review,
+    get_all_reports_from_competition, get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 from django.conf import settings
@@ -79,7 +79,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
 
     @action(
         detail=False,
-        methods=['GET', 'PATCH'],
+        methods=['GET', 'PUT'],
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
@@ -87,19 +87,21 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
             commander=self.request.user
         )
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+
         if request.method == "GET":
             return Response(
                 data=self.get_serializer(statistical_report).data,
                 status=status.HTTP_200_OK
             )
-        # TODO: Ограничение на изменение отчета (нельзя редактировать, если первый показатель отправлен is_sent=True)
+
         serializer = self.get_serializer(
-            request.user,
+            statistical_report,
             data=request.data,
-            partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
 
     def perform_create(self, serializer):
         report = serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
@@ -132,11 +134,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        context.update({'action': self.action})
         if self.action not in ('district_review', 'central_review'):
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                    'action': self.action
                 }
             )
         return context
@@ -148,7 +150,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
     @action(
-        methods=['PATCH'],
+        methods=['PUT'],
         detail=True,
         url_path='district_review',
         permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
@@ -189,7 +191,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data, partial=True)
+            update_serializer = self.get_serializer(report, data=request.data)
 
             if update_serializer.is_valid():
                 update_serializer.save()
@@ -211,7 +213,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         }, status=status.HTTP_200_OK)
 
     @action(
-        methods=['PATCH', 'DELETE'],
+        methods=['PUT', 'DELETE'],
         detail=True,
         url_path='central_review',
         permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
@@ -219,8 +221,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
     def central_review(self, request, pk=None):
         """Обрабатывает верификацию или отклонение отчета Центральным Штабом.
 
-        Метод поддерживает обработку запросов PATCH и DELETE.
-        - PATCH для верификации отчета.
+        Метод поддерживает обработку запросов PUT и DELETE.
+        - PUT для верификации отчета.
         - DELETE для отклонения отчета с указанием причин.
 
         В теле запроса необходимо передать:
@@ -231,7 +233,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
            соответствуют полям отчета, а значения являются строками.
 
         При успешной обработке возвращает:
-        - `HTTP 200 OK` для PATCH.
+        - `HTTP 200 OK` для PUT.
         - `HTTP 204 No Content` для DELETE.
 
         Возвращает ошибку `HTTP 400 Bad Request` в случаях:
@@ -281,11 +283,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data, partial=True)
+            update_serializer = self.get_serializer(report, data=request.data)
             if update_serializer.is_valid():
                 update_serializer.save()
 
-        if request.method == 'PATCH':
+        if request.method == 'PUT':
 
             report.verified_by_chq = True
             report.save()
@@ -359,6 +361,15 @@ class BaseRegionalRViewSet(RegionalRMixin):
             return Response({
                 'detail': 'Отчет успешно отклонен с указанием причин'
             }, status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=['GET',],
+        url_path='download_all_reports_data',
+    )
+    def download_all_reports_data(self, request, pk=None):
+        """Скачивание данных отчета в формате XLSX."""
+        return get_all_reports_from_competition(self.get_report_number())
 
 
 class RegionalRNoVerifViewSet(RegionalRMixin):
@@ -454,15 +465,6 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
     def get_report_number(self):
         return get_report_number_by_class_name(self)
-
-    @action(
-        detail=True,
-        methods=['GET',],
-        url_path='download_report_data',
-    )
-    def download_report_data(self, request, pk=None):
-        """Скачивание данных отчета в формате XLSX."""
-        return get_report_xlsx(self)
 
 
 class MassSendViewSet(GenericViewSet):
@@ -600,7 +602,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
     трудовых проектов РСО.
 
     Принимает JSON:
-    {
+    ```{
     "comment": "комментарий согласующего",
     "events": [ - проекты передаются в списке
         {
@@ -615,7 +617,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
         "ro_participants_number": 5 - Количество участников РО
         }
     ]
-    }
+    }```
     """
 
     queryset = RegionalR5.objects.all()
@@ -737,10 +739,17 @@ class RegionalR16MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR17ViewSet(BaseRegionalRViewSet):
+class RegionalR17ViewSet(RegionalRNoVerifViewSet):
     """Дислокация студенческих отрядов РО РСО.
 
     file_size выводится в мегабайтах.
+
+    ```json
+            {
+    "scan_file": документ,
+    "comment": строка
+    }
+    ```
     """
 
     queryset = RegionalR17.objects.all()
@@ -809,8 +818,23 @@ class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
-class RegionalR19ViewSet(BaseRegionalRViewSet):
-    """Трудоустройство."""
+class RegionalR19ViewSet(RegionalRNoVerifViewSet):
+    """Трудоустройство.
+
+    employed_student_start - Фактическое количество трудоустроенных студентов в третий
+    трудовой семестр
+    employed_student_end - Фактическое количество трудоустроенных в штат принимающей
+    организации по итогам третьего трудового семестра.
+
+    ```json
+            {
+      "employed_student_start": 0,
+      "employed_student_end": 0,
+      "comment": "string"
+    }
+    ```
+
+    """
 
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer

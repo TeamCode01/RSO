@@ -1,3 +1,4 @@
+from importlib import import_module
 from typing import Dict
 
 from django.contrib import admin
@@ -130,7 +131,9 @@ class RSerializerFactory:
     def create_serializer_classes(self):
         for model_name in self.models:
             if not model_name.endswith('Link'):
-                self._create_serializer_class(model_name)
+                serializer_class = self._create_serializer_class(model_name)
+                serializers_module = import_module('regional_competitions.serializers')
+                setattr(serializers_module, f'{model_name}Serializer', serializer_class)
 
     def _create_serializer_class(self, model_name):
         link_model_name = f'{model_name}Link'
@@ -175,6 +178,7 @@ class RSerializerFactory:
         )
 
         self.serializers[model_name] = regional_r_serializer_class
+        return regional_r_serializer_class
 
 
 class RViewSetFactory:

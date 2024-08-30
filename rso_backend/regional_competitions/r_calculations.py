@@ -6,10 +6,12 @@ from headquarters.models import RegionalHeadquarter
 from regional_competitions.models import (RegionalR4, RegionalR12, RegionalR13,
                                           RegionalR14, r7_models_factory, r9_models_factory,
                                           RegionalR16)
+from regional_competitions.utils import log_exception
 
-logger = logging.getLogger('tasks')
+logger = logging.getLogger('regional_tasks')
 
 
+@log_exception
 def calculate_r4_score(report: RegionalR4):
     """Расчет очков по 4 показателю.
 
@@ -39,6 +41,7 @@ def calculate_r4_score(report: RegionalR4):
     report.save()
 
 
+@log_exception
 def calculate_r5_score(report):
     """Расчет очков по 5 показателю.
 
@@ -87,6 +90,7 @@ def calculate_r5_score(report):
     logger.info(f'Подсчитали очки 5го показателя для рег штаба {ro_id}. Очки: {ro_score}')
 
 
+@log_exception
 def calculate_r7_score(report):
     """Расчет очков по 7 показателю.
     
@@ -108,6 +112,7 @@ def calculate_r7_score(report):
     report.save()
 
 
+@log_exception
 def calculate_r9_r10_score(report):
     """Расчет очков по 9-10 показателям.
     
@@ -123,6 +128,7 @@ def calculate_r9_r10_score(report):
     report.save()
 
 
+@log_exception
 def calculate_r16_score(report: RegionalR16):
     """Расчет очков по 16 показателю.
     
