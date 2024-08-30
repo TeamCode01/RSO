@@ -1,12 +1,8 @@
-import datetime
 import json
-import traceback
-from contextlib import suppress
 
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.utils.timezone import now
 
 from api.mixins import SendMixin
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
@@ -17,14 +13,12 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
-
 from api.utils import get_calculation
-from headquarters.serializers import RegionalHeadquarterSerializer, ShortRegionalHeadquarterSerializer
+from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
-from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
+from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR2,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -33,7 +27,8 @@ from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR
                                           StatisticalRegionalReport,
                                           r6_models_factory,
                                           r7_models_factory, r9_models_factory)
-from regional_competitions.permissions import IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert
+from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
+                                               IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
     EventNameSerializer, MassSendSerializer, RegionalR18Serializer, 
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
@@ -580,6 +575,20 @@ class RegionalR1MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+# class RegionalR2ViewSet(BaseRegionalRViewSet):
+#     queryset = RegionalR2.objects.all()
+#     serializer_class = RegionalR2Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+#     parser_classes = (MultiPartParser, FormParser)
+
+
+# class RegionalR2MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+#     model = RegionalR2
+#     queryset = RegionalR2.objects.all()
+#     serializer_class = RegionalR2Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
 class RegionalR4ViewSet(BaseRegionalRViewSet):

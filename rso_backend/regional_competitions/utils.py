@@ -306,10 +306,11 @@ def get_verbose_names_and_values(serializer) -> dict:
             except FieldDoesNotExist:
                 pass
             except AttributeError:
-                verbose_names_and_values[field_name] = (custom_verbose_names_dict.get(str(field_name).lower(), field_name), field_value)
+                verbose_names_and_values[field_name] = (
+                    custom_verbose_names_dict.get(str(field_name).lower(), field_name), field_value
+                )
 
     return verbose_names_and_values
-
 
 
 def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
@@ -389,7 +390,6 @@ def get_all_models(module_name: str):
     all_models = []
     pattern = re.compile(r'^RegionalR\d+$')
 
-
     for model in apps.get_models():
         model_name = model.__name__
         if issubclass(model, models.Model) and pattern.match(model_name):
@@ -400,7 +400,7 @@ def get_all_models(module_name: str):
 
 def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     """Выгрузка отчётов определенного РШ в формате Excel."""
-    
+
     models_list = get_all_models('regional_competitions.models')
     first_ws_is_filled = False
     workbook = Workbook()
@@ -408,7 +408,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     for model_name in models_list:
         report_number = model_name.split('RegionalR')[1]
         model = apps.get_model('regional_competitions', model_name)
-        
+
         if report_number == '14':
             instance = model.objects.filter(report_12__regional_headquarter_id=regional_headquarter_id).first()
             worksheet = workbook.create_sheet(report_number)
@@ -452,7 +452,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
             '.spreadsheetml.sheet'
         )
     )
-    response['Content-Disposition'] = f'attachment; filename=RO_report.xlsx'
+    response['Content-Disposition'] = 'attachment; filename=RO_report.xlsx'
     return response
 
 
