@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
+from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -516,3 +516,19 @@ class RegionalR19Admin(admin.ModelAdmin):
     search_fields = ('comment', 'regional_headquarter__name')
     list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ExpertRole)
+class ExpertRoleAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'central_headquarter',
+        'district_headquarter',
+        'created_at',
+    )
+    search_fields = (
+        'user__username',
+        'central_headquarter__name',
+        'district_headquarter__name'
+    )

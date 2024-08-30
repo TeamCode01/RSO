@@ -12,7 +12,7 @@ from api.mixins import SendMixin
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
@@ -20,10 +20,11 @@ from rest_framework.response import Response
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from api.utils import get_calculation
+from headquarters.serializers import RegionalHeadquarterSerializer, ShortRegionalHeadquarterSerializer
 from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions.factories import RViewSetFactory
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18,
+from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
+from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -32,7 +33,7 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           StatisticalRegionalReport,
                                           r6_models_factory,
                                           r7_models_factory, r9_models_factory)
-from regional_competitions.permissions import IsRegionalCommander
+from regional_competitions.permissions import IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert
 from regional_competitions.serializers import (
     EventNameSerializer, MassSendSerializer, RegionalR18Serializer, 
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
@@ -49,14 +50,16 @@ from regional_competitions.utils import (
 from django.conf import settings
 
 
-class StatisticalRegionalViewSet(RetrieveCreateMixin):
+class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
     """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
 
     def get_permissions(self):
         if self.action == 'retrieve':
-            return (permissions.IsAuthenticated(),)
+            return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
+        if self.action == 'list':
+            return (IsCentralHeadquarterExpert(),)
         return permissions.IsAuthenticated(), IsRegionalCommander()
 
     def retrieve(self, request, *args, **kwargs):
@@ -114,6 +117,15 @@ class BaseRegionalRViewSet(RegionalRMixin):
             self.district_review = swagger_schema_for_district_review(self.serializer_class)(self.district_review)
             self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
             self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        objects = queryset.filter(regional_headquarter_id=pk)
+        if objects.exists():
+            latest_object = objects.order_by('-id')[0]
+            return latest_object
+        raise Http404("Страница не найдена")
 
     def get_report_number(self):
         return get_report_number_by_class_name(self)
@@ -810,3 +822,39 @@ class RegionalR19MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+@api_view(['GET'])
+@permission_classes((IsCentralOrDistrictHeadquarterExpert,))
+def get_sent_reports(request):
+    """
+    Эндпоинт для  получения списка рег штабов, которые отправили отчеты по 2 части.
+
+    Доступ - только экспертам окружных и центрального штабов.
+
+    Для экспертов окр штабов выводит список рег штабов, отчеты которых отправлены, но не верифицирован окр штабом.
+    Для экспертов центрального штаба выводит список рег штабов, которые верифицированы окр штабом,
+    но не верифицированы и не отклонены центральным штабом.
+
+    Для окружных штабов выводит заявки только подвластных им рег штабов.
+    """
+    is_central_expert = ExpertRole.objects.filter(
+        user=request.user, central_headquarter__isnull=False
+    ).exists()
+    if is_central_expert:
+        reg_ids = RegionalR16.objects.filter(
+            verified_by_dhq=True,
+            verified_by_chq=None,
+        ).values_list('regional_headquarter_id', flat=True).distinct()
+        qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
+    else:
+        district_headquarter_id = ExpertRole.objects.get(user=request.user).district_headquarter_id
+        reg_ids = RegionalR16.objects.filter(
+            is_sent=True,
+            verified_by_dhq=False,
+        ).values_list('regional_headquarter', flat=True).distinct()
+        qs = RegionalHeadquarter.objects.filter(
+            id__in=reg_ids,
+            district_headquarter_id=district_headquarter_id
+        )
+    return Response(ShortRegionalHeadquarterSerializer(qs, many=True).data)

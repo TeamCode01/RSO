@@ -32,7 +32,8 @@ from regional_competitions.views import (MassSendViewSet,
                                          StatisticalRegionalViewSet,
                                          r6_view_sets_factory,
                                          r7_view_sets_factory,
-                                         r9_view_sets_factory)
+                                         r9_view_sets_factory,
+                                         get_sent_reports,)
 
 
 class MeRouter(SimpleRouter):
@@ -124,4 +125,5 @@ me_router.register(r'reports/19', RegionalR19MeViewSet, basename='r19_me')
 urlpatterns = [
     path('', include(router.urls)),
     path('me/', include(me_router.urls)),
+    path('get_sent_reports/', get_sent_reports, name='get_sent_reports'),
 ]

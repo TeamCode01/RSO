@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import PositiveSmallIntegerField
+from django.db.models import PositiveSmallIntegerField, Q
+from django.db.models.constraints import CheckConstraint
 
 from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              REPORT_EXISTS_MESSAGE,
@@ -814,3 +816,51 @@ REPORTS_IS_SENT_MODELS.extend(
 REPORTS_IS_SENT_MODELS.extend(
     [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
 )
+
+
+class ExpertRole(models.Model):
+    """Роль эксперта."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name="%(class)s",
+    )
+    central_headquarter = models.ForeignKey(
+        'headquarters.CentralHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Центральный штаб',
+        related_name='%(class)s',
+        blank=True,
+        null=True
+    )
+    district_headquarter = models.ForeignKey(
+        'headquarters.DistrictHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Районный штаб',
+        related_name='%(class)s',
+        blank=True,
+        null=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+
+    class Meta:
+        verbose_name = 'Роль эксперта'
+        verbose_name_plural = 'Роли экспертов'
+        constraints = [
+            CheckConstraint(
+                check=Q(central_headquarter__isnull=False) | Q(district_headquarter__isnull=False),
+                name='at_least_one_headquarter'
+            ),
+            CheckConstraint(
+                check=~Q(central_headquarter__isnull=False, district_headquarter__isnull=False),
+                name='not_both_headquarters'
+            )
+        ]

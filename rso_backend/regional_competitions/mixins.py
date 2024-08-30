@@ -3,7 +3,7 @@ from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
 from rest_framework.viewsets import GenericViewSet
 
 
-class RegionalRMixin(RetrieveModelMixin, ListModelMixin, CreateModelMixin, GenericViewSet):
+class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
     pass
 
 
@@ -11,5 +11,5 @@ class RegionalRMeMixin(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     pass
 
 
-class RetrieveCreateMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
+class ListRetrieveCreateMixin(RetrieveModelMixin, CreateModelMixin, ListModelMixin, GenericViewSet):
     pass
