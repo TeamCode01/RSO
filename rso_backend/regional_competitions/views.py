@@ -12,6 +12,7 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -94,8 +95,16 @@ class StatisticalRegionalViewSet(RetrieveCreateMixin):
         serializer.save()
 
     def perform_create(self, serializer):
-        report = serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-        send_email_report_part_1.delay(report.id)
+        user = self.request.user
+        regional_headquarter = RegionalHeadquarter.objects.get(commander=user)
+
+        should_send = True
+        if not StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            should_send = False
+
+        report = serializer.save(regional_headquarter=regional_headquarter)
+        if should_send:
+            send_email_report_part_1(report.id)
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
