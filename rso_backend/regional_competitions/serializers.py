@@ -1,7 +1,7 @@
 from django.db import models
 from rest_framework import serializers
 
-from api.utils import create_first_or_exception
+from django.db import transaction
 from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
@@ -19,11 +19,20 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RVerificationLog,
                                           StatisticalRegionalReport,
                                           r6_models_factory,
-                                          r7_models_factory, r9_models_factory)
+                                          r7_models_factory, r9_models_factory, AdditionalStatistic)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
+class AdditionalStatisticSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdditionalStatistic
+        fields = ('name', 'value',)
+        read_only_fields = ('id', 'statistical_report')
+
+
 class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
+    additional_statistics = AdditionalStatisticSerializer(required=False, allow_null=True, many=True)
+
     class Meta:
         model = StatisticalRegionalReport
         fields = (
@@ -39,6 +48,10 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'employed_specialized_detachments',
             'employed_production_detachments',
             'employed_top',
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso',
+            'additional_statistics',
         )
         read_only_fields = ('id', 'regional_headquarter')
         extra_kwargs = {
@@ -49,12 +62,37 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        return create_first_or_exception(
-            self,
-            validated_data,
-            StatisticalRegionalReport,
-            STATISTICAL_REPORT_EXISTS_MESSAGE
-        )
+        regional_headquarter = validated_data.get('regional_headquarter')
+
+        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            raise serializers.ValidationError({'non_field_errors': STATISTICAL_REPORT_EXISTS_MESSAGE})
+
+        additional_statistics_data = validated_data.pop('additional_statistics', None)
+
+        with transaction.atomic():
+            report = StatisticalRegionalReport.objects.create(**validated_data)
+
+            if additional_statistics_data:
+                for statistic_data in additional_statistics_data:
+                    AdditionalStatistic.objects.create(statistical_report=report, **statistic_data)
+
+        return report
+
+    def update(self, instance, validated_data):
+        additional_statistics_data = validated_data.pop('additional_statistics', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if additional_statistics_data is not None:
+            instance.additional_statistics.all().delete()
+
+            for statistic_data in additional_statistics_data:
+                AdditionalStatistic.objects.create(statistical_report=instance, **statistic_data)
+
+        return instance
 
 
 class FileScanSizeSerializerMixin(serializers.ModelSerializer):
@@ -434,7 +472,7 @@ class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('prize_place', 'document', 'links',)
+            + ('prize_place', 'document', 'links', 'comment')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -608,16 +646,20 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
+class RegionalR17Serializer(CreateUpdateSerializerMixin):
 
     class Meta:
         model = RegionalR17
         fields = (
-            BaseRSerializer.Meta.fields
-            + FileScanSizeSerializerMixin.Meta.fields
-            + ('scan_file', 'comment',)
+            'id',
+            'regional_headquarter',
+            'scan_file',
+            'comment',
         )
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+        )
 
 
 class RegionalR18LinkSerializer(serializers.ModelSerializer):
@@ -679,11 +721,21 @@ class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin
         )
 
 
-class RegionalR19Serializer(BaseRSerializer):
+class RegionalR19Serializer(CreateUpdateSerializerMixin):
     class Meta:
         model = RegionalR19
-        fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end', 'comment',)
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
+        fields = ('employed_student_start', 'employed_student_end', 'comment',)
+        fields = (
+            'id',
+            'regional_headquarter',
+            'employed_student_start',
+            'employed_student_end',
+            'comment',
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+        )
 
 
 class EventNameSerializer(serializers.Serializer):

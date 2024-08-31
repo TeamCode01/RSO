@@ -65,7 +65,7 @@ from headquarters.views import (CentralAcceptViewSet,
                                 RegionalPositionViewSet,
                                 LocalApplicationViewSet,
                                 EducationalAcceptViewSet,
-                                EducationalApplicationViewSet,
+                                EducationalApplicationViewSet, download_reg_comp_report,
                                 get_structural_units, DetachmentListViewSet,
                                 )
 from questions.views import QuestionsView, get_attempts_status, submit_answers
@@ -528,6 +528,11 @@ user_nested_urls = [
         'regionals/<int:pk>/applications/<int:application_pk>/accept/',
         RegionalAcceptVS,
         name='user-regional-apply'
+    ),
+    path(
+        'regionals/<int:pk>/download_regional_competition_report/',
+        download_reg_comp_report,
+        name='download-reg-comp-report'
     ),
     path(
         'districts/<int:pk>/members/',

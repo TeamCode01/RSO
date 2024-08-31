@@ -1,8 +1,14 @@
 import logging
+import traceback
 from functools import wraps
 from io import BytesIO
+from importlib import import_module
+import re
 
+from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
+from django.db import models
+from django.db.models import Q
 from django.http import HttpResponse
 from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
@@ -20,12 +26,12 @@ from pdfrw import PdfWriter, PdfReader, PageMerge
 import os
 
 from headquarters.models import RegionalHeadquarterEmail, RegionalHeadquarter
-# from regional_competitions.r_calculations import calculate_r5_score
 
 from rest_framework import serializers
 
-logger = logging.getLogger('tasks')
+from regional_competitions.constants import MASS_REPORT_NUMBERS
 
+logger = logging.getLogger('regional_tasks')
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -44,7 +50,7 @@ def swagger_schema_for_retrieve_method(serializer_cls):
 
 def swagger_schema_for_district_review(serializer_cls):
     def decorator(func):
-        @swagger_auto_schema(methods=['PATCH'], request_body=serializer_cls)
+        @swagger_auto_schema(methods=['PUT'], request_body=serializer_cls)
         @wraps(func)
         def wrapped(*args, **kwargs):
             return func(*args, **kwargs)
@@ -56,7 +62,7 @@ def swagger_schema_for_district_review(serializer_cls):
 
 def swagger_schema_for_central_review(serializer_cls):
     def decorator(func):
-        @swagger_auto_schema(methods=['PATCH', 'DELETE'], request_body=serializer_cls)
+        @swagger_auto_schema(methods=['PUT', 'DELETE'], request_body=serializer_cls)
         @wraps(func)
         def wrapped(*args, **kwargs):
             return func(*args, **kwargs)
@@ -76,6 +82,18 @@ def swagger_schema_for_create_and_update_methods(serializer_cls):
         return wrapped
 
     return decorator
+
+
+def log_exception(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            trb = traceback.format_exc()
+            logger.exception(f'Возник Exception!!!: {e}\n{trb}')
+
+    return wrapped
 
 
 def get_report_number_by_class_name(link):
@@ -106,21 +124,21 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
 
 def get_emails(report_instance) -> list:
     if settings.DEBUG:
-        addresses = settings.TEST_EMAIL_ADDRESSES
-    else:
-        try:
-            addresses = [
-                RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
-            ]
-            if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
-                addresses.append("rso.71@yandex.ru")
-        except RegionalHeadquarterEmail.DoesNotExist:
-            logger.warning(
-                f'Не найден почтовый адрес в RegionalHeadquarterEmail '
-                f'для РШ ID {report_instance.regional_headquarter.id}'
-            )
-            return []
-    return addresses
+        return settings.TEST_EMAIL_ADDRESSES
+
+    try:
+        addresses = [
+            RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
+        ]
+        if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
+            addresses.append("rso.71@yandex.ru")
+        return addresses
+    except RegionalHeadquarterEmail.DoesNotExist:
+        logger.warning(
+            f'Не найден почтовый адрес в RegionalHeadquarterEmail '
+            f'для РШ ID {report_instance.regional_headquarter.id}'
+        )
+        return []
 
 
 def send_email_with_attachment(subject: str, message: str, recipients: list, file_path: str):
@@ -130,9 +148,10 @@ def send_email_with_attachment(subject: str, message: str, recipients: list, fil
         from_email=settings.EMAIL_HOST_USER,
         to=recipients
     )
-    with open(file_path, 'rb') as f:
-        file_name_start = file_path.find('О')
-        mail.attach(file_path.split('/')[-1][file_name_start:], f.read(), 'application/octet-stream')
+    if file_path:
+        with open(file_path, 'rb') as f:
+            file_name_start = file_path.find('О')
+            mail.attach(file_path.split('/')[-1][file_name_start:], f.read(), 'application/octet-stream')
     mail.send()
 
 
@@ -230,41 +249,66 @@ def generate_pdf_report_part_1(report):
 def get_verbose_names_and_values(serializer) -> dict:
     """Возвращает словарь с названиями полей и значениями полей из сериализатора."""
 
+    custom_verbose_names_dict = {
+        'events': 'Мероприятия/Проекты',
+        'links': 'Ссылки',
+    }
+    custom_values_dict = {
+        'True': 'Да',
+        'False': 'Нет',
+        'None': 'Неизвестно',
+        'True': 'Да',
+        'False': 'Нет',
+        'None': 'Неизвестно',
+    }
     verbose_names_and_values = {}
     model_meta = serializer.Meta.model._meta
     instance = serializer.instance
 
-    for field_name in serializer.Meta.fields:
-        field = serializer.fields[field_name]
+    for field_name, field in serializer.fields.items():
         field_value = getattr(instance, field_name, None)
 
+        if str(field_value) in custom_values_dict:
+            field_value = custom_values_dict[str(field_value)]
+
+        if str(field_value) in custom_values_dict:
+            field_value = custom_values_dict[str(field_value)]
+
         if isinstance(field, serializers.ListSerializer):
-            nested_serializer_class = field.child.__class__
-            nested_verbose_names_and_values = []
-
-            for nested_instance in field_value.all():
-                nested_serializer = nested_serializer_class(nested_instance)
-                nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer))
-
-            verbose_names_and_values[field_name] = nested_verbose_names_and_values
+            if hasattr(field_value, 'all') and callable(field_value.all):
+                nested_verbose_names_and_values = []
+                for nested_instance in field_value.all():
+                    nested_serializer = field.child.__class__(nested_instance)
+                    nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer))
+                verbose_names_and_values[field_name] = nested_verbose_names_and_values
+            else:
+                verbose_names_and_values[field_name] = field_value
 
         elif isinstance(field, serializers.ModelSerializer):
-            nested_serializer = field.__class__(field_value)
-            nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer)
-
-            for nested_field_name, nested_verbose_name_and_value in nested_verbose_names_and_values.items():
-                verbose_names_and_values[f"{field_name}.{nested_field_name}"] = nested_verbose_name_and_value
+            if field_value is not None and hasattr(field_value, '_meta'):
+                nested_serializer = field.__class__(field_value)
+                nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer)
+                for nested_field_name, nested_verbose_name_and_value in nested_verbose_names_and_values.items():
+                    verbose_names_and_values[f"{field_name}.{nested_field_name}"] = nested_verbose_name_and_value
+            else:
+                verbose_names_and_values[field_name] = field_value
 
         else:
             try:
                 verbose_name = model_meta.get_field(field_name).verbose_name
                 if hasattr(field_value, '__str__'):
                     field_value = str(field_value)
+                    if not field_value[:4] == 'http':
+                        field_value = os.path.basename(field_value)
+                    if not field_value[:4] == 'http':
+                        field_value = os.path.basename(field_value)
                 verbose_names_and_values[field_name] = (verbose_name, field_value)
             except FieldDoesNotExist:
                 pass
             except AttributeError:
-                verbose_names_and_values[field_name] = (field_name, field_value)
+                verbose_names_and_values[field_name] = (
+                    custom_verbose_names_dict.get(str(field_name).lower(), field_name), field_value
+                )
 
     return verbose_names_and_values
 
@@ -272,14 +316,15 @@ def get_verbose_names_and_values(serializer) -> dict:
 def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
     """Формирует плоский словарь для заголовков и значений листа Excel."""
 
-    # TODO: убрать полный путь для названий файлов
-    # TODO: True, False и None заменить на человекочитаемые значения
     flat_dict = {}
 
     for value in fields_dict.values():
         if isinstance(value, list):
             for item in value:
-                nested_prefix = f'{prefix}{item["id"][0]}_{item["id"][1]}.'
+                try:
+                    nested_prefix = f'{prefix}{item["id"][0]}_{item["id"][1]}.'
+                except KeyError:
+                    nested_prefix = prefix
                 nested_dict = get_headers_values(fields_dict=item, prefix=nested_prefix)
                 flat_dict.update(nested_dict)
         elif isinstance(value, tuple):
@@ -288,19 +333,114 @@ def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
     return flat_dict
 
 
-def get_report_xlsx(self):
-    """Выгрузка отчёта в формате Excel."""
-    serializer = self.get_serializer(self.get_object())
-    flat_data_dict = get_headers_values(
-        get_verbose_names_and_values(serializer)
-    )
-    title = self.get_report_number()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = title
+def get_all_reports_from_competition(report_number: int) -> HttpResponse:
+    """Возвращает xlsx со всеми верифицированными или не рассмотренными отчетами."""
 
-    worksheet.append(list(flat_data_dict.keys()))
-    worksheet.append(list(flat_data_dict.values()))
+    model_name = 'RegionalR' + str(report_number)
+    model = apps.get_model('regional_competitions', model_name)
+
+    if model:
+        serializer_name = 'RegionalR' + str(report_number) + 'Serializer'
+        serializers_module = import_module('regional_competitions.serializers')
+        serializer_class = getattr(serializers_module, serializer_name, None)
+
+        if serializer_class:
+            reports = model.objects.filter(
+                Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
+            )
+
+            title = f'Reports_{report_number}'
+            workbook = Workbook()
+            worksheet = workbook.active
+            worksheet.title = title
+
+            headers_written = False
+
+            for report in reports:
+                serializer = serializer_class(report)
+                flat_data_dict = get_headers_values(fields_dict=get_verbose_names_and_values(serializer))
+
+                if not headers_written:
+                    worksheet.append(list(flat_data_dict.keys()))
+                    headers_written = True
+
+                worksheet.append(list(flat_data_dict.values()))
+
+            file_content = BytesIO()
+            workbook.save(file_content)
+            file_content.seek(0)
+            response = HttpResponse(
+                file_content.read(),
+                content_type=(
+                    'application/vnd.openxmlformats-officedocument'
+                    '.spreadsheetml.sheet'
+                )
+            )
+            response['Content-Disposition'] = f'attachment; filename={title}.xlsx'
+            return response
+
+        else:
+            raise ValueError(f'Сериализатор {serializer_name} не найден.')
+    else:
+        raise ValueError(f'Модель {model_name} не найдена.')
+
+
+def get_all_models(module_name: str):
+    """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
+    all_models = []
+    pattern = re.compile(r'^RegionalR\d+$')
+
+    for model in apps.get_models():
+        model_name = model.__name__
+        if issubclass(model, models.Model) and pattern.match(model_name):
+            all_models.append(model_name)
+
+    return all_models
+
+
+def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
+    """Выгрузка отчётов определенного РШ в формате Excel."""
+
+    models_list = get_all_models('regional_competitions.models')
+    first_ws_is_filled = False
+    workbook = Workbook()
+
+    for model_name in models_list:
+        report_number = model_name.split('RegionalR')[1]
+        model = apps.get_model('regional_competitions', model_name)
+
+        if report_number == '14':
+            instance = model.objects.filter(report_12__regional_headquarter_id=regional_headquarter_id).first()
+            worksheet = workbook.create_sheet(report_number)
+            worksheet.append(['Очки'])
+            worksheet.append([str(instance.score)])
+            continue
+
+        instance = model.objects.filter(regional_headquarter_id=regional_headquarter_id).first()
+        serializer_name = model_name + 'Serializer'
+        serializers_module = import_module('regional_competitions.serializers')
+        serializer_class = getattr(serializers_module, serializer_name, None)
+        serializer_data = serializer_class(instance)
+        report_data = get_headers_values(
+            get_verbose_names_and_values(
+                serializer_data
+            )
+        )
+
+        sheet_name = report_number[0] if report_number[0] in MASS_REPORT_NUMBERS else report_number
+
+        if sheet_name in workbook.sheetnames:
+            worksheet = workbook[sheet_name]
+        else:
+            if not first_ws_is_filled:
+                worksheet = workbook.active
+                worksheet.title = sheet_name
+                first_ws_is_filled = True
+            else:
+                worksheet = workbook.create_sheet(sheet_name)
+            worksheet.append(list(report_data.keys()))
+
+        worksheet.append(list(report_data.values()))
 
     file_content = BytesIO()
     workbook.save(file_content)
@@ -312,7 +452,7 @@ def get_report_xlsx(self):
             '.spreadsheetml.sheet'
         )
     )
-    response['Content-Disposition'] = (f'attachment; filename={title}.xlsx')
+    response['Content-Disposition'] = 'attachment; filename=RO_report.xlsx'
     return response
 
 
@@ -469,7 +609,8 @@ def add_verbose_names_and_values_to_pdf(
             verbose_name, field_value_content = field_value
         else:
             logger.error(
-                f"Неправильное количество значений для распаковки в поле: {field_name}. Значение: {field_value}")
+                f'Неправильное количество значений для распаковки в поле: {field_name}. Значение: {field_value}'
+            )
             continue
 
         if not isinstance(field_value_content, dict):
@@ -493,7 +634,16 @@ def add_verbose_names_and_values_to_pdf(
         elements.append(Spacer(1, 15))
 
     for nested_name, nested_items in nested_structures:
-        verbose_nested_name = nested_name.replace('_', ' ').capitalize()
+        match nested_name:
+            case "projects":
+                verbose_nested_name = "Проекты"
+            case "events":
+                verbose_nested_name = "Мероприятия"
+            case "links":
+                verbose_nested_name = "Ссылки"
+            case _:
+                verbose_nested_name = nested_name.replace('_', ' ').capitalize()
+
         elements.append(Paragraph(verbose_nested_name, nested_title_style))
         elements.append(Spacer(1, 5))
 
