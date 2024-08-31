@@ -28,11 +28,13 @@ class IsCentralHeadquarterExpert(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        if request.user.is_authenticated and ExpertRole.objects.filter(
-            user=request.user, central_headquarter__isnull=False
-        ).exists() or request.user.is_authenticated and CentralHeadquarter.objects.filter(
-            commander=request.user
-        ).exists():
+        if request.user.is_authenticated and (
+            ExpertRole.objects.filter(
+                user=request.user, central_headquarter__isnull=False
+            ).exists() or CentralHeadquarter.objects.filter(
+                commander=request.user
+            ).exists()
+        ):
             return True
 
 
@@ -67,11 +69,13 @@ class IsCentralOrDistrictHeadquarterExpert(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        if request.user.is_authenticated and ExpertRole.objects.filter(
-            user=request.user, central_headquarter__isnull=False
-        ).exists() or request.user.is_authenticated and ExpertRole.objects.filter(
-            user=request.user, district_headquarter__isnull=False
-        ).exists():
+        if request.user.is_authenticated and (
+            ExpertRole.objects.filter(
+                user=request.user, central_headquarter__isnull=False
+            ).exists() or ExpertRole.objects.filter(
+                user=request.user, district_headquarter__isnull=False
+            ).exists()
+        ):
             return True
 
 

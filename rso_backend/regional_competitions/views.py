@@ -120,18 +120,6 @@ class BaseRegionalRViewSet(RegionalRMixin):
             self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
             self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        pk = self.kwargs.get('pk')
-        objects = queryset.filter(regional_headquarter_id=pk)
-        if objects.exists():
-            latest_object = objects.order_by('-id')[0]
-            return latest_object
-        raise Http404("Страница не найдена")
-
-    def get_report_number(self):
-        return get_report_number_by_class_name(self)
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'action': self.action})
@@ -142,12 +130,6 @@ class BaseRegionalRViewSet(RegionalRMixin):
                 }
             )
         return context
-
-    def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-
-    def perform_update(self, request, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
     @action(
         methods=['PUT'],
@@ -380,9 +362,6 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     serializer_class = None
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
-    def get_report_number(self):
-        return get_report_number_by_class_name(self)
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update(
@@ -392,12 +371,6 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
             }
         )
         return context
-
-    def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-
-    def perform_update(self, request, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
 
 class BaseRegionalRMeViewSet(RegionalRMeMixin):
@@ -770,6 +743,9 @@ class RegionalR18ViewSet(RegionalRNoVerifViewSet):
 
     Показатель не требует верификации.
     Доступ - только региональным командирам.
+
+    get {pk} - принимает id РШ, а не id отчета.
+    Возвращает последний отчет, если тот существует, иначе 404.
     """
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalR18Serializer

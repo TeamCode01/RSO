@@ -857,21 +857,21 @@ class ExpertRole(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name="%(class)s",
+        related_name="regional_expert",
     )
     central_headquarter = models.ForeignKey(
         'headquarters.CentralHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Центральный штаб',
-        related_name='%(class)s',
+        related_name='regional_experts',
         blank=True,
         null=True
     )
     district_headquarter = models.ForeignKey(
         'headquarters.DistrictHeadquarter',
         on_delete=models.CASCADE,
-        verbose_name='Районный штаб',
-        related_name='%(class)s',
+        verbose_name='Окружной штаб',
+        related_name='regional_experts',
         blank=True,
         null=True
     )
