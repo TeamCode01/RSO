@@ -6,7 +6,7 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
+from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -346,6 +346,28 @@ class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
             + ('comment', 'amount_of_money')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR2Serializer(serializers.ModelSerializer):
+    """Сериализатор используется в выгрузках отчетов."""
+
+    class Meta:
+        model = RegionalR2
+        fields = (
+            'id',
+            'regional_headquarter',
+            'created_at',
+            'updated_at',
+            'score',
+            'full_time_students'
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+            'created_at',
+            'updated_at',
+            'score',
+        )
 
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
