@@ -411,15 +411,23 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
 
         if report_number == '14':
             instance = model.objects.filter(report_12__regional_headquarter_id=regional_headquarter_id).first()
+            if instance is None:
+                continue
             worksheet = workbook.create_sheet(report_number)
             worksheet.append(['Очки'])
             worksheet.append([str(instance.score)])
             continue
 
         instance = model.objects.filter(regional_headquarter_id=regional_headquarter_id).first()
+        if instance is None:
+            continue
+
         serializer_name = model_name + 'Serializer'
         serializers_module = import_module('regional_competitions.serializers')
         serializer_class = getattr(serializers_module, serializer_name, None)
+        if serializer_class is None:
+            continue
+
         serializer_data = serializer_class(instance)
         report_data = get_headers_values(
             get_verbose_names_and_values(
@@ -454,6 +462,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     )
     response['Content-Disposition'] = 'attachment; filename=RO_report.xlsx'
     return response
+
 
 
 def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
