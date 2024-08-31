@@ -3,7 +3,8 @@ from datetime import datetime
 
 from headquarters.models import RegionalHeadquarter
 
-from regional_competitions.models import (RegionalR4, RegionalR12, RegionalR13,
+from regional_competitions.constants import MSK_ID, SPB_ID
+from regional_competitions.models import (RegionalR1, RegionalR4, RegionalR12, RegionalR13,
                                           RegionalR14, r7_models_factory, r9_models_factory,
                                           RegionalR16)
 from regional_competitions.utils import log_exception
@@ -42,6 +43,37 @@ def calculate_r4_score(report: RegionalR4):
 
 
 @log_exception
+def calculate_r2_score(report):
+    """Расчет очков по 2 показателю.
+
+    P=(x/50)/(y/z)
+    x - Уплаченные членские взносы из первого показателя;
+    50 - коэффициент для определения количества человек, уплатвиших взносы;
+    y - Численность студентов очной формы обучения субъекта РФ (константа, которую сбросит ЦШ);
+    z - Коэффициент для региональной поправки. Для МСК равен 2, для СПБ равен 1,5, для остальных регионов равен 1.
+
+    !!! Расчёт вызывается через админку.
+    """
+
+    ro_id = report.regional_headquarter.id
+    ro_region = report.regional_headquarter.region.id
+
+    logger.info(f'Выполняется подсчет очков r2 для рег штаба {ro_id}')
+    try:
+        amount_of_money = RegionalR1.objects.filter(
+            verified_by_chq=True,
+            regional_headquarter_id=ro_id
+        ).first().amount_of_money
+    except AttributeError:
+        return
+    regional_coef = 2 if ro_region == MSK_ID else 1.5 if ro_region == SPB_ID else 1
+    ro_score = (amount_of_money / 50) / (report.full_time_students / regional_coef)
+    report.score = ro_score
+    report.save()
+    logger.info(f'Подсчитали очки 2го показателя для рег штаба {ro_id}. Очки: {ro_score}')
+
+
+@log_exception
 def calculate_r5_score(report):
     """Расчет очков по 5 показателю.
 
@@ -63,7 +95,7 @@ def calculate_r5_score(report):
     logger.info('Выполняется подсчет отчета по r5 показателю')
 
     ro_id = report.regional_headquarter.id
-    logger.info(f'Выполняется подсчет очков для рег штаба {ro_id}')
+    logger.info(f'Выполняется подсчет очков r5 для рег штаба {ro_id}')
     ro_score = 0
     # в ro_events получаем список кортежей.
     # Пример - [(34, 18, 2024-07-29, 2024-07-29), (4, 2, 2024-08-29, 2024-08-29),]
@@ -74,19 +106,15 @@ def calculate_r5_score(report):
         'start_date',
         'end_date'
     )
-    print('ro_events', ro_events)
+
     # вычисляем сумму очков, после цикла записываем в таблицу
     for item in ro_events:
-        print('item', item)
         date_start = datetime.strptime(item[2], '%Y-%m-%d').date()
         date_end = datetime.strptime(item[3], '%Y-%m-%d').date()
-
         days_diff = (date_end - date_start).days + 1
         ro_score += (item[0] - item[1]) * days_diff
-        print('ro_score', ro_score)
     report.score = ro_score
     report.save()
-    print(report.score)
     logger.info(f'Подсчитали очки 5го показателя для рег штаба {ro_id}. Очки: {ro_score}')
 
 

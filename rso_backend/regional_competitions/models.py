@@ -310,6 +310,26 @@ class RegionalR1(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 1 показателю'
 
 
+class RegionalR2(BaseRegionalR, BaseScore):
+    """
+    Отношение численности членов РО РСО к численности студентов очной формы обучения субъекта Российской Федерации,
+    обучающихся в профессиональных образовательных организациях и образовательных организациях высшего образования
+    в государственных, муниципальных и частных образовательных организациях, включая филиалы
+    (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
+    """
+
+    full_time_students = models.SmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество студентов очной формы обучения'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 2 показателю'
+        verbose_name_plural = 'Отчеты по 2 показателю'
+
+
 class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'

@@ -7,6 +7,8 @@ from regional_competitions.views import (MassSendViewSet,
                                          RegionalEventNamesRViewSet,
                                          RegionalR1MeViewSet,
                                          RegionalR1ViewSet,
+                                        #  RegionalR2MeViewSet,
+                                        #  RegionalR2ViewSet,
                                          RegionalR4MeViewSet,
                                          RegionalR4ViewSet,
                                          RegionalR5MeViewSet,
@@ -75,6 +77,7 @@ router = DefaultRouter()
 router.register(r'statistical_report', StatisticalRegionalViewSet, basename='statistical_report')
 
 router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
+# router.register(r'reports/2', RegionalR2ViewSet, basename='r2')
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 register_factory_view_sets(
@@ -100,6 +103,7 @@ router.register(r'reports/event_names', RegionalEventNamesRViewSet, basename='ev
 router.register(r'me/reports', MassSendViewSet, basename='mass_send_reports')
 
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
+# me_router.register(r'reports/2', RegionalR2MeViewSet, basename='r2_me')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
 register_factory_view_sets(

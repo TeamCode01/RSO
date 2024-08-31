@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
-from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
+from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -15,6 +15,7 @@ from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR
                                           StatisticalRegionalReport,
                                           r6_models_factory,
                                           r7_models_factory, r9_models_factory)
+from regional_competitions.r_calculations import calculate_r2_score
 
 
 @admin.register(StatisticalRegionalReport)
@@ -143,6 +144,28 @@ class RegionalR1Admin(admin.ModelAdmin):
     search_fields = ('comment', 'regional_headquarter__name')
     list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(RegionalR2)
+class RegionalR2Admin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('regional_headquarter__name',)
+    readonly_fields = ('created_at', 'updated_at')
+
+    actions = ['get_ro_score',]
+
+    def get_ro_score(self, request, queryset):
+        for obj in queryset:
+            calculate_r2_score(obj)
+
+    get_ro_score.short_description = 'Вычислить очки по показателю'
 
 
 class RegionalR4LinkInline(admin.TabularInline):
