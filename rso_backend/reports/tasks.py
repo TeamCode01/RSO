@@ -14,7 +14,8 @@ from reports.utils import (
     get_competition_participants_contact_data,
     get_competition_participants_data,
     get_q5_data, get_q6_data, get_q7_data, get_q8_data, get_q9_data, get_q10_data, get_q11_data, get_q12_data, get_q13_data, get_q14_data,
-    get_q15_data, get_q16_data, get_q17_data,get_q18_data, get_q19_data,
+    get_q15_data, get_q16_data, get_q17_data,get_q18_data, get_q19_data, get_central_hq_report, get_district_hq_report,
+    get_regional_hq_report, get_detachment_report, get_educational_hq_report, get_local_hq_report
 )
 
 
@@ -82,6 +83,24 @@ def generate_excel_file(headers, worksheet_title, filename, data_func):
         case 'attributes_of_uniform':
             data = get_attributes_of_uniform_data(
                 competition_id=settings.COMPETITION_ID)
+        case 'central_hq_report':
+            data = get_central_hq_report(
+                competition_id=settings.COMPETITION_ID)
+        case 'district_hq_report':
+            data = get_district_hq_report(
+                competition_id=settings.COMPETITION_ID)
+        case'regional_hq_report':
+            data = get_regional_hq_report(
+                competition_id=settings.COMPETITION_ID)
+        case 'educational_hq_report':
+            data = get_educational_hq_report(
+                competition_id=settings.COMPETITION_ID)
+        case 'local_hq_report':
+            data = get_local_hq_report(
+                competition_id=settings.COMPETITION_ID)
+        case 'detachment_report':
+            data = get_detachment_report(
+                detachment_id=settings.DETACHMENT_ID)
     if not data:
         logger.warning(
             'Вызов функции не соответствующей кейсу для вызова функции с data')
