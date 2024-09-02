@@ -24,8 +24,8 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
-from headquarters.count_hq_members import count_headquarter_participants
-from headquarters.models import UserDetachmentPosition, Detachment
+from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations
+from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
@@ -1642,5 +1642,203 @@ def get_attributes_of_uniform_data(competition_id):
                 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
         ) for data in individual_data
     ])
+
+    return rows
+
+
+def get_central_hq_report(obj):
+    central_headquarters = CentralHeadquarter.objects.all()
+    rows = []
+
+    for central_headquarter in central_headquarters:
+        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter__central_headquarter=central_headquarter).count()
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter).count()
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter).count()
+        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter).count()
+        participants_count = count_headquarter_participants(central_headquarter)
+        events_organizations = count_events_organizations(central_headquarter)
+        if participants_count > 0:
+            verification_perсent = (count_verified_users(central_headquarter) / participants_count) * 100
+            membership_fee_perсent = (count_membership_fee(central_headquarter) / participants_count) * 100
+            test_done_perсent = (count_test_membership(central_headquarter) / participants_count) * 100
+        else:
+            verification_perсent = 0
+            membership_fee_perсent = 0
+            test_done_perсent = 0
+
+        rows.append((
+            central_headquarter.name,
+            regional_headquarters,
+            local_headquarters,
+            educational_headquarters,
+            detachments,
+            participants_count,
+            verification_perсent,
+            membership_fee_perсent,
+            test_done_perсent,
+            events_organizations,
+        ))
+
+    return rows
+
+
+def get_district_hq_report(obj):
+    district_headquarters = DistrictHeadquarter.objects.all()
+    rows = []
+
+    for district_headquarter in district_headquarters:
+        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter=district_headquarter).count()
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter).count()
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter).count()
+        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter=district_headquarter).count()
+        participants_count = count_headquarter_participants(district_headquarter)
+        events_organizations = count_events_organizations(district_headquarter)
+        if participants_count > 0:
+            verification_perсent = (count_verified_users(district_headquarter) / participants_count) * 100
+            membership_fee_perсent = (count_membership_fee(district_headquarter) / participants_count) * 100
+            test_done_perсent = (count_test_membership(district_headquarter) / participants_count) * 100
+        else:
+            verification_perсent = 0
+            membership_fee_perсent = 0
+            test_done_perсent = 0
+
+        rows.append((
+            district_headquarter.name,
+            regional_headquarters,
+            local_headquarters,
+            educational_headquarters,
+            detachments,
+            participants_count,
+            verification_perсent,
+            membership_fee_perсent,
+            test_done_perсent,
+            events_organizations,
+        ))
+
+    return rows
+
+
+def get_regional_hq_report(obj):
+    regional_headquarters = RegionalHeadquarter.objects.all()
+    rows = []
+
+    for regional_headquarter in regional_headquarters:
+        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_headquarters)
+        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
+        detachments = Detachment.objects.filter(regional_headquarter=regional_headquarter)
+        participants_count = count_headquarter_participants(regional_headquarter)
+        events_organizations = count_events_organizations(regional_headquarter)
+        if participants_count > 0:
+            verification_perсent = (count_verified_users(regional_headquarter) / participants_count) * 100
+            membership_fee_perсent = (count_membership_fee(regional_headquarter) / participants_count) * 100
+            test_done_perсent = (count_test_membership(regional_headquarter) / participants_count) * 100
+        else:
+            verification_perсent = 0
+            membership_fee_perсent = 0
+            test_done_perсent = 0
+
+        rows.append((
+            regional_headquarter.name,
+            local_headquarters.count(),
+            educational_headquarters.count(),
+            detachments.count(),
+            participants_count,
+            verification_perсent,
+            membership_fee_perсent,
+            test_done_perсent,
+            events_organizations,
+        ))
+
+    return rows
+
+
+def get_local_hq_report(obj):
+    local_headquarters = LocalHeadquarter.objects.all()
+    rows = []
+
+    for local_headquarter in local_headquarters:
+        educational_headquarters = EducationalHeadquarter.objects.filter(local_headquarter=local_headquarter)
+        detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
+        participants_count = count_headquarter_participants(local_headquarter)
+        events_organizations = count_events_organizations(local_headquarter)
+        if participants_count > 0:
+            verification_perсent = (count_verified_users(local_headquarter) / participants_count) * 100
+            membership_fee_perсent = (count_membership_fee(local_headquarter) / participants_count) * 100
+            test_done_perсent = (count_test_membership(local_headquarter) / participants_count) * 100
+        else:
+            verification_perсent = 0
+            membership_fee_perсent = 0
+            test_done_perсent = 0
+
+        rows.append((
+            local_headquarter.name,
+            educational_headquarters.count(),
+            detachments.count(),
+            participants_count,
+            verification_perсent,
+            membership_fee_perсent,
+            test_done_perсent,
+            events_organizations,
+        ))
+
+    return rows
+
+
+def get_educational_hq_report(obj):
+    educational_headquarters = EducationalHeadquarter.objects.all()
+    rows = []
+
+    for educational_headquarter in educational_headquarters:
+        detachments = Detachment.objects.filter(educational_headquarter=educational_headquarter)
+        participants_count = count_headquarter_participants(educational_headquarter)
+        events_organizations = count_events_organizations(educational_headquarter)
+        if participants_count > 0:
+            verification_perсent = (count_verified_users(educational_headquarter) / participants_count) * 100
+            membership_fee_perсent = (count_membership_fee(educational_headquarter) / participants_count) * 100
+            test_done_perсent = (count_test_membership(educational_headquarter) / participants_count) * 100
+        else:
+            verification_perсent = 0
+            membership_fee_perсent = 0
+            test_done_perсent = 0
+
+        rows.append((
+            educational_headquarter.name,
+            detachments.count(),
+            participants_count,
+            verification_perсent,
+            membership_fee_perсent,
+            test_done_perсent,
+            events_organizations,
+        ))
+
+    return rows
+
+
+def get_detachment_report(obj):
+    detachments = Detachment.objects.all()
+    rows = []
+
+    for detachment in detachments:
+        participants_count = count_headquarter_participants(detachment)
+        events_organizations = count_events_organizations(detachment)
+        area_ = detachment.area
+        if participants_count > 0:
+            verification_perсent = (count_verified_users(detachment) / participants_count) * 100
+            membership_fee_perсent = (count_membership_fee(detachment) / participants_count) * 100
+            test_done_perсent = (count_test_membership(detachment) / participants_count) * 100
+        else:
+            verification_perсent = 0
+            membership_fee_perсent = 0
+            test_done_perсent = 0
+
+        rows.append((
+            detachment.name,
+            area_,
+            participants_count,
+            verification_perсent,
+            membership_fee_perсent,
+            test_done_perсent,
+            events_organizations,
+        ))
 
     return rows

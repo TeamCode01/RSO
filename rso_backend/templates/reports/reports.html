@@ -28,6 +28,12 @@
 						<button class="button" id="downloadQ17DataButton">Количество упоминаний в СМИ о прошедших творческих, добровольческих ипатриотических мероприятиях отряда (файл)</button>
 						<button class="button" id="downloadQ18DataButton">Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)</button>
                         <button class="button" id="downloadQ19DataButton">Отсутствие нарушений техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре (файл)</button>
+                        <button class="button" id="downloadCentralHqButton">Центральный штаб(файл)</button>
+                        <button class="button" id="downloadDistrictHqButton">Окружной штаб(файл)</button>
+                        <button class="button" id="downloadRegionalHqButton">Региональный штаб(файл)</button>
+                        <button class="button" id="downloadLocalHqButton">Местный штаб(файл)</button>
+                        <button class="button" id="downloadEducationalHqButton">СО ОО (файл)</button>
+                        <button class="button" id="downloadDetachmentButton">ЛСО (файл)</button>
 {#            <a href="/report2" class="button">Отчет 2</a>#}
 {#            <a href="/report3" class="button">Отчет 3</a>#}
 {#            <a href="/report1" class="button">Отчет 1</a>#}
@@ -92,6 +98,12 @@
         setupDownloadButton('downloadQ17DataButton', '{% url "export_q17_data" %}', 'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)');
         setupDownloadButton('downloadQ18DataButton', '{% url "export_q18_data" %}', 'Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)');
         setupDownloadButton('downloadQ19DataButton', '{% url "export_q19_data" %}', 'Отсутствие нарушений техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре (файл)');
+        setupDownloadButton('downloadCentralHqButton', '{% url "central_hq_export" %}', 'Центральный штаб (файл)');
+        setupDownloadButton('downloadDistrictHqButton', '{% url "district_hq_export" %}', 'Окружной штаб (файл)');
+        setupDownloadButton('downloadRegionalHqButton', '{% url "regional_hq_export" %}', 'Региональный штаб (файл)');
+        setupDownloadButton('downloadLocalHqButton', '{% url "local_hq_export" %}', 'местный штаб (файл)');
+        setupDownloadButton('downloadEducationalHqButton', '{% url "education_hq_export" %}', 'СО ОО (файл)');
+        setupDownloadButton('downloadDetachmentButton', '{% url "detachment_export" %}', 'ЛСО (файл)');
 
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');

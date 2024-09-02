@@ -16,7 +16,9 @@ from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
                            CompetitionParticipantView,
                            ExportAttributesOfUniformView,
                            ExportQ13DataView, ExportQ14DataView,
-                           ExportQ19DataView)
+                           ExportQ19DataView, ExportCentralHqDataView, ExportDistrictHqDataView,
+                           ExportRegionalHqDataView, ExportLocalHqDataView, ExportEducationHqDataView,
+                           ExportDetachmentDataView)
 
 
 urlpatterns = [
@@ -164,4 +166,22 @@ urlpatterns = [
         AttributesOfUniformDataView.as_view(),
         name='attributes_of_uniform'
     ),
+     path('central_headquarters/export/',
+         ExportCentralHqDataView.as_view(),
+         name='central_hq_export'),
+    path('district_headquarters/export/',
+         ExportDistrictHqDataView.as_view(), 
+         name='district_hq_export'),
+    path('regional_headquarters/export/',
+         ExportRegionalHqDataView.as_view(),
+         name='regional_hq_export'),
+    path('local_headquarters/export/',
+         ExportLocalHqDataView.as_view(),
+         name='local_hq_export'),
+    path('education_headquarters/export/',
+         ExportEducationHqDataView.as_view(),
+         name='education_hq_export'),
+    path('detachment/export/',
+         ExportDetachmentDataView.as_view(),
+         name='detachment_export'),
 ]
