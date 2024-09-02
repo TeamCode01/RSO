@@ -348,11 +348,26 @@ class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
-# class RegionalR2Serializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = RegionalR2
-#         fields = ('id', 'score', 'full_time_students',)
-#         read_only_fields = ('id', 'score',)
+class RegionalR2Serializer(serializers.ModelSerializer):
+    """Сериализатор используется в выгрузках отчетов."""
+
+    class Meta:
+        model = RegionalR2
+        fields = (
+            'id',
+            'regional_headquarter',
+            'created_at',
+            'updated_at',
+            'score',
+            'full_time_students'
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+            'created_at',
+            'updated_at',
+            'score',
+        )
 
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
@@ -653,16 +668,20 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
+class RegionalR17Serializer(CreateUpdateSerializerMixin):
 
     class Meta:
         model = RegionalR17
         fields = (
-            BaseRSerializer.Meta.fields
-            + FileScanSizeSerializerMixin.Meta.fields
-            + ('scan_file', 'comment',)
+            'id',
+            'regional_headquarter',
+            'scan_file',
+            'comment',
         )
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+        )
 
 
 class RegionalR18LinkSerializer(serializers.ModelSerializer):
@@ -724,11 +743,21 @@ class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin
         )
 
 
-class RegionalR19Serializer(BaseRSerializer):
+class RegionalR19Serializer(CreateUpdateSerializerMixin):
     class Meta:
         model = RegionalR19
-        fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end', 'comment',)
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
+        fields = ('employed_student_start', 'employed_student_end', 'comment',)
+        fields = (
+            'id',
+            'regional_headquarter',
+            'employed_student_start',
+            'employed_student_end',
+            'comment',
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+        )
 
 
 class EventNameSerializer(serializers.Serializer):

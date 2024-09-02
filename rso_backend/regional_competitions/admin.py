@@ -480,14 +480,10 @@ class RegionalR17Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
-        'score',
-        'verified_by_chq',
-        'verified_by_dhq',
         'created_at',
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
 
 
@@ -530,14 +526,10 @@ class RegionalR19Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
-        'score',
-        'verified_by_chq',
-        'verified_by_dhq',
         'created_at',
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
 
 

@@ -231,7 +231,7 @@ class RSOUserViewSet(RetrieveUpdateViewSet):
         Представляет должности юзера по pk на каждом структурном уровне.
         """
         if request.method == 'GET':
-            if not isinstance(pk, int):
+            if not pk.isdigit():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             user = get_object_or_404(RSOUser, id=pk)
             serializer = UserHeadquarterPositionSerializer(user)
@@ -249,7 +249,7 @@ class RSOUserViewSet(RetrieveUpdateViewSet):
         является командиром.
         """
         if request.method == 'GET':
-            if not isinstance(pk, int):
+            if not pk.isdigit():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             user = get_object_or_404(RSOUser, id=pk)
             serializer = UserCommanderSerializer(user)

@@ -717,7 +717,7 @@ SWAGGER_SETTINGS = {
 
 REQUESTLOGS = {
     'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
-    'ENTRY_CLASS': 'requestlogs.entries.RequestLogEntry',
+    'ENTRY_CLASS': 'api.log_entries.CustomRequestLogEntry',
     'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
     'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
     'ATTRIBUTE_NAME': '_requestlog',
@@ -735,3 +735,5 @@ LOG_VIEWER_MAX_READ_LINES = 12000
 LOG_VIEWER_FILE_LIST_MAX_ITEMS_PER_PAGE = 25
 LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL', "{'action_name':"]
 LOG_VIEWER_EXCLUDE_TEXT_PATTERN = None
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None

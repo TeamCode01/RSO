@@ -742,9 +742,23 @@ class RegionalR16Link(models.Model):
         return f'ID {self.id}'
 
 
-class RegionalR17(BaseEventProjectR):
+class RegionalR17(BaseComment, models.Model):
     """Дислокация студенческих отрядов РО РСО"""
 
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
     scan_file = models.FileField(
         upload_to=regional_comp_regulations_files_path,
         verbose_name='Документ',
@@ -825,9 +839,23 @@ class RegionalR18Link(models.Model):
         return f'Ссылка ID {self.id}'
 
 
-class RegionalR19(BaseEventProjectR):
-    """Трудоустройство"""
+class RegionalR19(BaseComment, models.Model):
+    """Трудоустройство."""
 
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
     employed_student_start = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
