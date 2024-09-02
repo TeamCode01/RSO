@@ -22,8 +22,7 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                Q18_DATA_HEADERS,
                                COMMANDER_SCHOOL_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
-                               Q19_DATA_HEADERS, CENTRAL_HQ_HEADERS, DISTRICT_HQ_HEADERS, REGIONAL_HQ_HEADERS,
-                               LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS)
+                               Q19_DATA_HEADERS)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
@@ -484,87 +483,3 @@ class AttributesOfUniformDataView(View):
         context = {'sample_results': results,
                    'columns': ATTRIBUTION_DATA_HEADERS}
         return render(request, self.template_name, context)
-
-
-class ExportCentralHqDataView(BaseExcelExportView):
-    def get_headers(self):
-        return CENTRAL_HQ_HEADERS
-
-    def get_filename(self):
-        return f'Центральный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'Центральный штаб'
-
-    def get_data_func(self):
-        return 'central_hq_report'
-
-
-class ExportDistrictHqDataView(BaseExcelExportView):
-    def get_headers(self):
-        return DISTRICT_HQ_HEADERS
-
-    def get_filename(self):
-        return f'Окружной_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'Окружной штаб'
-
-    def get_data_func(self):
-        return 'district_hq_report'
-
-
-class ExportRegionalHqDataView(BaseExcelExportView):
-    def get_headers(self):
-        return REGIONAL_HQ_HEADERS
-
-    def get_filename(self):
-        return f'Региональный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'Региональный штаб'
-
-    def get_data_func(self):
-        return 'regional_hq_report'
-
-
-class ExportLocalHqDataView(BaseExcelExportView):
-    def get_headers(self):
-        return LOCAL_HQ_HEADERS
-
-    def get_filename(self):
-        return f'Местный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'Местный штаб'
-
-    def get_data_func(self):
-        return 'local_hq_report'
-
-
-class ExportEducationHqDataView(BaseExcelExportView):
-    def get_headers(self):
-        return EDUCATION_HQ_HEADERS
-
-    def get_filename(self):
-        return f'СО_ОО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'СО ОО'
-
-    def get_data_func(self):
-        return 'educational_hq_report'
-
-
-class ExportDetachmentDataView(BaseExcelExportView):
-    def get_headers(self):
-        return DETACHMENT_HEADERS
-
-    def get_filename(self):
-        return f'ЛСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_worksheet_title(self):
-        return 'ЛСО'
-
-    def get_data_func(self):
-        return 'detachment_report'
