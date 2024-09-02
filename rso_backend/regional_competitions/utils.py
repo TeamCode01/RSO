@@ -18,6 +18,7 @@ from reportlab.lib.units import cm
 from rest_framework import status
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -155,7 +156,7 @@ def send_email_with_attachment(subject: str, message: str, recipients: list, fil
     mail.send()
 
 
-def generate_pdf_report_part_1(report):
+def generate_pdf_report_part_1(report) -> str:
     pdf_file_name = f"Отчет_ч1_РСО_{report.regional_headquarter}.pdf"
     pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
 
@@ -171,57 +172,89 @@ def generate_pdf_report_part_1(report):
     ))
 
     temp_pdf_file_path = os.path.join(settings.MEDIA_ROOT, f"Temp_{pdf_file_name}")
-    doc = SimpleDocTemplate(temp_pdf_file_path, pagesize=A4)
+    doc = SimpleDocTemplate(temp_pdf_file_path, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=30,
+                            bottomMargin=18)
     elements = []
 
     styles = getSampleStyleSheet()
-
-    styles.add(ParagraphStyle(name='CustomTitle', fontName='Times_New_Roman', fontSize=18, spaceAfter=20,
-                              alignment=1, leading=24))
-    styles.add(ParagraphStyle(name='Times_New_Roman', fontName='Times_New_Roman', fontSize=12))
-
-    elements.append(Spacer(1, 60))
-
-    elements.append(
-        Paragraph("Отчет о деятельности регионального отделения за 2024 год. Часть 1.", styles['CustomTitle'])
+    styles.add(
+        ParagraphStyle(
+            name='CustomTitle', fontName='Times_New_Roman', fontSize=18, spaceAfter=20, alignment=1, leading=24
+        )
+    )
+    styles.add(
+        ParagraphStyle(name='Times_New_Roman', fontName='Times_New_Roman', fontSize=12)
     )
 
-    elements.append(Spacer(1, 20))
-
-    data = [["Поле", "Значение"]]
+    elements.append(Spacer(1, 90))
+    elements.append(
+        Paragraph(
+            f'Отчет о деятельности регионального отделения за 2024 год. Часть 1. {report.regional_headquarter}',
+            styles['CustomTitle']
+        )
+    )
+    elements.append(Spacer(1, 15))
+    data = []
 
     for field in report._meta.fields:
         if field.name == 'id':
             continue
         field_name = field.verbose_name
         field_value = getattr(report, field.name, '')
-        if isinstance(field_value, str):
-            field_value = field_value
-        elif isinstance(field_value, (int, float)):
+        if isinstance(field_value, (int, float, str)):
             field_value = str(field_value)
         elif field_value is None:
             field_value = ''
         else:
             field_value = str(field_value)
 
-        data.append(
-            [Paragraph(field_name, styles['Times_New_Roman']), Paragraph(field_value, styles['Times_New_Roman'])])
+        data.append([Paragraph(f"<b>{field_name}:</b>", styles['Times_New_Roman']), Paragraph(field_value, styles['Times_New_Roman'])])
 
-    table = Table(data, colWidths=[150, 350], repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6699CC')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
-        ('FONTSIZE', (0, 0), (-1, -1), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    elements.append(table)
+    if data:
+        table = Table(data, colWidths=[5 * cm, 10 * cm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6699CC')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#003366')),
+            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ]))
+        elements.append(table)
+        elements.append(Spacer(1, 15))
 
     elements.append(PageBreak())
+
+    elements.append(
+        Paragraph("Дополнительные данные:", styles['CustomTitle'])
+    )
+    elements.append(Spacer(1, 10))
+
+    additional_data = []
+
+    for nested_dict in report.additional_statistics.all():
+        additional_data.append(
+            [
+                Paragraph(nested_dict.name, styles['Times_New_Roman']), 
+                Paragraph(str(nested_dict.value), styles['Times_New_Roman'])
+            ]
+        )
+
+    if additional_data:
+        additional_table = Table(additional_data, colWidths=[5 * cm, 10 * cm])
+        additional_table.setStyle(TableStyle([
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#003366')),  # Same text color for all rows
+            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),  # Same background color for all rows
+        ]))
+        elements.append(additional_table)
 
     doc.build(elements)
 
@@ -231,15 +264,18 @@ def generate_pdf_report_part_1(report):
         'samples',
         'header_regional_r.pdf'
     )
+
     template_reader = PdfReader(template_pdf_path)
     content_reader = PdfReader(temp_pdf_file_path)
 
     writer = PdfWriter()
-
-    for template_page, content_page in zip(template_reader.pages, content_reader.pages):
-        PageMerge(template_page).add(content_page, prepend=False).render()
-
-        writer.addpage(template_page)
+    for i, content_page in enumerate(content_reader.pages):
+        if i == 0:
+            template_page = template_reader.pages[0]
+            PageMerge(template_page).add(content_page, prepend=False).render()
+            writer.addpage(template_page)
+        else:
+            writer.addpage(content_page)
 
     writer.write(pdf_file_path)
     os.remove(temp_pdf_file_path)

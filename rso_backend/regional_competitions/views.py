@@ -102,12 +102,12 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         regional_headquarter = RegionalHeadquarter.objects.get(commander=user)
 
         should_send = True
-        if not StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
             should_send = False
 
         report = serializer.save(regional_headquarter=regional_headquarter)
         if should_send:
-            send_email_report_part_1(report.id)
+            send_email_report_part_1.delay(report.id)
 
 
 class BaseRegionalRViewSet(RegionalRMixin):

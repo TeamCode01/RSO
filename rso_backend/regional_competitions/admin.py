@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
-from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
+from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -18,6 +18,11 @@ from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR
 from regional_competitions.r_calculations import calculate_r2_score
 
 
+class AdditionalStatisticInline(admin.StackedInline):
+    model = AdditionalStatistic
+    extra = 0
+
+
 @admin.register(StatisticalRegionalReport)
 class StatisticalRegionalReportAdmin(admin.ModelAdmin):
     list_display = (
@@ -32,11 +37,15 @@ class StatisticalRegionalReportAdmin(admin.ModelAdmin):
         'employed_specialized_detachments',
         'employed_production_detachments',
         'employed_top',
+        'employed_so_poo',
+        'employed_so_oovo',
+        'employed_ro_rso'
     )
     search_fields = (
         'regional_headquarter__name',
         'regional_headquarter__id',
     )
+    inlines = [AdditionalStatisticInline]
 
 
 @admin.register(RVerificationLog)
