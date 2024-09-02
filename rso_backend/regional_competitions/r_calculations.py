@@ -13,6 +13,13 @@ logger = logging.getLogger('regional_tasks')
 
 
 @log_exception
+def calculate_r1_score(report: RegionalR1):
+    """Расчет очков для отчета 1 показателя."""
+    report.score = report.amount_of_money
+    report.save()
+
+
+@log_exception
 def calculate_r4_score(report: RegionalR4):
     """Расчет очков по 4 показателю.
 
@@ -119,6 +126,13 @@ def calculate_r5_score(report):
 
 
 @log_exception
+def calculate_r6_score(report):
+    """Расчет очков по 6 показателю."""
+    report.score = report.number_of_members
+    report.save()
+
+
+@log_exception
 def calculate_r7_score(report):
     """Расчет очков по 7 показателю.
     
@@ -157,6 +171,13 @@ def calculate_r9_r10_score(report):
 
 
 @log_exception
+def calculate_r12_score(report: RegionalR12):
+    """Расчет очков по 12 показателю."""
+    report.score = report.amount_of_money
+    report.save()
+
+
+@log_exception
 def calculate_r16_score(report: RegionalR16):
     """Расчет очков по 16 показателю.
     
@@ -177,6 +198,7 @@ def calculate_r16_score(report: RegionalR16):
     report.save()
 
 
+@log_exception
 def calculate_r14():
     """Расчет очков по 14 показателю."""
     logger.info('Выполняется подсчет отчета по r14 показателю')
