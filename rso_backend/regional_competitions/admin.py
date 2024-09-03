@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
+from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -13,7 +13,14 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RegionalR101Link, RegionalR102,
                                           RegionalR102Link, RVerificationLog,
                                           StatisticalRegionalReport,
+                                          r6_models_factory,
                                           r7_models_factory, r9_models_factory)
+from regional_competitions.r_calculations import calculate_r2_score
+
+
+class AdditionalStatisticInline(admin.StackedInline):
+    model = AdditionalStatistic
+    extra = 0
 
 
 @admin.register(StatisticalRegionalReport)
@@ -30,11 +37,15 @@ class StatisticalRegionalReportAdmin(admin.ModelAdmin):
         'employed_specialized_detachments',
         'employed_production_detachments',
         'employed_top',
+        'employed_so_poo',
+        'employed_so_oovo',
+        'employed_ro_rso'
     )
     search_fields = (
         'regional_headquarter__name',
         'regional_headquarter__id',
     )
+    inlines = [AdditionalStatisticInline]
 
 
 @admin.register(RVerificationLog)
@@ -144,6 +155,28 @@ class RegionalR1Admin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
+@admin.register(RegionalR2)
+class RegionalR2Admin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'score',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('regional_headquarter__name',)
+    readonly_fields = ('created_at', 'updated_at')
+
+    actions = ['get_ro_score',]
+
+    def get_ro_score(self, request, queryset):
+        for obj in queryset:
+            calculate_r2_score(obj)
+
+    get_ro_score.short_description = 'Вычислить очки по показателю'
+
+
 class RegionalR4LinkInline(admin.TabularInline):
     model = RegionalR4Link
     extra = 0
@@ -228,6 +261,36 @@ class RegionalR5Admin(admin.ModelAdmin):
     inlines = [RegionalR5EventAdminInline]
 
 
+r6_list_display = (
+    'regional_headquarter',
+    'id',
+    'number_of_members',
+    'verified_by_chq',
+    'verified_by_dhq',
+    'score',
+    'created_at',
+    'updated_at'
+)
+
+r6_list_filter = (
+    'verified_by_chq',
+    'verified_by_dhq'
+)
+
+r6_search_fields = ('comment', 'regional_headquarter__name')
+
+r6_readonly_fields = ('created_at', 'updated_at')
+
+r6_admin_factory = RAdminFactory(
+    models=r6_models_factory.models,
+    list_display=r6_list_display,
+    list_filter=r6_list_filter,
+    search_fields=r6_search_fields,
+    readonly_fields=r6_readonly_fields
+)
+r6_admin_factory.create_admin_classes()
+
+
 r7_list_display = (
     'regional_headquarter',
     'id',
@@ -246,7 +309,7 @@ r7_list_filter = (
     'verified_by_dhq'
 )
 
-r7_search_fields = ('comment', 'event_location')
+r7_search_fields = ('comment', 'regional_headquarter__name')
 
 r7_readonly_fields = ('created_at', 'updated_at')
 
@@ -426,14 +489,10 @@ class RegionalR17Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
-        'score',
-        'verified_by_chq',
-        'verified_by_dhq',
         'created_at',
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
 
 
@@ -476,12 +535,24 @@ class RegionalR19Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
-        'score',
-        'verified_by_chq',
-        'verified_by_dhq',
         'created_at',
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ExpertRole)
+class ExpertRoleAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'central_headquarter',
+        'district_headquarter',
+        'created_at',
+    )
+    search_fields = (
+        'user__username',
+        'central_headquarter__name',
+        'district_headquarter__name'
+    )

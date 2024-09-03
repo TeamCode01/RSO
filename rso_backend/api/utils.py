@@ -3,10 +3,7 @@ import mimetypes
 import os
 import re
 import zipfile
-import datetime
-import time
 
-from django.utils import timezone
 from datetime import datetime
 
 from django.db import IntegrityError
@@ -15,12 +12,10 @@ from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 
-from requestlogs.base import SETTINGS
-from requestlogs.logging import get_request_id
-from requestlogs.utils import get_client_ip, remove_secrets
 
-from regional_competitions.r_calculations import calculate_r5_score
-from rest_framework.request import Request
+from regional_competitions.r_calculations import (calculate_r4_score, calculate_r5_score,
+                                                  calculate_r7_score, calculate_r9_r10_score,
+                                                  calculate_r16_score)
 from rest_framework import serializers, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS
@@ -36,8 +31,6 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition)
 from users.models import RSOUser
-
-from rest_framework.pagination import LimitOffsetPagination
 
 
 class Limit250OffsetPagination(LimitOffsetPagination):
@@ -61,7 +54,6 @@ class RegionOffsetPagination(Limit250OffsetPagination):
             self.count = len(queryset)
             return list(queryset)
         return super().paginate_queryset(queryset, request, view)
-
 
 
 def create_first_or_exception(self, validated_data, instance, error_msg: str):
@@ -700,21 +692,6 @@ def get_central_hq_commander_num(user) -> int | None:
     return central_headquarter_commander_num
 
 
-def get_regional_hq_commander_num(user) -> int | None:
-    """Получение id регионального штаба, в котором юзер командир."""
-
-    try:
-        reghq_commander_num = RegionalHeadquarter.objects.get(
-            commander=user
-        ).id
-    except (
-            RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
-            RegionalHeadquarter.MultipleObjectsReturned
-    ):
-        return None
-    return reghq_commander_num
-
-
 def is_commander_this_detachment(user, detachment):
     """Проверяет, является ли пользователь командиром отряда."""
     return user.is_authenticated and detachment.commander == user
@@ -879,8 +856,15 @@ def get_calculation(report, report_number):
     """Функция вызова калькуляции очков при совпадении номера показателя."""
 
     match report_number:
+        case '4':
+            return calculate_r4_score(report)
         case '5':
             return calculate_r5_score(report)
+        case '7':
+            return calculate_r7_score(report)
+        case '9' | '10':
+            return calculate_r9_r10_score(report)
+        case '16':
+            return calculate_r16_score(report)
         case '':
-            return None
-    return None
+            return

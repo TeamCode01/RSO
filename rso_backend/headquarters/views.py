@@ -86,6 +86,7 @@ from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
                                 get_detachment_members_to_verify,)
+from regional_competitions.utils import generate_rhq_xlsx_report
 from users.serializers import UserVerificationReadSerializer
 
 
@@ -200,8 +201,7 @@ class DistrictViewSet(ApplicationsMixin,
 
     def get_application_short_serializer(self):
         return UserDistrictApplicationShortReadSerializer
-    
-    
+
 
 class RegionalViewSet(ApplicationsMixin, 
                       VerificationsMixin, 
@@ -279,11 +279,20 @@ class RegionalViewSet(ApplicationsMixin,
         return get_regional_hq_members_to_verify
 
 
-class LocalViewSet(ApplicationsMixin, 
-                   VerificationsMixin, 
-                   SubLocalHqsMixin, 
+@api_view(['GET'])
+def download_reg_comp_report(_, pk):
+    """Скачивание всех отчетов РО в одном xlsx файле.
+
+    pk - ID регионального штаба.
+    """
+    return generate_rhq_xlsx_report(pk)
+
+
+class LocalViewSet(ApplicationsMixin,
+                   VerificationsMixin,
+                   SubLocalHqsMixin,
                    BaseLeadershipMixin,
-                   LocalSubCommanderMixin, 
+                   LocalSubCommanderMixin,
                    viewsets.ModelViewSet):
     """Представляет местные штабы.
 

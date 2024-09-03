@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import PositiveSmallIntegerField
+from django.db.models import PositiveSmallIntegerField, Q
+from django.db.models.constraints import CheckConstraint
 
 from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              REPORT_EXISTS_MESSAGE,
@@ -47,6 +49,21 @@ class StatisticalRegionalReport(models.Model):
     employed_top = models.PositiveIntegerField(
         verbose_name='Количество трудоустроенных, ТОП'
     )
+    employed_so_poo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ПОО',
+        blank=True,
+        null=True
+    )
+    employed_so_oovo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ООВО',
+        blank=True,
+        null=True
+    )
+    employed_ro_rso = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов РО РСО',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name_plural = 'Статистические отчеты РШ'
@@ -54,6 +71,24 @@ class StatisticalRegionalReport(models.Model):
 
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
+
+
+class AdditionalStatistic(models.Model):
+    statistical_report = models.ForeignKey(
+        'StatisticalRegionalReport',
+        on_delete=models.CASCADE,
+        related_name='additional_statistics',
+        verbose_name='Статистический отчет'
+    )
+    name = models.CharField(verbose_name='Наименование', max_length=255)
+    value = models.PositiveIntegerField(verbose_name='Значение')
+
+    class Meta:
+        verbose_name_plural = 'Свои варианты - статистические отчеты'
+        verbose_name = 'Свои варианты - статистический отчет'
+
+    def __str__(self):
+        return f'{self.name}: {self.value}'
 
 
 class BaseRegionalR(models.Model):
@@ -275,6 +310,26 @@ class RegionalR1(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 1 показателю'
 
 
+class RegionalR2(BaseRegionalR, BaseScore):
+    """
+    Отношение численности членов РО РСО к численности студентов очной формы обучения субъекта Российской Федерации,
+    обучающихся в профессиональных образовательных организациях и образовательных организациях высшего образования
+    в государственных, муниципальных и частных образовательных организациях, включая филиалы
+    (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
+    """
+
+    full_time_students = models.SmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество студентов очной формы обучения'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 2 показателю'
+        verbose_name_plural = 'Отчеты по 2 показателю'
+
+
 class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'
@@ -419,6 +474,7 @@ r7_models_factory = RModelFactory(
     base_r_model=BaseRegionalR7,
     base_link_model=BaseLink,
     event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
+    labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
 )
 r7_models_factory.create_models()
 
@@ -686,9 +742,23 @@ class RegionalR16Link(models.Model):
         return f'ID {self.id}'
 
 
-class RegionalR17(BaseEventProjectR):
+class RegionalR17(BaseComment, models.Model):
     """Дислокация студенческих отрядов РО РСО"""
 
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
     scan_file = models.FileField(
         upload_to=regional_comp_regulations_files_path,
         verbose_name='Документ',
@@ -769,9 +839,23 @@ class RegionalR18Link(models.Model):
         return f'Ссылка ID {self.id}'
 
 
-class RegionalR19(BaseEventProjectR):
-    """Трудоустройство"""
+class RegionalR19(BaseComment, models.Model):
+    """Трудоустройство."""
 
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
     employed_student_start = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
@@ -813,3 +897,51 @@ REPORTS_IS_SENT_MODELS.extend(
 REPORTS_IS_SENT_MODELS.extend(
     [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
 )
+
+
+class ExpertRole(models.Model):
+    """Роль эксперта."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name="regional_expert",
+    )
+    central_headquarter = models.ForeignKey(
+        'headquarters.CentralHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Центральный штаб',
+        related_name='regional_experts',
+        blank=True,
+        null=True
+    )
+    district_headquarter = models.ForeignKey(
+        'headquarters.DistrictHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Окружной штаб',
+        related_name='regional_experts',
+        blank=True,
+        null=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+
+    class Meta:
+        verbose_name = 'Роль эксперта'
+        verbose_name_plural = 'Роли экспертов'
+        constraints = [
+            CheckConstraint(
+                check=Q(central_headquarter__isnull=False) | Q(district_headquarter__isnull=False),
+                name='at_least_one_headquarter'
+            ),
+            CheckConstraint(
+                check=~Q(central_headquarter__isnull=False, district_headquarter__isnull=False),
+                name='not_both_headquarters'
+            )
+        ]
