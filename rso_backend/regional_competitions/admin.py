@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
+from regional_competitions.forms import ExpertUserForm
 from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
@@ -543,6 +544,7 @@ class RegionalR19Admin(admin.ModelAdmin):
 
 @admin.register(ExpertRole)
 class ExpertRoleAdmin(admin.ModelAdmin):
+    form = ExpertUserForm
     list_display = (
         'id',
         'user',

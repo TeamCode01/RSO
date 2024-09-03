@@ -1,7 +1,7 @@
 import json
 
 from django.db import transaction
-from django.http import Http404, QueryDict
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from api.mixins import SendMixin
@@ -44,6 +44,8 @@ from regional_competitions.utils import (
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 from django.conf import settings
+
+from users.models import RSOUser
 
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
