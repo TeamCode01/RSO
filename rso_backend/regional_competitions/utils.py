@@ -126,23 +126,26 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
 def get_emails(report_instance) -> list:
     if settings.DEBUG:
         return settings.TEST_EMAIL_ADDRESSES
-
+    addresses = []
     try:
-        addresses = [
+        addresses.append(
             RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
-        ]
+        )
         if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
             addresses.append("rso.71@yandex.ru")
-        return addresses
     except RegionalHeadquarterEmail.DoesNotExist:
         logger.warning(
             f'Не найден почтовый адрес в RegionalHeadquarterEmail '
             f'для РШ ID {report_instance.regional_headquarter.id}'
         )
-        return []
+    if settings.PRODUCTION:
+        addresses.append('rso.login@yandex.ru')
+    return addresses
 
 
-def send_email_with_attachment(subject: str, message: str, recipients: list, file_path: str):
+def send_email_with_attachment(
+        subject: str, message: str, recipients: list, file_path: str, additional_file_path: str = None
+        ):
     mail = EmailMessage(
         subject=subject,
         body=message,
@@ -151,8 +154,10 @@ def send_email_with_attachment(subject: str, message: str, recipients: list, fil
     )
     if file_path:
         with open(file_path, 'rb') as f:
-            file_name_start = file_path.find('О')
-            mail.attach(file_path.split('/')[-1][file_name_start:], f.read(), 'application/octet-stream')
+            mail.attach(file_path.split('/')[-1], f.read(), 'application/octet-stream')
+    if additional_file_path:
+        with open(additional_file_path, 'rb') as f:
+            mail.attach(additional_file_path.split('/')[-1], f.read(), 'application/octet-stream')
     mail.send()
 
 
@@ -504,7 +509,13 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
 def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     """Генерация общего PDF-файла для отчета по 2-й части."""
     from regional_competitions.serializers import REPORTS_SERIALIZERS
-    pdf_file_name = f"Отчет_ч2_РСО_{regional_headquarter_id}.pdf"
+
+    try:
+        regional_hq = RegionalHeadquarter.objects.get(id=regional_headquarter_id).name
+    except RegionalHeadquarter.DoesNotExist:
+        regional_hq = ''
+
+    pdf_file_name = f"Отчет_ч2_РСО_{regional_hq}.pdf"
     pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
 
     pdfmetrics.registerFont(TTFont(
@@ -519,8 +530,9 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     ))
 
     temp_pdf_file_path = os.path.join(settings.MEDIA_ROOT, f"Temp_{pdf_file_name}")
-    doc = SimpleDocTemplate(temp_pdf_file_path, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=30,
-                            bottomMargin=18)
+    doc = SimpleDocTemplate(
+        temp_pdf_file_path, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=30, bottomMargin=18
+    )
     elements = []
 
     styles = getSampleStyleSheet()
@@ -535,11 +547,6 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     styles.add(
         ParagraphStyle(name='NestedField', fontName='Times_New_Roman', fontSize=12, leftIndent=20, spaceAfter=10)
     )
-
-    try:
-        regional_hq = RegionalHeadquarter.objects.get(id=regional_headquarter_id).name
-    except RegionalHeadquarter.DoesNotExist:
-        regional_hq = ''
 
     elements.append(Spacer(1, 90))
     elements.append(
