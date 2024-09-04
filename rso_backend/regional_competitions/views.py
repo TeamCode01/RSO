@@ -45,9 +45,11 @@ from regional_competitions.utils import (
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 from django.conf import settings
 
+from users.models import RSOUser
+
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
-    """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
+    """Отчет 1 ч."""
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
 
@@ -57,21 +59,6 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         if self.action == 'list':
             return (IsCentralHeadquarterExpert(),)
         return permissions.IsAuthenticated(), IsRegionalCommander()
-
-    def retrieve(self, request, *args, **kwargs):
-        regional_headquarter_id = kwargs.get('pk')
-        statistical_report = StatisticalRegionalReport.objects.filter(
-            regional_headquarter_id=regional_headquarter_id
-        ).last()
-
-        if not statistical_report:
-            return Response(
-                {"detail": "Отчет не найден."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = self.get_serializer(statistical_report)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
@@ -153,7 +140,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        verification_action = request.data.pop('action', None)
+        data = dict(request.data)
+        verification_action = data.pop('action', None)
         report = self.get_object()
 
         if not report.is_sent:
@@ -229,8 +217,9 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        verification_action = request.data.pop('action', None)
-        reasons = request.data.pop('reasons', {})
+        data = dict(request.data)  # для работы с formparser
+        verification_action = data.pop('action', None)
+        reasons = data.pop('reasons', {})
         report = self.get_object()
 
         if not report.is_sent or not report.verified_by_dhq:
@@ -872,3 +861,31 @@ def get_sent_reports(request):
             district_headquarter_id=district_headquarter_id
         )
     return Response(ShortRegionalHeadquarterSerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def user_info(request):
+    """Информация о пользователе.
+
+    Возвращает три ключа:
+    - is_central_expert - является ли пользователь экспертом центрального штаба или командиром центрального штаба.
+    - is_district_expert - является ли пользователь экспертом окружного штаба.
+    - is_reg_commander - является ли пользователь командиром регионального штаба.
+
+    Доступ: все аутентифицированные пользователи.
+    """
+    is_central_expert = ExpertRole.objects.filter(
+        user=request.user, central_headquarter__isnull=False
+    ).exists()
+    is_district_expert = ExpertRole.objects.filter(
+        user=request.user, district_headquarter__isnull=False
+    ).exists()
+    is_commander = RegionalHeadquarter.objects.filter(
+        commander=request.user
+    ).exists()
+    return Response({
+        'is_central_expert': is_central_expert,
+        'is_district_expert': is_district_expert,
+        'is_reg_commander': is_commander
+    })

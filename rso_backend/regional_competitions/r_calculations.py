@@ -13,6 +13,13 @@ logger = logging.getLogger('regional_tasks')
 
 
 @log_exception
+def calculate_r1_score(report: RegionalR1):
+    """Расчет очков для отчета 1 показателя."""
+    report.score = report.amount_of_money
+    report.save()
+
+
+@log_exception
 def calculate_r4_score(report: RegionalR4):
     """Расчет очков по 4 показателю.
 
@@ -119,6 +126,13 @@ def calculate_r5_score(report):
 
 
 @log_exception
+def calculate_r6_score(report):
+    """Расчет очков по 6 показателю."""
+    report.score = report.number_of_members
+    report.save()
+
+
+@log_exception
 def calculate_r7_score(report):
     """Расчет очков по 7 показателю.
     
@@ -154,6 +168,46 @@ def calculate_r9_r10_score(report):
     )
     report.score += 1 if report.event_happened else 0
     report.save()
+
+
+@log_exception
+def calculate_r12_score(report: RegionalR12):
+    """Расчет очков по 12 показателю."""
+    report.score = report.amount_of_money
+    report.save()
+
+
+def calculate_r13_score():
+    """
+    Расчет очков по 13 показателю.
+
+    Расчет производится после верификации 1 показателя, т.к.
+    рассчитывается на основании верифицированных данных из него.
+    """
+    # берем все id штабов верифицированного 1 показателя
+    r1_ro_ids = set(RegionalR1.objects.filter(verified_by_chq=True, score__gt=0).values_list('regional_headquarter_id', flat=True))
+    # берем все id штабов верифицированного 13 показателя, с не рассчитанными очками(равными 0)
+    r13_ro_ids = set(RegionalR13.objects.filter(score=0).values_list('regional_headquarter_id', flat=True))
+    # находим id штабов, с верифицированным 1 показателем и не рассчитанными очками в 13 показателе
+    ro_ids = r1_ro_ids.intersection(r13_ro_ids)
+    # находим отчеты по 1 показателю
+    r1_reports = RegionalR1.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score__gt=0)
+    # находим отчеты по 13 показателю
+    r13_reports = RegionalR13.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score=0)
+    # делаем словарь с ключ - id штаба, значение - сумма очков по 1 показателю
+    r1_scores = {report.regional_headquarter_id: report.score for report in r1_reports}
+    # считаем и массово присваем очки по 13 показателю.
+    # формула - number_of_members_r13/(score_r1/500)
+    updated_r13_reports = []
+    for report in r13_reports:
+        report.score = report.number_of_members / (r1_scores[report.regional_headquarter_id] / 500) if report.number_of_members > 0 else 0
+        updated_r13_reports.append(report)
+    try:
+        updated_r13_reports = RegionalR13.objects.bulk_update(updated_r13_reports, ['score'])
+    except Exception as e:
+        logger.error(f'Расчет r13 показателя завершен с ошибкой: {e}')
+
+    logger.info(f'Расчет r13 показателя завершен, обновлено {updated_r13_reports} отчетов')
 
 
 @log_exception

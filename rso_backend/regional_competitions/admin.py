@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
+from regional_competitions.forms import ExpertUserForm
 from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
@@ -15,7 +16,7 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           StatisticalRegionalReport,
                                           r6_models_factory,
                                           r7_models_factory, r9_models_factory)
-from regional_competitions.r_calculations import calculate_r2_score
+from regional_competitions.r_calculations import calculate_r13_score, calculate_r2_score
 
 
 class AdditionalStatisticInline(admin.StackedInline):
@@ -429,6 +430,14 @@ class RegionalR13Admin(admin.ModelAdmin):
     search_fields = ('comment', 'regional_headquarter__name')
     list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+    actions = ['get_ro_score',]
+
+    @admin.action(description='Вычислить очки по показателю')
+    def get_ro_score(self, request, queryset):
+        calculate_r13_score()
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('regional_headquarter')
 
 
 @admin.register(RegionalR14)
@@ -544,6 +553,7 @@ class RegionalR19Admin(admin.ModelAdmin):
 
 @admin.register(ExpertRole)
 class ExpertRoleAdmin(admin.ModelAdmin):
+    form = ExpertUserForm
     list_display = (
         'id',
         'user',

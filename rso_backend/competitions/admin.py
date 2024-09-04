@@ -276,7 +276,6 @@ class Q5DetachmentReportAdmin(admin.ModelAdmin):
     get_detachment_name.short_description = 'Название отряда'
 
 
-
 @admin.register(Q5TandemRanking)
 class Q5TandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
@@ -287,11 +286,9 @@ class DemonstrationBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'first_may_demonstration', 'first_may_demonstration_participants', 'is_verified')
 
 
-
 @admin.register(PatrioticActionBlock)
 class PatrioticActionBlockAdmin(admin.ModelAdmin):
     list_display = ('report', 'patriotic_action', 'patriotic_action_participants', 'is_verified')
-
 
 
 @admin.register(SafetyWorkWeekBlock)
@@ -518,6 +515,7 @@ class Q8LinksInline(admin.TabularInline):
     model = LinksQ8
     extra = 0
 
+
 @admin.register(Q8)
 class Q8Admin(admin.ModelAdmin):
     list_display = (
@@ -642,7 +640,6 @@ class Q11Admin(admin.ModelAdmin):
         return False
 
 
-
 class Q11Inline(admin.TabularInline):
     model = Q11
     extra = 0
@@ -742,6 +739,7 @@ class Q13TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q14LaborProjectInline(admin.TabularInline):
     model = Q14LaborProject
     extra = 0
+
 
 @admin.register(Q14DetachmentReport)
 class Q14DetachmentReportAdmin(admin.ModelAdmin):
