@@ -59,7 +59,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
     """
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = StatisticalRegionalReportFilter
 
     def get_permissions(self):
