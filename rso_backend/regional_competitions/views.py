@@ -49,7 +49,7 @@ from users.models import RSOUser
 
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
-    """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
+    """Отчет 1 ч."""
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
 
