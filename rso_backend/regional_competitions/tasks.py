@@ -10,7 +10,7 @@ from headquarters.models import RegionalHeadquarter
 from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
 from regional_competitions.models import StatisticalRegionalReport, REPORTS_IS_SENT_MODELS
-from regional_competitions.r_calculations import calculate_r14
+from regional_competitions.r_calculations import calculate_r13_score, calculate_r14
 from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
     generate_pdf_report_part_2
 
@@ -122,7 +122,23 @@ def send_mail(subject: str, message: str, recipients: list, file_path: str):
 
 
 @shared_task
-def calculate_q14_report_task():
+def calculate_r13_report_task():
+    """
+    Считает отчет по 13 показателю.
+
+    Считает вплоть до 15 октября 2024 года включительно.
+    """
+    today = date.today()
+    cutoff_date = date(2024, 10, 15)
+
+    if today <= cutoff_date + timedelta(days=1):
+        calculate_r13_score()
+    else:
+        logger.warning('Истек срок выполнения подсчета по 13 показателю')
+
+
+@shared_task
+def calculate_r14_report_task():
     """
     Считает отчет по 14 показателю.
 
