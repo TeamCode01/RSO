@@ -1,13 +1,14 @@
 import json
 
 from django.db import transaction
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from api.mixins import SendMixin
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from rest_framework import permissions, status
+from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.exceptions import ValidationError
@@ -18,6 +19,7 @@ from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions.factories import RViewSetFactory
+from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
@@ -49,9 +51,16 @@ from users.models import RSOUser
 
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
-    """Отчет 1 ч."""
+    """Отчет 1 ч.
+
+    Фильтрация:
+        - district_id: поиск по id окружного штаба
+        - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
+    """
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_class = StatisticalRegionalReportFilter
 
     def get_permissions(self):
         if self.action == 'retrieve':
