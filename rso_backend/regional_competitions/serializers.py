@@ -2,6 +2,7 @@ from django.db import models
 from rest_framework import serializers
 
 from django.db import transaction
+from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
@@ -32,6 +33,7 @@ class AdditionalStatisticSerializer(serializers.ModelSerializer):
 
 class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
     additional_statistics = AdditionalStatisticSerializer(required=False, allow_null=True, many=True)
+    regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
 
     class Meta:
         model = StatisticalRegionalReport
