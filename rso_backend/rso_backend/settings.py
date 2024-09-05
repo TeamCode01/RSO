@@ -325,9 +325,13 @@ if DEBUG:
                 month_of_year=10,
             )
         },
-        'calculate_q14_report_task': {
-            'task': 'regional_competitions.tasks.calculate_q14_report_task',
-            'schedule': timedelta(hours=12)  # пока только дев
+        'calculate_r13_report_task': {
+            'task': 'regional_competitions.tasks.calculate_r13_report_task',
+            'schedule': timedelta(minutes=12)  # TODO: пока только дев
+        },
+        'calculate_r14_report_task': {
+            'task': 'regional_competitions.tasks.calculate_r14_report_task',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
         },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',

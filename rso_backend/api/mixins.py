@@ -120,7 +120,7 @@ class CreateListRetrieveUpdateViewSet(mixins.CreateModelMixin,
     pass
 
 
-class SendMixin():
+class SendMixin:
 
     @action(
         detail=True,

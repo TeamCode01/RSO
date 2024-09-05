@@ -11,9 +11,8 @@ from django.db.models import Q
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
-
-
-from regional_competitions.r_calculations import (calculate_r4_score, calculate_r5_score,
+from regional_competitions.r_calculations import (calculate_r12_score, calculate_r1_score, calculate_r2_score,
+                                                  calculate_r4_score, calculate_r5_score, calculate_r6_score,
                                                   calculate_r7_score, calculate_r9_r10_score,
                                                   calculate_r16_score)
 from rest_framework import serializers, status
@@ -856,14 +855,20 @@ def get_calculation(report, report_number):
     """Функция вызова калькуляции очков при совпадении номера показателя."""
 
     match report_number:
+        case '1':
+            return calculate_r1_score(report)
         case '4':
             return calculate_r4_score(report)
         case '5':
             return calculate_r5_score(report)
+        case '6':
+            return calculate_r6_score(report)
         case '7':
             return calculate_r7_score(report)
         case '9' | '10':
             return calculate_r9_r10_score(report)
+        case '12':
+            return calculate_r12_score(report)
         case '16':
             return calculate_r16_score(report)
         case '':
