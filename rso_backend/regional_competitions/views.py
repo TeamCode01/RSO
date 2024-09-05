@@ -47,14 +47,13 @@ from regional_competitions.utils import (
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 from django.conf import settings
 
-from users.models import RSOUser
-
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
     """Отчет 1 ч.
 
     Фильтрация:
         - district_id: поиск по id окружного штаба
+        - district_name: поиск по названию окружного штаба, полное совпадение
         - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
     """
     queryset = StatisticalRegionalReport.objects.all()
