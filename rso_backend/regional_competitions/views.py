@@ -842,7 +842,7 @@ class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
 @permission_classes((IsCentralOrDistrictHeadquarterExpert,))
 def get_sent_reports(request):
     """
-    Эндпоинт для  получения списка рег штабов, которые отправили отчеты по 2 части.
+    Эндпоинт для получения списка рег штабов, которые отправили отчеты по 2 части.
 
     Доступ - только экспертам окружных и центрального штабов.
 
