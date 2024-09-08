@@ -3,11 +3,10 @@ from datetime import datetime
 
 from headquarters.models import RegionalHeadquarter
 
-from regional_competitions.constants import MSK_ID, SPB_ID
-from regional_competitions.models import (RegionalR1, RegionalR4, RegionalR12, RegionalR13,
-                                          RegionalR14, r7_models_factory, r9_models_factory,
-                                          RegionalR16)
-from regional_competitions.utils import log_exception
+from regional_competitions.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk
+from regional_competitions.models import (RegionalR1, RegionalR11, RegionalR4, RegionalR12, RegionalR13,
+                                          RegionalR14, RegionalR16)
+from regional_competitions.utils import get_fees, log_exception
 
 logger = logging.getLogger('regional_tasks')
 
@@ -20,13 +19,41 @@ def calculate_r1_score(report: RegionalR1):
 
 
 @log_exception
+def calculate_r2_score(report):
+    """Расчет очков по 2 показателю.
+
+    P=(x/50)/(y/z)
+    x - Уплаченные членские взносы из первого показателя;
+    50 - коэффициент для определения количества человек, уплативших взносы;
+    y - Численность студентов очной формы обучения субъекта РФ (константа, которую сбросит ЦШ);
+    z - Коэффициент для региональной поправки. Для МСК равен 2, для СПБ равен 1,5, для остальных регионов равен 1.
+
+    !!! Расчёт вызывается через админку.
+    """
+
+    ro_id = report.regional_headquarter.id
+    ro_region = report.regional_headquarter.region.id
+
+    logger.info(f'Выполняется подсчет очков r2 для рег штаба {ro_id}')
+    amount_of_money = get_fees(report, RegionalR1)
+    if not amount_of_money:
+        logger.info(f'Не удалось получить сумму взносов в r2 из r1 для рег штаба {ro_id}')
+        return
+    regional_coef = 2 if ro_region == MSK_ID else 1.5 if ro_region == SPB_ID else 1
+    ro_score = (amount_of_money / 50) / (report.full_time_students / regional_coef)
+    report.score = ro_score
+    report.save()
+    logger.info(f'Подсчитали очки 2-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
+
+
+@log_exception
 def calculate_r4_score(report: RegionalR4):
     """Расчет очков по 4 показателю.
 
     P=(х1*y1)+(xn*yn)
     P=(х1*y1)+(xn*yn*0.8)
 
-    «х1…xn» - количество человек, принявших участие в каждом мероприятии или проекте; 
+    «х1…xn» - количество человек, принявших участие в каждом мероприятии или проекте;
     «у1…yn» - количество дней проведения каждого мероприятия или проекта
 
     Количество дней проведения мероприятия рассчитываем сами, как разницу между датой окончания и датой начала.
@@ -47,37 +74,6 @@ def calculate_r4_score(report: RegionalR4):
         f'Финальное кол-во очков для отчета {report.id} {report.regional_headquarter} по 4 показателю: {report.score}'
     )
     report.save()
-
-
-@log_exception
-def calculate_r2_score(report):
-    """Расчет очков по 2 показателю.
-
-    P=(x/50)/(y/z)
-    x - Уплаченные членские взносы из первого показателя;
-    50 - коэффициент для определения количества человек, уплатвиших взносы;
-    y - Численность студентов очной формы обучения субъекта РФ (константа, которую сбросит ЦШ);
-    z - Коэффициент для региональной поправки. Для МСК равен 2, для СПБ равен 1,5, для остальных регионов равен 1.
-
-    !!! Расчёт вызывается через админку.
-    """
-
-    ro_id = report.regional_headquarter.id
-    ro_region = report.regional_headquarter.region.id
-
-    logger.info(f'Выполняется подсчет очков r2 для рег штаба {ro_id}')
-    try:
-        amount_of_money = RegionalR1.objects.filter(
-            verified_by_chq=True,
-            regional_headquarter_id=ro_id
-        ).first().amount_of_money
-    except AttributeError:
-        return
-    regional_coef = 2 if ro_region == MSK_ID else 1.5 if ro_region == SPB_ID else 1
-    ro_score = (amount_of_money / 50) / (report.full_time_students / regional_coef)
-    report.score = ro_score
-    report.save()
-    logger.info(f'Подсчитали очки 2го показателя для рег штаба {ro_id}. Очки: {ro_score}')
 
 
 @log_exception
@@ -135,7 +131,7 @@ def calculate_r6_score(report):
 @log_exception
 def calculate_r7_score(report):
     """Расчет очков по 7 показателю.
-    
+
     Р = (4 − m1) + (4 − m2) + (4 − mx)
     Для трудовых проектов множитель - 2.
     """
@@ -157,7 +153,7 @@ def calculate_r7_score(report):
 @log_exception
 def calculate_r9_r10_score(report):
     """Расчет очков по 9-10 показателям.
-    
+
     Да - 0 баллов.
     Нет - 1 балл.
     """
@@ -168,6 +164,51 @@ def calculate_r9_r10_score(report):
     )
     report.score += 1 if report.event_happened else 0
     report.save()
+
+
+@log_exception
+def calculate_r11_score():
+    """Расчет очков для 11-го показателя.
+
+    P=(x/k)+(x/2y)
+
+    x- количество человек, входящих в группу РСО в социальной сети «Вконтакте»
+    в результате проведенного опроса (анкетирования) - этот показатель ЦШ предоставляет нам централизованно.
+    y - количество человек, входящих в группу РО РСО в социальной сети «Вконтакте» (подтверждение - скриншот).
+    к - количество членов РО РСО в соответствии с объемом уплаченных членских взносов. (из первого показателя).
+    Подтвержденный 1 показатель. (цифра из первого показателя/50)
+
+    Примечание: Если К больше или равно 1500 и  Х > Y, то слагаемое № 2 приравнивается к 0.
+    Сравнение итогов между РО, самая большая цифра - 1 место.
+
+    """
+    r1_ro_ids = set(RegionalR1.objects.filter(
+        verified_by_chq=True, score__gt=0).values_list('regional_headquarter_id', flat=True)
+    )
+    r11_ro_ids = set(RegionalR11.objects.filter(score=0).values_list('regional_headquarter_id', flat=True))
+    ro_ids = r1_ro_ids.intersection(r11_ro_ids)
+    r1_reports = RegionalR1.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score__gt=0)
+    r11_reports = RegionalR11.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score=0)
+    r1_scores = {report.regional_headquarter_id: report.score for report in r1_reports}
+
+    updated_r11_reports = []
+    for report in r11_reports:
+        ro_id = report.regional_headquarter.id
+        rso_vk_members = ro_members_in_rso_vk.get(ro_id, 0)
+        logger.info(f'Выполняется подсчет очков r11 для рег штаба {ro_id}')
+        members_with_fees = r1_scores[report.regional_headquarter_id] / 50
+        if members_with_fees >= 1500 and rso_vk_members > report.participants_number:
+            ro_score = (rso_vk_members / (members_with_fees))
+        else:
+            ro_score = (rso_vk_members / (members_with_fees)) + (rso_vk_members / (2 * report.participants_number))
+        report.score = ro_score
+        logger.info(f'Подсчитали очки 11-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
+        updated_r11_reports.append(report)
+    try:
+        updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
+    except Exception as e:
+        logger.error(f'Расчет r11 показателя завершен с ошибкой: {e}')
+    logger.info(f'Расчет r13 показателя завершен, обновлено {len(updated_r11_reports)} отчетов')
 
 
 @log_exception
@@ -185,7 +226,9 @@ def calculate_r13_score():
     рассчитывается на основании верифицированных данных из него.
     """
     # берем все id штабов верифицированного 1 показателя
-    r1_ro_ids = set(RegionalR1.objects.filter(verified_by_chq=True, score__gt=0).values_list('regional_headquarter_id', flat=True))
+    r1_ro_ids = set(RegionalR1.objects.filter(
+        verified_by_chq=True, score__gt=0).values_list('regional_headquarter_id', flat=True)
+    )
     # берем все id штабов верифицированного 13 показателя, с не рассчитанными очками(равными 0)
     r13_ro_ids = set(RegionalR13.objects.filter(score=0).values_list('regional_headquarter_id', flat=True))
     # находим id штабов, с верифицированным 1 показателем и не рассчитанными очками в 13 показателе
@@ -200,7 +243,9 @@ def calculate_r13_score():
     # формула - number_of_members_r13/(score_r1/500)
     updated_r13_reports = []
     for report in r13_reports:
-        report.score = report.number_of_members / (r1_scores[report.regional_headquarter_id] / 500) if report.number_of_members > 0 else 0
+        report.score = report.number_of_members / (
+            r1_scores[report.regional_headquarter_id] / 500
+        ) if report.number_of_members > 0 else 0
         updated_r13_reports.append(report)
     try:
         updated_r13_reports = RegionalR13.objects.bulk_update(updated_r13_reports, ['score'])
@@ -208,27 +253,6 @@ def calculate_r13_score():
         logger.error(f'Расчет r13 показателя завершен с ошибкой: {e}')
 
     logger.info(f'Расчет r13 показателя завершен, обновлено {updated_r13_reports} отчетов')
-
-
-@log_exception
-def calculate_r16_score(report: RegionalR16):
-    """Расчет очков по 16 показателю.
-    
-
-    """
-    points = {'Всероссийский': 2, 'Окружной': 1.5, 'Межрегиональный': 1}
-    logger.info(
-        f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
-        f'по {report.__class__._meta.verbose_name} - id {report.id}. '
-        f'Мероприятие состоялось: {report.event_happened}'
-    )
-    projects = report.projects
-    for project in projects:
-       report.score += points[project.project_scale]
-       logger.info(
-           f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
-        )
-    report.save()
 
 
 def calculate_r14():
@@ -278,3 +302,24 @@ def calculate_r14():
         logger.exception(f'Не удалось создать отчеты по r14 показателю: {e}')
 
     logger.info(f'Завершено подсчет отчета по r14 показателю. Создано {len(new_reports)} отчетов')
+
+
+@log_exception
+def calculate_r16_score(report: RegionalR16):
+    """Расчет очков по 16 показателю.
+
+
+    """
+    points = {'Всероссийский': 2, 'Окружной': 1.5, 'Межрегиональный': 1}
+    logger.info(
+        f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
+        f'по {report.__class__._meta.verbose_name} - id {report.id}. '
+        f'Мероприятие состоялось: {report.event_happened}'
+    )
+    projects = report.projects
+    for project in projects:
+        report.score += points[project.project_scale]
+        logger.info(
+           f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
+        )
+    report.save()
