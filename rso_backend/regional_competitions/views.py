@@ -61,6 +61,9 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = StatisticalRegionalReportFilter
 
+    def get_queryset(self):
+        return self.queryset.order_by('regional_headquarter__name')
+
     def get_permissions(self):
         if self.action == 'retrieve':
             return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
