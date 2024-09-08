@@ -14,6 +14,7 @@ from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from django.core.mail import EmailMessage
 from openpyxl import Workbook
+from regional_competitions.models import StatisticalRegionalReport
 from reportlab.lib.units import cm
 from rest_framework import status
 from reportlab.pdfbase import pdfmetrics
@@ -161,7 +162,12 @@ def send_email_with_attachment(
     mail.send()
 
 
-def generate_pdf_report_part_1(report) -> str:
+def generate_pdf_report_part_1(report_id) -> str:
+    try:
+        report = StatisticalRegionalReport.objects.get(pk=report_id)
+    except:
+        raise Exception(f'В generate_pdf_report_part_1 передан некорректный id первого отчета: {report_id}')
+
     pdf_file_name = f"Отчет_ч1_РСО_{report.regional_headquarter}.pdf"
     pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
 
