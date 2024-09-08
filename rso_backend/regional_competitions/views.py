@@ -1,21 +1,21 @@
 import json
 
+from django.conf import settings
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
-from api.mixins import SendMixin
-from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
-                                 UserDistrictHeadquarterPosition)
 from rest_framework import permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
+from api.mixins import SendMixin
 from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
+from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
+                                 UserDistrictHeadquarterPosition)
 from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
@@ -43,9 +43,6 @@ from regional_competitions.utils import (
     get_all_reports_from_competition, get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
-from django.conf import settings
-
-from users.models import RSOUser
 
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
@@ -263,10 +260,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
         if request.method == 'PUT':
 
             report.verified_by_chq = True
-            report.save()
+            with transaction.atomic():
+                report.save()
 
-            # Вызываем функцию подсчета очков
-            get_calculation(report=report, report_number=self.get_report_number())
+                # Вызываем функцию подсчета очков
+                get_calculation(report=report, report_number=self.get_report_number())
 
             RVerificationLog.objects.create(
                 user=user,
@@ -362,6 +360,7 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
             }
         )
         return context
+
 
 class BaseRegionalRMeViewSet(RegionalRMeMixin):
     """Базовый класс для вьюсетов шаблона RegionalR<int>MeViewSet."""

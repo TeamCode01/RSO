@@ -709,3 +709,18 @@ def add_verbose_names_and_values_to_pdf(
             if isinstance(item, dict):
                 add_verbose_names_and_values_to_pdf(item, elements, styles, indent + 1, is_nested=True)
             elements.append(Spacer(1, 5))
+
+
+def get_fees(report, model):
+    """Возвращает сумму взносов из первого показателя."""
+
+    ro_id = report.regional_headquarter.id
+
+    try:
+        amount_of_money = model.objects.filter(
+            verified_by_chq=True,
+            regional_headquarter_id=ro_id
+        ).first().amount_of_money
+    except AttributeError:
+        return
+    return amount_of_money
