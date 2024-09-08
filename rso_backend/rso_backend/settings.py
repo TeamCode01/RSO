@@ -325,6 +325,10 @@ if DEBUG:
                 month_of_year=10,
             )
         },
+        'calculate_r11_report_task': {
+            'task': 'regional_competitions.tasks.calculate_r11_report_task',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
         'calculate_r13_report_task': {
             'task': 'regional_competitions.tasks.calculate_r13_report_task',
             'schedule': timedelta(minutes=12)  # TODO: пока только дев
