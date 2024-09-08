@@ -87,7 +87,7 @@ def send_email_report_part_2(regional_headquarter_id: int):
         pdf_file_p2 = generate_pdf_report_part_2(regional_headquarter_id)
         logger.info(f'Подготавливаем PDF-файл 1 части отчета для регионального штаба {regional_headquarter}')
         pdf_file_p1 = generate_pdf_report_part_1(
-            StatisticalRegionalReport.objects.filter(regional_headquarter_id=regional_headquarter_id).last()
+            StatisticalRegionalReport.objects.filter(regional_headquarter_id=regional_headquarter_id).last().id
         )
         logger.info(f'Отправляем PDF-файлы для регионального штаба {regional_headquarter}')
         send_email_with_attachment(
