@@ -216,6 +216,14 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
             obj.delete()
 
 
+class ReportExistsValidationMixin:
+    def validate(self, data):
+        user = self.context['request'].user
+        if self.Meta.model.objects.filter(regional_headquarter__commander=user).exists():
+            raise serializers.ValidationError(REPORT_EXISTS_MESSAGE)
+        return data
+
+
 class BaseRSerializer(serializers.ModelSerializer):
     """Базовый класс для сериализаторов шаблона RegionalR<int>Serializer.
 
@@ -668,7 +676,7 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(CreateUpdateSerializerMixin):
+class RegionalR17Serializer(ReportExistsValidationMixin, serializers.ModelSerializer):
 
     class Meta:
         model = RegionalR17
@@ -709,7 +717,7 @@ class RegionalR18ProjectSerializer(FileScanSizeSerializerMixin):
         read_only_fields = ('id', 'regional_r18',)
 
 
-class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
+class RegionalR18Serializer(ReportExistsValidationMixin, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
     projects = RegionalR18ProjectSerializer(many=True, allow_null=True, required=False)
 
     objects_name = 'projects'
@@ -743,10 +751,9 @@ class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin
         )
 
 
-class RegionalR19Serializer(CreateUpdateSerializerMixin):
+class RegionalR19Serializer(ReportExistsValidationMixin, serializers.ModelSerializer):
     class Meta:
         model = RegionalR19
-        fields = ('employed_student_start', 'employed_student_end', 'comment',)
         fields = (
             'id',
             'regional_headquarter',
