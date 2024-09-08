@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
-from regional_competitions.r_calculations import (calculate_r12_score, calculate_r1_score, calculate_r2_score,
+from regional_competitions.r_calculations import (calculate_r11_score, calculate_r12_score, calculate_r1_score, calculate_r2_score,
                                                   calculate_r4_score, calculate_r5_score, calculate_r6_score,
                                                   calculate_r7_score, calculate_r9_r10_score,
                                                   calculate_r16_score)
