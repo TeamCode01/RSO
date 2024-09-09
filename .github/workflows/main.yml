@@ -68,7 +68,7 @@ jobs:
             sudo docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
   post_deploy_tests:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/master'
     needs:
       - deploy
     steps:
@@ -79,7 +79,7 @@ jobs:
         id: regions_request
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'http://213.139.208.147:30000/api/v1/regions/'
+          url: 'https://лк.трудкрут.рф/api/v1/regions/'
           method: 'GET'
 
       - name: Get commit author name
