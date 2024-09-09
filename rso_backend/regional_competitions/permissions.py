@@ -94,5 +94,8 @@ class IsRegionalCommanderAuthorOrCentralHeadquarterExpert(permissions.BasePermis
                     request.user == obj.regional_headquarter.commander or
                     ExpertRole.objects.filter(
                         user=request.user, central_headquarter__isnull=False
+                    ).exists() or
+                    CentralHeadquarter.objects.filter(
+                        commander=request.user
                     ).exists()
             )

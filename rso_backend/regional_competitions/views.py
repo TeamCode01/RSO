@@ -5,8 +5,9 @@ from django.db import transaction
 from django.forms import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 
-from rest_framework import permissions, status
+from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -19,6 +20,7 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE
 from regional_competitions.factories import RViewSetFactory
+from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
@@ -44,12 +46,26 @@ from regional_competitions.utils import (
     get_all_reports_from_competition, get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
+from django.conf import settings
 
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
-    """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
+    """Отчет 1 ч.
+
+    Фильтрация:
+        - district_id: поиск по id окружного штаба
+        - district_name: поиск по названию окружного штаба, полное совпадение
+        - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
+    Сортировка:
+        - доступные поля для сортировки:
+            - regional_headquarter_name: сортировка по названию регионального штаба
+          Можно сортировать в обратном порядке добавив признак '-' перед названием поля
+    """
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = StatisticalRegionalReportFilter
+    ordering_fields = ('regional_headquarter__name',)
 
     def get_permissions(self):
         if self.action == 'retrieve':
@@ -110,7 +126,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'action': self.action})
-        if self.action not in ('district_review', 'central_review'):
+        if self.action == 'create':
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
@@ -354,13 +370,14 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                # 'action': self.action
-            }
-        )
+        if self.action == 'create':
+            context = super().get_serializer_context()
+            context.update(
+                {
+                    'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                    # 'action': self.action
+                }
+            )
         return context
 
 

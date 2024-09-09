@@ -143,6 +143,7 @@ def get_emails(report_instance) -> list:
     return addresses
 
 
+@log_exception
 def send_email_with_attachment(
         subject: str, message: str, recipients: list, file_path: str, additional_file_path: str = None
         ):
