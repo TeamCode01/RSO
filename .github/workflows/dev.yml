@@ -72,6 +72,9 @@ jobs:
     needs:
       - deploy
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Make regions get request
         id: regions_request
         uses: fjogeleit/http-request-action@v1
@@ -89,13 +92,13 @@ jobs:
       - name: Check regions response and send Telegram notification
         run: |
           branch_name=${{ github.ref }}
-          branch_name=${branch_name#refs/heads/}
+          branch_name=${branch_name#refs/heads/} # удаление префикса "refs/heads/"
           
           if [ "${{ steps.regions_request.outputs.status }}" -eq 200 ]; then
             echo "Status is 200, sending success notification to Telegram."
             curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
               -d chat_id=$TELEGRAM_CHAT_ID \
-              -d text="<b>✅ Деплой успешен!</b>\n<b>Статус:</b> 200\n<b>Коммит:</b> <code>$GITHUB_SHA</code>\n<b>Автор:</b> ${{ env.author_name }}\n<b>Ветка:</b> $branch_name" \
+              -d text="<b>✅ Деплой прошел успешно!</b>\n<b>Статус:</b> 200\n<b>Коммит:</b> <code>$GITHUB_SHA</code>\n<b>Автор:</b> ${{ env.author_name }}\n<b>Ветка:</b> $branch_name" \
               -d parse_mode="HTML"
           else
             echo "Status is not 200, sending failure notification to Telegram."
