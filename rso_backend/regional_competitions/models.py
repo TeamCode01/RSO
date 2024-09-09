@@ -14,6 +14,8 @@ from regional_competitions.utils import regional_comp_regulations_files_path
 
 
 class StatisticalRegionalReport(models.Model):
+    """Статистический отчет РШ, 1-я часть отчёта РО."""
+
     regional_headquarter = models.OneToOneField(
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
