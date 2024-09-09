@@ -5,6 +5,7 @@ from django.db import transaction
 from django.forms import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
