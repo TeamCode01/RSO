@@ -79,7 +79,7 @@ jobs:
         id: regions_request
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'http://213.139.208.147:30000/api/v1/users/'
+          url: 'http://213.139.208.147:30000/api/v1/regions/'
           method: 'GET'
 
       - name: Get commit author name
