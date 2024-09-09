@@ -90,7 +90,6 @@ jobs:
           echo "Author: $author_name"
 
       - name: Send success or error based on status code
-      - name: Send success or error based on status code
         if: success()
         run: |
           branch_name="${GITHUB_REF#refs/heads/}"
