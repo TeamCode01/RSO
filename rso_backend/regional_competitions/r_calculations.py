@@ -78,31 +78,15 @@ def calculate_r4_score(report: RegionalR4):
 
 @log_exception
 def calculate_r5_score(report):
-    """Расчет очков по 5 показателю.
-
-    P= ((x1-z1)*y1+((xn-zn)yn
-    ((xn-zn)yn - вычисление очков для всех мероприятий у РО.
-
-    Три поля ввода:
-    x- количество человек, принявших участие в проекте, всего(participants_number)
-    z- количество человек из своего региона, принявших участие в проекте(ro_participants_number)
-    y- количество дней проведения проекта(end_date - start_date)
-    Количество дней проведения мероприятия рассчитываем сами, как разницу между датой окончания и датой начала.
-
-    Все цифры в формулу берутся из корректировок ЦШ.
-
-    """
-
-    # TODO: написать функцию расчёта мест
+    """Расчет очков по 5 показателю."""
 
     logger.info('Выполняется подсчет отчета по r5 показателю')
 
     ro_id = report.regional_headquarter.id
     logger.info(f'Выполняется подсчет очков r5 для рег штаба {ro_id}')
     ro_score = 0
-    # в ro_events получаем список кортежей.
-    # Пример - [(34, 18, 2024-07-29, 2024-07-29), (4, 2, 2024-08-29, 2024-08-29),]
 
+    # Получаем список кортежей с данными мероприятий.
     ro_events = report.events.values_list(
         'participants_number',
         'ro_participants_number',
@@ -110,15 +94,16 @@ def calculate_r5_score(report):
         'end_date'
     )
 
-    # вычисляем сумму очков, после цикла записываем в таблицу
+    # вычисляем сумму очков
     for item in ro_events:
-        date_start = datetime.strptime(item[2], '%Y-%m-%d').date()
-        date_end = datetime.strptime(item[3], '%Y-%m-%d').date()
+        date_start = item[2]
+        date_end = item[3]
         days_diff = (date_end - date_start).days + 1
         ro_score += (item[0] - item[1]) * days_diff
+
     report.score = ro_score
     report.save()
-    logger.info(f'Подсчитали очки 5го показателя для рег штаба {ro_id}. Очки: {ro_score}')
+    logger.info(f'Подсчитали очки 5-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
 
 
 @log_exception
