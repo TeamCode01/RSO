@@ -90,6 +90,7 @@ jobs:
           echo "Author: $author_name"
 
       - name: Send success or error based on status code
+      - name: Send success or error based on status code
         if: success()
         run: |
           branch_name="${GITHUB_REF#refs/heads/}"
@@ -100,14 +101,15 @@ jobs:
             echo "Status is 200, sending success notification to Telegram."
             curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
               -d chat_id=$TELEGRAM_CHAT_ID \
-              -d text="<b>✅ Деплой прошел успешно!</b>%0A<b>Статус:</b> 200%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name" \
+              -d text="&lt;b&gt;✅ Деплой прошел успешно!&lt;/b&gt;%0A&lt;b&gt;Статус:&lt;/b&gt; 200%0A&lt;b&gt;Коммит:&lt;/b&gt; &lt;code&gt;$GITHUB_SHA&lt;/code&gt;%0A&lt;b&gt;Автор:&lt;/b&gt; ${{ env.author_name }}%0A&lt;b&gt;Ветка:&lt;/b&gt; $branch_name" \
               -d parse_mode="HTML"
           else
             echo "Status is not 200, sending failure notification to Telegram."
             curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
               -d chat_id=$TELEGRAM_CHAT_ID \
-              -d text="<b>❌ Ошибка деплоя!</b>%0A<b>Статус:</b> $status_code%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name%0A%0A<b><a href=\"https://github.com/d2avids/rso/actions\">Смотреть подробнее</a></b>" \
+              -d text="&lt;b&gt;❌ Ошибка деплоя!&lt;/b&gt;%0A&lt;b&gt;Статус:&lt;/b&gt; $status_code%0A&lt;b&gt;Коммит:&lt;/b&gt; &lt;code&gt;$GITHUB_SHA&lt;/code&gt;%0A&lt;b&gt;Автор:&lt;/b&gt; ${{ env.author_name }}%0A&lt;b&gt;Ветка:&lt;/b&gt; $branch_name%0A%0A&lt;b&gt;&lt;a href=&quot;https://github.com/d2avids/rso/actions&quot;&gt;Смотреть подробнее&lt;/a&gt;&lt;/b&gt;" \
               -d parse_mode="HTML"
+          fi
 
       - name: Send workflow failure notification
         if: failure()
