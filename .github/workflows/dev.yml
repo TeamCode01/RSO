@@ -79,7 +79,7 @@ jobs:
         id: regions_request
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'http://213.139.208.147:30000/api/v1/regions/'
+          url: 'http://213.139.208.147:30000/api/v1/rsousers/'
           method: 'GET'
 
       - name: Get commit author name
@@ -92,7 +92,7 @@ jobs:
       - name: Check regions response and send Telegram notification
         run: |
           branch_name=${{ github.ref }}
-          branch_name=${branch_name#refs/heads/} # удаление префикса "refs/heads/"
+          branch_name=${branch_name#refs/heads/}"
           
           if [ "${{ steps.regions_request.outputs.status }}" -eq 200 ]; then
             echo "Status is 200, sending success notification to Telegram."
