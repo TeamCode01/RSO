@@ -66,3 +66,48 @@ jobs:
             sudo docker compose exec backend python manage.py migrate
             sudo docker compose exec backend python manage.py collectstatic
             sudo docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
+  post_deploy_tests:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    needs:
+      - deploy
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Make regions get request
+        id: regions_request
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://лк.трудкрут.рф/api/v1/regions/'
+          method: 'GET'
+
+      - name: Get commit author name
+        id: get_author
+        run: |
+          author_name=$(git log -1 --pretty=format:'%an')
+          echo "author_name=$author_name" >> $GITHUB_ENV
+          echo "Author: $author_name"
+
+      - name: Check regions response and send Telegram notification
+        run: |
+          branch_name=${{ github.ref }}
+          branch_name=${branch_name#refs/heads/} # удаление префикса "refs/heads/"
+          
+          if [ "${{ steps.regions_request.outputs.status }}" -eq 200 ]; then
+            echo "Status is 200, sending success notification to Telegram."
+            curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
+              -d chat_id=$TELEGRAM_CHAT_ID \
+              -d text="<b>✅ Деплой прошел успешно!</b>%0A<b>Статус:</b> 200%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name" \
+              -d parse_mode="HTML"
+          else
+            echo "Status is not 200, sending failure notification to Telegram."
+            curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
+              -d chat_id=$TELEGRAM_CHAT_ID \
+              -d text="<b>❌ Ошибка деплоя!</b>%0A<b>Статус:</b> ${{ steps.regions_request.outputs.status }}%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name" \
+              -d parse_mode="HTML"
+            exit 1
+          fi
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
