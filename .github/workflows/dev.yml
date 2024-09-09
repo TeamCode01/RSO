@@ -78,6 +78,26 @@ jobs:
         with:
           url: 'https://лк.трудкрут.рф/api/v1/regions/'
           method: 'GET'
-      - name: Check regions response
+
+      - name: Get commit author name
+        id: get_author
         run: |
-          echo ${{ steps.regions_request.outputs.status }}
+          echo "author_name=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+
+      - name: Check regions response and send Telegram notification
+        run: |
+          if [ "${{ steps.regions_request.outputs.status }}" -eq 200 ]; then
+            echo "Status is 200, sending success notification to Telegram."
+            curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
+              -d chat_id=$TELEGRAM_CHAT_ID \
+              -d text="✅ Деплой успешен!\nСтатус: ${{ steps.regions_request.outputs.status }}.\nКоммит: $GITHUB_SHA\nАвтор: ${{ env.author_name }}"
+          else
+            echo "Status is not 200, sending failure notification to Telegram."
+            curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
+              -d chat_id=$TELEGRAM_CHAT_ID \
+              -d text="❌ Ошибка деплоя!\nСтатус: ${{ steps.regions_request.outputs.status }}.\nКоммит: $GITHUB_SHA\nАвтор: ${{ env.author_name }}"
+            exit 1
+          fi
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
