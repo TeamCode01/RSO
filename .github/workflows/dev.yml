@@ -104,7 +104,7 @@ jobs:
             echo "Status is not 200, sending failure notification to Telegram."
             curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
               -d chat_id=$TELEGRAM_CHAT_ID \
-              -d text="<b>❌ Ошибка деплоя!</b>%0A<b>Статус:</b> ${{ steps.regions_request.outputs.status }}%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name" \
+              -d text="<b>❌ Ошибка деплоя!</b>%0A<b>Статус:</b> ${{ steps.regions_request.outputs.status }}%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name"%0A%0A<b><a href="https://github.com/d2avids/rso/actions">Смотреть подробнее</a> \
               -d parse_mode="HTML"
             exit 1
           fi
