@@ -93,8 +93,12 @@ jobs:
         if: success()
         run: |
           branch_name="${GITHUB_REF#refs/heads/}"
+          echo "Branch name: $branch_name"
+          echo "Commit: $GITHUB_SHA"
+          echo "Author: ${{ env.author_name }}"
           
           status_code="${{ steps.regions_request.outputs.status }}"
+          echo "Status Code: $status_code"
           
           if [ "$status_code" -eq 200 ]; then
             echo "Status is 200, sending success notification to Telegram."
@@ -108,13 +112,15 @@ jobs:
               -d chat_id=$TELEGRAM_CHAT_ID \
               -d text="<b>❌ Ошибка деплоя!</b>%0A<b>Статус:</b> $status_code%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name%0A%0A<b><a href=\"https://github.com/d2avids/rso/actions\">Смотреть подробнее</a></b>" \
               -d parse_mode="HTML"
-          fi
 
       - name: Send workflow failure notification
         if: failure()
         run: |
           branch_name="${GITHUB_REF#refs/heads/}"
-          
+          echo "Branch name: $branch_name"
+          echo "Commit: $GITHUB_SHA"
+          echo "Author: ${{ env.author_name }}"
+  
           echo "Workflow error, sending failure notification to Telegram."
           curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
             -d chat_id=$TELEGRAM_CHAT_ID \
