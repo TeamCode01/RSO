@@ -92,8 +92,7 @@ jobs:
       - name: Send success or error based on status code
         if: success()
         run: |
-          branch_name=${{ github.ref }}
-          branch_name=${branch_name#refs/heads/}"
+          branch_name="${GITHUB_REF#refs/heads/}"
           
           status_code="${{ steps.regions_request.outputs.status }}"
           
@@ -113,8 +112,7 @@ jobs:
       - name: Send workflow failure notification
         if: failure()
         run: |
-          branch_name=${{ github.ref }}
-          branch_name=${branch_name#refs/heads/}"
+          branch_name="${GITHUB_REF#refs/heads/}"
           
           echo "Workflow error, sending failure notification to Telegram."
           curl -s -X POST https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage \
