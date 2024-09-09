@@ -66,3 +66,13 @@ jobs:
             sudo docker compose exec backend python manage.py migrate
             sudo docker compose exec backend python manage.py collectstatic
             sudo docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
+  post_deploy_tests:
+    - name: Make regions get request
+      id: regions_request
+      uses: fjogeleit/http-request-action@v1
+      with:
+        url: 'https://лк.трудкрут.рф/api/v1/regions/'
+        method: 'GET'
+    - name: Check regions response
+      run: |
+        echo ${{ steps.regions_request.outputs.status }}
