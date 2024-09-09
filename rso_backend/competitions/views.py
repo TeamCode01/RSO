@@ -2116,7 +2116,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
             for i, participant in enumerate(participants_data):
                 file_key = f'participants_data[{i}][document]'
                 if file_key in request.FILES:
-                    participant['document'] = request.FILES[file_key]
+                    participant['document'] = 'https://' + settings.DEFAULT_SITE_URL + request.FILES[file_key]
         if not participants_data:
             return Response(
                 {
