@@ -113,6 +113,9 @@ jobs:
               -d text="<b>❌ Ошибка деплоя!</b>%0A<b>Статус:</b> $status_code%0A<b>Коммит:</b> <code>$GITHUB_SHA</code>%0A<b>Автор:</b> ${{ env.author_name }}%0A<b>Ветка:</b> $branch_name%0A%0A<b><a href=\"https://github.com/d2avids/rso/actions\">Смотреть подробнее</a></b>" \
               -d parse_mode="HTML"
           fi
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
       - name: Send workflow failure notification
         if: failure()
