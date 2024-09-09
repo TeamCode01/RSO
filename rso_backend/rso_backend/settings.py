@@ -286,7 +286,6 @@ LOGGING = {
     }
 }
 
-
 REDIS_HOST = '127.0.0.1' if RUN_TYPE != 'DOCKER' else 'redis'
 
 # REDIS CACHE

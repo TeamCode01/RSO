@@ -2,7 +2,7 @@ import json
 
 from django.conf import settings
 from django.db import transaction
-from django_filters.rest_framework import DjangoFilterBackend
+from django.forms import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
@@ -17,7 +17,7 @@ from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE
+from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
@@ -362,6 +362,7 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet,
     которые не требуют верификации.
     """
+    model = None
     serializer_class = None
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
@@ -735,7 +736,7 @@ class RegionalR17ViewSet(RegionalRNoVerifViewSet):
     file_size выводится в мегабайтах.
 
     ```json
-            {
+    {
     "scan_file": документ,
     "comment": строка
     }
@@ -764,6 +765,7 @@ class RegionalR18ViewSet(RegionalRNoVerifViewSet):
     get {pk} - принимает id РШ, а не id отчета.
     Возвращает последний отчет, если тот существует, иначе 404.
     """
+
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalR18Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -820,7 +822,7 @@ class RegionalR19ViewSet(RegionalRNoVerifViewSet):
     организации по итогам третьего трудового семестра.
 
     ```json
-            {
+    {
       "employed_student_start": 0,
       "employed_student_end": 0,
       "comment": "string"
