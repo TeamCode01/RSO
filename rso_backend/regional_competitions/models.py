@@ -332,6 +332,22 @@ class RegionalR2(BaseRegionalR, BaseScore):
         verbose_name_plural = 'Отчеты по 2 показателю'
 
 
+class RegionalR3(BaseScore):
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    amount_of_membership_fees_2023 = models.IntegerField(
+        validators=[MinValueValidator(0)]
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 3 показателю'
+        verbose_name_plural = 'Отчеты по 3 показателю'
+
+
 class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'
