@@ -220,9 +220,10 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
 
 class ReportExistsValidationMixin:
     def validate(self, data):
-        user = self.context['request'].user
-        if self.Meta.model.objects.filter(regional_headquarter__commander=user).exists():
-            raise serializers.ValidationError(REPORT_EXISTS_MESSAGE)
+        if self.context.get('action') == 'create':
+            user = self.context['request'].user
+            if self.Meta.model.objects.filter(regional_headquarter__commander=user).exists():
+                raise serializers.ValidationError(REPORT_EXISTS_MESSAGE)
         return data
 
 

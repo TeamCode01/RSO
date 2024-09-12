@@ -375,7 +375,7 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                    # 'action': self.action
+                    'action': self.action
                 }
             )
         return context

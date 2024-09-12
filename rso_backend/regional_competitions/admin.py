@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
 from regional_competitions.forms import ExpertUserForm
-from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
+from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
+                                          RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -15,8 +16,8 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           RegionalR102Link, RVerificationLog,
                                           StatisticalRegionalReport,
                                           r6_models_factory,
-                                          r7_models_factory, r9_models_factory)
-from regional_competitions.r_calculations import calculate_r13_score, calculate_r2_score
+                                          r7_models_factory, r9_models_factory, RegionalR3)
+from regional_competitions.r_calculations import calculate_r13_score, calculate_r2_score, calculate_r3_score
 
 
 class AdditionalStatisticInline(admin.StackedInline):
@@ -174,6 +175,25 @@ class RegionalR2Admin(admin.ModelAdmin):
     def get_ro_score(self, request, queryset):
         for obj in queryset:
             calculate_r2_score(obj)
+
+    get_ro_score.short_description = 'Вычислить очки по показателю'
+
+
+@admin.register(RegionalR3)
+class RegionalR3Admin(admin.ModelAdmin):
+
+    list_display = (
+        'regional_headquarter',
+        'id',
+        'amount_of_membership_fees_2023',
+        'score',
+    )
+    search_fields = ('regional_headquarter__name',)
+    actions = ['get_ro_score',]
+
+    def get_ro_score(self, request, queryset):
+        for obj in queryset:
+            calculate_r3_score(obj)
 
     get_ro_score.short_description = 'Вычислить очки по показателю'
 
