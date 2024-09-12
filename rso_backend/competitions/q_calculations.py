@@ -837,7 +837,7 @@ def calculate_q6_place(competition_id):
 
             if verified:
                 logger.info(f'Для {entry.detachment} и {partner_entry.detachment} найден верифицированный блок, сохраняем {entry.score + partner_entry.score} очков')
-                tuple_to_append = (entry, partner_entry, round_math(entry.score + partner_entry.score), 2)
+                tuple_to_append = (entry, partner_entry, round_math((entry.score + partner_entry.score), 2))
                 if tuple_to_append not in category:
                     category.append(tuple_to_append)
         elif entry and not partner_entry and category == solo_entries:
@@ -907,7 +907,7 @@ def calculate_q6_place(competition_id):
 
             if verified:
                 logger.info(f'Для {entry.detachment} найден верифицированный блок, сохраняем {entry.score} очков')
-                category.append((round_math(entry, entry.score), 2))
+                category.append((entry, entry.score))
             else:
                 logger.info(f'Для {entry.detachment} не найден верифицированный блок, пропускаем')
         elif partner_entry and not entry and category == solo_entries:
@@ -976,7 +976,7 @@ def calculate_q6_place(competition_id):
 
             if verified:
                 logger.info(f'Для {partner_entry.detachment} найден верифицированный блок, сохраняем {partner_entry.score} очков')
-                category.append((round_math(partner_entry, partner_entry.score), 2))
+                category.append((partner_entry, partner_entry.score))
             else:
                 logger.info(f'Для {partner_entry.detachment} не найден верифицированный блок, пропускаем')
 
