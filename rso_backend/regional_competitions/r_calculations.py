@@ -47,6 +47,24 @@ def calculate_r2_score(report):
 
 
 @log_exception
+def calculate_r3_score(report):
+    """Расчет очков по 3 показателю.
+
+    P3= ((X1-X2)/X2)*100%, где
+    X1- численность членов РО РСО за 2024 г., оплативших ЧВ (по данным ЦШ) (сумма из 1 показателя/50)
+    X2- Численность членов РО РСО за 2023 г., оплативших ЧВ (по данным ЦШ)
+
+    Расчёт вызывается через админку и 15 октября 2024 года.
+    """
+    logger.info(f'Выполняется подсчет очков r3 для РШ {report.regional_headquarter}')
+    amount_of_money = get_fees(report, RegionalR1)
+    ro_score = (amount_of_money / 50) / report.amount_of_membership_fees_2023
+    report.score = ro_score
+    report.save()
+    logger.info(f'Подсчитали очки 3-го показателя для РШ {report.regional_headquarter}: {ro_score}')
+
+
+@log_exception
 def calculate_r4_score(report: RegionalR4):
     """Расчет очков по 4 показателю.
 

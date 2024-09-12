@@ -383,7 +383,7 @@ def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
 
 
 def get_all_reports_from_competition(report_number: int) -> HttpResponse:
-    """Возвращает xlsx со всеми верифицированными или не рассмотренными отчетами."""
+    """Возвращает xlsx со всеми верифицированными или не рассмотренными отчетами показателя."""
 
     model_name = 'RegionalR' + str(report_number)
     model = apps.get_model('regional_competitions', model_name)
@@ -436,7 +436,7 @@ def get_all_reports_from_competition(report_number: int) -> HttpResponse:
 
 def get_all_models(module_name: str):
     """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
-    all_models = []
+    all_models = ['StatisticalRegionalReport',]
     pattern = re.compile(r'^RegionalR\d+$')
 
     for model in apps.get_models():
@@ -483,8 +483,12 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
                 serializer_data
             )
         )
-
-        sheet_name = report_number[0] if report_number[0] in MASS_REPORT_NUMBERS else report_number
+        if model_name == 'StatisticalRegionalReport':
+            sheet_name = 'Статистический отчет'
+        elif report_number == '101' or report_number == '102':
+            sheet_name = '10'
+        else:
+            sheet_name = report_number[0] if report_number[0] in MASS_REPORT_NUMBERS else report_number
 
         if sheet_name in workbook.sheetnames:
             worksheet = workbook[sheet_name]

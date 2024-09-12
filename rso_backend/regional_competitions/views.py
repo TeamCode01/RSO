@@ -56,14 +56,16 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         - district_id: поиск по id окружного штаба
         - district_name: поиск по названию окружного штаба, полное совпадение
         - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
+    Сортировка:
+        - доступные поля для сортировки:
+            - regional_headquarter_name: сортировка по названию регионального штаба
+          Можно сортировать в обратном порядке добавив признак '-' перед названием поля
     """
     queryset = StatisticalRegionalReport.objects.all()
     serializer_class = StatisticalRegionalReportSerializer
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = StatisticalRegionalReportFilter
-
-    def get_queryset(self):
-        return self.queryset.order_by('regional_headquarter__name')
+    ordering_fields = ('regional_headquarter__name',)
 
     def get_permissions(self):
         if self.action == 'retrieve':
@@ -124,7 +126,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'action': self.action})
-        if self.action not in ('district_review', 'central_review'):
+        if self.action == 'create':
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
@@ -368,13 +370,14 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                # 'action': self.action
-            }
-        )
+        if self.action == 'create':
+            context = super().get_serializer_context()
+            context.update(
+                {
+                    'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                    'action': self.action
+                }
+            )
         return context
 
 
