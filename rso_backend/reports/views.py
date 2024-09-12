@@ -22,13 +22,15 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                Q18_DATA_HEADERS,
                                COMMANDER_SCHOOL_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
-                               Q19_DATA_HEADERS)
+                               Q19_DATA_HEADERS, DISTRICT_HQ_HEADERS, REGIONAL_HQ_HEADERS,
+                               LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS, CENTRAL_HQ_HEADERS)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
     get_competition_users, get_detachment_q_results,
     adapt_attempts, get_membership_fee_data
 )
+from django.core.exceptions import ValidationError
 
 
 def has_reports_access(user):
@@ -483,3 +485,87 @@ class AttributesOfUniformDataView(View):
         context = {'sample_results': results,
                    'columns': ATTRIBUTION_DATA_HEADERS}
         return render(request, self.template_name, context)
+
+
+class ExportCentralHqDataView(BaseExcelExportView):
+    def get_headers(self):
+        return CENTRAL_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Центральный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Центральный штаб'
+    
+    def get_data_func(self):
+        return 'get_central_hq_data'
+
+
+class ExportDistrictHqDataView(BaseExcelExportView):
+    def get_headers(self):
+        return DISTRICT_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Окружной_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Окружной штаб'
+
+    def get_data_func(self):
+        return 'get_district_hq_data'
+
+
+class ExportRegionalHqDataView(BaseExcelExportView):
+    def get_headers(self):
+        return REGIONAL_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Региональный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Региональный штаб'
+
+    def get_data_func(self):
+        return 'get_regional_hq_data'
+
+
+class ExportLocalHqDataView(BaseExcelExportView):
+    def get_headers(self):
+        return LOCAL_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Местный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Местный штаб'
+
+    def get_data_func(self):
+        return 'get_local_hq_data'
+
+
+class ExportEducationHqDataView(BaseExcelExportView):
+    def get_headers(self):
+        return EDUCATION_HQ_HEADERS
+
+    def get_filename(self):
+        return f'СО_ОО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'СО ОО'
+
+    def get_data_func(self):
+        return 'get_educational_hq_data'
+
+
+class ExportDetachmentDataView(BaseExcelExportView):
+    def get_headers(self):
+        return DETACHMENT_HEADERS
+
+    def get_filename(self):
+        return f'ЛСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'ЛСО'
+
+    def get_data_func(self):
+        return 'get_detachment_data'

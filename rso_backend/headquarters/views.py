@@ -81,7 +81,7 @@ from headquarters.serializers import (
     UserLocalApplicationReadSerializer,
     UserRegionalApplicationReadSerializer,
     UserRegionalApplicationShortReadSerializer,
-    UserCentralApplicationShortReadSerializer,)
+    UserCentralApplicationShortReadSerializer)
 from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
@@ -1207,3 +1207,4 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         return queryset
+    
