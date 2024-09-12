@@ -143,8 +143,8 @@ class VKLoginAPIView(APIView):
 
             if 'response' in response_data:
                 access_token = response_data['response']['access_token']
-                email = response_data['response']['email']
-                phone = response_data['response']['phone']
+                email = response_data['response'].get('email')
+                phone = response_data['response'].get('phone')
             else:
                 return Response(
                     {'error': response_data.get('error', 'Unknown error')},
