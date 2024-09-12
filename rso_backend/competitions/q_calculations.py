@@ -1117,12 +1117,22 @@ def calculate_june_detachment_members(entry, partner_entry=None):
 
 def calculate_april_detachment_members(entry, partner_entry=None):
     if entry:
-        entry.april_1_detachment_members = July15Participant.objects.filter(detachment=entry.detachment).last().members_number
+        members_inst = July15Participant.objects.filter(detachment=entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        entry.april_1_detachment_members = members_number
         entry.save()
     if partner_entry:
-        partner_entry.april_1_detachment_members = (
-            July15Participant.objects.filter(detachment=partner_entry.detachment).last().members_number
-        )
+        members_inst = July15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        partner_entry.april_1_detachment_members = members_number
         partner_entry.save()
 
 
