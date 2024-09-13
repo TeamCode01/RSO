@@ -378,7 +378,7 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
                     'action': self.action
                 }
             )
-        return context
+            return context
 
 
 class BaseRegionalRMeViewSet(RegionalRMeMixin):

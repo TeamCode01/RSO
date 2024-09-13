@@ -847,6 +847,8 @@ class RegionalR18Link(models.Model):
     )
     link = models.URLField(
         verbose_name='Ссылка на публикацию',
+        blank=True,
+        null=True
     )
 
     class Meta:
