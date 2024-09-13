@@ -700,9 +700,9 @@ def add_verbose_names_and_values_to_pdf(
     for nested_name, nested_items in nested_structures:
         match nested_name:
             case "projects":
-                verbose_nested_name = "Проекты"
+                verbose_nested_name = "Проект"
             case "events":
-                verbose_nested_name = "Мероприятия"
+                verbose_nested_name = "Мероприятие"
             case "links":
                 verbose_nested_name = "Ссылки"
             case _:
