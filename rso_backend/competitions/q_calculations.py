@@ -665,13 +665,8 @@ def calculate_q6_place(competition_id):
                         f'партнерский отчет. Создали дефолтный: {partner_entry}'
                     )
 
-        if today <= cutoff_date:
-            logger.info(
-                f'Сегодняшняя дата {today} меньше '
-                f'cutoff date: {cutoff_date}. '
-                f'Обновляем кол-во участников.'
-            )
-            calculate_april_detachment_members(entry, partner_entry)
+
+        calculate_april_detachment_members(entry, partner_entry)
 
         working_semester_opening_participants = 0
         patriotic_action_participants = 0
@@ -703,7 +698,7 @@ def calculate_q6_place(competition_id):
                     patriotic_action_participants +
                     first_may_demonstration_participants
             )
-            entry.score = (entry_participants_number / entry.april_1_detachment_members)
+            entry.score = round_math((entry_participants_number / entry.april_1_detachment_members), 2)
             entry.save()
 
         if partner_entry and entry:
@@ -739,7 +734,7 @@ def calculate_q6_place(competition_id):
                     patriotic_action_participants +
                     first_may_demonstration_participants
             )
-            partner_entry.score = (partner_entry_participants_number / partner_entry.april_1_detachment_members)
+            partner_entry.score = round_math((partner_entry_participants_number / partner_entry.april_1_detachment_members), 2)
             partner_entry.save()
 
             verified = False
@@ -842,7 +837,7 @@ def calculate_q6_place(competition_id):
 
             if verified:
                 logger.info(f'Для {entry.detachment} и {partner_entry.detachment} найден верифицированный блок, сохраняем {entry.score + partner_entry.score} очков')
-                tuple_to_append = (entry, partner_entry, entry.score + partner_entry.score)
+                tuple_to_append = (entry, partner_entry, round_math((entry.score + partner_entry.score), 2))
                 if tuple_to_append not in category:
                     category.append(tuple_to_append)
         elif entry and not partner_entry and category == solo_entries:
@@ -1122,12 +1117,22 @@ def calculate_june_detachment_members(entry, partner_entry=None):
 
 def calculate_april_detachment_members(entry, partner_entry=None):
     if entry:
-        entry.april_1_detachment_members = entry.detachment.members.count() + 1
+        members_inst = July15Participant.objects.filter(detachment=entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        entry.april_1_detachment_members = members_number
         entry.save()
     if partner_entry:
-        partner_entry.april_1_detachment_members = (
-            partner_entry.detachment.members.count() + 1
-        )
+        members_inst = July15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        partner_entry.april_1_detachment_members = members_number
         partner_entry.save()
 
 
