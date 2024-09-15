@@ -2305,6 +2305,10 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def create(self, request, *args, **kwargs):
         today = date.today()
+        cutoff_date = date(year=2024, month=10, day=15)
+        if today >= (cutoff_date + timedelta(days=1)):
+            return get_deadline_response(deadline=cutoff_date)
+
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
         try:
             detachment_id = request.user.detachment_commander.id
@@ -2777,6 +2781,11 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(year=2024, month=10, day=15)
+        if today >= (cutoff_date + timedelta(days=1)):
+            return get_deadline_response(deadline=cutoff_date)
+
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
@@ -3095,6 +3104,10 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ),
     )
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(year=2024, month=10, day=15)
+        if today >= (cutoff_date + timedelta(days=1)):
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
