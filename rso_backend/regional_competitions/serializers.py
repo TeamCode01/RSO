@@ -679,7 +679,7 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(ReportExistsValidationMixin, serializers.ModelSerializer):
+class RegionalR17Serializer(ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer):
 
     class Meta:
         model = RegionalR17
@@ -688,7 +688,7 @@ class RegionalR17Serializer(ReportExistsValidationMixin, serializers.ModelSerial
             'regional_headquarter',
             'scan_file',
             'comment',
-        )
+        ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = (
             'id',
             'regional_headquarter',
