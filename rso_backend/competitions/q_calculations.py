@@ -189,16 +189,8 @@ def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
 def calculate_q14_place(competition_id):
 
     today = date.today()
-    cutoff_date = date(2024, 6, 15)
 
-    logger.info(f'Сегодняшняя дата: {today}')
-    check_date = today <= cutoff_date
-    if check_date:
-        logger.info(
-            f'Сегодняшняя дата {today} меньше '
-            f'cutoff date: {cutoff_date}. '
-            f'Обновляем кол-во участников.'
-        )
+    logger.info(f'Сегодня: {today}. Считаем Q14')
 
     detachment_reports = Q14DetachmentReport.objects.filter(
         competition_id=competition_id,
@@ -208,83 +200,83 @@ def calculate_q14_place(competition_id):
     start_list = []
     tandem_list = []
     tandem_participants_list = []
-    """
-    Проходим циклом по всем отчетам
-    и записываем число участников отрядов до 15.06.2024
-    в поле отчёта.
-    """
+
+    # Проходим циклом по всем отчетам
     for report in detachment_reports:
-        if check_date:
-            is_tandem = tandem_or_start(
-                competition=competition_id,
-                detachment=report.detachment.id,
+        is_tandem = tandem_or_start(
+            competition=competition_id,
+            detachment=report.detachment.id,
+            competition_model=CompetitionParticipants
+        )
+        if not is_tandem:
+            start_list.append(report)
+            calculate_sep_detachment_members(
+                entry=report,
+                partner_entry=None
+            )
+        if is_tandem:
+            tandem_list.append(report)
+            is_main = is_main_detachment(
+                competition_id=competition_id,
+                detachment_id=report.detachment.id,
                 competition_model=CompetitionParticipants
             )
-            if not is_tandem:
-                start_list.append(report)
+            if is_main:
+                junior_detachment = CompetitionParticipants.objects.filter(
+                    competition_id=competition_id,
+                    detachment_id=report.detachment.id
+                ).first().junior_detachment
+                tandem_participants_list.append((
+                    report.detachment.id, junior_detachment.id
+                ))
+                try:
+                    partner_entry = Q14DetachmentReport.objects.filter(
+                        competition_id=competition_id,
+                        detachment_id=junior_detachment.id
+                    ).first()
+
+                except Q14DetachmentReport.DoesNotExist:
+                    partner_entry = None
                 calculate_sep_detachment_members(
                     entry=report,
-                    partner_entry=None
+                    partner_entry=partner_entry
                 )
-            if is_tandem:
-                tandem_list.append(report)
-                is_main = is_main_detachment(
+
+            if not is_main:
+                main_detachment = CompetitionParticipants.objects.filter(
                     competition_id=competition_id,
-                    detachment_id=report.detachment.id,
-                    competition_model=CompetitionParticipants
+                    junior_detachment=report.detachment.id
+                ).first().detachment
+                try:
+                    partner_entry = Q14DetachmentReport.objects.filter(
+                        competition_id=competition_id,
+                        detachment_id=main_detachment.id
+                    ).first()
 
+                except Q14DetachmentReport.DoesNotExist:
+                    partner_entry = None
+                calculate_sep_detachment_members(
+                    entry=report,
+                    partner_entry=partner_entry
                 )
-                if is_main:
-                    junior_detachment = CompetitionParticipants.objects.filter(
-                        competition_id=competition_id,
-                        detachment_id=report.detachment.id
-                    ).first().junior_detachment
-                    tandem_participants_list.append((
-                        report.detachment.id, junior_detachment.id
-                    ))
-                    try:
-                        partner_entry = Q14DetachmentReport.objects.filter(
-                            competition_id=competition_id,
-                            detachment_id=junior_detachment.id
-                        ).first()
+                tandem_participants_list.append((
+                    main_detachment.id, report.detachment.id
+                ))
 
-                    except Q14DetachmentReport.DoesNotExist:
-                        partner_entry = None
-                    calculate_sep_detachment_members(
-                        entry=report,
-                        partner_entry=partner_entry
-                    )
+    # Создание множества для участников тандемов
+    tandem_participants = set(tandem_participants_list)
 
-                if not is_main:
-                    main_detachment = CompetitionParticipants.objects.filter(
-                        competition_id=competition_id,
-                        junior_detachment=report.detachment.id
-                    ).first().detachment
-                    try:
-                        partner_entry = Q14DetachmentReport.objects.filter(
-                            competition_id=competition_id,
-                            detachment_id=main_detachment.id
-                        ).first()
-
-                    except Q14DetachmentReport.DoesNotExist:
-                        partner_entry = None
-                    calculate_sep_detachment_members(
-                        entry=report,
-                        partner_entry=partner_entry
-                    )
-                    tandem_participants_list.append((
-                        main_detachment.id, report.detachment.id
-                    ))
-                tandem_participants = set(tandem_participants_list)
-        verified_projects = (Q14LaborProject.objects.filter(
+    # Обработка количества подтвержденных проектов
+    for report in detachment_reports:
+        verified_projects = Q14LaborProject.objects.filter(
             detachment_report=report,
             is_verified=True
-        ))
-        result_amount = sum([entry.amount for entry in verified_projects])
-        report.score = (
-            result_amount / report.june_15_detachment_members
         )
+        result_amount = sum([entry.amount for entry in verified_projects])
+        report.score = result_amount / report.june_15_detachment_members
         report.save()
+
+    # Ранжирование одиночных участников
     data_list = []
     data_dict = {}
     for entry in start_list:
@@ -303,6 +295,8 @@ def calculate_q14_place(competition_id):
             detachment_id=item[0],
             place=item[1]
         )
+
+    # Ранжирование тандемов
     data_list.clear()
     data_dict.clear()
     for entry in tandem_list:
@@ -318,6 +312,7 @@ def calculate_q14_place(competition_id):
         result = score_main + score_junior
         data_dict[item[0]] = result
         data_list += [(item[0], result)]
+
     ranked_tandem = assign_ranks(data_list)
     Q14TandemRanking.objects.all().delete()
     for item in ranked_tandem:
@@ -329,6 +324,7 @@ def calculate_q14_place(competition_id):
                     junior_detachment_id=partnership[1],
                     place=item[1]
                 )
+
 
 
 def calculate_q17_place(competition_id):

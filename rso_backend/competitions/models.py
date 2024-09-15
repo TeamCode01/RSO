@@ -1285,7 +1285,10 @@ class Q13EventOrganization(models.Model):
 
 
 class Q14DetachmentReport(QBaseReport):
-    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+    june_15_detachment_members = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name='Участники с оплаченным ЧВ на 15-ое сентября'
+    )
     score = models.FloatField(verbose_name='Очки', default=1000)
 
     class Meta:
