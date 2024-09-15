@@ -32,7 +32,19 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
                                  Q19TandemRanking, Q20Ranking, Q20Report,
                                  Q20TandemRanking, QVerificationLog, ProfessionalCompetitionBlock, SpartakiadBlock,
                                  CreativeFestivalBlock, WorkingSemesterOpeningBlock, CommanderCommissionerSchoolBlock,
-                                 SafetyWorkWeekBlock, DemonstrationBlock, PatrioticActionBlock, July15Participant)
+                                 SafetyWorkWeekBlock, DemonstrationBlock, PatrioticActionBlock, July15Participant,
+                                 September15Participant)
+
+
+@admin.register(September15Participant)
+class September15Participant(admin.ModelAdmin):
+    list_display = (
+        'detachment_id',
+        'detachment',
+        'participants_number',
+        'members_number',
+    )
+    search_fields = ('detachment__name',)
 
 
 @admin.register(July15Participant)
