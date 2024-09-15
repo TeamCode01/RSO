@@ -27,8 +27,8 @@ from competitions.models import (CompetitionParticipants, July15Participant, Ove
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
-                                 CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
-                                 ProfessionalCompetitionBlock, SpartakiadBlock, September15Participant)
+                                 CommanderCommissionerSchoolBlock, September15Participant, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 ProfessionalCompetitionBlock, SpartakiadBlock)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
                                 tandem_or_start, round_math)
@@ -222,7 +222,7 @@ def calculate_q14_place(competition_id):
             )
             if not is_tandem:
                 start_list.append(report)
-                calculate_june_detachment_members(
+                calculate_sep_detachment_members(
                     entry=report,
                     partner_entry=None
                 )
@@ -250,7 +250,7 @@ def calculate_q14_place(competition_id):
 
                     except Q14DetachmentReport.DoesNotExist:
                         partner_entry = None
-                    calculate_june_detachment_members(
+                    calculate_sep_detachment_members(
                         entry=report,
                         partner_entry=partner_entry
                     )
@@ -268,7 +268,7 @@ def calculate_q14_place(competition_id):
 
                     except Q14DetachmentReport.DoesNotExist:
                         partner_entry = None
-                    calculate_june_detachment_members(
+                    calculate_sep_detachment_members(
                         entry=report,
                         partner_entry=partner_entry
                     )
@@ -1145,6 +1145,26 @@ def calculate_april_detachment_members(entry, partner_entry=None):
         partner_entry.april_1_detachment_members = members_number
         partner_entry.save()
 
+
+def calculate_sep_detachment_members(entry, partner_entry=None):
+    if entry:
+        members_inst = September15Participant.objects.filter(detachment=entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        entry.june_15_detachment_members = members_number
+        entry.save()
+    if partner_entry:
+        members_inst = September15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        partner_entry.june_15_detachment_members = members_number
+        partner_entry.save()
 
 def calculate_score_q16(competition_id):
     """
