@@ -1181,41 +1181,43 @@ def calculate_score_q16(competition_id):
     )
 
     for report in reports:
-        # если дата меньше 15 июня, или отчет сдан после 15 июня,
-        # пересчитываем score. После 15 июня пересчитывать смысла нет
-        # так как количество участников будет тем же
         logger.info(f'Расчет очков для отчета {report}')
-        if today <= date(2024, 6, 15) or report.score == 0:
-            report.june_15_detachment_members = report.detachment.members.count() + 1
-            score = 0
-            # первый блок
-            if report.link_vk_commander and report.link_vk_commissar:
+        members_inst = September15Participant.objects.filter(detachment=report.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        report.june_15_detachment_members = members_number
+        score = 0
+        # первый блок
+        if report.link_vk_commander and report.link_vk_commissar:
+            score += 3
+        # второй блок
+        points_vk = (report.vk_rso_number_subscribers
+                     / report.june_15_detachment_members
+                     * 100)
+        if points_vk >= 76:
+            score += 3
+        elif points_vk >= 51:
+            score += 2
+        elif points_vk == 50:
+            score += 1
+        # третий блок
+        if report.link_vk_detachment:
+            score += 3
+        # четвертый блок
+        if report.vk_detachment_number_subscribers:
+            if report.vk_detachment_number_subscribers >= 300:
                 score += 3
-            # второй блок
-            points_vk = (report.vk_rso_number_subscribers
-                         / report.june_15_detachment_members
-                         * 100)
-            if points_vk >= 76:
-                score += 3
-            elif points_vk >= 51:
+            elif report.vk_detachment_number_subscribers >= 200:
                 score += 2
-            elif points_vk == 50:
+            elif report.vk_detachment_number_subscribers >= 100:
                 score += 1
-            # третий блок
-            if report.link_vk_detachment:
-                score += 3
-            # четвертый блок
-            if report.vk_detachment_number_subscribers:
-                if report.vk_detachment_number_subscribers >= 300:
-                    score += 3
-                elif report.vk_detachment_number_subscribers >= 200:
-                    score += 2
-                elif report.vk_detachment_number_subscribers >= 100:
-                    score += 1
 
-            report.score = score
-            logger.info(f'Очки {score} для отчета {report}')
-            report.save()
+        report.score = score
+        logger.info(f'Очки {score} для отчета {report}')
+        report.save()
 
 
 def calculate_place(
