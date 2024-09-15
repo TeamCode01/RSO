@@ -28,7 +28,7 @@ from competitions.models import (CompetitionParticipants, July15Participant, Ove
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
                                  CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
-                                 ProfessionalCompetitionBlock, SpartakiadBlock)
+                                 ProfessionalCompetitionBlock, SpartakiadBlock, September15Participant)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
                                 tandem_or_start, round_math)
@@ -1106,18 +1106,28 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
 
 def calculate_june_detachment_members(entry, partner_entry=None):
     if entry:
-        entry.june_15_detachment_members = entry.detachment.members.count() + 1
+        members_inst = September15Participant.objects.filter(detachment=entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        entry.june_15_detachment_members = members_number
         entry.save()
     if partner_entry:
-        partner_entry.june_15_detachment_members = (
-            partner_entry.detachment.members.count() + 1
-        )
+        members_inst = September15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.members_number
+        if members_number < 1:
+            members_number = 1
+        partner_entry.june_15_detachment_members = members_number
         partner_entry.save()
 
 
 def calculate_april_detachment_members(entry, partner_entry=None):
     if entry:
-        members_inst = July15Participant.objects.filter(detachment=entry.detachment).last()
+        members_inst = September15Participant.objects.filter(detachment=entry.detachment).last()
         if not members_inst:
             return
         members_number = members_inst.members_number
@@ -1126,7 +1136,7 @@ def calculate_april_detachment_members(entry, partner_entry=None):
         entry.april_1_detachment_members = members_number
         entry.save()
     if partner_entry:
-        members_inst = July15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        members_inst = September15Participant.objects.filter(detachment=partner_entry.detachment).last()
         if not members_inst:
             return
         members_number = members_inst.members_number
