@@ -3488,6 +3488,10 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
     )
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(2024, 10, 1)
+        if today > cutoff_date:
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )

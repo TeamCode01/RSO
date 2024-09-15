@@ -222,7 +222,7 @@ def calculate_q14_place(competition_id):
             )
             if not is_tandem:
                 start_list.append(report)
-                calculate_june_detachment_members(
+                calculate_april_detachment_members(
                     entry=report,
                     partner_entry=None
                 )
@@ -250,7 +250,7 @@ def calculate_q14_place(competition_id):
 
                     except Q14DetachmentReport.DoesNotExist:
                         partner_entry = None
-                    calculate_june_detachment_members(
+                    calculate_april_detachment_members(
                         entry=report,
                         partner_entry=partner_entry
                     )
@@ -268,7 +268,7 @@ def calculate_q14_place(competition_id):
 
                     except Q14DetachmentReport.DoesNotExist:
                         partner_entry = None
-                    calculate_june_detachment_members(
+                    calculate_april_detachment_members(
                         entry=report,
                         partner_entry=partner_entry
                     )
