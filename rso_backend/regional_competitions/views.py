@@ -18,7 +18,8 @@ from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE
+from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES, 
+                                             EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin

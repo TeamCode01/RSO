@@ -29,6 +29,7 @@ class FrontReportsViewSet(viewsets.ModelViewSet):
 
     serializer_class = FrontErrorSerializer
     queryset = FrontError.objects.all()
+    permission_classes = [permissions.AllowAny, ]
 
     @swagger_auto_schema(
                 request_body=openapi.Schema(

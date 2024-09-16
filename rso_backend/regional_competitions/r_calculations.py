@@ -31,6 +31,9 @@ def calculate_r2_score(report):
     !!! Расчёт вызывается через админку.
     """
 
+    if type(report.full_time_students) is not int:
+        logger.info(f'Не удалось получить численность студентов для рег штаба {report.regional_headquarter.id}')
+        return
     ro_id = report.regional_headquarter.id
     ro_region = report.regional_headquarter.region.id
 
@@ -58,7 +61,10 @@ def calculate_r3_score(report):
     """
     logger.info(f'Выполняется подсчет очков r3 для РШ {report.regional_headquarter}')
     amount_of_money = get_fees(report, RegionalR1)
-    ro_score = (amount_of_money / 50) / report.amount_of_membership_fees_2023
+    ro_score = (
+        (amount_of_money / 50) / 
+        (report.amount_of_membership_fees_2023 if report.amount_of_membership_fees_2023 > 0 else 1)
+    )
     report.score = ro_score
     report.save()
     logger.info(f'Подсчитали очки 3-го показателя для РШ {report.regional_headquarter}: {ro_score}')
@@ -114,6 +120,8 @@ def calculate_r5_score(report):
 
     # вычисляем сумму очков
     for item in ro_events:
+        if type(item[0]) is not int or type(item[1]) is not int:
+            item[0] = item[1] = 0
         date_start = item[2]
         date_end = item[3]
         days_diff = (date_end - date_start).days + 1
@@ -196,6 +204,8 @@ def calculate_r11_score():
 
     updated_r11_reports = []
     for report in r11_reports:
+        if type(report.participants_number) is not int:
+            report.participants_number = 0
         ro_id = report.regional_headquarter.id
         rso_vk_members = ro_members_in_rso_vk.get(ro_id, 0)
         logger.info(f'Выполняется подсчет очков r11 для рег штаба {ro_id}')
@@ -207,11 +217,13 @@ def calculate_r11_score():
         report.score = ro_score
         logger.info(f'Подсчитали очки 11-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
         updated_r11_reports.append(report)
+        print(updated_r11_reports)
     try:
+        # TODO: исправить эксепшн
         updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
     except Exception as e:
         logger.error(f'Расчет r11 показателя завершен с ошибкой: {e}')
-    logger.info(f'Расчет r13 показателя завершен, обновлено {len(updated_r11_reports)} отчетов')
+    logger.info(f'Расчет r11 показателя завершен.')
 
 
 @log_exception
@@ -246,6 +258,8 @@ def calculate_r13_score():
     # формула - number_of_members_r13/(score_r1/500)
     updated_r13_reports = []
     for report in r13_reports:
+        if type(report.number_of_members) is not int:
+            report.number_of_members = 0
         report.score = report.number_of_members / (
             r1_scores[report.regional_headquarter_id] / 500
         ) if report.number_of_members > 0 else 0
