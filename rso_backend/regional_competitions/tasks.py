@@ -76,7 +76,7 @@ def send_email_report_part_2(regional_headquarter_id: int):
                     f'{model._meta.verbose_name} на верификацию'
                 )
 
-        if not not_sent_exists:  # !!! Можно добавить not (для удобного тестирования генерации файла)
+        if not_sent_exists:  # !!! Можно добавить not (для удобного тестирования генерации файла)
             logger.warning(
                 f'Не отправляем письмо региональному штабу {regional_headquarter}, '
                 f'т.к. есть неотправленные отчеты'
