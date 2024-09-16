@@ -873,3 +873,17 @@ def get_calculation(report, report_number):
             return calculate_r16_score(report)
         case '':
             return
+
+
+def calculate_sep_15():
+    from competitions.models import September15Participant
+    from headquarters.models import Detachment, UserDetachmentPosition
+
+    for detachment in Detachment.objects.all():
+        members_count = 0
+        participants_count = 1
+        members_count += 1 if detachment.commander.membership_fee else 0
+        for participant in UserDetachmentPosition.objects.filter(headquarter=detachment):
+            participants_count += 1
+            members_count += 1 if participant.user.membership_fee else 0
+        September15Participant.objects.create(detachment=detachment,participants_number=participants_count,members_number=members_count)
