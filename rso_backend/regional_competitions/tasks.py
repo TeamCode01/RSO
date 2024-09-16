@@ -86,9 +86,17 @@ def send_email_report_part_2(regional_headquarter_id: int):
         logger.info(f'Подготавливаем PDF-файл 2 части отчета для регионального штаба {regional_headquarter}')
         pdf_file_p2 = generate_pdf_report_part_2(regional_headquarter_id)
         logger.info(f'Подготавливаем PDF-файл 1 части отчета для регионального штаба {regional_headquarter}')
-        pdf_file_p1 = generate_pdf_report_part_1(
-            StatisticalRegionalReport.objects.filter(regional_headquarter_id=regional_headquarter_id).last().id
-        )
+        statistical_report = StatisticalRegionalReport.objects.filter(
+            regional_headquarter_id=regional_headquarter_id
+        ).last()
+        pdf_file_p1 = None
+        if statistical_report:
+            pdf_file_p1 = generate_pdf_report_part_1(statistical_report.id)
+        else:
+            logger.warning(
+                f'PDF-файл 1 части отчета для регионального штаба {regional_headquarter} не найден. '
+                f'Отправляем только вторую часть'
+            )
         logger.info(f'Отправляем PDF-файлы для регионального штаба {regional_headquarter}')
         send_email_with_attachment(
             subject='Получен отчет о деятельности регионального отделения РСО за 2024 год - часть 2',
@@ -98,7 +106,8 @@ def send_email_report_part_2(regional_headquarter_id: int):
             additional_file_path=pdf_file_p1
         )
         os.remove(pdf_file_p2)
-        os.remove(pdf_file_p1)
+        if pdf_file_p1:
+            os.remove(pdf_file_p1)
         logger.info(
             f'ПДФ успешно отправлен региональному штабу {regional_headquarter}. '
             f'Удалили файл и удаляем периодическую задачу.'
