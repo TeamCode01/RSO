@@ -1647,14 +1647,9 @@ def get_attributes_of_uniform_data(competition_id):
 
 
 def get_central_hq_data(fields):
-    if fields is None:
-        fields = [
-            'regional_headquarters', 'local_headquarters', 
-            'educational_headquarters', 'detachments', 
-            'participants_count', 'verification_percent', 
-            'membership_fee_percent', 'test_done_percent', 
-            'events_organizations', 'event_participants'
-                ]
+    if not fields:
+        return "Добавьте хотя бы 1 поле"
+    
     central_headquarters = CentralHeadquarter.objects.all()
     rows = []
 
@@ -1733,9 +1728,11 @@ def get_central_hq_data(fields):
     return rows
 
 
+
 def get_district_hq_data(fields):
-    if fields is None:
-        fields = []
+    if not fields:
+        return "Добавьте хотя бы 1 поле"
+    
     district_headquarters = DistrictHeadquarter.objects.all()
     rows = []
 
@@ -1807,8 +1804,9 @@ def get_district_hq_data(fields):
 
 
 def get_regional_hq_data(fields):
-    if fields is None:
-        fields = []
+    if not fields:
+        return "Добавьте хотя бы 1 поле"
+    
     regional_headquarters = RegionalHeadquarter.objects.all()
     rows = []
 
@@ -1874,8 +1872,9 @@ def get_regional_hq_data(fields):
 
 
 def get_local_hq_data(fields):
-    if fields is None:
-        fields = []
+    if not fields:
+        return "Добавьте хотя бы 1 поле"
+    
     local_headquarters = LocalHeadquarter.objects.all()
     rows = []
 
@@ -1938,8 +1937,9 @@ def get_local_hq_data(fields):
 
 
 def get_educational_hq_data(fields):
-    if fields is None:
-        fields = []
+    if not fields:
+        return "Добавьте хотя бы 1 поле"
+    
     educational_headquarters = EducationalHeadquarter.objects.all()
     rows = []
 
@@ -1995,8 +1995,9 @@ def get_educational_hq_data(fields):
 
 
 def get_detachment_data(fields):
-    if fields is None:
-        fields = []
+    if not fields:
+        return "Добавьте хотя бы 1 поле"
+    
     detachments = Detachment.objects.all()
     rows = []
 

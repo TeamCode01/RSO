@@ -30,7 +30,7 @@ from reports.utils import (
     get_competition_users, get_detachment_q_results,
     adapt_attempts, get_membership_fee_data
 )
-from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import csrf_exempt
 
 
 def has_reports_access(user):
@@ -487,6 +487,7 @@ class AttributesOfUniformDataView(View):
         return render(request, self.template_name, context)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ExportCentralHqDataView(BaseExcelExportView):
     def get_headers(self):
         return CENTRAL_HQ_HEADERS
@@ -498,6 +499,13 @@ class ExportCentralHqDataView(BaseExcelExportView):
         return 'Центральный штаб'
     
     def get_data_func(self):
+        fields = self.request.POST.getlist('fields')
+        if not fields:
+            fields = [
+                'regional_headquarters', 'local_headquarters', 'educational_headquarters',
+                'detachments', 'participants_count', 'verification_percent', 
+                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
+            ]
         return 'get_central_hq_data'
 
 
@@ -512,6 +520,13 @@ class ExportDistrictHqDataView(BaseExcelExportView):
         return 'Окружной штаб'
 
     def get_data_func(self):
+        fields = self.request.POST.getlist('fields')
+        if not fields:
+            fields = [
+                'regional_headquarters', 'local_headquarters', 'educational_headquarters',
+                'detachments', 'participants_count', 'verification_percent', 
+                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
+            ]
         return 'get_district_hq_data'
 
 
@@ -526,6 +541,13 @@ class ExportRegionalHqDataView(BaseExcelExportView):
         return 'Региональный штаб'
 
     def get_data_func(self):
+        fields = self.request.POST.getlist('fields')
+        if not fields:
+            fields = [
+                'educational_headquarters',
+                'detachments', 'participants_count', 'verification_percent', 
+                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
+            ]
         return 'get_regional_hq_data'
 
 
@@ -540,6 +562,13 @@ class ExportLocalHqDataView(BaseExcelExportView):
         return 'Местный штаб'
 
     def get_data_func(self):
+        fields = self.request.POST.getlist('fields')
+        if not fields:
+            fields = [
+                'educational_headquarters',
+                'detachments', 'participants_count', 'verification_percent', 
+                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
+            ]
         return 'get_local_hq_data'
 
 
@@ -554,6 +583,12 @@ class ExportEducationHqDataView(BaseExcelExportView):
         return 'СО ОО'
 
     def get_data_func(self):
+        fields = self.request.POST.getlist('fields')
+        if not fields:
+            fields = [
+                'detachments', 'participants_count', 'verification_percent', 
+                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
+            ]
         return 'get_educational_hq_data'
 
 
@@ -568,4 +603,10 @@ class ExportDetachmentDataView(BaseExcelExportView):
         return 'ЛСО'
 
     def get_data_func(self):
+        fields = self.request.POST.getlist('fields')
+        if not fields:
+            fields = [
+                'participants_count', 'verification_percent', 
+                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
+            ]
         return 'get_detachment_data'
