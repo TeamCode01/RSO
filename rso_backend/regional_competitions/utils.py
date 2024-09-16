@@ -531,7 +531,6 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     pdf_file_name = f"Отчет_ч2_РСО_{regional_hq}.pdf"
     pdf_file_path = os.path.join(settings.MEDIA_ROOT, pdf_file_name)
 
-    # Register your existing 'Times_New_Roman' font
     pdfmetrics.registerFont(TTFont(
         'Times_New_Roman',
         os.path.join(
@@ -543,15 +542,12 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
         )
     ))
 
-    # Get the sample style sheet
     doc_style = getSampleStyleSheet()
 
-    # Modify the existing 'Normal' style
     doc_style['Normal'].fontName = 'Times_New_Roman'
     doc_style['Normal'].fontSize = 12
     doc_style['Normal'].leading = 14
 
-    # Add custom styles
     doc_style.add(
         ParagraphStyle(
             name='CustomTitle',
@@ -581,16 +577,6 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
             textColor=colors.HexColor('#003366')
         )
     )
-    doc_style.add(
-        ParagraphStyle(
-            name='SubSectionHeader',
-            parent=doc_style['Normal'],
-            fontSize=14,
-            spaceBefore=10,
-            spaceAfter=5,
-            textColor=colors.HexColor('#003366')
-        )
-    )
 
     temp_pdf_file_path = os.path.join(settings.MEDIA_ROOT, f"Temp_{pdf_file_name}")
     doc = SimpleDocTemplate(
@@ -599,7 +585,6 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     )
     elements = []
 
-    # Initial spacing from the logo
     elements.append(Spacer(1, 90))
     elements.append(
         Paragraph(
@@ -622,30 +607,26 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
             if first_block:
                 elements.append(
                     HRFlowable(
-                        width="100%", thickness=1, color=colors.HexColor('#003366'),
+                        width="100%", thickness=2, color=colors.HexColor('#003366'),
                         spaceBefore=10, spaceAfter=10
                     )
                 )
                 first_block = False
 
-            # Add section header with the model's verbose name
             elements.append(Paragraph(f'<b>{serializer.Meta.model._meta.verbose_name}</b>', doc_style['SectionHeader']))
             elements.append(Spacer(1, 10))
 
-            # Add the data to the PDF
             add_verbose_names_and_values_to_pdf(verbose_names_and_values, elements, doc_style)
 
             elements.append(
                 HRFlowable(
-                    width="100%", thickness=1, color=colors.HexColor('#003366'),
+                    width="100%", thickness=2, color=colors.HexColor('#003366'),
                     spaceBefore=10, spaceAfter=20
                 )
             )
 
-    # Build the document
     doc.build(elements)
 
-    # Merge with the template that contains the logo/header
     template_pdf_path = os.path.join(
         str(settings.BASE_DIR),
         'templates',
@@ -685,6 +666,7 @@ def add_verbose_names_and_values_to_pdf(
         'verified_by_chq',
         'verified_by_dhq',
         'score',
+        'created_at',
         'updated_at',
         'file_size',
         'file_type',
@@ -695,8 +677,8 @@ def add_verbose_names_and_values_to_pdf(
     ]
 
     primary_color = colors.HexColor('#003366')
-    secondary_color = colors.HexColor('#99CCFF')
-    background_color = colors.HexColor('#E6F2FF')
+    header_background_color = colors.HexColor('#F0F0F0')
+    cell_background_color = colors.white
 
     data = []
     nested_structures = []
@@ -712,7 +694,6 @@ def add_verbose_names_and_values_to_pdf(
         if isinstance(field_value, tuple) and len(field_value) == 2:
             verbose_name, field_value_content = field_value
         else:
-            # Handle improper field value formats
             continue
 
         if not isinstance(field_value_content, dict):
@@ -722,40 +703,30 @@ def add_verbose_names_and_values_to_pdf(
             ])
 
     if data:
-        # Create a table with improved styles
         table = Table(data, colWidths=[6 * cm, 10 * cm])
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), secondary_color),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Times_New_Roman'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Times_New_Roman'),
+            ('TEXTCOLOR', (0, 0), (-1, 0), primary_color),
+            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
             ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND', (0, 1), (-1, -1), background_color),
+            ('BACKGROUND', (0, 0), (-1, -1), cell_background_color),
         ]))
         elements.append(table)
         elements.append(Spacer(1, 10))
 
-    # Process nested structures
     for nested_name, nested_items in nested_structures:
-        # Map nested field names to verbose names
-        verbose_nested_name = {
-            "projects": "Проекты",
-            "events": "Мероприятия",
-            "links": "Ссылки",
-        }.get(nested_name, nested_name.replace('_', ' ').capitalize())
-
-        # Add subsection header for nested structures
-        elements.append(Paragraph(f'<b>{verbose_nested_name}</b>', styles['SubSectionHeader']))
-        elements.append(Spacer(1, 5))
+        singular_names = {
+            "projects": "Проект",
+            "events": "Мероприятие",
+            "links": "Ссылка",
+        }
+        singular_name = singular_names.get(nested_name, nested_name)
 
         for idx, item in enumerate(nested_items, start=1):
             if isinstance(item, dict):
-                # Add a label or number for each nested item
-                elements.append(Paragraph(f"<b>{verbose_nested_name[:-1]} {idx}</b>", styles['NestedField']))
-                # Recursively add the nested content with increased indentation
+                elements.append(Paragraph(f"<b>{singular_name} {idx}</b>", styles['NestedField']))
                 add_verbose_names_and_values_to_pdf(item, elements, styles, indent + 1, is_nested=True)
             elements.append(Spacer(1, 5))
 
