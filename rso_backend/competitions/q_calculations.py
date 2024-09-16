@@ -496,14 +496,9 @@ def calculate_q18_place(competition_id):
                         f'Для отчета {partner_entry} не найден '
                         f'партнерский отчет'
                     )
-        if today <= cutoff_date:
-            logger.info(
-                f'Сегодняшняя дата {today} меньше '
-                f'cutoff date: {cutoff_date}. '
-                f'Обновляем кол-во участников.'
-            )
-            if entry:
-                calculate_june_detachment_members(entry, partner_entry)
+
+        if entry:
+            calculate_june_detachment_members(entry, partner_entry)
 
         if entry:
             entry.score = entry.participants_number / entry.june_15_detachment_members
@@ -1760,13 +1755,7 @@ def calculate_q5_place(competition_id: int):
             )
             continue
 
-        if today <= cutoff_date:
-            logger.info(
-                f'Сегодняшняя дата {today} меньше '
-                f'cutoff date: {cutoff_date}. '
-                f'Обновляем кол-во участников.'
-            )
-            calculate_june_detachment_members(tandem_entry_report, junior_tandem_entry_report)
+        calculate_june_detachment_members(tandem_entry_report, junior_tandem_entry_report)
 
         educated_participants_count_junior = Q5EducatedParticipant.objects.filter(
             is_verified=True,
