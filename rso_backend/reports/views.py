@@ -501,11 +501,8 @@ class ExportCentralHqDataView(BaseExcelExportView):
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
         if not fields:
-            fields = [
-                'regional_headquarters', 'local_headquarters', 'educational_headquarters',
-                'detachments', 'participants_count', 'verification_percent', 
-                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
-            ]
+            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
+        
         return 'get_central_hq_data'
 
 
@@ -522,11 +519,8 @@ class ExportDistrictHqDataView(BaseExcelExportView):
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
         if not fields:
-            fields = [
-                'regional_headquarters', 'local_headquarters', 'educational_headquarters',
-                'detachments', 'participants_count', 'verification_percent', 
-                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
-            ]
+            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
+        
         return 'get_district_hq_data'
 
 
@@ -543,11 +537,8 @@ class ExportRegionalHqDataView(BaseExcelExportView):
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
         if not fields:
-            fields = [
-                'educational_headquarters',
-                'detachments', 'participants_count', 'verification_percent', 
-                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
-            ]
+            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
+        
         return 'get_regional_hq_data'
 
 
@@ -564,11 +555,8 @@ class ExportLocalHqDataView(BaseExcelExportView):
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
         if not fields:
-            fields = [
-                'educational_headquarters',
-                'detachments', 'participants_count', 'verification_percent', 
-                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
-            ]
+            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
+        
         return 'get_local_hq_data'
 
 
@@ -585,10 +573,8 @@ class ExportEducationHqDataView(BaseExcelExportView):
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
         if not fields:
-            fields = [
-                'detachments', 'participants_count', 'verification_percent', 
-                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
-            ]
+            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
+        
         return 'get_educational_hq_data'
 
 
@@ -605,8 +591,6 @@ class ExportDetachmentDataView(BaseExcelExportView):
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
         if not fields:
-            fields = [
-                'participants_count', 'verification_percent', 
-                'membership_fee_percent', 'test_done_percent', 'events_organizations', 'event_participants'
-            ]
+            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
+        
         return 'get_detachment_data'

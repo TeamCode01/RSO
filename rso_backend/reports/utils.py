@@ -1656,41 +1656,36 @@ def get_central_hq_data(fields):
     try:
         for central_headquarter in central_headquarters:
             row = [central_headquarter.name]
-            
+    
             if 'regional_headquarters' in fields:
                 row.append(RegionalHeadquarter.objects.filter(
                     district_headquarter__central_headquarter=central_headquarter
                 ).count() or 0)
             else:
-                row.append('-')
-                
+                row.append('-')               
             if 'local_headquarters' in fields:
                 row.append(LocalHeadquarter.objects.filter(
                     regional_headquarter__district_headquarter__central_headquarter=central_headquarter
                 ).count() or 0)
             else:
                 row.append('-')
-                
             if 'educational_headquarters' in fields:
                 row.append(EducationalHeadquarter.objects.filter(
                     regional_headquarter__district_headquarter__central_headquarter=central_headquarter
                 ).count() or 0)
             else:
-                row.append('-')
-                
+                row.append('-')               
             if 'detachments' in fields:
                 row.append(Detachment.objects.filter(
                     regional_headquarter__district_headquarter__central_headquarter=central_headquarter
                 ).count() or 0)
             else:
-                row.append('-')
-                
+                row.append('-')                
             if 'participants_count' in fields:
                 participants_count = count_headquarter_participants(central_headquarter) or 0
                 row.append(participants_count)
             else:
-                row.append('-')
-                
+                row.append('-')   
             if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
                 if participants_count > 0:
                     if 'verification_percent' in fields:
@@ -1708,13 +1703,11 @@ def get_central_hq_data(fields):
                 else:
                     row += ['-'] * 3
             else:
-                row += ['-'] * 3
-                
+                row += ['-'] * 3  
             if 'events_organizations' in fields:
                 row.append(count_events_organizations(central_headquarter) or 0)
             else:
-                row.append('-')
-                
+                row.append('-')                
             if 'event_participants' in fields:
                 row.append(count_events_participants(central_headquarter) or 0)
             else:
@@ -1963,12 +1956,10 @@ def get_educational_hq_data(fields):
                         row.append(count_verified_users(educational_headquarter) / participants_count * 100)
                     else:
                         row.append('-')
-
                     if 'membership_fee_percent' in fields:
                         row.append(count_membership_fee(educational_headquarter) / participants_count * 100)
                     else:
                         row.append('-')
-
                     if 'test_done_percent' in fields:
                         row.append(count_test_membership(educational_headquarter) / participants_count * 100)
                     else:
