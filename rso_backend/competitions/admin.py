@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from competitions.forms import (CompetitionApplicationsForm,
@@ -34,6 +35,7 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
                                  CreativeFestivalBlock, WorkingSemesterOpeningBlock, CommanderCommissionerSchoolBlock,
                                  SafetyWorkWeekBlock, DemonstrationBlock, PatrioticActionBlock, July15Participant,
                                  September15Participant)
+from competitions.q_calculations import calculate_q1_score
 
 
 @admin.register(September15Participant)
@@ -199,6 +201,11 @@ class OverallTandemRankingAdmin(admin.ModelAdmin):
 class Q1ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name', 'score')
+    actions = ['recalc_scores',]
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        calculate_q1_score(settings.COMPETITION_ID)
 
     def has_add_permission(self, request, obj=None):
         return False
