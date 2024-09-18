@@ -223,7 +223,7 @@ def calculate_r11_score():
         updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
     except Exception as e:
         logger.error(f'Расчет r11 показателя завершен с ошибкой: {e}')
-    logger.info(f'Расчет r11 показателя завершен.')
+    logger.info(f'Расчет r11 показателя завершен, обновлено {updated_r11_reports} отчетов')
 
 
 @log_exception
@@ -233,6 +233,7 @@ def calculate_r12_score(report: RegionalR12):
     report.save()
 
 
+@log_exception
 def calculate_r13_score():
     """
     Расчет очков по 13 показателю.
