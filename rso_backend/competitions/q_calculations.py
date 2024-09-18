@@ -1373,7 +1373,7 @@ def calculate_q1_score(competition_id):
     Выполняется каждый день до 15.07.2024.
     """
     today = date.today()
-    end_date = date(2024, 7, 16)
+    end_date = date(2024, 9, 20)
 
     if today > end_date:
         return
@@ -1388,7 +1388,7 @@ def calculate_q1_score(competition_id):
 
         detachments_data = []
 
-        members = July15Participant.objects.all()
+        members = September15Participant.objects.all()
 
         members_dict = {m.detachment_id: m for m in members}
 
