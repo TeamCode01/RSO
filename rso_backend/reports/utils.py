@@ -24,7 +24,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
-from headquarters.count_hq_members import count_headquarter_participants
+from headquarters.count_hq_members import count_headquarter_participants, get_hq_participants_15_september
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
@@ -87,7 +87,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         )
     for participant_entry in junior_detachments_queryset:
         detachment = participant_entry.junior_detachment
-        detachment.participants_count = count_headquarter_participants(detachment)
+        detachment.participants_count = get_hq_participants_15_september(detachment)
         detachment.status = 'Младший отряд'
         detachment.nomination = 'Дебют'
         detachment.places = []
@@ -123,12 +123,12 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         )
     for participant_entry in tandem_queryset:
         junior_detachment = participant_entry.junior_detachment
-        junior_detachment.participants_count = count_headquarter_participants(junior_detachment)
+        junior_detachment.participants_count = get_hq_participants_15_september(junior_detachment)
         junior_detachment.status = 'Младший отряд'
         junior_detachment.nomination = 'Тандем'
         junior_detachment.places = []
         detachment = participant_entry.detachment
-        detachment.participants_count = count_headquarter_participants(detachment)
+        detachment.participants_count = get_hq_participants_15_september(detachment)
         detachment.status = 'Наставник'
         detachment.nomination = 'Тандем'
         detachment.places = []
