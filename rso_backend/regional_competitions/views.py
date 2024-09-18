@@ -684,7 +684,6 @@ class RegionalR11ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR11MeViewSet(BaseRegionalRMeViewSet, SendMixin):
