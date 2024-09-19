@@ -335,7 +335,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(serializers.ModelSerializer):
+class BaseEventSerializer(serializers.ModelSerializer, FileScanSizeSerializerMixin):
 
     class Meta:
         model = None
