@@ -3,6 +3,8 @@ import datetime
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files.storage import default_storage
+from rest_framework import views, permissions, status
+from rest_framework.response import Response
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -51,35 +53,49 @@ class TaskStatusView(View):
         return JsonResponse({'status': task.state})
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
-class BaseExcelExportView(View):
-
+class BaseExcelExportMixin:
     def get_worksheet_title(self):
-        """К переопределению."""
-        raise NotImplementedError('Определите метод для получения названия Worksheet Excel-файла.')
+        """To be overridden."""
+        raise NotImplementedError('Define a method to get the Worksheet title of the Excel file.')
 
     def get_headers(self):
-        """К переопределению."""
-        raise NotImplementedError('Определите метод для получения хедеров для Excel-файла.')
+        """To be overridden."""
+        raise NotImplementedError('Define a method to get headers for the Excel file.')
 
     def get_filename(self):
-        """К переопределению."""
-        raise NotImplementedError('Определите метод для получения названия для Excel-файла.')
+        """To be overridden."""
+        raise NotImplementedError('Define a method to get the filename for the Excel file.')
 
     def get_data_func(self):
-        """Для вызова нужной функции в селери-задаче. Может быть переопределено в саб-классе."""
+        """For calling the required function in the Celery task. Can be overridden in subclass."""
         return 'default'
 
-    def get(self, request):
+    def process_request(self, request):
         headers = self.get_headers()
         worksheet_title = self.get_worksheet_title()
         filename = self.get_filename()
         safe_filename = quote(filename)
         data_func = self.get_data_func()
+
         task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func)
 
-        return JsonResponse({'task_id': task.id})
+        return {'task_id': task.id}
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
+class BaseExcelExportView(BaseExcelExportMixin, View):
+    def get(self, request):
+        result = self.process_request(request)
+        return JsonResponse(result)
+
+
+class BaseExcelExportAPIView(BaseExcelExportMixin, views.APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        result = self.process_request(request)
+        return Response(result, status=status.HTTP_200_OK)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -578,7 +594,7 @@ class ExportEducationHqDataView(BaseExcelExportView):
         return 'get_educational_hq_data'
 
 
-class ExportDetachmentDataView(BaseExcelExportView):
+class ExportDetachmentDataMixin:
     def get_headers(self):
         return DETACHMENT_HEADERS
 
@@ -590,7 +606,16 @@ class ExportDetachmentDataView(BaseExcelExportView):
 
     def get_data_func(self):
         fields = self.request.POST.getlist('fields')
+
         if not fields:
             return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
         
         return 'get_detachment_data'
+
+
+class ExportDetachmentDataView(BaseExcelExportView, ExportDetachmentDataMixin):
+    pass
+
+
+class ExportDetachmentDataAPIView(BaseExcelExportAPIView, ExportDetachmentDataMixin):
+    pass
