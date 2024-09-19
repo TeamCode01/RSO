@@ -1422,15 +1422,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
         'detachment__region',
-        'detachment__july_15_participants'
+        'detachment__sep_15_participants'
     ).prefetch_related(
         'detachment__q1report_detachment_reports',
         'detachment__q1tandemranking_main_detachment'
     ).values(
         'detachment__name',
         'detachment__region__name',
-        'detachment__july_15_participants__members_number',
-        'detachment__july_15_participants__participants_number',
+        'detachment__sep_15_participants__members_number',
+        'detachment__sep_15_participants__participants_number',
         'detachment__q1report_detachment_reports__score',
         'detachment__q1tandemranking_main_detachment__place',
     ).all()
@@ -1439,15 +1439,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
         'junior_detachment__region',
-        'junior_detachment__july_15_participants'
+        'junior_detachment__sep_15_participants'
     ).prefetch_related(
         'junior_detachment__q1report_detachment_reports',
         'junior_detachment__q1tandemranking_junior_detachment'
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
-        'junior_detachment__july_15_participants__members_number',
-        'junior_detachment__july_15_participants__participants_number',
+        'junior_detachment__sep_15_participants__members_number',
+        'junior_detachment__sep_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
         'junior_detachment__q1tandemranking_junior_detachment__place',
     ).all()
@@ -1457,15 +1457,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=True)
     ).select_related(
         'junior_detachment__region',
-        'junior_detachment__july_15_participants'
+        'junior_detachment__sep_15_participants'
     ).prefetch_related(
         'junior_detachment__q1report_detachment_reports',
         'junior_detachment__q1ranking'
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
-        'junior_detachment__july_15_participants__members_number',
-        'junior_detachment__july_15_participants__participants_number',
+        'junior_detachment__sep_15_participants__members_number',
+        'junior_detachment__sep_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
         'junior_detachment__q1ranking__place',
     ).all()
@@ -1476,8 +1476,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('detachment__name', '-'),
             data.get('detachment__region__name', '-'),
             'Тандем',
-            data.get('detachment__july_15_participants__participants_number'),
-            data.get('detachment__july_15_participants__members_number'),
+            data.get('detachment__sep_15_participants__participants_number'),
+            data.get('detachment__sep_15_participants__members_number'),
             data.get('detachment__q1report_detachment_reports__score', '-') or '-',
             data.get('detachment__q1tandemranking_main_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
         ) for data in detachment_data
@@ -1489,7 +1489,7 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
-            data.get('junior_detachment__july_15_participants__participants_number'),
+            data.get('junior_detachment__sep_15_participants__participants_number'),
             data.get('junior_detachment__july_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
@@ -1505,8 +1505,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
-            data.get('junior_detachment__july_15_participants__participants_number'),
-            data.get('junior_detachment__july_15_participants__members_number'),
+            data.get('junior_detachment__sep_15_participants__participants_number'),
+            data.get('junior_detachment__sep_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
             data.get(

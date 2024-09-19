@@ -371,15 +371,15 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
     def get_serializer_context(self):
+        context = super().get_serializer_context()
         if self.action == 'create':
-            context = super().get_serializer_context()
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
                     'action': self.action
                 }
             )
-            return context
+        return context
 
 
 class BaseRegionalRMeViewSet(RegionalRMeMixin):
@@ -684,7 +684,6 @@ class RegionalR11ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR11MeViewSet(BaseRegionalRMeViewSet, SendMixin):
