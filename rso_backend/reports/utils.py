@@ -1490,7 +1490,7 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
             data.get('junior_detachment__sep_15_participants__participants_number'),
-            data.get('junior_detachment__july_15_participants__members_number'),
+            data.get('junior_detachment__sep_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
             data.get(
