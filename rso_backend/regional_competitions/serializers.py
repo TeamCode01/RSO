@@ -335,7 +335,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(serializers.ModelSerializer):
+class BaseEventSerializer(FileScanSizeSerializerMixin):
 
     class Meta:
         model = None
@@ -354,7 +354,7 @@ class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
         model = RegionalR1
         fields = (
             BaseRSerializer.Meta.fields + FileScanSizeSerializerMixin.Meta.fields
-            + ('comment', 'amount_of_money')
+            + ('comment', 'scan_file', 'amount_of_money')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 

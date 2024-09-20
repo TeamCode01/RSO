@@ -18,7 +18,8 @@ from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES, EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE
+from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES, 
+                                             EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
@@ -370,15 +371,15 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
     def get_serializer_context(self):
+        context = super().get_serializer_context()
         if self.action == 'create':
-            context = super().get_serializer_context()
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
                     'action': self.action
                 }
             )
-            return context
+        return context
 
 
 class BaseRegionalRMeViewSet(RegionalRMeMixin):
@@ -683,7 +684,6 @@ class RegionalR11ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR11MeViewSet(BaseRegionalRMeViewSet, SendMixin):
