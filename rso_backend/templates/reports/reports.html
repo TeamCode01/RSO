@@ -28,12 +28,12 @@
 						<button class="button" id="downloadQ17DataButton">Количество упоминаний в СМИ о прошедших творческих, добровольческих ипатриотических мероприятиях отряда (файл)</button>
 						<button class="button" id="downloadQ18DataButton">Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)</button>
                         <button class="button" id="downloadQ19DataButton">Отсутствие нарушений техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре (файл)</button>
-                        <button class="button" id="downloadCentralHqButton">Центральный штаб(файл)</button>
-                        <button class="button" id="downloadDistrictHqButton">Окружной штаб(файл)</button>
-                        <button class="button" id="downloadRegionalHqButton">Региональный штаб(файл)</button>
-                        <button class="button" id="downloadLocalHqButton">Местный штаб(файл)</button>
-                        <button class="button" id="downloadEducationalHqButton">СО ОО (файл)</button>
-                        <button class="button" id="downloadDetachmentButton">ЛСО (файл)</button>
+                        <button class="button" id="downloadCentralHqButton">Реестр: ЦШ (файл)</button>
+                        <button class="button" id="downloadDistrictHqButton">Реестр ОШ (файл)</button>
+                        <button class="button" id="downloadRegionalHqButton">Реестр РШ (файл)</button>
+                        <button class="button" id="downloadLocalHqButton">Реестр МШ (файл)</button>
+                        <button class="button" id="downloadEducationalHqButton">Реестр СО ОО (файл)</button>
+                        <button class="button" id="downloadDetachmentButton">Реестр ЛСО (файл)</button>
 {#            <a href="/report2" class="button">Отчет 2</a>#}
 {#            <a href="/report3" class="button">Отчет 3</a>#}
 {#            <a href="/report1" class="button">Отчет 1</a>#}
@@ -98,12 +98,12 @@
         setupDownloadButton('downloadQ17DataButton', '{% url "export_q17_data" %}', 'Количество упоминаний в СМИ о прошедших творческих, добровольческих и патриотических мероприятиях отряда (файл)');
         setupDownloadButton('downloadQ18DataButton', '{% url "export_q18_data" %}', 'Охват бойцов, принявших участие во Всероссийском дне ударного труда (файл)');
         setupDownloadButton('downloadQ19DataButton', '{% url "export_q19_data" %}', 'Отсутствие нарушений техники безопасности, охраны труда и противопожарной безопасности в трудовом семестре (файл)');
-        setupDownloadButton('downloadCentralHqButton', '{% url "export_central_hq_data" %}', 'Центральный штаб (файл)');
-        setupDownloadButton('downloadDistrictHqButton', '{% url "export_district_hq_data" %}', 'Окружной штаб (файл)');
-        setupDownloadButton('downloadRegionalHqButton', '{% url "export_regional_hq_data" %}', 'Региональный штаб (файл)');
-        setupDownloadButton('downloadLocalHqButton', '{% url "export_local_hq_data" %}', 'местный штаб (файл)');
-        setupDownloadButton('downloadEducationalHqButton', '{% url "export_education_hq_data" %}', 'СО ОО (файл)');
-        setupDownloadButton('downloadDetachmentButton', '{% url "export_detachment_data" %}', 'ЛСО (файл)');
+        setupDownloadButton('downloadCentralHqButton', '{% url "export_central_hq_data" %}', 'Реестр ЦШ (файл)');
+        setupDownloadButton('downloadDistrictHqButton', '{% url "export_district_hq_data" %}', 'Реестр ОШ (файл)');
+        setupDownloadButton('downloadRegionalHqButton', '{% url "export_regional_hq_data" %}', 'Реестр РШ (файл)');
+        setupDownloadButton('downloadLocalHqButton', '{% url "export_local_hq_data" %}', 'Реестр МШ (файл)');
+        setupDownloadButton('downloadEducationalHqButton', '{% url "export_education_hq_data" %}', 'Реестр СО ОО (файл)');
+        setupDownloadButton('downloadDetachmentButton', '{% url "export_detachment_data" %}', 'Реестр ЛСО (файл)');
 
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');
