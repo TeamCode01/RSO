@@ -69,6 +69,9 @@ class BaseExcelExportMixin:
     def get_data_func(self):
         """For calling the required function in the Celery task. Can be overridden in subclass."""
         return 'default'
+    
+    def get_fields(self):
+        return None
 
     def process_request(self, request):
         headers = self.get_headers()
@@ -76,8 +79,17 @@ class BaseExcelExportMixin:
         filename = self.get_filename()
         safe_filename = quote(filename)
         data_func = self.get_data_func()
+        
+        if isinstance(data_func, dict):
+            return data_func
 
-        task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func)
+        if hasattr(self, 'get_fields'):
+            fields = self.get_fields()
+            
+        if fields:
+            task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func, fields)
+        else:
+            task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func)
 
         return {'task_id': task.id}
 
@@ -503,8 +515,7 @@ class AttributesOfUniformDataView(View):
         return render(request, self.template_name, context)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class ExportCentralHqDataView(BaseExcelExportView):
+class ExportCentralHqDataMixin:
     def get_headers(self):
         return CENTRAL_HQ_HEADERS
 
@@ -514,15 +525,30 @@ class ExportCentralHqDataView(BaseExcelExportView):
     def get_worksheet_title(self):
         return 'Центральный штаб'
     
-    def get_data_func(self):
+    def get_fields(self):
         fields = self.request.POST.getlist('fields')
-        if not fields:
-            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
-        
+        return fields or[
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+    
+    def get_data_func(self):  
         return 'get_central_hq_data'
+    
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
+    pass
 
 
-class ExportDistrictHqDataView(BaseExcelExportView):
+class ExportCentralDataAPIView(ExportCentralHqDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+class ExportDistrictHqDataMixin:
     def get_headers(self):
         return DISTRICT_HQ_HEADERS
 
@@ -531,16 +557,30 @@ class ExportDistrictHqDataView(BaseExcelExportView):
 
     def get_worksheet_title(self):
         return 'Окружной штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
 
     def get_data_func(self):
-        fields = self.request.POST.getlist('fields')
-        if not fields:
-            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
-        
         return 'get_district_hq_data'
+    
+
+class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
+    pass
 
 
-class ExportRegionalHqDataView(BaseExcelExportView):
+class ExportDistrictDataAPIView(ExportDistrictHqDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+class ExportRegionalHqDataMixin:
     def get_headers(self):
         return REGIONAL_HQ_HEADERS
 
@@ -549,16 +589,30 @@ class ExportRegionalHqDataView(BaseExcelExportView):
 
     def get_worksheet_title(self):
         return 'Региональный штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
 
     def get_data_func(self):
-        fields = self.request.POST.getlist('fields')
-        if not fields:
-            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
-        
         return 'get_regional_hq_data'
+    
+
+class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
+    pass
 
 
-class ExportLocalHqDataView(BaseExcelExportView):
+class ExportRegionalDataAPIView(ExportRegionalHqDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+class ExportLocalHqDataMixin:
     def get_headers(self):
         return LOCAL_HQ_HEADERS
 
@@ -567,16 +621,30 @@ class ExportLocalHqDataView(BaseExcelExportView):
 
     def get_worksheet_title(self):
         return 'Местный штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
 
     def get_data_func(self):
-        fields = self.request.POST.getlist('fields')
-        if not fields:
-            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
-        
         return 'get_local_hq_data'
+    
+
+class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
+    pass
 
 
-class ExportEducationHqDataView(BaseExcelExportView):
+class ExportLocalDataAPIView(ExportLocalHqDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+
+class ExportEducationHqDataMixin:
     def get_headers(self):
         return EDUCATION_HQ_HEADERS
 
@@ -585,13 +653,26 @@ class ExportEducationHqDataView(BaseExcelExportView):
 
     def get_worksheet_title(self):
         return 'СО ОО'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
 
     def get_data_func(self):
-        fields = self.request.POST.getlist('fields')
-        if not fields:
-            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
-        
         return 'get_educational_hq_data'
+    
+
+class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportEducationDataAPIView(ExportEducationHqDataMixin, BaseExcelExportAPIView):
+    pass
 
 
 class ExportDetachmentDataMixin:
@@ -603,19 +684,24 @@ class ExportDetachmentDataMixin:
 
     def get_worksheet_title(self):
         return 'ЛСО'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
 
     def get_data_func(self):
-        fields = self.request.POST.getlist('fields')
-
-        if not fields:
-            return JsonResponse({'error': 'Добавьте хотя бы 1 поле'}, status=400)
-        
         return 'get_detachment_data'
 
 
-class ExportDetachmentDataView(BaseExcelExportView, ExportDetachmentDataMixin):
+class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportDetachmentDataAPIView(BaseExcelExportAPIView, ExportDetachmentDataMixin):
+class ExportDetachmentDataAPIView(ExportDetachmentDataMixin, BaseExcelExportAPIView):
     pass
