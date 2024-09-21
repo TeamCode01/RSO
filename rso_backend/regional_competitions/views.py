@@ -703,7 +703,6 @@ class RegionalR12ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR12MeViewSet(BaseRegionalRMeViewSet, SendMixin):
@@ -717,7 +716,6 @@ class RegionalR13ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR13MeViewSet(BaseRegionalRMeViewSet, SendMixin):
