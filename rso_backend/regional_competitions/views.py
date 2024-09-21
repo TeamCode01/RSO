@@ -118,6 +118,13 @@ class BaseRegionalRViewSet(RegionalRMixin):
     serializer_class = None
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.DEBUG:
+            self.district_review = swagger_schema_for_district_review(self.serializer_class)(self.district_review)
+            self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
+            self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'action': self.action})
@@ -646,17 +653,18 @@ r9_view_sets_factory = RViewSetFactory(
     serializers=r9_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r9_view_sets_factory.create_view_sets()
 
 
-class RegionalR101ViewSet(BaseRegionalRViewSet):
+class RegionalR101ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR101MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR101MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR101
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
