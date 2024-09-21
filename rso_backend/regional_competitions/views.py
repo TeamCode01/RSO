@@ -22,7 +22,7 @@ from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
+from regional_competitions.mixins import FormDataNestedFileParser, RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
 from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
@@ -578,20 +578,20 @@ class RegionalR1MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4ViewSet(BaseRegionalRViewSet):
+class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR4MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5ViewSet(BaseRegionalRViewSet):
+class RegionalR5ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     """
     Организация всероссийских (международных) (организатор – региональное отделение РСО),
     окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
@@ -621,7 +621,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR5MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR5
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
@@ -721,20 +721,20 @@ class RegionalR13MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16ViewSet(BaseRegionalRViewSet):
+class RegionalR16ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR16MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR16
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR17ViewSet(RegionalRNoVerifViewSet):
+class RegionalR17ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
     """Дислокация студенческих отрядов РО РСО.
 
     file_size выводится в мегабайтах.
@@ -750,10 +750,9 @@ class RegionalR17ViewSet(RegionalRNoVerifViewSet):
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR17MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     model = RegionalR17
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer

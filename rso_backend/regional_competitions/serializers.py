@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from rest_framework import serializers
 
@@ -335,7 +336,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(FileScanSizeSerializerMixin):
+class BaseEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = None
@@ -347,6 +348,26 @@ class BaseEventSerializer(FileScanSizeSerializerMixin):
             'regulations',
         )
         read_only_fields = ('id',)
+
+    def to_internal_value(self, data):
+        print(f"Original data: {data}")
+        
+        if 'is_interregional' in data:
+            data['is_interregional'] = True if data['is_interregional'].lower() == 'true' else False
+
+        for date_field in ['start_date', 'end_date']:
+            if date_field in data:
+                try:
+                    print(f"Parsing date field: {date_field} with value {data[date_field]}")
+                    data[date_field] = datetime.strptime(data[date_field], '%Y-%m-%d').date()
+                except ValueError:
+                    raise serializers.ValidationError({
+                        date_field: 'Неправильный формат date. Используйте формат: YYYY-MM-DD.'
+                    })
+
+        print(f"Modified data: {data}")
+        return super().to_internal_value(data)
+
 
 
 class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
@@ -665,7 +686,7 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
 
     class Meta:
         model = RegionalR16
-        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects',)
+        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects', 'comment')
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
     def create_objects(self, created_objects, project_data):
