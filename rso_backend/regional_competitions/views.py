@@ -22,7 +22,8 @@ from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
-from regional_competitions.mixins import FormDataNestedFileParser, RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
+from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
+                                          RegionalRMixin, ListRetrieveCreateMixin)
 from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
