@@ -156,7 +156,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        data = dict(request.data)
+        parser = FormDataNestedFileParser()
+        data = parser.parse_querydict(request.data)
         verification_action = data.pop('action', None)
         report = self.get_object()
 
@@ -179,7 +180,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data)
+            update_serializer = self.get_serializer(report, data=data)
 
             if update_serializer.is_valid():
                 update_serializer.save()
@@ -233,7 +234,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        data = dict(request.data)  # для работы с formparser
+        parser = FormDataNestedFileParser()
+        data = parser.parse_querydict(request.data)
         verification_action = data.pop('action', None)
         reasons = data.pop('reasons', {})
         report = self.get_object()
@@ -272,7 +274,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data)
+            update_serializer = self.get_serializer(report, data=data)
             if update_serializer.is_valid():
                 update_serializer.save()
 
