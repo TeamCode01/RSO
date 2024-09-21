@@ -139,6 +139,11 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
 
 
 class EmptyAsNoneMixin:
+    """
+    Миксин для сериализаторов с полями типа FileField, где при отправке 
+    с multipart/form-data требуется обработка пустых строк "" как None (null).
+    """
+
     def treat_empty_string_as_none(self, data):
         """
         Рекурсивно обрабатывает словарь, заменяя пустые строки на None.
