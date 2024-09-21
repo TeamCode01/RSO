@@ -759,7 +759,7 @@ class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR18ViewSet(RegionalRNoVerifViewSet):
+class RegionalR18ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
     """Вьюсет для просмотра и создания отчета по 18 показателю.
 
     Показатель не требует верификации.
@@ -797,7 +797,7 @@ class RegionalR18ViewSet(RegionalRNoVerifViewSet):
         return super().create(request, *args, **kwargs)
 
 
-class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR18MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     """Вьюсет для просмотра и редактирования отчета по 18 показателю.
 
     Показатель не требует верификации.
