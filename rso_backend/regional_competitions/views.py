@@ -627,6 +627,7 @@ r6_view_sets_factory = RViewSetFactory(
     serializers=r6_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r6_view_sets_factory.create_view_sets()
 
@@ -636,6 +637,7 @@ r7_view_sets_factory = RViewSetFactory(
     serializers=r7_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r7_view_sets_factory.create_view_sets()
 
