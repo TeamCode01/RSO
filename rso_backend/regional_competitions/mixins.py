@@ -62,6 +62,7 @@ class FormDataNestedFileParser:
         :return: Обновленный словарь или список с присвоенным значением.
         """
         current = data
+
         for i, key in enumerate(keys):
             if key.isdigit():
                 key = int(key)

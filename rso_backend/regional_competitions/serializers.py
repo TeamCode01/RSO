@@ -271,6 +271,26 @@ class BaseRSerializer(serializers.ModelSerializer):
     def get_report_number(self):
         return get_report_number_by_class_name(self)
 
+    def treat_empty_string_as_none(self, data):
+        """
+        Рекурсивно обрабатывает словарь, заменяя пустые строки на None.
+        """
+        print('идет обработка')
+        for key, val in data.items():
+            if val == '':
+                data[key] = None
+            elif isinstance(val, dict):
+                data[key] = self.treat_empty_string_as_none(val)
+            elif isinstance(val, list):
+                data[key] = [self.treat_empty_string_as_none(item) if isinstance(item, dict) else item for item in val]
+        return data
+
+    def to_internal_value(self, data):
+        """
+        Переопределяем to_internal_value для обработки пустых строк как None перед валидацией.
+        """
+        return super().to_internal_value(self.treat_empty_string_as_none(data))
+
     def validate(self, attrs):
         action = self.context.get('action')
         regional_headquarter = self.context.get('regional_hq')
