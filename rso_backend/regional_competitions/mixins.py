@@ -126,7 +126,7 @@ class FormDataNestedFileParser:
 
     def create(self, request, *args, **kwargs):
         """
-        Переопределяет метод создания, обрабатывая QueryDict перед передачей в сериализатор.
+        Переопределяет метод создания, обрабатывая QueryDict перед передачей их в сериализатор.
 
         :param request: Запрос с данными.
         :return: Ответ с созданными данными.

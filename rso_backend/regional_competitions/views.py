@@ -98,7 +98,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -117,13 +117,6 @@ class BaseRegionalRViewSet(RegionalRMixin):
     """Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet."""
     serializer_class = None
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if settings.DEBUG:
-            self.district_review = swagger_schema_for_district_review(self.serializer_class)(self.district_review)
-            self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
-            self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -761,41 +754,9 @@ class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
 
 
 class RegionalR18ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
-    """Вьюсет для просмотра и создания отчета по 18 показателю.
-
-    Показатель не требует верификации.
-    Доступ - только региональным командирам.
-
-    get {pk} - принимает id РШ, а не id отчета.
-    Возвращает последний отчет, если тот существует, иначе 404.
-    """
-
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalR18Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
-
-    def create(self, request, *args, **kwargs):
-        """Метод для создания отчета по 18 показателю.
-        Пример отчета:
-        ```json
-                {
-        "comment": "Комментарий",
-        "projects": [
-            {
-                "links": [
-                    {
-                    "link": "http://127.0.0.1:8000/swagger/"
-                    }
-                ]
-            }
-        ]
-        }
-        ```
-
-        Также стоят MultiPartParser, FormParser.
-        """
-        return super().create(request, *args, **kwargs)
 
 
 class RegionalR18MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
