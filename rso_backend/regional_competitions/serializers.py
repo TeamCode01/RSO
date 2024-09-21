@@ -812,7 +812,13 @@ REPORTS_SERIALIZERS = [
     RegionalR13Serializer,
     RegionalR16Serializer,
 ]
-# REPORTS_SERIALIZERS.extend(r6_serializers_factory.serializers)
+
+REPORTS_SERIALIZERS.extend(
+    [
+        serializer_class for serializer_name, serializer_class in r6_serializers_factory.serializers.items()
+        if not serializer_name.endswith('Link')
+    ]
+)
 
 REPORTS_SERIALIZERS.extend(
     [
