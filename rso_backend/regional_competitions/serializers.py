@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.db import models
+from django.http import QueryDict
 from rest_framework import serializers
 
 from django.db import transaction
@@ -199,22 +200,73 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
         raise NotImplementedError('Определите create_objects для CreateUpdateSerializerMixin')
 
     def _create_or_update_objects(self, created_objects, received_objects):
+        """
+        Метод для создания или обновления связанных объектов (events, projects, etc.),
+        а также вложенных объектов. Если объект с указанным id существует, он обновляется, 
+        если нет — создается новый объект. Если файл (например, scan_file) не передан, 
+        используется существующий файл. Старые объекты удаляются, если их нет в новых данных.
+
+        Логика работы метода:
+        
+        1. Создаем словарь с существующими объектами, сопоставляя их по id.
+        2. Проходим по каждому объекту из новых данных:
+            - Если объект содержит id и он есть в базе:
+                - Обновляем объект, сохраняя файлы, если они не были переданы заново.
+                - Обновляем вложенные объекты, если они есть.
+                - Удаляем этот объект из списка существующих, чтобы в конце не удалить его.
+            
+            - Если id не передан (новый объект):
+                - Пытаемся сопоставить с существующим объектом по порядку (берем первый 
+                из оставшихся объектов).
+                - Используем файлы из сопоставленного объекта, если они не были переданы.
+                - Создаем новый объект с данными.
+                - Обновляем вложенные объекты для нового объекта, если они есть.
+                - Удаляем сопоставленный объект, так как он был заменен новым.
+        
+        3. В конце удаляем все оставшиеся объекты, которые не были обновлены или заменены.
+        """
         existing_objects = {obj.id: obj for obj in getattr(created_objects, self.objects_name).all()}
+
         for obj_data in received_objects:
-            print(f'self.nested_objects_name = {self.nested_objects_name}')
+            obj_id = obj_data.get('id', None)
+
             if self.nested_objects_name:
                 nested_data = obj_data.pop(self.nested_objects_name, [])
-            obj_id = obj_data.get('id', None)
+
             if obj_id and obj_id in existing_objects:
+                obj_instance = existing_objects[obj_id]
+
+                for field in obj_instance._meta.fields:
+                    if isinstance(field, models.FileField) and field.name not in obj_data:
+                        obj_data[field.name] = getattr(obj_instance, field.name)
+
                 existing_objects[obj_id].__class__.objects.filter(id=obj_id).update(**obj_data)
+
                 if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     obj_instance = existing_objects[obj_id].__class__.objects.get(id=obj_id)
                     self._create_or_update_nested_objects(obj_instance, nested_data)
+
                 existing_objects.pop(obj_id)
+
             else:
+                matched_obj = None
+                if existing_objects:
+                    matched_obj = list(existing_objects.values())[0]
+
+                    for field in matched_obj._meta.fields:
+                        if isinstance(field, models.FileField) and field.name not in obj_data:
+                            obj_data[field.name] = getattr(matched_obj, field.name)
+
                 new_obj = self.create_objects(created_objects, obj_data)
+
                 if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     self._create_or_update_nested_objects(new_obj, nested_data)
+
+                if matched_obj:
+                    existing_objects.pop(matched_obj.id, None)
+
+                    matched_obj.delete()
+
         for obj in existing_objects.values():
             obj.delete()
 
@@ -275,7 +327,9 @@ class BaseRSerializer(serializers.ModelSerializer):
         """
         Рекурсивно обрабатывает словарь, заменяя пустые строки на None.
         """
-        print('идет обработка')
+        if isinstance(data, QueryDict):
+            data = data.copy()
+
         for key, val in data.items():
             if val == '':
                 data[key] = None
@@ -283,6 +337,7 @@ class BaseRSerializer(serializers.ModelSerializer):
                 data[key] = self.treat_empty_string_as_none(val)
             elif isinstance(val, list):
                 data[key] = [self.treat_empty_string_as_none(item) if isinstance(item, dict) else item for item in val]
+
         return data
 
     def to_internal_value(self, data):
