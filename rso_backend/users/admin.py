@@ -303,6 +303,10 @@ class UserVerificationLogsAdmin(admin.ModelAdmin):
         return False
 
 
+admin.site.site_header = 'Российские Студенческие Отряды'
+admin.site.index_title = 'Администрирование ЛК РСО'
+
+
 admin.site.unregister(PeriodicTask)
 admin.site.unregister(IntervalSchedule)
 admin.site.unregister(CrontabSchedule)
