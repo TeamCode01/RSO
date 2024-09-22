@@ -965,3 +965,31 @@ class ExpertRole(models.Model):
                 name='not_both_headquarters'
             )
         ]
+
+
+class Ranking(models.Model):
+    """Места участников по показателям."""
+
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='regional_competitions_rankings'
+    )
+
+    @classmethod
+    def add_fields(cls):
+        for i in range(1, 16):
+            field = models.PositiveSmallIntegerField(
+                verbose_name=f'Место участника по {i} показателю',
+                blank=True,
+                null=True
+            )
+            cls.add_to_class(f'r{i}_place', field)
+
+    class Meta:
+        verbose_name = 'Место участника по показателю'
+        verbose_name_plural = 'Места участников по показателям'
+
+
+Ranking.add_fields()
