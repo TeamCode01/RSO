@@ -325,19 +325,58 @@ class CentralSubCommanderMixin(BaseSubCommanderMixin):
         commanders = []
         central_headquarter = obj
 
-        district_headquarters = DistrictHeadquarter.objects.filter(central_headquarter=central_headquarter)
+        district_headquarters = DistrictHeadquarter.objects.filter(
+            central_headquarter=central_headquarter
+            )
         self.append_district_hqs(district_headquarters, user_id, commanders)
-
-        regional_headquarters = RegionalHeadquarter.objects.filter(district_headquarter__central_headquarter=central_headquarter)
+        regional_headquarters = RegionalHeadquarter.objects.filter(
+            district_headquarter__central_headquarter=central_headquarter
+            )
         self.append_regional_hqs(regional_headquarters, user_id, commanders)
-
-        detachments = Detachment.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
+        detachments = Detachment.objects.filter(
+            regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+            )
         self.append_detachment_hqs(detachments, user_id, commanders)
-
-        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
+        local_headquarters = LocalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+            )
         self.append_local_hqs(local_headquarters, user_id, commanders)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter__central_headquarter=central_headquarter)
+        return commanders
+    
+    
+class CentralSubCommanderIdMixin(BaseSubCommanderMixin):
+    def get_sub_commanders(self, obj, user_id=None):
+        commanders = []
+        central_headquarter = obj
+
+        district_headquarters = DistrictHeadquarter.objects.filter(
+            central_headquarter=central_headquarter
+        )
+        self.append_district_hqs(district_headquarters, user_id, commanders)
+        
+        regional_headquarters = RegionalHeadquarter.objects.filter(
+            district_headquarter__central_headquarter=central_headquarter
+        )
+        self.append_regional_hqs(regional_headquarters, user_id, commanders)
+        
+        detachments = Detachment.objects.filter(
+            regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+        )
+        self.append_detachment_hqs(detachments, user_id, commanders)
+        
+        local_headquarters = LocalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+        )
+        self.append_local_hqs(local_headquarters, user_id, commanders)
+        
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+        )
         self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
@@ -350,19 +389,47 @@ class DistrictSubCommanderMixin(BaseSubCommanderMixin):
         district_headquarter = obj
 
         regional_headquarters = RegionalHeadquarter.objects.filter(
-            district_headquarter=district_headquarter)
+            district_headquarter=district_headquarter
+            )
         self.append_regional_hqs(regional_headquarters, user_id, commanders
             )
-
         detachments = Detachment.objects.filter(
             regional_headquarter__district_headquarter=district_headquarter
             )
         self.append_detachment_hqs(detachments, user_id, commanders)
-
-        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
+        local_headquarters = LocalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+                                                             )
         self.append_local_hqs(local_headquarters, user_id, commanders)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
-        educational_headquarters = EducationalHeadquarter.objects.filter(regional_headquarter__district_headquarter=district_headquarter)
+        return commanders
+    
+    
+class DistrictSubCommanderIdMixin(BaseSubCommanderMixin):
+    def get_sub_commanders(self, obj, user_id=None):
+        commanders = []
+        district_headquarter = obj
+
+        regional_headquarters = RegionalHeadquarter.objects.filter(
+            district_headquarter=district_headquarter
+            )
+        self.append_regional_hqs(regional_headquarters, user_id, commanders
+            )
+        detachments = Detachment.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+            )
+        self.append_detachment_hqs(detachments, user_id, commanders)
+        local_headquarters = LocalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+                                                             )
+        self.append_local_hqs(local_headquarters, user_id, commanders)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter__district_headquarter=district_headquarter
+            )
         self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
         return commanders
@@ -374,12 +441,35 @@ class RegionalSubCommanderMixin(BaseSubCommanderMixin):
         commanders = []
         regional_headquarter = obj
 
-        detachments = Detachment.objects.filter(regional_headquarter=regional_headquarter)
+        detachments = Detachment.objects.filter(
+            regional_headquarter=regional_headquarter
+            )
         self.append_detachment_hqs(detachments, user_id, commanders)
+        local_headquarters = LocalHeadquarter.objects.filter(
+            regional_headquarter=regional_headquarter)
+        self.append_local_hqs(local_headquarters, user_id, commanders
+                              )
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            regional_headquarter=regional_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
-        local_headquarters = LocalHeadquarter.objects.filter(regional_headquarter=regional_headquarter)
-        self.append_local_hqs(local_headquarters, user_id, commanders)
+        return commanders
+    
+    
+class RegionalSubCommanderIdMixin(BaseSubCommanderMixin):
+    def get_sub_commanders(self, obj, user_id=None):
+        commanders = []
+        regional_headquarter = obj
 
+        detachments = Detachment.objects.filter(
+            regional_headquarter=regional_headquarter
+            )
+        self.append_detachment_hqs(detachments, user_id, commanders)
+        local_headquarters = LocalHeadquarter.objects.filter(
+            regional_headquarter=regional_headquarter)
+        self.append_local_hqs(local_headquarters, user_id, commanders
+                              )
         educational_headquarters = EducationalHeadquarter.objects.filter(
             regional_headquarter=regional_headquarter
             )
@@ -394,9 +484,27 @@ class LocalSubCommanderMixin(BaseSubCommanderMixin):
         commanders = []
         local_headquarter = obj
 
-        detachments = Detachment.objects.filter(local_headquarter=local_headquarter)
+        detachments = Detachment.objects.filter(
+            local_headquarter=local_headquarter
+            )
         self.append_detachment_hqs(detachments, user_id, commanders)
+        educational_headquarters = EducationalHeadquarter.objects.filter(
+            local_headquarter=local_headquarter
+            )
+        self.append_educational_hqs(educational_headquarters, user_id, commanders)
 
+        return commanders
+    
+
+class LocalSubCommanderIdMixin(BaseSubCommanderMixin):
+    def get_sub_commanders(self, obj, user_id=None):
+        commanders = []
+        local_headquarter = obj
+
+        detachments = Detachment.objects.filter(
+            local_headquarter=local_headquarter
+            )
+        self.append_detachment_hqs(detachments, user_id, commanders)
         educational_headquarters = EducationalHeadquarter.objects.filter(
             local_headquarter=local_headquarter
             )
@@ -411,7 +519,22 @@ class EducationalSubCommanderMixin(BaseSubCommanderMixin):
         commanders = []
         educational_headquarter = obj
 
-        detachments = Detachment.objects.filter(educational_headquarter=educational_headquarter)
+        detachments = Detachment.objects.filter(
+            educational_headquarter=educational_headquarter
+            )
+        self.append_detachment_hqs(detachments, user_id, commanders)
+        
+        return commanders
+    
+
+class EducationalSubCommanderIdMixin(BaseSubCommanderMixin):
+    def get_sub_commanders(self, obj, user_id=None):
+        commanders = []
+        educational_headquarter = obj
+
+        detachments = Detachment.objects.filter(
+            educational_headquarter=educational_headquarter
+            )
         self.append_detachment_hqs(detachments, user_id, commanders)
         
         return commanders
