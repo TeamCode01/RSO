@@ -86,37 +86,37 @@ def count_membership_fee(headquarter, user_id=None):
     sub_commanders = []
 
     if isinstance(headquarter, CentralHeadquarter):
-        membership_fee_count = UserCentralHeadquarterPosition.objects.filter(
+        membership_fee_users_count = UserCentralHeadquarterPosition.objects.filter(
             headquarter=headquarter,
             user__membership_fee=True,
         ).count()
         sub_commanders = CentralSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, DistrictHeadquarter):
-        membership_fee_count = UserDistrictHeadquarterPosition.objects.filter(
+        membership_fee_users_count = UserDistrictHeadquarterPosition.objects.filter(
             headquarter=headquarter,
             user__membership_fee=True,
         ).count()
         sub_commanders = DistrictSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, RegionalHeadquarter):
-        membership_fee_count = UserRegionalHeadquarterPosition.objects.filter(
+        membership_fee_users_count = UserRegionalHeadquarterPosition.objects.filter(
             headquarter=headquarter,
             user__membership_fee=True,
         ).count()
         sub_commanders = RegionalSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, LocalHeadquarter):
-        membership_fee_count = UserLocalHeadquarterPosition.objects.filter(
+        membership_fee_users_count = UserLocalHeadquarterPosition.objects.filter(
             headquarter=headquarter,
             user__membership_fee=True,
         ).count()
         sub_commanders = LocalSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, EducationalHeadquarter):
-        membership_fee_count = UserEducationalHeadquarterPosition.objects.filter(
+        membership_fee_users_count = UserEducationalHeadquarterPosition.objects.filter(
             headquarter=headquarter,
             user__membership_fee=True,
         ).count()
         sub_commanders = EducationalSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, Detachment):
-        membership_fee_count = UserDetachmentPosition.objects.filter(
+        membership_fee_users_count = UserDetachmentPosition.objects.filter(
             headquarter=headquarter,
             user__membership_fee=True,
         ).count()
@@ -125,8 +125,9 @@ def count_membership_fee(headquarter, user_id=None):
 
     commander_ids = [cmd['id'] for cmd in sub_commanders]
     membership_fee_sub_commanders_count = RSOUser.objects.filter(id__in=commander_ids, membership_fee=True).count()
+    membership_fee_count = membership_fee_users_count + membership_fee_sub_commanders_count + 1
 
-    return membership_fee_count + membership_fee_sub_commanders_count + 1
+    return membership_fee_count 
 
 
 def count_test_membership(headquarter, user_id=None):
@@ -134,7 +135,7 @@ def count_test_membership(headquarter, user_id=None):
 
     if isinstance(headquarter, CentralHeadquarter):
         members = UserCentralHeadquarterPosition.objects.filter(headquarter=headquarter)
-        test_membership_count = Attempt.objects.filter(
+        test_membership_users_count = Attempt.objects.filter(
             user__in=members.values_list('user', flat=True),
             category=Attempt.Category.SAFETY,
             score__gt=60
@@ -142,7 +143,7 @@ def count_test_membership(headquarter, user_id=None):
         sub_commanders = CentralSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, DistrictHeadquarter):
         members = UserDistrictHeadquarterPosition.objects.filter(headquarter=headquarter)
-        test_membership_count = Attempt.objects.filter(
+        test_membership_users_count = Attempt.objects.filter(
             user__in=members.values_list('user', flat=True),
             category=Attempt.Category.SAFETY,
             score__gt=60
@@ -150,7 +151,7 @@ def count_test_membership(headquarter, user_id=None):
         sub_commanders = DistrictSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, RegionalHeadquarter):
         members = UserRegionalHeadquarterPosition.objects.filter(headquarter=headquarter)
-        test_membership_count = Attempt.objects.filter(
+        test_membership_users_count = Attempt.objects.filter(
             user__in=members.values_list('user', flat=True),
             category=Attempt.Category.SAFETY,
             score__gt=60
@@ -158,7 +159,7 @@ def count_test_membership(headquarter, user_id=None):
         sub_commanders = RegionalSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, LocalHeadquarter):
         members = UserLocalHeadquarterPosition.objects.filter(headquarter=headquarter)
-        test_membership_count = Attempt.objects.filter(
+        test_membership_users_count = Attempt.objects.filter(
             user__in=members.values_list('user', flat=True),
             category=Attempt.Category.SAFETY,
             score__gt=60
@@ -166,7 +167,7 @@ def count_test_membership(headquarter, user_id=None):
         sub_commanders = LocalSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, EducationalHeadquarter):
         members = UserEducationalHeadquarterPosition.objects.filter(headquarter=headquarter)
-        test_membership_count = Attempt.objects.filter(
+        test_membership_users_count = Attempt.objects.filter(
             user__in=members.values_list('user', flat=True),
             category=Attempt.Category.SAFETY,
             score__gt=60
@@ -174,7 +175,7 @@ def count_test_membership(headquarter, user_id=None):
         sub_commanders = EducationalSubCommanderIdMixin().get_sub_commanders(headquarter, user_id)
     elif isinstance(headquarter, Detachment):
         members = UserDetachmentPosition.objects.filter(headquarter=headquarter)
-        test_membership_count = Attempt.objects.filter(
+        test_membership_users_count = Attempt.objects.filter(
             user__in=members.values_list('user', flat=True),
             category=Attempt.Category.SAFETY,
             score__gt=60
@@ -189,8 +190,9 @@ def count_test_membership(headquarter, user_id=None):
         category=Attempt.Category.SAFETY,
         score__gt=60
     ).count()
+    test_membership_count = test_membership_users_count + test_membership_sub_commanders_count + 1
 
-    return test_membership_count + test_membership_sub_commanders_count + 1
+    return test_membership_count 
 
 
 def count_events_organizations(headquarter):
