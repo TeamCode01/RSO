@@ -34,6 +34,7 @@
                         <button class="button" id="downloadLocalHqButton">Реестр МШ (файл)</button>
                         <button class="button" id="downloadEducationalHqButton">Реестр СО ОО (файл)</button>
                         <button class="button" id="downloadDetachmentButton">Реестр ЛСО (файл)</button>
+                        <button class="button" id="downloadDirectionButton">Реестр Направление (файл)</button>
 {#            <a href="/report2" class="button">Отчет 2</a>#}
 {#            <a href="/report3" class="button">Отчет 3</a>#}
 {#            <a href="/report1" class="button">Отчет 1</a>#}
@@ -104,6 +105,7 @@
         setupDownloadButton('downloadLocalHqButton', '{% url "export_local_hq_data" %}', 'Реестр МШ (файл)');
         setupDownloadButton('downloadEducationalHqButton', '{% url "export_education_hq_data" %}', 'Реестр СО ОО (файл)');
         setupDownloadButton('downloadDetachmentButton', '{% url "export_detachment_data" %}', 'Реестр ЛСО (файл)');
+        setupDownloadButton('downloadDirectionButton', '{% url "export_direction_data" %}', 'Реестр Направление (файл)')
 
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');

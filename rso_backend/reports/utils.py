@@ -25,7 +25,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
 from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september
-from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter
+from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
@@ -2140,4 +2140,21 @@ def get_detachment_data(fields):
 
     return rows
 
+       
+def get_direction_data(fields):
+    if not fields:
+        fields = [
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+    
+    directions = Area.objects.all()
+    rows = []
+    
+    try:
+        for direction in directions:
+            row = [direction.name]
             
+    except Exception as e:
+        print(f"Ошибка: {e}")

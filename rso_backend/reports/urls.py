@@ -18,7 +18,7 @@ from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
                            ExportQ13DataView, ExportQ14DataView,
                            ExportQ19DataView, ExportCentralDataView, ExportDistrictDataView,
                            ExportRegionalDataView, ExportLocalDataView, ExportEducationDataView,
-                           ExportDetachmentDataView)
+                           ExportDetachmentDataView, ExportDirectionDataView)
 
 
 urlpatterns = [
@@ -184,4 +184,7 @@ urlpatterns = [
     path('get_detachment_data/export/',
          ExportDetachmentDataView.as_view(),
          name='export_detachment_data'),
+    path('get_direction_data/export/',
+         ExportDirectionDataView.as_view(),
+         name='export_direction_data'),
 ]

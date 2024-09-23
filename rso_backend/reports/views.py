@@ -25,7 +25,8 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                COMMANDER_SCHOOL_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
                                Q19_DATA_HEADERS, DISTRICT_HQ_HEADERS, REGIONAL_HQ_HEADERS,
-                               LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS, CENTRAL_HQ_HEADERS)
+                               LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS, CENTRAL_HQ_HEADERS,
+                               DIRECTIONS_HEADERS)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
@@ -33,6 +34,7 @@ from reports.utils import (
     adapt_attempts, get_membership_fee_data
 )
 from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import PermissionDenied
 
 
 def has_reports_access(user):
@@ -513,6 +515,40 @@ class AttributesOfUniformDataView(View):
         context = {'sample_results': results,
                    'columns': ATTRIBUTION_DATA_HEADERS}
         return render(request, self.template_name, context)
+    
+
+class CommanerPermissionMixin:
+    def get_user_role(self):
+        user = self.request.user
+        
+        if hasattr(user, 'centralheadquarter_commander'):
+            return 'central'
+        elif hasattr(user, 'districtheadquarter_commander'):
+            return 'district'
+        elif hasattr(user, 'regionalheadquarter_commander'):
+            return 'regional'
+        elif hasattr(user, 'localheadquarter_commander'):
+            return 'local'
+        elif hasattr(user, 'educationalheadquarter_commander'):
+            return 'educational'
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+
+    def filter_fields_by_role(self, fields, role):
+        if role == 'district':
+            return [field for field in fields if field != 'district_headquarters']
+        elif role == 'regional':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters']]
+        elif role == 'local':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters']]
+        elif role == 'educational':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters', 'educational_headquarters']]
+        return fields
+
+    def get_fields(self):
+        fields = super().get_fields()
+        user_role = self.get_user_role()
+        return self.filter_fields_by_role(fields, user_role)
 
 
 class ExportCentralHqDataMixin:
@@ -544,7 +580,7 @@ class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportCentralDataAPIView(ExportCentralHqDataMixin, BaseExcelExportAPIView):
+class ExportCentralDataAPIView(CommanerPermissionMixin, ExportCentralHqDataMixin, BaseExcelExportAPIView):
     pass
 
 
@@ -576,7 +612,7 @@ class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportDistrictDataAPIView(ExportDistrictHqDataMixin, BaseExcelExportAPIView):
+class ExportDistrictDataAPIView(CommanerPermissionMixin, ExportDistrictHqDataMixin, BaseExcelExportAPIView):
     pass
 
 
@@ -608,7 +644,7 @@ class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportRegionalDataAPIView(ExportRegionalHqDataMixin, BaseExcelExportAPIView):
+class ExportRegionalDataAPIView(CommanerPermissionMixin, ExportRegionalHqDataMixin, BaseExcelExportAPIView):
     pass
 
 
@@ -640,7 +676,7 @@ class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportLocalDataAPIView(ExportLocalHqDataMixin, BaseExcelExportAPIView):
+class ExportLocalDataAPIView(CommanerPermissionMixin, ExportLocalHqDataMixin, BaseExcelExportAPIView):
     pass
 
 
@@ -673,7 +709,7 @@ class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportEducationDataAPIView(ExportEducationHqDataMixin, BaseExcelExportAPIView):
+class ExportEducationDataAPIView(CommanerPermissionMixin, ExportEducationHqDataMixin, BaseExcelExportAPIView):
     pass
 
 
@@ -706,5 +742,36 @@ class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportDetachmentDataAPIView(ExportDetachmentDataMixin, BaseExcelExportAPIView):
+class ExportDetachmentDataAPIView(CommanerPermissionMixin, ExportDetachmentDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+class ExportDirectionDataMixin:
+    def get_headers(self):
+        return DIRECTIONS_HEADERS
+    
+    def get_filename(self):
+        return f'Направление_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+    
+    def get_worksheet_title(self):
+        return 'Направление'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or [
+            'detachments',
+            'participants_count', 'verification_percent', 
+           'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        
+    def get_data_func(self):
+        return 'get_direction_data'
+    
+
+class ExportDirectionDataView(ExportDirectionDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportDirectionDataAPIView(CommanerPermissionMixin, ExportDirectionDataMixin, BaseExcelExportAPIView):
     pass
