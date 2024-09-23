@@ -1811,7 +1811,7 @@ def get_district_hq_data(fields):
 def get_regional_hq_data(fields):
     if not fields:
         fields = [
-            'local_headquarters', 
+            'district_headquarters','local_headquarters', 
             'educational_headquarters', 'detachments', 
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
@@ -1824,6 +1824,14 @@ def get_regional_hq_data(fields):
     try:
         for regional_headquarter in regional_headquarters:
             row = [regional_headquarter.name]
+            if 'district_headquarters' in fields:
+                district_headquarter = regional_headquarter.district_headquarter
+                if district_headquarter:
+                    row.append(district_headquarter.name)
+                else:
+                    row.append('-')
+            else:
+                row.append('-')
             if 'local_headquarters' in fields:
                 row.append(LocalHeadquarter.objects.filter(
                     regional_headquarter=regional_headquarter
@@ -1885,6 +1893,7 @@ def get_regional_hq_data(fields):
 def get_local_hq_data(fields):
     if not fields:
         fields = [ 
+            'district_headquarters', 'regional_headquarters',
             'educational_headquarters', 'detachments', 
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
@@ -1897,6 +1906,16 @@ def get_local_hq_data(fields):
     try:
         for local_headquarter in local_headquarters:
             row = [local_headquarter.name]
+            if 'district_headquarters' in fields:
+                district_headquarter = local_headquarter.regional_headquarter.district_headquarter
+                row.append(district_headquarter.name if district_headquarter else '-')
+            else:
+                row.append('-')
+            if 'regional_headquarters' in fields:
+                regional_headquarter = local_headquarter.regional_headquarter
+                row.append(regional_headquarter.name if regional_headquarter else '-')
+            else:
+                row.append('-')
             if 'educational_headquarters' in fields:
                 row.append(EducationalHeadquarter.objects.filter(
                     local_headquarter=local_headquarter
@@ -1955,7 +1974,8 @@ def get_local_hq_data(fields):
 def get_educational_hq_data(fields):
     if not fields:
         fields = [
-            'detachments', 
+            'district_headquarters', 'regional_headquarters',
+            'local_headquarters','detachments', 
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
@@ -1967,6 +1987,21 @@ def get_educational_hq_data(fields):
     try:
         for educational_headquarter in educational_headquarters:
             row = [educational_headquarter.name]
+            if 'district_headquarters' in fields:
+                district_headquarter = educational_headquarter.regional_headquarter.district_headquarter
+                row.append(district_headquarter.name if district_headquarter else '-')
+            else:
+                row.append('-')
+            if 'regional_headquarters' in fields:
+                regional_headquarter = educational_headquarter.regional_headquarter
+                row.append(regional_headquarter.name if regional_headquarter else '-')
+            else:
+                row.append('-')
+            if 'local_headquarters' in fields:
+                local_headquarter = educational_headquarter.local_headquarter
+                row.append(local_headquarter.name if local_headquarter else '-')
+            else:
+                row.append('-')
             if 'detachments' in fields:
                 row.append(Detachment.objects.filter(
                     educational_headquarter=educational_headquarter
@@ -2016,6 +2051,9 @@ def get_educational_hq_data(fields):
 def get_detachment_data(fields):
     if not fields:
         fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions',
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
@@ -2027,6 +2065,36 @@ def get_detachment_data(fields):
     try:
         for detachment in detachments:
             row = [detachment.name]
+            # if 'district_headquarter' in fields:
+            #     if detachment.regional_headquarter:
+            #         district_headquarter = detachment.regional_headquarter.district_headquarter
+            #         row.append(district_headquarter.name if district_headquarter else '-')
+            #     else:
+            #         row.append('-')
+            # else:
+            #     row.append('-')
+            # if 'regional_headquarter' in fields:
+            #     regional_headquarter = detachment.regional_headquarter
+            #     row.append(regional_headquarter.name if regional_headquarter else '-')
+            # else:
+            #     row.append('-')
+            # if 'local_headquarter' in fields:
+            #     local_headquarter = detachment.local_headquarter
+            #     row.append(local_headquarter.name if local_headquarter else '-')
+            # else:
+            #     row.append('-')
+            # if 'educational_headquarter' in fields:
+            #     educational_headquarter = detachment.educational_headquarter
+            #     row.append(educational_headquarter.name if educational_headquarter else '-')
+            # else:
+            #     row.append('-')
+            # if 'directions' in fields:
+            #     if detachment.area:
+            #         row.append(detachment.area.name)
+            #     else:
+            #         row.append('-')
+            # else:
+            #     row.append('-')
             if 'participants_count' in fields:
                 participants_count = count_headquarter_participants(detachment) or 0
                 row.append(participants_count)

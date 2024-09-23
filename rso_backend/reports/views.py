@@ -593,7 +593,7 @@ class ExportRegionalHqDataMixin:
     def get_fields(self):
         fields = self.request.POST.getlist('fields')
         return fields or[
-            'local_headquarters', 
+            'district_headquarters','local_headquarters', 
             'educational_headquarters', 'detachments', 
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
@@ -625,6 +625,7 @@ class ExportLocalHqDataMixin:
     def get_fields(self):
         fields = self.request.POST.getlist('fields')
         return fields or[
+            'district_headquarters', 'regional_headquarters',
             'educational_headquarters', 'detachments', 
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
@@ -657,7 +658,8 @@ class ExportEducationHqDataMixin:
     def get_fields(self):
         fields = self.request.POST.getlist('fields')
         return fields or[
-            'detachments', 
+            'district_headquarters', 'regional_headquarters',
+            'local_headquarters','detachments', 
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
@@ -688,8 +690,9 @@ class ExportDetachmentDataMixin:
     def get_fields(self):
         fields = self.request.POST.getlist('fields')
         return fields or[
-            'local_headquarters', 
-            'educational_headquarters', 'detachments', 
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions',
             'participants_count', 'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
