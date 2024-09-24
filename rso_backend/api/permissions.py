@@ -1287,6 +1287,7 @@ class IsDetachmentCommander(permissions.BasePermission):
             hasattr(request.user, 'districtheadquarter_commander') or
             hasattr(request.user, 'regionalheadquarter_commander') or
             hasattr(request.user, 'localheadquarter_commander') or
-            hasattr(request.user, 'educationalheadquarter_commander')
+            hasattr(request.user, 'educationalheadquarter_commander') or
+            hasattr(request.user, 'detachment_commander')
         )        
     

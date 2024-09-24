@@ -533,17 +533,19 @@ class CommanerPermissionMixin:
             return 'local'
         elif hasattr(user, 'educationalheadquarter_commander'):
             return 'educational'
+        elif hasattr(user, 'detachment_commander'):
+            return 'detachment'
         else:
             raise PermissionDenied("У вас недостаточно прав")
 
     def filter_fields_by_role(self, fields, role):
-        if role == 'district':
-            return [field for field in fields if field != 'district_headquarters']
-        elif role == 'regional':
-            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters']]
+        if role == 'regional':
+            return [field for field in fields if field not in ['district_headquarters']]
         elif role == 'local':
-            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters']]
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters']]
         elif role == 'educational':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters']]
+        elif role == 'detachment':
             return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters', 'educational_headquarters']]
         return fields
 
@@ -762,7 +764,7 @@ class ExportDirectionDataMixin:
         return fields or [
             'detachments',
             'participants_count', 'verification_percent', 
-           'membership_fee_percent', 'test_done_percent', 
+            'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
         
