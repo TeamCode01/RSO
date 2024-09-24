@@ -1236,3 +1236,57 @@ class PersonalDataPermissionForGET(PersonalDataPermission):
             super().has_object_permission(request, view, obj)
             or view.get_object().user == request.user
         )
+
+
+class IsCentralCommander(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return hasattr(request.user, 'centralheadquarter_commander')
+
+
+class IsDistrictCommander(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            hasattr(request.user, 'centralheadquarter_commander') or
+            hasattr(request.user, 'districtheadquarter_commander')
+        )
+
+class IsRegionalCommander(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            hasattr(request.user, 'centralheadquarter_commander') or
+            hasattr(request.user, 'districtheadquarter_commander') or
+            hasattr(request.user, 'regionalheadquarter_commander')
+        )
+
+
+class IsLocalCommander(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            hasattr(request.user, 'centralheadquarter_commander') or
+            hasattr(request.user, 'districtheadquarter_commander') or
+            hasattr(request.user, 'regionalheadquarter_commander') or
+            hasattr(request.user, 'localheadquarter_commander')
+        )
+
+
+class IsEducationalCommander(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            hasattr(request.user, 'centralheadquarter_commander') or
+            hasattr(request.user, 'districtheadquarter_commander') or
+            hasattr(request.user, 'regionalheadquarter_commander') or
+            hasattr(request.user, 'localheadquarter_commander') or
+            hasattr(request.user, 'educationalheadquarter_commander')
+        )
+        
+        
+class IsDetachmentCommander(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            hasattr(request.user, 'centralheadquarter_commander') or
+            hasattr(request.user, 'districtheadquarter_commander') or
+            hasattr(request.user, 'regionalheadquarter_commander') or
+            hasattr(request.user, 'localheadquarter_commander') or
+            hasattr(request.user, 'educationalheadquarter_commander')
+        )        
+    

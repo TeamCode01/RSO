@@ -35,6 +35,8 @@ from reports.utils import (
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
+from api.permissions import (IsCentralCommander, IsDistrictCommander, IsDetachmentCommander,
+                             IsEducationalCommander, IsLocalCommander, IsRegionalCommander)
 
 
 def has_reports_access(user):
@@ -581,7 +583,7 @@ class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
 
 
 class ExportCentralDataAPIView(CommanerPermissionMixin, ExportCentralHqDataMixin, BaseExcelExportAPIView):
-    pass
+    permission_classes = [IsCentralCommander]
 
 
 class ExportDistrictHqDataMixin:
@@ -613,8 +615,8 @@ class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
 
 
 class ExportDistrictDataAPIView(CommanerPermissionMixin, ExportDistrictHqDataMixin, BaseExcelExportAPIView):
-    pass
-
+    permission_classes = [IsDistrictCommander]
+    
 
 class ExportRegionalHqDataMixin:
     def get_headers(self):
@@ -645,7 +647,7 @@ class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
 
 
 class ExportRegionalDataAPIView(CommanerPermissionMixin, ExportRegionalHqDataMixin, BaseExcelExportAPIView):
-    pass
+    permission_classes = [IsRegionalCommander]
 
 
 class ExportLocalHqDataMixin:
@@ -677,8 +679,7 @@ class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
 
 
 class ExportLocalDataAPIView(CommanerPermissionMixin, ExportLocalHqDataMixin, BaseExcelExportAPIView):
-    pass
-
+    permission_classes = [IsLocalCommander]
 
 
 class ExportEducationHqDataMixin:
@@ -710,7 +711,7 @@ class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
 
 
 class ExportEducationDataAPIView(CommanerPermissionMixin, ExportEducationHqDataMixin, BaseExcelExportAPIView):
-    pass
+    permission_classes = [IsEducationalCommander]
 
 
 class ExportDetachmentDataMixin:
@@ -743,7 +744,7 @@ class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
 
 
 class ExportDetachmentDataAPIView(CommanerPermissionMixin, ExportDetachmentDataMixin, BaseExcelExportAPIView):
-    pass
+    permission_classes = [IsDetachmentCommander]
 
 
 class ExportDirectionDataMixin:
