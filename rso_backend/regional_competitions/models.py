@@ -670,6 +670,14 @@ class RegionalR14(BaseScore):
     Заполняется один раз, без периодического пересчета,
     т.к. нет редактирования верифицированных отчетов.
     """
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s',
+        blank=True,
+        null=True
+    )
     report_12 = models.ForeignKey(
         'RegionalR12',
         on_delete=models.CASCADE,
