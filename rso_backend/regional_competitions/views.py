@@ -63,7 +63,9 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
             - regional_headquarter_name: сортировка по названию регионального штаба
           Можно сортировать в обратном порядке добавив признак '-' перед названием поля
     """
-    queryset = StatisticalRegionalReport.objects.all()
+    queryset = StatisticalRegionalReport.objects.all().select_related(
+        'regional_headquarter'
+    ).prefetch_related('additional_statistics')
     serializer_class = StatisticalRegionalReportSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = StatisticalRegionalReportFilter

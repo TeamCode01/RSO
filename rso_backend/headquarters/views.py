@@ -164,7 +164,9 @@ class DistrictViewSet(ApplicationsMixin,
     Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = DistrictHeadquarter.objects.all()
+    queryset = DistrictHeadquarter.objects.all().select_related(
+        'central_headquarter'
+    ).prefetch_related('members', 'events')
     serializer_class = DistrictHeadquarterSerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter)
     search_fields = ('name', 'founding_date')
@@ -229,7 +231,10 @@ class RegionalViewSet(ApplicationsMixin,
     Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
-    queryset = RegionalHeadquarter.objects.all()
+    queryset = RegionalHeadquarter.objects.all().select_related(
+        'region',
+        'district_headquarter',
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -309,7 +314,9 @@ class LocalViewSet(ApplicationsMixin,
     Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = LocalHeadquarter.objects.all()
+    queryset = LocalHeadquarter.objects.all().select_related(
+        'regional_headquarter',
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -374,7 +381,11 @@ class EducationalViewSet(ApplicationsMixin,
     Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = EducationalHeadquarter.objects.all()
+    queryset = EducationalHeadquarter.objects.all().select_related(
+        'educational_institution',
+        'local_headquarter',
+        'regional_headquarter'
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -443,7 +454,14 @@ class DetachmentViewSet(ApplicationsMixin,
     Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
-    queryset = Detachment.objects.all()
+    queryset = Detachment.objects.all().select_related(
+        'area', 
+        'region', 
+        'educational_institution',
+        'educational_headquarter',
+        'local_headquarter',
+        'regional_headquarter'
+    ).prefetch_related('events', 'members')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -573,7 +591,7 @@ class CentralPositionViewSet(BasePositionViewSet):
             self,
             CentralHeadquarter,
             UserCentralHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
     @method_decorator(cache_page(settings.CENTRALHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -600,7 +618,7 @@ class DistrictPositionViewSet(BasePositionViewSet):
             self,
             DistrictHeadquarter,
             UserDistrictHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
     @method_decorator(cache_page(settings.DISTRCICTHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -630,7 +648,7 @@ class RegionalPositionViewSet(BasePositionViewSet):
             self,
             RegionalHeadquarter,
             UserRegionalHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class LocalPositionViewSet(BasePositionViewSet):
@@ -656,7 +674,7 @@ class LocalPositionViewSet(BasePositionViewSet):
             self,
             LocalHeadquarter,
             UserLocalHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class EducationalPositionViewSet(BasePositionViewSet):
@@ -682,7 +700,7 @@ class EducationalPositionViewSet(BasePositionViewSet):
             self,
             EducationalHeadquarter,
             UserEducationalHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class DetachmentPositionViewSet(BasePositionViewSet):
@@ -708,7 +726,7 @@ class DetachmentPositionViewSet(BasePositionViewSet):
             self,
             Detachment,
             UserDetachmentPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class BaseAcceptRejectViewSet(CreateDeleteViewSet):
@@ -1171,7 +1189,9 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
 
 
 class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Detachment.objects.all()
+    queryset = Detachment.objects.all().select_related(
+        'local_headquarter', 'educational_headquarter', 'regional_headquarter'
+    )
     serializer_class = DetachmentListSerializer
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter

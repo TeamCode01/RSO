@@ -33,7 +33,7 @@ from users.short_serializers import ShortUserSerializer, ShortestUserSerializer
 
 class PositionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Area
+        model = Position
         fields = ('id', 'name',)
 
 
