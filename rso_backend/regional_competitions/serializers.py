@@ -630,7 +630,7 @@ class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('event_happened', 'document', 'links')
+            + ('comment', 'event_happened', 'document', 'links')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -651,7 +651,7 @@ class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fi
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('event_happened', 'document', 'links')
+            + ('comment', 'event_happened', 'document', 'links')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
