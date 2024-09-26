@@ -92,12 +92,15 @@ class FrontReportsViewSet(viewsets.ModelViewSet):
         )
         url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
         error_url_host = urlparse( error_data.get('url')).netloc.split(':')[0]
-        if error_url_host == '127.0.0.1' or error_url_host == 'localhost':
-            message_thread_id = os.getenv('TG_LOCAL_TOPIC_ID')
-        elif message_thread_id == '213.139.208.147':
-            message_thread_id = os.getenv('TG_DEV_TOPIC_ID')
-        else:
-            message_thread_id = os.getenv('TG_MAIN_TOPIC_ID')
+        try:
+            if error_url_host == '127.0.0.1' or error_url_host == 'localhost':
+                message_thread_id = os.getenv('TG_LOCAL_TOPIC_ID')
+            elif error_url_host == '213.139.208.147':
+                message_thread_id = os.getenv('TG_DEV_TOPIC_ID')
+            else:
+                message_thread_id = os.getenv('TG_MAIN_TOPIC_ID')
+        except Exception:
+            message_thread_id = None
         payload = {
             'chat_id': chat_id,
             'text': message,
