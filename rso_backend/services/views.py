@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import requests
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db.models import Q
@@ -90,9 +91,17 @@ class FrontReportsViewSet(viewsets.ModelViewSet):
             f"User ID: {error_data.get('user')}"
         )
         url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+        error_url_host = urlparse( error_data.get('url')).netloc.split(':')[0]
+        if error_url_host == '127.0.0.1' or error_url_host == 'localhost':
+            message_thread_id = os.getenv('TG_LOCAL_TOPIC_ID')
+        elif message_thread_id == '213.139.208.147':
+            message_thread_id = os.getenv('TG_DEV_TOPIC_ID')
+        else:
+            message_thread_id = os.getenv('TG_MAIN_TOPIC_ID')
         payload = {
             'chat_id': chat_id,
-            'text': message
+            'text': message,
+            'message_thread_id': message_thread_id
         }
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
