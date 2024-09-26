@@ -38,13 +38,13 @@ class ApplicationsMixin:
         if application_model is UserDetachmentApplication:
             applications = application_model.objects.filter(
                 detachment=headquarter
-            )
+            ).select_related('user__media')
         else:
             applications = application_model.objects.filter(
                 headquarter=headquarter
-            )
+            ).select_related('user__media')
         if user_id:
-            applications = applications.filter(user_id=user_id)
+            applications = applications.filter(user_id=user_id).select_related('user__media')
         serializer = self.get_application_serializer()(instance=applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -58,13 +58,13 @@ class ApplicationsMixin:
         if application_model is UserDetachmentApplication:
             applications = application_model.objects.filter(
                 detachment=headquarter
-            )
+            ).select_related('user__media')
         else:
             applications = application_model.objects.filter(
                 headquarter=headquarter
-            )
+            ).select_related('user__media')
         if user_id:
-            applications = applications.filter(user_id=user_id)
+            applications = applications.filter(user_id=user_id).select_related('user__media')
         serializer = self.get_application_short_serializer()(instance=applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

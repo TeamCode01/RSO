@@ -22,7 +22,8 @@ from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
                                              EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, ListRetrieveCreateMixin
+from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
+                                          RegionalRMixin, ListRetrieveCreateMixin)
 from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
@@ -62,7 +63,9 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
             - regional_headquarter_name: сортировка по названию регионального штаба
           Можно сортировать в обратном порядке добавив признак '-' перед названием поля
     """
-    queryset = StatisticalRegionalReport.objects.all()
+    queryset = StatisticalRegionalReport.objects.all().select_related(
+        'regional_headquarter'
+    ).prefetch_related('additional_statistics')
     serializer_class = StatisticalRegionalReportSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = StatisticalRegionalReportFilter
@@ -97,7 +100,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -155,7 +158,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        data = dict(request.data)
+        parser = FormDataNestedFileParser()
+        data = parser.parse_querydict(request.data)
         verification_action = data.pop('action', None)
         report = self.get_object()
 
@@ -178,7 +182,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data)
+            update_serializer = self.get_serializer(report, data=data)
 
             if update_serializer.is_valid():
                 update_serializer.save()
@@ -232,7 +236,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        data = dict(request.data)  # для работы с formparser
+        parser = FormDataNestedFileParser()
+        data = parser.parse_querydict(request.data)
         verification_action = data.pop('action', None)
         reasons = data.pop('reasons', {})
         report = self.get_object()
@@ -271,7 +276,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data)
+            update_serializer = self.get_serializer(report, data=data)
             if update_serializer.is_valid():
                 update_serializer.save()
 
@@ -578,20 +583,20 @@ class RegionalR1MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4ViewSet(BaseRegionalRViewSet):
+class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR4MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5ViewSet(BaseRegionalRViewSet):
+class RegionalR5ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     """
     Организация всероссийских (международных) (организатор – региональное отделение РСО),
     окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
@@ -621,7 +626,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR5MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR5
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
@@ -633,6 +638,7 @@ r6_view_sets_factory = RViewSetFactory(
     serializers=r6_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r6_view_sets_factory.create_view_sets()
 
@@ -642,6 +648,7 @@ r7_view_sets_factory = RViewSetFactory(
     serializers=r7_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r7_view_sets_factory.create_view_sets()
 
@@ -650,30 +657,31 @@ r9_view_sets_factory = RViewSetFactory(
     serializers=r9_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r9_view_sets_factory.create_view_sets()
 
 
-class RegionalR101ViewSet(BaseRegionalRViewSet):
+class RegionalR101ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR101MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR101MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR101
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102ViewSet(BaseRegionalRViewSet):
+class RegionalR102ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR102MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR102
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
@@ -697,7 +705,6 @@ class RegionalR12ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR12MeViewSet(BaseRegionalRMeViewSet, SendMixin):
@@ -711,7 +718,6 @@ class RegionalR13ViewSet(BaseRegionalRViewSet):
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
 class RegionalR13MeViewSet(BaseRegionalRMeViewSet, SendMixin):
@@ -721,20 +727,20 @@ class RegionalR13MeViewSet(BaseRegionalRMeViewSet, SendMixin):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16ViewSet(BaseRegionalRViewSet):
+class RegionalR16ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR16MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR16
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR17ViewSet(RegionalRNoVerifViewSet):
+class RegionalR17ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
     """Дислокация студенческих отрядов РО РСО.
 
     file_size выводится в мегабайтах.
@@ -750,55 +756,22 @@ class RegionalR17ViewSet(RegionalRNoVerifViewSet):
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR17MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     model = RegionalR17
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR18ViewSet(RegionalRNoVerifViewSet):
-    """Вьюсет для просмотра и создания отчета по 18 показателю.
-
-    Показатель не требует верификации.
-    Доступ - только региональным командирам.
-
-    get {pk} - принимает id РШ, а не id отчета.
-    Возвращает последний отчет, если тот существует, иначе 404.
-    """
-
+class RegionalR18ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalR18Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
-
-    def create(self, request, *args, **kwargs):
-        """Метод для создания отчета по 18 показателю.
-        Пример отчета:
-        ```json
-                {
-        "comment": "Комментарий",
-        "projects": [
-            {
-                "links": [
-                    {
-                    "link": "http://127.0.0.1:8000/swagger/"
-                    }
-                ]
-            }
-        ]
-        }
-        ```
-
-        Также стоят MultiPartParser, FormParser.
-        """
-        return super().create(request, *args, **kwargs)
 
 
-class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR18MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     """Вьюсет для просмотра и редактирования отчета по 18 показателю.
 
     Показатель не требует верификации.

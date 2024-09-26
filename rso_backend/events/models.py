@@ -275,7 +275,7 @@ class EventTimeData(models.Model):
 
 
 class EventDocument(models.Model):
-    """ Таблица для хранения документов мероприятий """
+    """Таблица для хранения документов мероприятий."""
     event = models.ForeignKey(
         to='Event',
         on_delete=models.CASCADE,

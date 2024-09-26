@@ -221,11 +221,20 @@ LOGGING = {
             'style': '{',
         },
     },
-
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+        },
+        'debug_console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
         },
         'tasks': {
             'level': 'DEBUG',
@@ -283,6 +292,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['debug_console'],
+        }
     }
 }
 
