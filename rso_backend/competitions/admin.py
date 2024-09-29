@@ -584,9 +584,15 @@ class Q9Admin(admin.ModelAdmin):
         'id', 'event_name', 'detachment_report', 'is_verified',
         'prize_place'
     )
+    actions = ['recalc_scores']
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q9Inline(admin.TabularInline):
@@ -619,9 +625,15 @@ class Q9TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q10Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
+    actions = ['recalc_scores']
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q10Inline(admin.TabularInline):
@@ -654,9 +666,15 @@ class Q10TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q11Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
+    actions = ['recalc_scores']
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q11Inline(admin.TabularInline):
@@ -689,9 +707,15 @@ class Q11TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q12Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
+    actions = ['recalc_scores', ]
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q12Inline(admin.TabularInline):
