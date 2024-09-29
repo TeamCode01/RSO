@@ -604,11 +604,19 @@ class Q9Inline(admin.TabularInline):
 class Q9ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name',)
+    actions = ['recalc_scores']
 
     inlines = [Q9Inline]
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            if Q9.objects.filter(is_verified=True, detachment_report_id=obj.id).count() == 0:
+                obj.score = 0
+                obj.save()
 
 
 @admin.register(Q9Ranking)
@@ -645,11 +653,19 @@ class Q10Inline(admin.TabularInline):
 class Q10ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name',)
+    actions = ['recalc_scores']
 
     inlines = [Q10Inline]
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            if Q10.objects.filter(is_verified=True, detachment_report_id=obj.id).count() == 0:
+                obj.score = 0
+                obj.save()
 
 
 @admin.register(Q10Ranking)
@@ -686,11 +702,19 @@ class Q11Inline(admin.TabularInline):
 class Q11ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name',)
+    actions = ['recalc_scores']
 
     inlines = [Q11Inline]
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            if Q11.objects.filter(is_verified=True, detachment_report_id=obj.id).count() == 0:
+                obj.score = 0
+                obj.save()
 
 
 @admin.register(Q11Ranking)
@@ -710,7 +734,7 @@ class Q12Admin(admin.ModelAdmin):
     actions = ['recalc_scores', ]
 
     def has_add_permission(self, request, obj=None):
-        return False
+        return settings.DEBUG
 
     @admin.action(description='Пересчитать очки')
     def recalc_scores(self, request, queryset):
@@ -727,11 +751,19 @@ class Q12Inline(admin.TabularInline):
 class Q12ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name',)
+    actions = ['recalc_scores', ]
 
     inlines = [Q12Inline]
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            if Q12.objects.filter(is_verified=True, detachment_report_id=obj.id).count() == 0:
+                obj.score = 0
+                obj.save()
 
 
 @admin.register(Q12Ranking)

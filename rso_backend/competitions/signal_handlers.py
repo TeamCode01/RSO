@@ -66,12 +66,6 @@ def create_score_q9(sender, instance, created=False, **kwargs):
             report.save()
 
             return report
-        else:
-            report = instance.detachment_report
-            report.score = 0
-            report.save()
-
-            return report
 
 
 @receiver([post_save, post_delete], sender=Q10)
@@ -90,12 +84,6 @@ def create_score_q10(sender, instance, created=False, **kwargs):
                 score += 4 - event.prize_place
 
             report.score = score
-            report.save()
-
-            return report
-        else:
-            report = instance.detachment_report
-            report.score = 0
             report.save()
 
             return report
@@ -120,12 +108,6 @@ def create_score_q11(sender, instance, created=False, **kwargs):
             report.save()
 
             return report
-        else:
-            report = instance.detachment_report
-            report.score = 0
-            report.save()
-
-            return report
 
 
 @receiver([post_save, post_delete], sender=Q12)
@@ -144,12 +126,6 @@ def create_score_q12(sender, instance, created=False, **kwargs):
                 score += 4 - event.prize_place
 
             report.score = score
-            report.save()
-
-            return report
-        else:
-            report = instance.detachment_report
-            report.score = 0
             report.save()
 
             return report
