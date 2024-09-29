@@ -1923,6 +1923,8 @@ def calculate_q19_place(report: Q19Report) -> int:
 
 
 def save_reserve_places():
+    RankingCopy.objects.all().delete()
+    OverallTandemRanking.objects.all().delete()
     logger.info('Начинаем сохранение резервных мест по всем показателям.')
     solo_detachments = CompetitionParticipants.objects.filter(
         detachment__isnull=True
