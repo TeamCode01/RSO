@@ -58,11 +58,11 @@ def create_score_q9(sender, instance, created=False, **kwargs):
                         detachment_report=report,
                         is_verified=True
             ).all()
-            report.score = (
-                report.score_calculation_avg(
-                    events, 'prize_place'
-                )
-            )
+            score = 0
+            for event in events:
+                score += 4 - event.prize_place
+
+            report.score = score
             report.save()
 
             return report
@@ -79,11 +79,11 @@ def create_score_q10(sender, instance, created=False, **kwargs):
                         detachment_report=report,
                         is_verified=True
             ).all()
-            report.score = (
-                report.score_calculation_avg(
-                    events, 'prize_place'
-                )
-            )
+            score = 0
+            for event in events:
+                score += 4 - event.prize_place
+
+            report.score = score
             report.save()
 
             return report
@@ -100,11 +100,11 @@ def create_score_q11(sender, instance, created=False, **kwargs):
                         detachment_report=report,
                         is_verified=True
             ).all()
-            report.score = (
-                report.score_calculation_avg(
-                    events, 'prize_place'
-                )
-            )
+            score = 0
+            for event in events:
+                score += 4 - event.prize_place
+
+            report.score = score
             report.save()
 
             return report
@@ -121,11 +121,11 @@ def create_score_q12(sender, instance, created=False, **kwargs):
                         detachment_report=report,
                         is_verified=True
             ).all()
-            report.score = (
-                report.score_calculation_avg(
-                    events, 'prize_place'
-                )
-            )
+            score = 0
+            for event in events:
+                score += 4 - event.prize_place
+
+            report.score = score
             report.save()
 
             return report
