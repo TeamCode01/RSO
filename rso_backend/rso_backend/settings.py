@@ -8,6 +8,8 @@ from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
+SHOW_RESERVED_PLACE = True
+
 DEFAULT_POSITION_ID = 1
 CENTRAL_HQ_ID = 1
 
@@ -643,7 +645,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '65/min',
-        'user': '400/min'
+        'user': '650/min'
     },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
