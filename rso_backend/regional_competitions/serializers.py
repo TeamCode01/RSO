@@ -1,4 +1,6 @@
+from datetime import datetime
 from django.db import models
+from django.http import QueryDict
 from rest_framework import serializers
 
 from django.db import transaction
@@ -136,6 +138,37 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         return None
 
 
+class EmptyAsNoneMixin:
+    """
+    Миксин для сериализаторов с полями типа FileField, где при отправке 
+    с multipart/form-data требуется обработка пустых строк "" как None (null).
+    """
+
+    def treat_empty_string_as_none(self, data):
+        """
+        Рекурсивно обрабатывает словарь, заменяя пустые строки на None.
+        """
+        if isinstance(data, QueryDict):
+            data = data.copy()
+
+        for key, val in data.items():
+            if val == '':
+                data[key] = None
+            elif isinstance(val, dict):
+                data[key] = self.treat_empty_string_as_none(val)
+            elif isinstance(val, list):
+                data[key] = [self.treat_empty_string_as_none(item) if isinstance(item, dict) else item for item in val]
+
+        return data
+
+    def to_internal_value(self, data):
+        """
+        Переопределяем to_internal_value для обработки пустых строк как None перед валидацией.
+        """
+        return super().to_internal_value(self.treat_empty_string_as_none(data))
+
+
+
 class NestedCreateUpdateMixin:
     """
     Миксин для сериализаторов, которые реализуют логику
@@ -198,22 +231,73 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
         raise NotImplementedError('Определите create_objects для CreateUpdateSerializerMixin')
 
     def _create_or_update_objects(self, created_objects, received_objects):
+        """
+        Метод для создания или обновления связанных объектов (events, projects, etc.),
+        а также вложенных объектов. Если объект с указанным id существует, он обновляется, 
+        если нет — создается новый объект. Если файл (например, scan_file) не передан, 
+        используется существующий файл. Старые объекты удаляются, если их нет в новых данных.
+
+        Логика работы метода:
+        
+        1. Создаем словарь с существующими объектами, сопоставляя их по id.
+        2. Проходим по каждому объекту из новых данных:
+            - Если объект содержит id и он есть в базе:
+                - Обновляем объект, сохраняя файлы, если они не были переданы заново.
+                - Обновляем вложенные объекты, если они есть.
+                - Удаляем этот объект из списка существующих, чтобы в конце не удалить его.
+            
+            - Если id не передан (новый объект):
+                - Пытаемся сопоставить с существующим объектом по порядку (берем первый 
+                из оставшихся объектов).
+                - Используем файлы из сопоставленного объекта, если они не были переданы.
+                - Создаем новый объект с данными.
+                - Обновляем вложенные объекты для нового объекта, если они есть.
+                - Удаляем сопоставленный объект, так как он был заменен новым.
+        
+        3. В конце удаляем все оставшиеся объекты, которые не были обновлены или заменены.
+        """
         existing_objects = {obj.id: obj for obj in getattr(created_objects, self.objects_name).all()}
+
         for obj_data in received_objects:
-            print(f'self.nested_objects_name = {self.nested_objects_name}')
+            obj_id = obj_data.get('id', None)
+
             if self.nested_objects_name:
                 nested_data = obj_data.pop(self.nested_objects_name, [])
-            obj_id = obj_data.get('id', None)
+
             if obj_id and obj_id in existing_objects:
+                obj_instance = existing_objects[obj_id]
+
+                for field in obj_instance._meta.fields:
+                    if isinstance(field, models.FileField) and field.name not in obj_data:
+                        obj_data[field.name] = getattr(obj_instance, field.name)
+
                 existing_objects[obj_id].__class__.objects.filter(id=obj_id).update(**obj_data)
+
                 if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     obj_instance = existing_objects[obj_id].__class__.objects.get(id=obj_id)
                     self._create_or_update_nested_objects(obj_instance, nested_data)
+
                 existing_objects.pop(obj_id)
+
             else:
+                matched_obj = None
+                if existing_objects:
+                    matched_obj = list(existing_objects.values())[0]
+
+                    for field in matched_obj._meta.fields:
+                        if isinstance(field, models.FileField) and field.name not in obj_data:
+                            obj_data[field.name] = getattr(matched_obj, field.name)
+
                 new_obj = self.create_objects(created_objects, obj_data)
+
                 if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     self._create_or_update_nested_objects(new_obj, nested_data)
+
+                if matched_obj:
+                    existing_objects.pop(matched_obj.id, None)
+
+                    matched_obj.delete()
+
         for obj in existing_objects.values():
             obj.delete()
 
@@ -227,7 +311,7 @@ class ReportExistsValidationMixin:
         return data
 
 
-class BaseRSerializer(serializers.ModelSerializer):
+class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
     """Базовый класс для сериализаторов шаблона RegionalR<int>Serializer.
 
     - regional_version: Данные последней версии отчета, отправленного региональным штабом.
@@ -335,7 +419,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(FileScanSizeSerializerMixin):
+class BaseEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = None
@@ -347,6 +431,26 @@ class BaseEventSerializer(FileScanSizeSerializerMixin):
             'regulations',
         )
         read_only_fields = ('id',)
+
+    def to_internal_value(self, data):
+        print(f"Original data: {data}")
+        
+        if 'is_interregional' in data:
+            data['is_interregional'] = True if data['is_interregional'].lower() == 'true' else False
+
+        for date_field in ['start_date', 'end_date']:
+            if date_field in data:
+                try:
+                    print(f"Parsing date field: {date_field} with value {data[date_field]}")
+                    data[date_field] = datetime.strptime(data[date_field], '%Y-%m-%d').date()
+                except ValueError:
+                    raise serializers.ValidationError({
+                        date_field: 'Неправильный формат date. Используйте формат: YYYY-MM-DD.'
+                    })
+
+        print(f"Modified data: {data}")
+        return super().to_internal_value(data)
+
 
 
 class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
@@ -526,7 +630,7 @@ class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('event_happened', 'document', 'links')
+            + ('comment', 'event_happened', 'document', 'links')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -547,7 +651,7 @@ class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fi
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('event_happened', 'document', 'links')
+            + ('comment', 'event_happened', 'document', 'links')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -665,7 +769,7 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
 
     class Meta:
         model = RegionalR16
-        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects',)
+        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects', 'comment')
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
     def create_objects(self, created_objects, project_data):
@@ -679,7 +783,9 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer):
+class RegionalR17Serializer(
+    EmptyAsNoneMixin, ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer
+):
 
     class Meta:
         model = RegionalR17
@@ -720,7 +826,9 @@ class RegionalR18ProjectSerializer(FileScanSizeSerializerMixin):
         read_only_fields = ('id', 'regional_r18',)
 
 
-class RegionalR18Serializer(ReportExistsValidationMixin, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
+class RegionalR18Serializer(
+    EmptyAsNoneMixin, ReportExistsValidationMixin, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
+):
     projects = RegionalR18ProjectSerializer(many=True, allow_null=True, required=False)
 
     objects_name = 'projects'
@@ -791,7 +899,13 @@ REPORTS_SERIALIZERS = [
     RegionalR13Serializer,
     RegionalR16Serializer,
 ]
-# REPORTS_SERIALIZERS.extend(r6_serializers_factory.serializers)
+
+REPORTS_SERIALIZERS.extend(
+    [
+        serializer_class for serializer_name, serializer_class in r6_serializers_factory.serializers.items()
+        if not serializer_name.endswith('Link')
+    ]
+)
 
 REPORTS_SERIALIZERS.extend(
     [

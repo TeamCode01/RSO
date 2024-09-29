@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 
 from api.constants import Q6_BLOCK_MODELS
-from competitions.constants import COUNT_PLACES_DEADLINE
+from competitions.constants import COUNT_PLACES_DEADLINE, SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (CompetitionParticipants, July15Participant, OverallRanking,
                                  OverallTandemRanking, Q1Ranking, Q1Report,
                                  Q2DetachmentReport, Q2Ranking,
@@ -26,8 +26,8 @@ from competitions.models import (CompetitionParticipants, July15Participant, Ove
                                  Q17EventLink, Q17Ranking, Q17TandemRanking,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
-                                 Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
-                                 CommanderCommissionerSchoolBlock, September15Participant, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, RankingCopy, SafetyWorkWeekBlock,
+                                 CommanderCommissionerSchoolBlock, September15Participant, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
                                  ProfessionalCompetitionBlock, SpartakiadBlock)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
@@ -1920,3 +1920,87 @@ def calculate_q19_place(report: Q19Report) -> int:
     if report.safety_violations == 'Имеются':
         return 2
     return 1
+
+
+def save_reserve_places():
+    logger.info('Начинаем сохранение резервных мест по всем показателям.')
+    solo_detachments = CompetitionParticipants.objects.filter(
+        detachment__isnull=True
+    )
+
+    solo_reserve_to_create = []
+    ranking_copy_fields = [field.name for field in RankingCopy._meta.get_fields()]
+
+    for comp_participant in solo_detachments:
+        detachment = comp_participant.junior_detachment
+        overall_ranking = OverallRanking.objects.get(
+            competition_id=1,
+            detachment=detachment
+        )
+        ranking_copy = RankingCopy(
+            competition_id=1,
+            detachment=detachment,
+            places_sum=overall_ranking.places_sum,
+            place=overall_ranking.place
+        )
+    
+        for q_number, q_model in enumerate(SOLO_RANKING_MODELS, start=1):
+            attribute_name = f'q{q_number}_place'
+
+            if attribute_name in ranking_copy_fields:
+                try:
+                    ranking_instance = q_model.objects.get(
+                        competition_id=1,
+                        detachment=detachment
+                    )
+                    setattr(ranking_copy, attribute_name, ranking_instance.place)
+                except q_model.DoesNotExist:
+                    logger.warning(f'Рейтинг не найден для отряда {detachment} по показателю {q_number}')
+
+        solo_reserve_to_create.append(ranking_copy)
+    RankingCopy.objects.bulk_create(solo_reserve_to_create)
+    logger.info('Сохранение резервных мест для соло участников завершено.')
+
+    logger.info('Начинаем сохранение резервных мест по всем показателям для тандемов.')
+    tandem_participants = CompetitionParticipants.objects.filter(
+        detachment__isnull=False,
+    )
+
+    tandem_reserve_to_create = []
+    tandem_ranking_copy_fields = [field.name for field in TandemRankingCopy._meta.get_fields()]
+
+    for comp_participant in tandem_participants:
+        overall_ranking = OverallTandemRanking.objects.get(
+            competition_id=1,
+            detachment=comp_participant.detachment,
+            junior_detachment=comp_participant.junior_detachment
+        )
+        tandem_ranking_copy = TandemRankingCopy(
+            competition_id=1,
+            detachment=comp_participant.detachment,
+            junior_detachment=comp_participant.junior_detachment,
+            places_sum=overall_ranking.places_sum,
+            place=overall_ranking.place
+        )
+
+        for q_number, q_model in enumerate(TANDEM_RANKING_MODELS, start=1):
+            attribute_name = f'q{q_number}_place'
+
+            if attribute_name in tandem_ranking_copy_fields:
+                try:
+                    ranking_instance = q_model.objects.get(
+                        competition_id=1,
+                        detachment=comp_participant.detachment,
+                        junior_detachment=comp_participant.junior_detachment,
+                    )
+                    setattr(tandem_ranking_copy, attribute_name, ranking_instance.place)
+                except q_model.DoesNotExist:
+                    logger.warning(
+                        f'Рейтинг не найден для тандем отрядов {comp_participant.detachment} и '
+                        f'{comp_participant.junior_detachment} по показателю {q_number}'
+                    )
+
+        tandem_reserve_to_create.append(tandem_ranking_copy)
+
+    TandemRankingCopy.objects.bulk_create(tandem_reserve_to_create)
+    logger.info('Сохранение резервных мест полностью завершено.')

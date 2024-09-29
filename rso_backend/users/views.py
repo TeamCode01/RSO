@@ -261,7 +261,12 @@ class SafeUserViewSet(RetrieveViewSet):
 
     Доступно авторизованным пользователям.
     """
-    queryset = RSOUser.objects.all()
+    queryset = RSOUser.objects.all().select_related(
+        'media',
+        'region',
+        'education',
+        'privacy'
+    )
     serializer_class = SafeUserSerializer
     permission_classes = (permissions.IsAuthenticated,)
 

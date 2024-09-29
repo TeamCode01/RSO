@@ -31,8 +31,8 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, Q20Ranking, Q20Report,
-                                 Q20TandemRanking, QVerificationLog, ProfessionalCompetitionBlock, SpartakiadBlock,
-                                 CreativeFestivalBlock, WorkingSemesterOpeningBlock, CommanderCommissionerSchoolBlock,
+                                 Q20TandemRanking, QVerificationLog, ProfessionalCompetitionBlock, RankingCopy, SpartakiadBlock,
+                                 CreativeFestivalBlock, TandemRankingCopy, WorkingSemesterOpeningBlock, CommanderCommissionerSchoolBlock,
                                  SafetyWorkWeekBlock, DemonstrationBlock, PatrioticActionBlock, July15Participant,
                                  September15Participant)
 from competitions.q_calculations import calculate_q1_score
@@ -584,9 +584,15 @@ class Q9Admin(admin.ModelAdmin):
         'id', 'event_name', 'detachment_report', 'is_verified',
         'prize_place'
     )
+    actions = ['recalc_scores']
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q9Inline(admin.TabularInline):
@@ -619,9 +625,15 @@ class Q9TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q10Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
+    actions = ['recalc_scores']
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q10Inline(admin.TabularInline):
@@ -654,9 +666,15 @@ class Q10TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q11Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
+    actions = ['recalc_scores']
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q11Inline(admin.TabularInline):
@@ -689,9 +707,15 @@ class Q11TandemRankingAdmin(QBaseTandemRankingAdmin):
 class Q12Admin(admin.ModelAdmin):
     list_display = ('id', 'event_name', 'detachment_report',
                     'is_verified', 'prize_place')
+    actions = ['recalc_scores', ]
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.action(description='Пересчитать очки')
+    def recalc_scores(self, request, queryset):
+        for obj in queryset:
+            obj.save()
 
 
 class Q12Inline(admin.TabularInline):
@@ -977,3 +1001,99 @@ class QVerificationLogAdmin(admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
         return False
+
+
+@admin.register(TandemRankingCopy)
+class TandemRankingCopyAdmin(admin.ModelAdmin):
+    list_display = (
+        'competition', 
+        'get_main_detachment_name', 
+        'get_junior_detachment_name', 
+        'places_sum', 
+        'place', 
+        'q6_place', 
+        'q7_place', 
+        'q8_place', 
+        'q9_place', 
+        'q10_place', 
+        'q11_place', 
+        'q12_place', 
+        'q13_place', 
+        'q15_place', 
+        'q16_place', 
+        'q17_place', 
+        'q20_place'
+    )
+    
+    list_filter = (
+        'competition',
+        'detachment',
+        'junior_detachment',
+        'places_sum',
+        'place',
+        'q6_place',
+        'q7_place',
+        'q8_place',
+        'q9_place',
+        'q10_place',
+        'q11_place',
+        'q12_place',
+        'q13_place',
+        'q15_place',
+        'q16_place',
+        'q17_place',
+        'q20_place',
+    )
+
+    def get_main_detachment_name(self, obj):
+        return obj.detachment.name
+    get_main_detachment_name.short_description = 'Отряд-наставник'
+
+    def get_junior_detachment_name(self, obj):
+        return obj.junior_detachment.name
+    get_junior_detachment_name.short_description = 'Младший отряд'
+
+
+@admin.register(RankingCopy)
+class RankingCopyAdmin(admin.ModelAdmin):
+    list_display = (
+        'competition', 
+        'get_detachment_name', 
+        'places_sum', 
+        'place', 
+        'q6_place', 
+        'q7_place', 
+        'q8_place', 
+        'q9_place', 
+        'q10_place', 
+        'q11_place', 
+        'q12_place', 
+        'q13_place', 
+        'q15_place', 
+        'q16_place', 
+        'q17_place', 
+        'q20_place'
+    )
+
+    list_filter = (
+        'competition',
+        'detachment',
+        'places_sum',
+        'place',
+        'q6_place',
+        'q7_place',
+        'q8_place',
+        'q9_place',
+        'q10_place',
+        'q11_place',
+        'q12_place',
+        'q13_place',
+        'q15_place',
+        'q16_place',
+        'q17_place',
+        'q20_place',
+    )
+
+    def get_detachment_name(self, obj):
+        return obj.detachment.name
+    get_detachment_name.short_description = 'Отряд'
