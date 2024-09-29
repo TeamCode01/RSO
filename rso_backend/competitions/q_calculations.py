@@ -1933,15 +1933,23 @@ def save_reserve_places():
 
     for comp_participant in solo_detachments:
         detachment = comp_participant.junior_detachment
-        overall_ranking = OverallRanking.objects.get(
-            competition_id=1,
-            detachment=detachment
-        )
+    
+        try:
+            overall_ranking = OverallRanking.objects.get(
+                competition_id=1,
+                detachment=detachment
+            )
+            places_sum = overall_ranking.places_sum
+            place = overall_ranking.place
+        except OverallRanking.DoesNotExist:
+            places_sum = None
+            place = None
+
         ranking_copy = RankingCopy(
             competition_id=1,
             detachment=detachment,
-            places_sum=overall_ranking.places_sum,
-            place=overall_ranking.place
+            places_sum=places_sum,
+            place=place
         )
     
         for q_number, q_model in enumerate(SOLO_RANKING_MODELS, start=1):
@@ -1970,17 +1978,25 @@ def save_reserve_places():
     tandem_ranking_copy_fields = [field.name for field in TandemRankingCopy._meta.get_fields()]
 
     for comp_participant in tandem_participants:
-        overall_ranking = OverallTandemRanking.objects.get(
-            competition_id=1,
-            detachment=comp_participant.detachment,
-            junior_detachment=comp_participant.junior_detachment
-        )
+
+        try:
+            overall_ranking = OverallTandemRanking.objects.get(
+                competition_id=1,
+                detachment=comp_participant.detachment,
+                junior_detachment=comp_participant.junior_detachment
+            )
+            places_sum = overall_ranking.places_sum
+            place = overall_ranking.place
+        except OverallTandemRanking.DoesNotExist:
+            places_sum = None
+            place = None
+
         tandem_ranking_copy = TandemRankingCopy(
             competition_id=1,
             detachment=comp_participant.detachment,
             junior_detachment=comp_participant.junior_detachment,
-            places_sum=overall_ranking.places_sum,
-            place=overall_ranking.place
+            places_sum=places_sum,
+            place=place
         )
 
         for q_number, q_model in enumerate(TANDEM_RANKING_MODELS, start=1):

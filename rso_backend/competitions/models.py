@@ -1780,9 +1780,15 @@ class TandemRankingCopy(models.Model):
         verbose_name='Младший отряд'
     )
     places_sum = models.FloatField(
-        verbose_name='Сумма мест по всем показателям'
+        verbose_name='Сумма мест по всем показателям',
+        blank=True,
+        null=True
     )
-    place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Финальное место',
+        blank=True,
+        null=True
+    )
     q6_place = models.PositiveSmallIntegerField(
         verbose_name='Итоговое место по показателю 6',
         blank=True,
@@ -1867,9 +1873,15 @@ class RankingCopy(models.Model):
         verbose_name='Отряд'
     )
     places_sum = models.FloatField(
-        verbose_name='Сумма мест по всем показателям'
+        verbose_name='Сумма мест по всем показателям',
+        blank=True,
+        null=True
     )
-    place = models.PositiveSmallIntegerField(verbose_name='Финальное место')
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Финальное место',
+        blank=True,
+        null=True
+    )
     q6_place = models.PositiveSmallIntegerField(
         verbose_name='Итоговое место по показателю 6',
         blank=True,
