@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+from urllib.parse import urlparse
 import requests
 from urllib.parse import urlparse
 

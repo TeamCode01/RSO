@@ -110,8 +110,7 @@ def calculate_q9_places_task():
     calculate_place(competition_id=settings.COMPETITION_ID,
                     model_report=Q9Report,
                     model_ranking=Q9Ranking,
-                    model_tandem_ranking=Q9TandemRanking,
-                    reverse=False)
+                    model_tandem_ranking=Q9TandemRanking)
 
 
 @shared_task
@@ -120,8 +119,7 @@ def calculate_q10_places_task():
     calculate_place(competition_id=settings.COMPETITION_ID,
                     model_report=Q10Report,
                     model_ranking=Q10Ranking,
-                    model_tandem_ranking=Q10TandemRanking,
-                    reverse=False)
+                    model_tandem_ranking=Q10TandemRanking)
 
 
 @shared_task
@@ -130,8 +128,7 @@ def calculate_q11_places_task():
     calculate_place(competition_id=settings.COMPETITION_ID,
                     model_report=Q11Report,
                     model_ranking=Q11Ranking,
-                    model_tandem_ranking=Q11TandemRanking,
-                    reverse=False)
+                    model_tandem_ranking=Q11TandemRanking)
 
 
 @shared_task
@@ -140,8 +137,7 @@ def calculate_q12_places_task():
     calculate_place(competition_id=settings.COMPETITION_ID,
                     model_report=Q12Report,
                     model_ranking=Q12Ranking,
-                    model_tandem_ranking=Q12TandemRanking,
-                    reverse=False)
+                    model_tandem_ranking=Q12TandemRanking)
 
 
 @shared_task

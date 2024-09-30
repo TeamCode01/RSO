@@ -1,4 +1,5 @@
 from io import BytesIO
+from api.utils import count_sql_queries
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -91,49 +92,91 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
     def prepared_users_data(self, request, queryset):
         user_ids = queryset.values_list('id', flat=True)
-        all_users_data = UserRegion.objects.filter(
-            user__id__in=user_ids
-        ).prefetch_related(
-            Prefetch('user', queryset=queryset),
-            Prefetch('user__documents'),
-            Prefetch('user__education')
-        ).values_list(
-            'reg_region__code',
-            'reg_region__name',
-            'user__id',
-            'user__first_name',
-            'user__last_name',
-            'user__patronymic_name',
-            'user__username',
-            'user__date_of_birth',
-            'user__documents__russian_passport',
-            'user__documents__pass_ser_num',
-            'user__documents__pass_whom',
-            'user__documents__pass_date',
-            'user__documents__pass_code',
-            'user__documents__inn',
-            'user__documents__snils',
-            'reg_town',
-            'reg_house',
-            'reg_fact_same_address',
-            'fact_region_id',
-            'fact_region__fact_region__reg_region',
-            'fact_town',
-            'fact_house',
-            'user__education__study_institution',
-            'user__education__study_faculty',
-            'user__education__study_specialty',
-            'user__education__study_year',
-            'user__phone_number',
-            'user__email',
-            'user__social_vk',
-            'user__social_tg',
-            'user__is_rso_member',
-            'user__is_verified',
-            'user__membership_fee',
-        )
+        all_users_data = (
+            RSOUser.objects.select_related(
+                'documents',
+                'education',
+                'user_region',
+                'user_region__reg_region',
+                'user_region__fact_region__fact_region',
+                'usercentralheadquarterposition__position',
+                'userdistrictheadquarterposition__headquarter',
+                'userdistrictheadquarterposition__position',
+                'userregionalheadquarterposition__position',
+                'userregionalheadquarterposition__headquarter',
+                'usereducationalheadquarterposition__position',
+                'usereducationalheadquarterposition__headquarter',
+                'userdetachmentposition__position',
+                'userdetachmentposition__headquarter',
+                'userdetachmentposition__headquarter__area',
+                'detachment_commander',
+                'detachment_commander__area',
+                'userlocalheadquarterposition__position',
+                'userlocalheadquarterposition__headquarter',
+                'userregionalheadquarterposition__position',
+                'userregionalheadquarterposition__headquarter',
+                'districtheadquarter_commander',
+                'regionalheadquarter_commander',
+                'localheadquarter_commander',
+                'educationalheadquarter_commander',
+            ).filter(
+                id__in=user_ids
+            ).values_list(
+                'user_region__reg_region__code',
+                'user_region__reg_region__name',
+                'id',
+                'first_name',
+                'last_name',
+                'patronymic_name',
+                'username',
+                'date_of_birth',
+                'documents__russian_passport',
+                'documents__pass_ser_num',
+                'documents__pass_whom',
+                'documents__pass_date',
+                'documents__pass_code',
+                'documents__inn',
+                'documents__snils',
+                'user_region__reg_town',
+                'user_region__reg_house',
+                'user_region__reg_fact_same_address',
+                'user_region__fact_region_id',
+                'user_region__fact_region__fact_region__reg_region',
+                'user_region__fact_town',
+                'user_region__fact_house',
+                'education__study_institution',
+                'education__study_faculty',
+                'education__study_specialty',
+                'education__study_year',
+                'phone_number',
+                'email',
+                'social_vk',
+                'social_tg',
+                'is_rso_member',
+                'is_verified',
+                'membership_fee',
+                'usercentralheadquarterposition__position__name',
+                'userdistrictheadquarterposition__headquarter__name',
+                'userdistrictheadquarterposition__position__name',
+                'districtheadquarter_commander',
+                'userregionalheadquarterposition__headquarter__name',
+                'userregionalheadquarterposition__position__name',
+                'regionalheadquarter_commander',
+                'userlocalheadquarterposition__headquarter__name',
+                'userlocalheadquarterposition__position__name',
+                'localheadquarter_commander',
+                'usereducationalheadquarterposition__headquarter__name',
+                'usereducationalheadquarterposition__position__name',
+                'educationalheadquarter_commander',
+                'userdetachmentposition__position__name',
+                'userdetachmentposition__headquarter__area__name',
+                'detachment_commander',
+                'detachment_commander__area__name',
+            )
+        ).distinct().iterator(chunk_size=1000)
         return all_users_data
 
+    @count_sql_queries
     def get_users_data(self, request, queryset):
         workbook = Workbook()
         worksheet = workbook.active
