@@ -5594,27 +5594,53 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         junior_detachment=detachment,
         detachment__isnull=True
     ).exists()
+
+    ranking_copy = RankingCopy.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+
+    tandem_ranking_copy = TandemRankingCopy.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+
+    junior_tandem_ranking_copy = TandemRankingCopy.objects.filter(
+        junior_detachment=detachment,
+        competition=competition
+    ).first()
+
     if is_solo:
         response['partner_detachment'] = None
         response['is_tandem'] = False
         response['is_junior_detachment'] = True
-        try:
-            response['overall_place'] = OverallRanking.objects.get(
-                detachment=detachment, competition=competition
-            ).place
-            response['places_sum'] = OverallRanking.objects.get(
-                detachment=detachment, competition=competition
-            ).places_sum
-        except OverallRanking.DoesNotExist:
-            response['overall_place'] = 'Рейтинг ещё не сформирован'
-            response['places_sum'] = 'Рейтинг ещё не сформирован'
-        for q_number, q_ranking in enumerate(SOLO_RANKING_MODELS, start=1):
+
+        if ranking_copy:
+            response['overall_place'] = ranking_copy.place
+            response['places_sum'] = ranking_copy.places_sum
+        else:
             try:
-                response[f'q{q_number}_place'] = q_ranking.objects.get(
+                overall_ranking = OverallRanking.objects.get(
                     detachment=detachment, competition=competition
-                ).place
-            except q_ranking.DoesNotExist:
-                response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+                )
+                response['overall_place'] = overall_ranking.place
+                response['places_sum'] = overall_ranking.places_sum
+            except OverallRanking.DoesNotExist:
+                response['overall_place'] = 'Рейтинг ещё не сформирован'
+                response['places_sum'] = 'Рейтинг ещё не сформирован'
+
+        for q_number, q_ranking in enumerate(SOLO_RANKING_MODELS, start=1):
+            ranking_field = f'q{q_number}_place'
+            if hasattr(ranking_copy, ranking_field) and getattr(ranking_copy, ranking_field) is not None:
+                response[ranking_field] = getattr(ranking_copy, ranking_field)
+            else:
+                try:
+                    response[ranking_field] = q_ranking.objects.get(
+                        detachment=detachment, competition=competition
+                    ).place
+                except q_ranking.DoesNotExist:
+                    response[ranking_field] = 'Рейтинг ещё не сформирован'
+
     if not is_solo:
         is_tandem_junior = CompetitionParticipants.objects.filter(
             junior_detachment=detachment,
@@ -5628,23 +5654,33 @@ def get_detachment_places(request, competition_pk, detachment_pk):
             }
             response['is_tandem'] = True
             response['is_junior_detachment'] = True
-            try:
-                response['overall_place'] = OverallTandemRanking.objects.get(
-                    junior_detachment=detachment, competition=competition
-                ).place
-                response['places_sum'] = OverallTandemRanking.objects.get(
-                    junior_detachment=detachment, competition=competition
-                ).places_sum
-            except OverallTandemRanking.DoesNotExist:
-                response['overall_place'] = 'Рейтинг ещё не сформирован'
-                response['places_sum'] = 'Рейтинг ещё не сформирован'
-            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+
+            if junior_tandem_ranking_copy:
+                response['overall_place'] = junior_tandem_ranking_copy.place
+                response['places_sum'] = junior_tandem_ranking_copy.places_sum
+            else:
                 try:
-                    response[f'q{q_number}_place'] = q_ranking.objects.get(
+                    overall_tandem_ranking = OverallTandemRanking.objects.get(
                         junior_detachment=detachment, competition=competition
-                    ).place
-                except q_ranking.DoesNotExist:
-                    response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+                    )
+                    response['overall_place'] = overall_tandem_ranking.place
+                    response['places_sum'] = overall_tandem_ranking.places_sum
+                except OverallTandemRanking.DoesNotExist:
+                    response['overall_place'] = 'Рейтинг ещё не сформирован'
+                    response['places_sum'] = 'Рейтинг ещё не сформирован'
+
+            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+                ranking_field = f'q{q_number}_place'
+                if hasattr(junior_tandem_ranking_copy, ranking_field) and getattr(junior_tandem_ranking_copy,
+                                                                                  ranking_field) is not None:
+                    response[ranking_field] = getattr(junior_tandem_ranking_copy, ranking_field)
+                else:
+                    try:
+                        response[ranking_field] = q_ranking.objects.get(
+                            junior_detachment=detachment, competition=competition
+                        ).place
+                    except q_ranking.DoesNotExist:
+                        response[ranking_field] = 'Рейтинг ещё не сформирован'
 
         is_older_detachment = CompetitionParticipants.objects.filter(
             detachment=detachment,
@@ -5657,25 +5693,37 @@ def get_detachment_places(request, competition_pk, detachment_pk):
             }
             response['is_tandem'] = True
             response['is_junior_detachment'] = False
-            try:
-                response['overall_place'] = OverallTandemRanking.objects.get(
-                    detachment=detachment, competition=competition
-                ).place
-                response['places_sum'] = OverallTandemRanking.objects.get(
-                    detachment=detachment, competition=competition
-                ).places_sum
-            except OverallTandemRanking.DoesNotExist:
-                response['overall_place'] = 'Рейтинг ещё не сформирован'
-                response['places_sum'] = 'Рейтинг ещё не сформирован'
-            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+
+            if tandem_ranking_copy:
+                response['overall_place'] = tandem_ranking_copy.place
+                response['places_sum'] = tandem_ranking_copy.places_sum
+            else:
                 try:
-                    response[f'q{q_number}_place'] = q_ranking.objects.get(
+                    overall_tandem_ranking = OverallTandemRanking.objects.get(
                         detachment=detachment, competition=competition
-                    ).place
-                except q_ranking.DoesNotExist:
-                    response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+                    )
+                    response['overall_place'] = overall_tandem_ranking.place
+                    response['places_sum'] = overall_tandem_ranking.places_sum
+                except OverallTandemRanking.DoesNotExist:
+                    response['overall_place'] = 'Рейтинг ещё не сформирован'
+                    response['places_sum'] = 'Рейтинг ещё не сформирован'
+
+            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+                ranking_field = f'q{q_number}_place'
+                if hasattr(tandem_ranking_copy, ranking_field) and getattr(tandem_ranking_copy,
+                                                                           ranking_field) is not None:
+                    response[ranking_field] = getattr(tandem_ranking_copy, ranking_field)
+                else:
+                    try:
+                        response[ranking_field] = q_ranking.objects.get(
+                            detachment=detachment, competition=competition
+                        ).place
+                    except q_ranking.DoesNotExist:
+                        response[ranking_field] = 'Рейтинг ещё не сформирован'
+
         else:
             return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
+
     return Response(response, status=status.HTTP_200_OK)
 
 
