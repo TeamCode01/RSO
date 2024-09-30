@@ -39,9 +39,12 @@ logger = logging.getLogger('tasks')
 
 
 def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, competition_id):
-    logger.info('Удаляем записи из OverallTandemRanking, OverallTanking')
+    logger.info('Удаляем записи из OverallTandemRanking, OverallRanking')
+    print('Deleting existing entries from OverallTandemRanking and OverallRanking')
     OverallTandemRanking.objects.all().delete()
     OverallRanking.objects.all().delete()
+
+    print(f'Fetching solo and tandem entries for competition {competition_id}')
     solo_entries = CompetitionParticipants.objects.filter(
         competition_id=competition_id,
         junior_detachment__isnull=False,
@@ -52,23 +55,34 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
         junior_detachment__isnull=False,
         detachment__isnull=False
     )
+
+    print(f'Found {solo_entries.count()} solo entries and {tandem_entries.count()} tandem entries')
+
     solo_worst_places = {}
     tandem_worst_places = {}
 
+    print('Calculating worst places for solo ranking models...')
     for model in solo_ranking_models:
         worst_entry = model.objects.filter(competition_id=competition_id).order_by('-place').first()
-        solo_worst_places[model] = worst_entry.place + 1 if worst_entry else 1
+        worst_place = worst_entry.place + 1 if worst_entry else 1
+        solo_worst_places[model] = worst_place
+        print(f'Worst place for model {model.__name__}: {worst_place}')
 
+    print('Calculating worst places for tandem ranking models...')
     for model in tandem_ranking_models:
         worst_entry = model.objects.filter(competition_id=competition_id).order_by('-place').first()
-        tandem_worst_places[model] = worst_entry.place + 1 if worst_entry else 1
+        worst_place = worst_entry.place + 1 if worst_entry else 1
+        tandem_worst_places[model] = worst_place
+        print(f'Worst place for model {model.__name__}: {worst_place}')
 
     solo_rankings = []
     tandem_rankings = []
 
+    print('Calculating solo entry places...')
     for solo_entry in solo_entries:
         solo_entry_place = 0
         detachment = solo_entry.junior_detachment
+        print(f'Processing solo entry for detachment {detachment.id}')
 
         for model in solo_ranking_models:
             try:
@@ -76,15 +90,22 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
                     competition_id=competition_id, detachment=detachment
                 )
                 solo_entry_place += ranking.place
+                print(f'Found ranking in {model.__name__} for detachment {detachment.id}: {ranking.place}')
             except model.DoesNotExist:
                 solo_entry_place += solo_worst_places[model]
+                print(
+                    f'No ranking found in {model.__name__} for detachment {detachment.id}. Using worst place: {solo_worst_places[model]}')
 
         solo_rankings.append({'detachment': detachment, 'place': solo_entry_place})
+        print(f'Solo entry place for detachment {detachment.id}: {solo_entry_place}')
 
+    print('Calculating tandem entry places...')
     for tandem_entry in tandem_entries:
         tandem_entry_place = 0
         detachment = tandem_entry.detachment
         junior_detachment = tandem_entry.junior_detachment
+        print(f'Processing tandem entry for detachment {detachment.id} and junior detachment {junior_detachment.id}')
+
         for model in tandem_ranking_models:
             try:
                 ranking = model.objects.get(
@@ -93,8 +114,13 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
                     junior_detachment=junior_detachment
                 )
                 tandem_entry_place += ranking.place
+                print(
+                    f'Found ranking in {model.__name__} for tandem {detachment.id}-{junior_detachment.id}: {ranking.place}')
             except model.DoesNotExist:
                 tandem_entry_place += tandem_worst_places[model]
+                print(
+                    f'No ranking found in {model.__name__} for tandem {detachment.id}-{junior_detachment.id}. Using worst place: {tandem_worst_places[model]}')
+
         tandem_rankings.append(
             {
                 'detachment': detachment,
@@ -102,12 +128,17 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
                 'place': tandem_entry_place
             }
         )
+        print(
+            f'Tandem entry place for detachment {detachment.id} and junior detachment {junior_detachment.id}: {tandem_entry_place}')
 
+    # Sorting and calculating overall rankings for solo entries
+    print('Sorting solo rankings...')
     solo_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     last_place = 0
     previous_places_sum = None
 
+    print('Assigning places for solo rankings...')
     for solo_ranking_entry in solo_rankings:
         if solo_ranking_entry['place'] != previous_places_sum:
             current_place = last_place + 1
@@ -118,14 +149,20 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
             places_sum=solo_ranking_entry['place'],
             place=current_place
         )
+        print(
+            f'Assigned place {current_place} for detachment {solo_ranking_entry["detachment"].id} with place sum {solo_ranking_entry["place"]}')
+
         last_place = current_place
         previous_places_sum = solo_ranking_entry['place']
 
+    # Sorting and calculating overall rankings for tandem entries
+    print('Sorting tandem rankings...')
     tandem_rankings.sort(key=lambda x: x['place'])
     current_place = 1
     last_place = 0
     previous_places_sum = None
 
+    print('Assigning places for tandem rankings...')
     for tandem_ranking_entry in tandem_rankings:
         if tandem_ranking_entry['place'] != previous_places_sum:
             current_place = last_place + 1
@@ -137,6 +174,9 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
             places_sum=tandem_ranking_entry['place'],
             place=current_place
         )
+        print(
+            f'Assigned place {current_place} for tandem {tandem_ranking_entry["detachment"].id}-{tandem_ranking_entry["junior_detachment"].id} with place sum {tandem_ranking_entry["place"]}')
+
         last_place = current_place
         previous_places_sum = tandem_ranking_entry['place']
 
@@ -1924,7 +1964,7 @@ def calculate_q19_place(report: Q19Report) -> int:
 
 def save_reserve_places():
     RankingCopy.objects.all().delete()
-    OverallTandemRanking.objects.all().delete()
+    TandemRankingCopy.objects.all().delete()
     logger.info('Начинаем сохранение резервных мест по всем показателям.')
     solo_detachments = CompetitionParticipants.objects.filter(
         detachment__isnull=True
