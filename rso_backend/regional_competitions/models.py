@@ -312,14 +312,27 @@ class RegionalR1(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 1 показателю'
 
 
-class RegionalR2(BaseRegionalR, BaseScore):
+class RegionalR2(BaseScore, models.Model):
     """
     Отношение численности членов РО РСО к численности студентов очной формы обучения субъекта Российской Федерации,
     обучающихся в профессиональных образовательных организациях и образовательных организациях высшего образования
     в государственных, муниципальных и частных образовательных организациях, включая филиалы
     (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
     """
-
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
     full_time_students = models.SmallIntegerField(
         validators=[MinValueValidator(0)],
         blank=True,
