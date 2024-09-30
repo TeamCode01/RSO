@@ -96,9 +96,11 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             RSOUser.objects.select_related(
                 'documents',
                 'education',
-                'user_region',
                 'user_region__reg_region',
                 'user_region__fact_region__fact_region',
+                'detachment_commander',
+                'detachment_commander__area',
+            ).prefetch_related(
                 'usercentralheadquarterposition__position',
                 'userdistrictheadquarterposition__headquarter',
                 'userdistrictheadquarterposition__position',
@@ -109,12 +111,6 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 'userdetachmentposition__position',
                 'userdetachmentposition__headquarter',
                 'userdetachmentposition__headquarter__area',
-                'detachment_commander',
-                'detachment_commander__area',
-                'userlocalheadquarterposition__position',
-                'userlocalheadquarterposition__headquarter',
-                'userregionalheadquarterposition__position',
-                'userregionalheadquarterposition__headquarter',
                 'districtheadquarter_commander',
                 'regionalheadquarter_commander',
                 'localheadquarter_commander',
@@ -172,8 +168,8 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 'userdetachmentposition__headquarter__area__name',
                 'detachment_commander',
                 'detachment_commander__area__name',
-            )
-        ).distinct().iterator(chunk_size=1000)
+            ).distinct()
+        )
         return all_users_data
 
     @count_sql_queries
