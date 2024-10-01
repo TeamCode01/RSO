@@ -8,6 +8,8 @@ from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
+SHOW_RESERVED_PLACE = True
+
 DEFAULT_POSITION_ID = 1
 CENTRAL_HQ_ID = 1
 
@@ -221,11 +223,20 @@ LOGGING = {
             'style': '{',
         },
     },
-
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+        },
+        'debug_console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
         },
         'tasks': {
             'level': 'DEBUG',
@@ -283,6 +294,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['debug_console'],
+        # }
     }
 }
 
@@ -630,7 +645,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '65/min',
-        'user': '400/min'
+        'user': '650/min'
     },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',

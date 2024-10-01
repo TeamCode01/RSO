@@ -3,10 +3,11 @@ import mimetypes
 import os
 import re
 import zipfile
+from functools import wraps
 
 from datetime import datetime
 
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db.models import Q
 from django.http import QueryDict
 from django.http.response import HttpResponse
@@ -887,3 +888,14 @@ def calculate_sep_15():
             participants_count += 1
             members_count += 1 if participant.user.membership_fee else 0
         September15Participant.objects.create(detachment=detachment,participants_number=participants_count,members_number=members_count)
+
+
+def count_sql_queries(func):
+    """Декоратор для подсчета количества SQL-запросов."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        connection.queries_log.clear()
+        result = func(*args, **kwargs)
+        print(f'Количество SQL-запросов: {len(connection.queries)}')
+        return result
+    return wrapper

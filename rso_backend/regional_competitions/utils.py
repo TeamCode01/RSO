@@ -112,16 +112,34 @@ def get_report_number_by_class_name(link):
 
 def regional_comp_regulations_files_path(instance, filename) -> str:
     """Функция для формирования пути сохранения файлов конкурса РШ.
+    
+    Сначала проверяет наличие атрибута `regional_headquarter`. 
+    Если атрибут отсутствует, ищет атрибут, начинающийся на `regional_r`, 
+    и через него обращается к `regional_headquarter`.
 
     :param instance: Экземпляр модели.
     :param filename: Имя файла. Добавляем к имени текущую дату и время.
     :return: Путь к изображению.
     """
-    filename = filename.split('.')
-    return (
-        f'regional_comp/regulations/{instance.__class__.__name__}/'
-        f'{instance.regional_headquarter.id}/{filename[0][:25]}.{filename[1]}'
-    )
+    filename_parts = filename.split('.')
+    base_filename = filename_parts[0][:25]
+    file_extension = filename_parts[1] if len(filename_parts) > 1 else ''
+
+    if hasattr(instance, 'regional_headquarter'):
+        regional_hq_id = instance.regional_headquarter.id
+    else:
+        regional_r_attr = next(
+            (getattr(instance, attr) for attr in dir(instance) if attr.startswith('regional_r') and 
+            hasattr(getattr(instance, attr), 'regional_headquarter')), 
+            None
+        )
+        if regional_r_attr:
+            regional_hq_id = regional_r_attr.regional_headquarter.id
+        else:
+            raise AttributeError("Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'.")
+
+    return f'regional_comp/regulations/{instance.__class__.__name__}/{regional_hq_id}/{base_filename}.{file_extension}'
+
 
 
 def get_emails(report_instance) -> list:

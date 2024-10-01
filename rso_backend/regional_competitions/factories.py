@@ -187,12 +187,15 @@ class RViewSetFactory:
             models,
             serializers,
             base_r_view_set,
-            base_r_me_view_set
+            base_r_me_view_set,
+            additional_parental_class=None
     ):
         self.models = models
         self.serializers = serializers
         self.base_r_view_set = base_r_view_set
         self.base_r_me_view_set = base_r_me_view_set
+        self.additional_parental_class = additional_parental_class
+
         self.r_view_sets = []
         self.r_me_view_sets = []
         self.view_set_names = []
@@ -207,14 +210,22 @@ class RViewSetFactory:
         view_set_name = f'{model_name}ViewSet'
         me_view_set_name = f'{model_name}MeViewSet'
 
+        view_set_bases = (
+            self.additional_parental_class, self.base_r_view_set
+        ) if self.additional_parental_class else (self.base_r_view_set,)
+        me_view_set_bases = (
+            self.additional_parental_class, self.base_r_me_view_set
+        ) if self.additional_parental_class else (self.base_r_me_view_set,)
+
         view_set = type(
-            view_set_name, (self.base_r_view_set,), {
+            view_set_name, view_set_bases, {
                 'queryset': self.models[model_name].objects.all(),
                 'serializer_class': self.serializers[model_name],
             }
         )
+
         me_view_set = type(
-            me_view_set_name, (self.base_r_me_view_set,), {
+            me_view_set_name, me_view_set_bases, {
                 'model': self.models[model_name],
                 'queryset': self.models[model_name].objects.all(),
                 'serializer_class': self.serializers[model_name],

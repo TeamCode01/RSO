@@ -33,7 +33,7 @@ from users.short_serializers import ShortUserSerializer, ShortestUserSerializer
 
 class PositionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Area
+        model = Position
         fields = ('id', 'name',)
 
 
@@ -417,16 +417,11 @@ class BaseUnitSerializer(serializers.ModelSerializer):
         Запрещает назначить пользователя командиром, если он уже им является.
         """
         commander_id = attrs.get('commander')
-        print('валидириуем')
-        print('командир айди:', commander_id)
-        print(self.instance)
         if commander_id:
             instance_type = self.Meta.model
-            print(f'INSTANCE TYPE: {instance_type}')
             for model_class in self._POSITIONS_MAPPING:
                 if not issubclass(instance_type, model_class):
                     continue
-                print(f'MODEL CLASS: {model_class}')
                 existing_units = model_class.objects.exclude(
                     id=getattr(self.instance, 'id', None))
 
