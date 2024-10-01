@@ -4474,9 +4474,6 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         Доступ: рег. командиры или админ
         """
         today = date.today()
-        cutoff_date = date(2024, 9, 30)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
