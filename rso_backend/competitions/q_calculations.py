@@ -538,7 +538,7 @@ def calculate_q18_place(competition_id):
                     )
 
         if entry:
-            calculate_june_detachment_members(entry, partner_entry)
+            calculate_18th_detachment_members(entry, partner_entry)
 
         if entry:
             entry.score = entry.participants_number / entry.june_15_detachment_members
@@ -1133,6 +1133,27 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
     elif score == 4:
         place = 5
     return place
+
+
+def calculate_18th_detachment_members(entry, partner_entry=None):
+    if entry:
+        members_inst = September15Participant.objects.filter(detachment=entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.participants_number
+        if members_number < 1:
+            members_number = 1
+        entry.june_15_detachment_members = members_number
+        entry.save()
+    if partner_entry:
+        members_inst = September15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.participants_number
+        if members_number < 1:
+            members_number = 1
+        partner_entry.june_15_detachment_members = members_number
+        partner_entry.save()
 
 
 def calculate_june_detachment_members(entry, partner_entry=None):
