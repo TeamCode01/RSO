@@ -26,8 +26,6 @@ class Command(BaseCommand):
 
         # Получаем или создаем Region (используйте подходящее имя региона)
         region = Region.objects.filter(id=1).first()
-        area = Area.objects.filter(id=1).first()
-        commander = RSOUser.objects.filter(id=22).first()
         # Генерация 30 тысяч пользователей
         users = []
         for _ in range(30000):
@@ -77,6 +75,7 @@ class Command(BaseCommand):
             if not UserRegion.objects.filter(user=user).exists():
                 UserRegion.objects.create(
                     user=user,
+                    reg_region=region,
                     reg_town=fake.city(),
                     reg_house=fake.building_number(),
                     reg_fact_same_address=random.choice([True, False]),
@@ -85,19 +84,14 @@ class Command(BaseCommand):
                 )
 
             # Создаем или получаем Detachment
-            detachment, _ = Detachment.objects.get_or_create(
-                name=fake.company(),
-                region=region,
-                founding_date=fake.date(),
-                area=area,
-                commander=commander
-            )
+            detachment = Detachment.objects.filter(id=1).first()
 
             if not UserDetachmentPosition.objects.filter(user=user).exists():
                 UserDetachmentPosition.objects.create(
                     user=user,
                     position=random.choice(positions),
                     headquarter=detachment,
+                    is_trusted=random.choice([True, False]),
                 )
 
         self.stdout.write(self.style.SUCCESS('Successfully generated 30,000 users with related data'))
