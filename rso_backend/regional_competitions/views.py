@@ -688,13 +688,13 @@ class RegionalR102MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, Se
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11ViewSet(BaseRegionalRViewSet):
+class RegionalR11ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR11MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR11
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
