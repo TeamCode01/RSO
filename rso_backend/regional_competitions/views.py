@@ -569,14 +569,13 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         return Response(event_data)
 
 
-class RegionalR1ViewSet(BaseRegionalRViewSet):
+class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR1MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR1
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
