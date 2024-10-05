@@ -63,7 +63,9 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
             - regional_headquarter_name: сортировка по названию регионального штаба
           Можно сортировать в обратном порядке добавив признак '-' перед названием поля
     """
-    queryset = StatisticalRegionalReport.objects.all()
+    queryset = StatisticalRegionalReport.objects.all().select_related(
+        'regional_headquarter'
+    ).prefetch_related('additional_statistics')
     serializer_class = StatisticalRegionalReportSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = StatisticalRegionalReportFilter
@@ -567,14 +569,13 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         return Response(event_data)
 
 
-class RegionalR1ViewSet(BaseRegionalRViewSet):
+class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR1MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR1
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
@@ -686,39 +687,39 @@ class RegionalR102MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, Se
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11ViewSet(BaseRegionalRViewSet):
+class RegionalR11ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR11MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR11
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR12ViewSet(BaseRegionalRViewSet):
+class RegionalR12ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR12MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR12MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR12
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR13ViewSet(BaseRegionalRViewSet):
+class RegionalR13ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR13MeViewSet(BaseRegionalRMeViewSet, SendMixin):
+class RegionalR13MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR13
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
