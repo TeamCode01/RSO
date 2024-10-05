@@ -8,7 +8,7 @@ from competitions.models import September15Participant
 
 def count_september_30_members_number():
     verifications_after_15 = UserMembershipLogs.objects.filter(
-        date__gt=date(2024, 9, 15)
+        date__gt=date(2024, 9, 15), date__lt=date(2024, 10, 1)
     )
 
     for verification in verifications_after_15:
