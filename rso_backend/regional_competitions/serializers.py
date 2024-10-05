@@ -429,7 +429,7 @@ class BaseEventSerializer(FileScanSizeSerializerMixin):
             'start_date',
             'end_date',
             'regulations',
-        )
+        ) + FileScanSizeSerializerMixin.fields
         read_only_fields = ('id',)
 
     def to_internal_value(self, data):
