@@ -419,7 +419,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(serializers.ModelSerializer):
+class BaseEventSerializer(FileScanSizeSerializerMixin):
 
     class Meta:
         model = None
@@ -510,7 +510,7 @@ class RegionalR4EventSerializer(BaseEventSerializer):
 
 
 class RegionalR4Serializer(
-    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin, FileScanSizeSerializerMixin
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
 ):
     events = RegionalR4EventSerializer(many=True, required=False, allow_null=True)
 
@@ -558,7 +558,7 @@ class RegionalR5EventSerializer(BaseEventSerializer):
 
 
 class RegionalR5Serializer(
-    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin, FileScanSizeSerializerMixin
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
 ):
     events = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
 
