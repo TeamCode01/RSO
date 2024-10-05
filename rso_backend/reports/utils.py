@@ -2196,17 +2196,6 @@ def get_users_registry_data(fields=None):
             
             row.append(user.email if user.email else '-')
             row.append(user.phone_number if user.phone_number else '-')
-            if 'verification' in fields:
-                row.append('Да' if user.is_verified else 'Нет')
-            if 'membership_fee' in fields:
-                row.append('Да' if user.membership_fee else 'Нет')
-            if 'test_done' in fields:
-                test_passed = Attempt.objects.filter(
-                    user=user,
-                    category=Attempt.Category.SAFETY,
-                    score__gt=60
-                ).exists()
-                row.append('Да' if test_passed else 'Нет')
             if 'district_headquarter' in fields:
                 district_hq = UserDistrictHeadquarterPosition.objects.filter(user=user).first()
                 row.append(district_hq.headquarter.name if district_hq else 'Нет')
@@ -2219,6 +2208,17 @@ def get_users_registry_data(fields=None):
             if 'educational_headquarter' in fields:
                 edu_hq = UserEducationalHeadquarterPosition.objects.filter(user=user).first()
                 row.append(edu_hq.headquarter.name if edu_hq else 'Нет')
+            if 'verification' in fields:
+                row.append('Да' if user.is_verified else 'Нет')
+            if 'membership_fee' in fields:
+                row.append('Да' if user.membership_fee else 'Нет')
+            if 'test_done' in fields:
+                test_passed = Attempt.objects.filter(
+                    user=user,
+                    category=Attempt.Category.SAFETY,
+                    score__gt=60
+                ).exists()
+                row.append('Да' if test_passed else 'Нет')
             if 'events_organizations' in fields:
                 is_organizer = Event.objects.filter(author=user).exists()
                 row.append('Да' if is_organizer else 'Нет')
