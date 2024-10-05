@@ -538,7 +538,7 @@ def calculate_q18_place(competition_id):
                     )
 
         if entry:
-            calculate_june_detachment_members(entry, partner_entry)
+            calculate_18th_detachment_members(entry, partner_entry)
 
         if entry:
             entry.score = entry.participants_number / entry.june_15_detachment_members
@@ -1135,6 +1135,27 @@ def calculate_q6_boolean_scores(entry: Q6DetachmentReport) -> int:
     return place
 
 
+def calculate_18th_detachment_members(entry, partner_entry=None):
+    if entry:
+        members_inst = September15Participant.objects.filter(detachment=entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.participants_number
+        if members_number < 1:
+            members_number = 1
+        entry.june_15_detachment_members = members_number
+        entry.save()
+    if partner_entry:
+        members_inst = September15Participant.objects.filter(detachment=partner_entry.detachment).last()
+        if not members_inst:
+            return
+        members_number = members_inst.participants_number
+        if members_number < 1:
+            members_number = 1
+        partner_entry.june_15_detachment_members = members_number
+        partner_entry.save()
+
+
 def calculate_june_detachment_members(entry, partner_entry=None):
     if entry:
         members_inst = September15Participant.objects.filter(detachment=entry.detachment).last()
@@ -1413,7 +1434,7 @@ def calculate_q1_score(competition_id):
     Выполняется каждый день до 15.07.2024.
     """
     today = date.today()
-    end_date = date(2024, 9, 20)
+    end_date = date(2024, 10, 6)
 
     if today > end_date:
         return

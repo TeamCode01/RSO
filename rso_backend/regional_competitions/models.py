@@ -352,7 +352,7 @@ class RegionalR3(BaseScore):
         verbose_name='Региональный штаб',
         related_name='%(class)s'
     )
-    amount_of_membership_fees_2023 = models.IntegerField(
+    amount_of_membership_fees_2023 = models.PositiveIntegerField(
         validators=[MinValueValidator(0)]
     )
 
@@ -378,7 +378,7 @@ class RegionalR4Event(BaseEventOrProject):
         verbose_name='Межрегиональное',
         default=False
     )
-    participants_number = PositiveSmallIntegerField(
+    participants_number = models.PositiveIntegerField(
         verbose_name='Количество участников',
         default=0,
         blank=True,
@@ -421,7 +421,7 @@ class RegionalR5Event(BaseEventOrProject):
         verbose_name='Отчет',
         related_name='events'
     )
-    participants_number = PositiveSmallIntegerField(
+    participants_number = models.PositiveIntegerField(
         verbose_name='Общее количество участников',
         default=0,
         blank=True,
@@ -459,7 +459,7 @@ class BaseRegionalR6(BaseEventProjectR):
     Участие бойцов студенческих отрядов РО РСО во всероссийских
     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
     """
-    number_of_members = models.PositiveSmallIntegerField(
+    number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество человек принявших участие'
@@ -655,7 +655,7 @@ class RegionalR13(BaseEventProjectR):
     """
     Охват членов РО РСО, принявших участие во Всероссийском дне ударного труда «К».
     """
-    number_of_members = models.PositiveSmallIntegerField(
+    number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество членов РО РСО, принявших участие'
@@ -897,7 +897,7 @@ class RegionalR19(BaseComment, models.Model):
         auto_now=True,
         verbose_name='Дата последнего обновления'
     )
-    employed_student_start = models.PositiveSmallIntegerField(
+    employed_student_start = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name=(
@@ -905,7 +905,7 @@ class RegionalR19(BaseComment, models.Model):
             'в третий трудовой семестр'
         )
     )
-    employed_student_end = models.PositiveSmallIntegerField(
+    employed_student_end = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name=(

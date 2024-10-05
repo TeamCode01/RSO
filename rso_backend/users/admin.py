@@ -96,9 +96,11 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             RSOUser.objects.select_related(
                 'documents',
                 'education',
-                'user_region',
                 'user_region__reg_region',
                 'user_region__fact_region__fact_region',
+                'detachment_commander',
+                'detachment_commander__area',
+            ).prefetch_related(
                 'usercentralheadquarterposition__position',
                 'userdistrictheadquarterposition__headquarter',
                 'userdistrictheadquarterposition__position',
@@ -109,12 +111,6 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 'userdetachmentposition__position',
                 'userdetachmentposition__headquarter',
                 'userdetachmentposition__headquarter__area',
-                'detachment_commander',
-                'detachment_commander__area',
-                'userlocalheadquarterposition__position',
-                'userlocalheadquarterposition__headquarter',
-                'userregionalheadquarterposition__position',
-                'userregionalheadquarterposition__headquarter',
                 'districtheadquarter_commander',
                 'regionalheadquarter_commander',
                 'localheadquarter_commander',
@@ -140,8 +136,8 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 'user_region__reg_town',
                 'user_region__reg_house',
                 'user_region__reg_fact_same_address',
-                'user_region__fact_region_id',
-                'user_region__fact_region__fact_region__reg_region',
+                'user_region__fact_region__code',
+                'user_region__fact_region__name',
                 'user_region__fact_town',
                 'user_region__fact_house',
                 'education__study_institution',
@@ -172,8 +168,8 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 'userdetachmentposition__headquarter__area__name',
                 'detachment_commander',
                 'detachment_commander__area__name',
-            )
-        ).distinct().iterator(chunk_size=1000)
+            ).distinct()
+        )
         return all_users_data
 
     @count_sql_queries
@@ -306,7 +302,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
 @admin.register(UserMembershipLogs)
 class UserMembershipLogsAdmin(admin.ModelAdmin):
-    list_display = ('user', 'status_changed_by', 'date', 'period', 'status',)
+    list_display = ('id', 'user', 'status_changed_by', 'date', 'period', 'status',)
     readonly_fields = (
         'user', 'status_changed_by', 'date', 'period', 'status', 'description'
     )
