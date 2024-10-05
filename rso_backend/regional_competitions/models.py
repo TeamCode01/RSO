@@ -320,7 +320,7 @@ class RegionalR2(BaseRegionalR, BaseScore):
     (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
     """
 
-    full_time_students = models.SmallIntegerField(
+    full_time_students = models.PositiveIntegerField(
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
@@ -339,7 +339,7 @@ class RegionalR3(BaseScore):
         verbose_name='Региональный штаб',
         related_name='%(class)s'
     )
-    amount_of_membership_fees_2023 = models.IntegerField(
+    amount_of_membership_fees_2023 = models.PositiveIntegerField(
         validators=[MinValueValidator(0)]
     )
 
