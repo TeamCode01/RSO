@@ -13,9 +13,10 @@ def count_september_30_members_number():
 
     for verification in verifications_after_15:
         try:
-            user_detachment_position = verification.user.userdetachmentpositions
+            user_detachment_position = verification.user.userdetachmentposition
         except Exception as e:
             print(traceback.format_exc())
+            continue
         try:
             september_15_inst = September15Participant.objects.get(
                 detachment=user_detachment_position.headquarter
