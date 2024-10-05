@@ -302,7 +302,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
 @admin.register(UserMembershipLogs)
 class UserMembershipLogsAdmin(admin.ModelAdmin):
-    list_display = ('user', 'status_changed_by', 'date', 'period', 'status',)
+    list_display = ('id', 'user', 'status_changed_by', 'date', 'period', 'status',)
     readonly_fields = (
         'user', 'status_changed_by', 'date', 'period', 'status', 'description'
     )
