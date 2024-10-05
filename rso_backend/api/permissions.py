@@ -1238,19 +1238,19 @@ class PersonalDataPermissionForGET(PersonalDataPermission):
         )
 
 
-class IsCentralCommander(permissions.BasePermission):
+class IsCentralCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return hasattr(request.user, 'centralheadquarter_commander')
 
 
-class IsDistrictCommander(permissions.BasePermission):
+class IsDistrictCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             hasattr(request.user, 'centralheadquarter_commander') or
             hasattr(request.user, 'districtheadquarter_commander')
         )
 
-class IsRegionalCommander(permissions.BasePermission):
+class IsRegionalCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             hasattr(request.user, 'centralheadquarter_commander') or
@@ -1259,7 +1259,7 @@ class IsRegionalCommander(permissions.BasePermission):
         )
 
 
-class IsLocalCommander(permissions.BasePermission):
+class IsLocalCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             hasattr(request.user, 'centralheadquarter_commander') or
@@ -1269,7 +1269,7 @@ class IsLocalCommander(permissions.BasePermission):
         )
 
 
-class IsEducationalCommander(permissions.BasePermission):
+class IsEducationalCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             hasattr(request.user, 'centralheadquarter_commander') or
@@ -1280,7 +1280,7 @@ class IsEducationalCommander(permissions.BasePermission):
         )
         
         
-class IsDetachmentCommander(permissions.BasePermission):
+class IsDetachmentCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             hasattr(request.user, 'centralheadquarter_commander') or

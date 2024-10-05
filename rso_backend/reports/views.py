@@ -35,8 +35,8 @@ from reports.utils import (
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
-from api.permissions import (IsCentralCommander, IsDistrictCommander, IsDetachmentCommander,
-                             IsEducationalCommander, IsLocalCommander, IsRegionalCommander)
+from api.permissions import (IsCentralCommanderRegistry, IsDistrictCommanderRegistry, IsDetachmentCommanderRegistry,
+                             IsEducationalCommanderRegistry, IsLocalCommanderRegistry, IsRegionalCommanderRegistry)
 
 
 def has_reports_access(user):
@@ -585,7 +585,7 @@ class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
 
 
 class ExportCentralDataAPIView(CommanerPermissionMixin, ExportCentralHqDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsCentralCommander]
+    permission_classes = [IsCentralCommanderRegistry]
 
 
 class ExportDistrictHqDataMixin:
@@ -617,7 +617,7 @@ class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
 
 
 class ExportDistrictDataAPIView(CommanerPermissionMixin, ExportDistrictHqDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsDistrictCommander]
+    permission_classes = [IsDistrictCommanderRegistry]
     
 
 class ExportRegionalHqDataMixin:
@@ -649,7 +649,7 @@ class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
 
 
 class ExportRegionalDataAPIView(CommanerPermissionMixin, ExportRegionalHqDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsRegionalCommander]
+    permission_classes = [IsRegionalCommanderRegistry]
 
 
 class ExportLocalHqDataMixin:
@@ -681,7 +681,7 @@ class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
 
 
 class ExportLocalDataAPIView(CommanerPermissionMixin, ExportLocalHqDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsLocalCommander]
+    permission_classes = [IsLocalCommanderRegistry]
 
 
 class ExportEducationHqDataMixin:
@@ -713,7 +713,7 @@ class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
 
 
 class ExportEducationDataAPIView(CommanerPermissionMixin, ExportEducationHqDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsEducationalCommander]
+    permission_classes = [IsEducationalCommanderRegistry]
 
 
 class ExportDetachmentDataMixin:
@@ -746,7 +746,7 @@ class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
 
 
 class ExportDetachmentDataAPIView(CommanerPermissionMixin, ExportDetachmentDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsDetachmentCommander]
+    permission_classes = [IsDetachmentCommanderRegistry]
 
 
 class ExportDirectionDataMixin:
