@@ -26,7 +26,7 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
                                Q19_DATA_HEADERS, DISTRICT_HQ_HEADERS, REGIONAL_HQ_HEADERS,
                                LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS, CENTRAL_HQ_HEADERS,
-                               DIRECTIONS_HEADERS)
+                               DIRECTIONS_HEADERS, USERS_HEADERS,)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
@@ -777,4 +777,36 @@ class ExportDirectionDataView(ExportDirectionDataMixin, BaseExcelExportView):
 
 
 class ExportDirectionDataAPIView(CommanerPermissionMixin, ExportDirectionDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+class ExportUsersDataMixin:
+    def get_headers(self):
+        return USERS_HEADERS
+    
+    def get_filename(self):
+        return f'Пользователи_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Пользователи'
+
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions', 'verification', 
+            'membership_fee', 'test_done', 
+            'events_organizations', 'event_participants'
+            ]
+
+    def get_data_func(self):
+        return 'get_users_registry_data'
+
+
+class ExportUsersDataView(ExportUsersDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportUsersDataAPIView(CommanerPermissionMixin, ExportUsersDataMixin, BaseExcelExportAPIView):
     pass

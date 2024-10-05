@@ -25,10 +25,11 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
 from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september
-from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area
+from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area, UserDistrictHeadquarterPosition, UserLocalHeadquarterPosition, UserEducationalHeadquarterPosition, UserRegionalHeadquarterPosition
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
+from events.models import Event, EventParticipants
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -1957,12 +1958,10 @@ def get_local_hq_data(fields):
                         row.append(count_verified_users(local_headquarter) / participants_count * 100)
                     else:
                         row.append('-')
-
                     if 'membership_fee_percent' in fields:
                         row.append(count_membership_fee(local_headquarter) / participants_count * 100)
                     else:
                         row.append('-')
-
                     if 'test_done_percent' in fields:
                         row.append(count_test_membership(local_headquarter) / participants_count * 100)
                     else:
@@ -2158,7 +2157,7 @@ def get_detachment_data(fields):
 
     return rows
 
-       
+
 def get_direction_data(fields):
     if not fields:
         fields = [
@@ -2176,3 +2175,60 @@ def get_direction_data(fields):
             
     except Exception as e:
         print(f"Ошибка: {e}")
+
+
+def get_users_registry_data(fields=None):
+    if fields is None:
+        fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions', 'verification', 
+            'membership_fee', 'test_done', 
+            'events_organizations', 'event_participants'
+        ]
+    
+    users = RSOUser.objects.all()
+    rows = []
+    
+    try:
+        for user in users:
+            row = [user.get_full_name()]
+            
+            row.append(user.email if user.email else '-')
+            row.append(user.phone_number if user.phone_number else '-')
+            if 'verification' in fields:
+                row.append('Да' if user.is_verified else 'Нет')
+            if 'membership_fee' in fields:
+                row.append('Да' if user.membership_fee else 'Нет')
+            if 'test_done' in fields:
+                test_passed = Attempt.objects.filter(
+                    user=user,
+                    category=Attempt.Category.SAFETY,
+                    score__gt=60
+                ).exists()
+                row.append('Да' if test_passed else 'Нет')
+            if 'district_headquarter' in fields:
+                district_hq = UserDistrictHeadquarterPosition.objects.filter(user=user).first()
+                row.append(district_hq.headquarter.name if district_hq else 'Нет')
+            if 'regional_headquarter' in fields:
+                regional_hq = UserRegionalHeadquarterPosition.objects.filter(user=user).first()
+                row.append(regional_hq.headquarter.name if regional_hq else 'Нет')
+            if 'local_headquarter' in fields:
+                local_hq = UserLocalHeadquarterPosition.objects.filter(user=user).first()
+                row.append(local_hq.headquarter.name if local_hq else 'Нет')
+            if 'educational_headquarter' in fields:
+                edu_hq = UserEducationalHeadquarterPosition.objects.filter(user=user).first()
+                row.append(edu_hq.headquarter.name if edu_hq else 'Нет')
+            if 'events_organizations' in fields:
+                is_organizer = Event.objects.filter(author=user).exists()
+                row.append('Да' if is_organizer else 'Нет')
+            if 'event_participants' in fields:
+                is_participant = EventParticipants.objects.filter(user=user).exists()
+                row.append('Да' if is_participant else 'Нет')
+            
+            rows.append(row)
+    
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    
+    return rows

@@ -236,6 +236,6 @@ def count_events_participants(headquarter):
 
 
 def get_hq_participants_15_september(detachment):
-     inst = September15Participant.objects.filter(detachment=detachment).last()
-     return 1 if not inst else inst.participants_number
+    inst = September15Participant.objects.filter(detachment=detachment).last()
+    return 1 if not inst else inst.participants_number
 

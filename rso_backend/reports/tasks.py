@@ -16,7 +16,7 @@ from reports.utils import (
     get_q5_data, get_q6_data, get_q7_data, get_q8_data, get_q9_data, get_q10_data, get_q11_data, get_q12_data, get_q13_data, get_q14_data,
     get_q15_data, get_q16_data, get_q17_data,get_q18_data, get_q19_data, get_district_hq_data,
     get_regional_hq_data, get_detachment_data, get_educational_hq_data, get_local_hq_data, get_central_hq_data,
-    get_direction_data
+    get_direction_data, get_users_registry_data
 )
 
 
@@ -98,6 +98,8 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
             data = get_detachment_data(fields)
         case 'get_direction_data':
             data = get_direction_data(fields)
+        case 'get_users_registry_data':
+            data = get_users_registry_data(fields)
         case _:
             logger.error(f"Неизвестное значение data_func: {data_func}")
             return
