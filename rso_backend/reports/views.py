@@ -785,10 +785,10 @@ class ExportUsersDataMixin:
         return USERS_HEADERS
     
     def get_filename(self):
-        return f'Пользователи_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+        return f'Участники_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
     def get_worksheet_title(self):
-        return 'Пользователи'
+        return 'Участники'
 
     def get_fields(self):
         fields = self.request.POST.getlist('fields')
@@ -797,7 +797,8 @@ class ExportUsersDataMixin:
             'local_headquarter', 'educational_headquarter',
             'directions', 'verification', 
             'membership_fee', 'test_done', 
-            'events_organizations', 'event_participants'
+            'events_organizations', 'event_participants',
+            'area', 'position', 'detachment'
             ]
 
     def get_data_func(self):

@@ -25,7 +25,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
 from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september
-from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area, UserDistrictHeadquarterPosition, UserLocalHeadquarterPosition, UserEducationalHeadquarterPosition, UserRegionalHeadquarterPosition
+from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area, UserDistrictHeadquarterPosition, UserLocalHeadquarterPosition, UserEducationalHeadquarterPosition, UserRegionalHeadquarterPosition, UserUnitPosition
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
@@ -2184,7 +2184,8 @@ def get_users_registry_data(fields=None):
             'local_headquarter', 'educational_headquarter',
             'directions', 'verification', 
             'membership_fee', 'test_done', 
-            'events_organizations', 'event_participants'
+            'events_organizations', 'event_participants',
+            'area', 'position', 'detachment'
         ]
     
     users = RSOUser.objects.all()
@@ -2198,33 +2199,55 @@ def get_users_registry_data(fields=None):
             row.append(user.phone_number if user.phone_number else '-')
             if 'district_headquarter' in fields:
                 district_hq = UserDistrictHeadquarterPosition.objects.filter(user=user).first()
-                row.append(district_hq.headquarter.name if district_hq else 'Нет')
+                row.append(district_hq.headquarter.name if district_hq else '-')
             if 'regional_headquarter' in fields:
                 regional_hq = UserRegionalHeadquarterPosition.objects.filter(user=user).first()
-                row.append(regional_hq.headquarter.name if regional_hq else 'Нет')
+                row.append(regional_hq.headquarter.name if regional_hq else '-')
             if 'local_headquarter' in fields:
                 local_hq = UserLocalHeadquarterPosition.objects.filter(user=user).first()
-                row.append(local_hq.headquarter.name if local_hq else 'Нет')
+                row.append(local_hq.headquarter.name if local_hq else '-')
             if 'educational_headquarter' in fields:
                 edu_hq = UserEducationalHeadquarterPosition.objects.filter(user=user).first()
-                row.append(edu_hq.headquarter.name if edu_hq else 'Нет')
+                row.append(edu_hq.headquarter.name if edu_hq else '-')
+            if 'detachment' in fields:
+                detachment = UserDetachmentPosition.objects.filter(user=user).first()
+                row.append(detachment.headquarter.name if detachment else '-')
+            if 'position' in fields:
+                if Detachment.objects.filter(commander=user).exists():
+                    row.append("Командир")
+                else:
+                    user_detachment_position = getattr(user, 'userdetachmentposition', None)
+                    if user_detachment_position and hasattr(user_detachment_position, 'position'):
+                        row.append(user_detachment_position.position.name)
+                    else:
+                        row.append('-')
+            else:
+                row.append('-')
+            if 'area' in fields:
+                if Detachment.objects.filter(commander=user).exists():
+                    area = Detachment.objects.filter(commander=user).first().area
+            else:
+                user_detachment_position = getattr(user, 'userdetachmentposition', None)
+                if user_detachment_position:
+                    area = getattr(user_detachment_position, 'detachment', None).area if hasattr(user_detachment_position, 'detachment') else None
+            row.append(area.name if area else '-')
             if 'verification' in fields:
-                row.append('Да' if user.is_verified else 'Нет')
+                row.append('Да' if user.is_verified else '-')
             if 'membership_fee' in fields:
-                row.append('Да' if user.membership_fee else 'Нет')
+                row.append('Да' if user.membership_fee else '-')
             if 'test_done' in fields:
                 test_passed = Attempt.objects.filter(
                     user=user,
                     category=Attempt.Category.SAFETY,
                     score__gt=60
                 ).exists()
-                row.append('Да' if test_passed else 'Нет')
+                row.append('Да' if test_passed else '-')
             if 'events_organizations' in fields:
                 is_organizer = Event.objects.filter(author=user).exists()
-                row.append('Да' if is_organizer else 'Нет')
+                row.append('Да' if is_organizer else '-')
             if 'event_participants' in fields:
                 is_participant = EventParticipants.objects.filter(user=user).exists()
-                row.append('Да' if is_participant else 'Нет')
+                row.append('Да' if is_participant else '-')
             
             rows.append(row)
     
