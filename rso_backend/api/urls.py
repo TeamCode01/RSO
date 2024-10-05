@@ -480,7 +480,7 @@ user_nested_urls = [
     path(
         'detachments/register_of_participants/',
         ExportDetachmentDataAPIVS,
-        name='detachments-register-of-participants'
+        name='detachments-registry-of-participants'
     ),
     path(
         'educationals/<int:pk>/apply/',
@@ -505,7 +505,7 @@ user_nested_urls = [
     path(
         'educationals/register_of_participants/',
         ExportEducationDataAPIVS,
-        name='educationals-register-of-participants',
+        name='educationals-registry-of-participants',
     ),
     path(
         'locals/<int:pk>/members/',
@@ -530,7 +530,7 @@ user_nested_urls = [
     path(
         'locals/register_of_participants/',
         ExportLocalDataAPIVS,
-        name='locals-register-of-participants',    
+        name='locals-registry-of-participants',    
     ),
     path(
         'regionals/<int:pk>/members/',
@@ -560,7 +560,7 @@ user_nested_urls = [
     path(
         'regionals/register_of_participants/',
         ExportRegionalDataAPIVS,
-        name='regionals-register-of-participants',
+        name='regionals-registry-of-participants',
     ),
     path(
         'districts/<int:pk>/members/',
@@ -585,7 +585,7 @@ user_nested_urls = [
     path(
         'district/register_of_participants/',
         ExportDistrictDataAPIVS,
-        name='districts-register-of-participants',
+        name='districts-registry-of-participants',
     ),
     path(
         'centrals/<int:pk>/members/',
@@ -610,7 +610,7 @@ user_nested_urls = [
     path(
         'centrals/register_of_participants/',
         ExportCentralDataAPIVS,
-        name='centrals-register-of-participants',
+        name='centrals-registry-of-participants',
     ),
     path(
         'rsousers/me/professional_education/',
