@@ -510,7 +510,7 @@ class RegionalR4EventSerializer(BaseEventSerializer):
 
 
 class RegionalR4Serializer(
-    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin, FileScanSizeSerializerMixin
 ):
     events = RegionalR4EventSerializer(many=True, required=False, allow_null=True)
 
@@ -558,7 +558,7 @@ class RegionalR5EventSerializer(BaseEventSerializer):
 
 
 class RegionalR5Serializer(
-    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
+    BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin, FileScanSizeSerializerMixin
 ):
     events = RegionalR5EventSerializer(many=True, required=False, allow_null=True)
 
