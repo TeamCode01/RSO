@@ -1434,7 +1434,7 @@ def calculate_q1_score(competition_id):
     Выполняется каждый день до 15.07.2024.
     """
     today = date.today()
-    end_date = date(2024, 9, 20)
+    end_date = date(2024, 10, 6)
 
     if today > end_date:
         return

@@ -9,8 +9,12 @@ from django_celery_beat.models import PeriodicTask
 from headquarters.models import RegionalHeadquarter
 from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
-from regional_competitions.models import StatisticalRegionalReport, REPORTS_IS_SENT_MODELS
-from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14
+from regional_competitions.models import (
+    RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR13, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
+    StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
+    r7_models_factory, r9_models_factory
+)
+from regional_competitions.r_calculations import calc_r_ranking, calculate_r11_score, calculate_r13_score, calculate_r14
 from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
     generate_pdf_report_part_2
 
@@ -176,3 +180,89 @@ def calculate_r14_report_task():
         calculate_r14()
     else:
         logger.warning('Истек срок выполнения подсчета по 14 показателю')
+
+
+@shared_task
+def calc_places_r1():
+    logger.info('Выполняется подсчет rank1 показателя')
+    calc_r_ranking([RegionalR1], 'r1_place')
+
+
+@shared_task
+def calc_places_r2():
+    # показатель считается на основе верифицированного первого, без верификации
+    logger.info('Выполняется подсчет rank2 показателя')
+    calc_r_ranking([RegionalR2], 'r2_place', no_verification=True)
+
+
+@shared_task
+def calc_places_r3():
+    # показатель считается на основе верифицированного первого, без верификации
+    logger.info('Выполняется подсчет rank3 показателя')
+    calc_r_ranking([RegionalR3], 'r3_place', no_verification=True)
+
+
+@shared_task
+def calc_places_r4():
+    logger.info('Выполняется подсчет rank4 показателя')
+    calc_r_ranking([RegionalR4], 'r4_place')
+
+
+@shared_task
+def calc_places_r5():
+    logger.info('Выполняется подсчет rank5 показателя')
+    calc_r_ranking([RegionalR5], 'r5_place')
+
+
+@shared_task
+def calc_places_r6():
+    logger.info('Выполняется подсчет rank6 показателя')
+    models = [model for model_name, model in r6_models_factory.models.items() if not model_name.endswith('Link')]
+    calc_r_ranking(models, 'r6_place')
+
+
+@shared_task
+def calc_places_r7():
+    logger.info('Выполняется подсчет rank7 показателя')
+    models = [model for model_name, model in r7_models_factory.models.items() if not model_name.endswith('Link')]
+    calc_r_ranking(models, 'r7_place')
+
+
+@shared_task
+def calc_places_r9():
+    # чем меньше score - тем выше в рейтинге
+    logger.info('Выполняется подсчет rank9 показателя')
+    models = [model for model_name, model in r9_models_factory.models.items() if not model_name.endswith('Link')]
+    calc_r_ranking(models, 'r9_place', reverse=False)
+
+
+@shared_task
+def calc_places_r10():
+    # чем меньше score - тем выше в рейтинге + две модели по одному показателю
+    logger.info('Выполняется подсчет rank10 показателя')
+    calc_r_ranking([RegionalR101, RegionalR102], 'r10_place', reverse=False)
+
+
+@shared_task
+def calc_places_r11():
+    logger.info('Выполняется подсчет rank11 показателя')
+    calc_r_ranking([RegionalR11], 'r11_place')
+
+
+@shared_task
+def calc_places_r12():
+    logger.info('Выполняется подсчет rank12 показателя')
+    calc_r_ranking([RegionalR12], 'r12_place')
+
+
+@shared_task
+def calc_places_r13():
+    logger.info('Выполняется подсчет rank13 показателя')
+    calc_r_ranking([RegionalR13], 'r13_place')
+
+
+@shared_task
+def calc_places_r14():
+    # считается на основании верифицированных 12 и 13 показателей, без верификации
+    logger.info('Выполняется подсчет rank14 показателя')
+    calc_r_ranking([RegionalR14], 'r14_place', no_verification=True)

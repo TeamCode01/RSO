@@ -419,7 +419,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(serializers.ModelSerializer):
+class BaseEventSerializer(FileScanSizeSerializerMixin):
 
     class Meta:
         model = None
@@ -429,7 +429,7 @@ class BaseEventSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'regulations',
-        )
+        ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = ('id',)
 
     def to_internal_value(self, data):

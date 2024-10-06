@@ -312,14 +312,27 @@ class RegionalR1(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 1 показателю'
 
 
-class RegionalR2(BaseRegionalR, BaseScore):
+class RegionalR2(BaseScore, models.Model):
     """
     Отношение численности членов РО РСО к численности студентов очной формы обучения субъекта Российской Федерации,
     обучающихся в профессиональных образовательных организациях и образовательных организациях высшего образования
     в государственных, муниципальных и частных образовательных организациях, включая филиалы
     (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
     """
-
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
     full_time_students = models.SmallIntegerField(
         validators=[MinValueValidator(0)],
         blank=True,
@@ -339,7 +352,7 @@ class RegionalR3(BaseScore):
         verbose_name='Региональный штаб',
         related_name='%(class)s'
     )
-    amount_of_membership_fees_2023 = models.IntegerField(
+    amount_of_membership_fees_2023 = models.PositiveIntegerField(
         validators=[MinValueValidator(0)]
     )
 
@@ -365,7 +378,7 @@ class RegionalR4Event(BaseEventOrProject):
         verbose_name='Межрегиональное',
         default=False
     )
-    participants_number = PositiveSmallIntegerField(
+    participants_number = models.PositiveIntegerField(
         verbose_name='Количество участников',
         default=0,
         blank=True,
@@ -408,7 +421,7 @@ class RegionalR5Event(BaseEventOrProject):
         verbose_name='Отчет',
         related_name='events'
     )
-    participants_number = PositiveSmallIntegerField(
+    participants_number = models.PositiveIntegerField(
         verbose_name='Общее количество участников',
         default=0,
         blank=True,
@@ -446,7 +459,7 @@ class BaseRegionalR6(BaseEventProjectR):
     Участие бойцов студенческих отрядов РО РСО во всероссийских
     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
     """
-    number_of_members = models.PositiveSmallIntegerField(
+    number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество человек принявших участие'
@@ -642,7 +655,7 @@ class RegionalR13(BaseEventProjectR):
     """
     Охват членов РО РСО, принявших участие во Всероссийском дне ударного труда «К».
     """
-    number_of_members = models.PositiveSmallIntegerField(
+    number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество членов РО РСО, принявших участие'
@@ -670,6 +683,14 @@ class RegionalR14(BaseScore):
     Заполняется один раз, без периодического пересчета,
     т.к. нет редактирования верифицированных отчетов.
     """
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s',
+        blank=True,
+        null=True
+    )
     report_12 = models.ForeignKey(
         'RegionalR12',
         on_delete=models.CASCADE,
@@ -876,7 +897,7 @@ class RegionalR19(BaseComment, models.Model):
         auto_now=True,
         verbose_name='Дата последнего обновления'
     )
-    employed_student_start = models.PositiveSmallIntegerField(
+    employed_student_start = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name=(
@@ -884,7 +905,7 @@ class RegionalR19(BaseComment, models.Model):
             'в третий трудовой семестр'
         )
     )
-    employed_student_end = models.PositiveSmallIntegerField(
+    employed_student_end = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name=(
@@ -965,3 +986,31 @@ class ExpertRole(models.Model):
                 name='not_both_headquarters'
             )
         ]
+
+
+class Ranking(models.Model):
+    """Места участников по показателям."""
+
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='regional_competitions_rankings'
+    )
+
+    @classmethod
+    def add_fields(cls):
+        for i in range(1, 16):
+            field = models.PositiveSmallIntegerField(
+                verbose_name=f'Место участника по {i} показателю',
+                blank=True,
+                null=True
+            )
+            cls.add_to_class(f'r{i}_place', field)
+
+    class Meta:
+        verbose_name = 'Место участника по показателю'
+        verbose_name_plural = 'Места участников по показателям'
+
+
+Ranking.add_fields()
