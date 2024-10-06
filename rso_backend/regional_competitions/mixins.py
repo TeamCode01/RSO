@@ -67,27 +67,44 @@ class FormDataNestedFileParser:
         :return: Обновленный словарь или список с присвоенным значением.
         """
         current = data
-
         for i, key in enumerate(keys):
+            is_last = i == len(keys) - 1
             if key.isdigit():
                 key = int(key)
 
-            if i == len(keys) - 1:
+            if is_last:
                 value = self.process_value(value)
-                current[key] = value
+                if isinstance(current, list) and isinstance(key, int):
+                    while len(current) <= key:
+                        current.append(None)
+                    current[key] = value
+                else:
+                    current[key] = value
             else:
+                next_key = keys[i + 1] if i + 1 < len(keys) else None
+
+                next_is_index = isinstance(next_key, int) or (isinstance(next_key, str) and next_key.isdigit())
+
                 if isinstance(key, int):
                     if not isinstance(current, list):
-                        current[keys[i - 1]] = []
-                        current = current[keys[i - 1]]
+                        if isinstance(current, dict):
+                            if key in current:
+                                temp = current[key]
+                            else:
+                                temp = {}
+                            current = [temp] if key == 0 else [{} for _ in range(key)] + [temp]
+                            data[keys[0]] = current
+                        else:
+                            current = []
+                            data[keys[0]] = current
+
                     while len(current) <= key:
                         current.append({})
                     current = current[key]
                 else:
-                    if isinstance(current, dict):
-                        if key not in current:
-                            current[key] = {}
-                        current = current[key]
+                    if key not in current or not isinstance(current[key], (dict, list)):
+                        current[key] = [] if next_is_index else {}
+                    current = current[key]
         return data
 
     def process_value(self, value):
@@ -170,7 +187,9 @@ class FormDataNestedFileParser:
         for key, value in query_dict.items():
             keys = self.extract_keys(key)
             data = self.assign_value(data, keys, value)
-        return self.remove_duplicate_keys(data)
+        result = self.remove_duplicate_keys(data)
+        print(result)
+        return result
 
     def update(self, request, *args, **kwargs):
         """
