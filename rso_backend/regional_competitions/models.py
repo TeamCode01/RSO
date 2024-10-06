@@ -312,15 +312,28 @@ class RegionalR1(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 1 показателю'
 
 
-class RegionalR2(BaseRegionalR, BaseScore):
+class RegionalR2(BaseScore, models.Model):
     """
     Отношение численности членов РО РСО к численности студентов очной формы обучения субъекта Российской Федерации,
     обучающихся в профессиональных образовательных организациях и образовательных организациях высшего образования
     в государственных, муниципальных и частных образовательных организациях, включая филиалы
     (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
     """
-
-    full_time_students = models.PositiveIntegerField(
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+    full_time_students = models.SmallIntegerField(
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
@@ -670,6 +683,14 @@ class RegionalR14(BaseScore):
     Заполняется один раз, без периодического пересчета,
     т.к. нет редактирования верифицированных отчетов.
     """
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s',
+        blank=True,
+        null=True
+    )
     report_12 = models.ForeignKey(
         'RegionalR12',
         on_delete=models.CASCADE,
@@ -965,3 +986,31 @@ class ExpertRole(models.Model):
                 name='not_both_headquarters'
             )
         ]
+
+
+class Ranking(models.Model):
+    """Места участников по показателям."""
+
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='regional_competitions_rankings'
+    )
+
+    @classmethod
+    def add_fields(cls):
+        for i in range(1, 16):
+            field = models.PositiveSmallIntegerField(
+                verbose_name=f'Место участника по {i} показателю',
+                blank=True,
+                null=True
+            )
+            cls.add_to_class(f'r{i}_place', field)
+
+    class Meta:
+        verbose_name = 'Место участника по показателю'
+        verbose_name_plural = 'Места участников по показателям'
+
+
+Ranking.add_fields()
