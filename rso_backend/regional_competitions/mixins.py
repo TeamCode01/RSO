@@ -110,39 +110,26 @@ class FormDataNestedFileParser:
     def process_value(self, value):
         """
         Обрабатывает значение, проверяя, является ли оно ссылкой на существующий файл в /media/.
-
-        :param value: Значение для проверки.
-        :return: Файл или исходное значение.
         """
+        if not hasattr(self, 'files_to_delete'):
+            self.files_to_delete = []
+
         if isinstance(value, str) and '/media/' in value:
-            file_object = self.get_file_from_media(value)
-            if file_object:
-                return file_object
+            result = self.get_file_from_media(value)
+            if result:
+                uploaded_file, file_path = result
+                self.files_to_delete.append(file_path)
+                return uploaded_file
         return value
 
     def get_file_from_media(self, link):
-        """
-        Пытается найти файл на сервере в папке /media/.
-
-        :param link: Ссылка на файл.
-        :return: Объект файла или None, если файл не найден.
-        """
-        media_url = settings.MEDIA_URL
-        if media_url.endswith('/'):
-            media_url = media_url[:-1]
-
-
+        media_url = settings.MEDIA_URL.rstrip('/')
         parsed_link = urlparse(link)
         link_path = parsed_link.path
 
         if link_path.startswith(media_url):
-            relative_path = link_path[len(media_url):]
-
-            if relative_path.startswith('/'):
-                relative_path = relative_path[1:]
-
+            relative_path = link_path[len(media_url):].lstrip('/')
             relative_path = unquote(relative_path)
-
             file_path = os.path.join(settings.MEDIA_ROOT, relative_path)
 
             if os.path.exists(file_path):
@@ -155,10 +142,26 @@ class FormDataNestedFileParser:
                             content=file_content,
                             content_type='application/octet-stream'
                         )
-                        return uploaded_file
+                    return uploaded_file, file_path
                 except IOError as e:
-                    pass
+                    print(f"Ошибка при чтении файла {file_path}: {e}")
+            else:
+                print(f"Файл не найден по пути: {file_path}")
+        else:
+            print("Путь ссылки не начинается с MEDIA_URL")
         return None
+
+    def delete_old_files(self):
+        """
+        Удаляет старые файлы, пути к которым хранятся в self.files_to_delete.
+        """
+        for file_path in getattr(self, 'files_to_delete', []):
+            try:
+                os.remove(file_path)
+                print(f"Удален файл: {file_path}")
+            except OSError as e:
+                print(f"Ошибка при удалении файла {file_path}: {e}")
+        self.files_to_delete = []
 
     def remove_duplicate_keys(self, data):
         """
@@ -194,25 +197,23 @@ class FormDataNestedFileParser:
     def update(self, request, *args, **kwargs):
         """
         Переопределяет метод обновления, обрабатывая QueryDict перед передачей в сериализатор.
-
-        :param request: Запрос с данными.
-        :return: Ответ с данными после обновления.
         """
+        self.files_to_delete = []
         data = self.parse_querydict(request.data)
         serializer = self.get_serializer(self.get_object(), data=data, partial=kwargs.get('partial', False))
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        self.delete_old_files()
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         """
         Переопределяет метод создания, обрабатывая QueryDict перед передачей их в сериализатор.
-
-        :param request: Запрос с данными.
-        :return: Ответ с созданными данными.
         """
+        self.files_to_delete = []
         data = self.parse_querydict(request.data)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        self.delete_old_files()
         return Response(serializer.data)
