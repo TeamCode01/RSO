@@ -17,7 +17,7 @@ from api.mixins import SendMixin
 from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
-                                 UserDistrictHeadquarterPosition)
+                                 UserDistrictHeadquarterPosition, DistrictHeadquarter)
 from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES, 
                                              EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
@@ -179,7 +179,14 @@ class BaseRegionalRViewSet(RegionalRMixin):
         serialized_json = json.dumps(serialized_data, ensure_ascii=False, default=str)
 
         user = request.user
-        district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
+        try:
+            district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
+        except UserDistrictHeadquarterPosition.DoesNotExist:
+            district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+        else:
+            return Response({
+                'non_field_errors': 'Изменение отчетов доступно только командирам окружных штабов.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)
