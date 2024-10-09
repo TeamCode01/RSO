@@ -194,12 +194,22 @@ def calculate_r11_score():
 
     """
     r1_ro_ids = set(RegionalR1.objects.filter(
-        verified_by_chq=True, score__gt=0).values_list('regional_headquarter_id', flat=True)
+        verified_by_chq=True,
+        score__gt=0
+    ).values_list('regional_headquarter_id', flat=True)
     )
     r11_ro_ids = set(RegionalR11.objects.filter(score=0).values_list('regional_headquarter_id', flat=True))
     ro_ids = r1_ro_ids.intersection(r11_ro_ids)
-    r1_reports = RegionalR1.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score__gt=0)
-    r11_reports = RegionalR11.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score=0)
+    r1_reports = RegionalR1.objects.filter(
+        regional_headquarter_id__in=ro_ids,
+        verified_by_chq=True,
+        score__gt=0
+    )
+    r11_reports = RegionalR11.objects.filter(
+        regional_headquarter_id__in=ro_ids,
+        verified_by_chq=True,
+        score=0
+    )
     r1_scores = {report.regional_headquarter_id: report.score for report in r1_reports}
 
     updated_r11_reports = []
@@ -217,7 +227,6 @@ def calculate_r11_score():
         report.score = ro_score
         logger.info(f'Подсчитали очки 11-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
         updated_r11_reports.append(report)
-        print(updated_r11_reports)
     try:
         # TODO: исправить эксепшн
         updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
