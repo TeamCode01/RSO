@@ -66,7 +66,7 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, Q20Report,
                                  QVerificationLog, DemonstrationBlock, PatrioticActionBlock, RankingCopy, SafetyWorkWeekBlock,
-                                 CommanderCommissionerSchoolBlock, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 CommanderCommissionerSchoolBlock, September15Participant, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
                                  ProfessionalCompetitionBlock, SpartakiadBlock, Q1Report)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
@@ -552,7 +552,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
             'detachment__name',
             'created_at',
             'junior_detachment__overallranking__place' (старт рейтинг),
-            'detachment__overalltandemranking_main_detachment__place' (тандем).
+            'detachment__overalltandemranking_main_detachment__place' (тандем),
+            'detachment__copy_ranking_main_detachment__place' (тандем замороженный рейтинг),
+            'junior_detachment__copy_ranking_detachment__place' (старт замороженный рейтинг)'.
           Можно сортировать в обратном порядке добавив признак '-'
           перед названием поля, например -created_at.
         - порядок сортировки по дефолту: junior_detachment__name,
@@ -574,7 +576,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
                        'junior_detachment__name',
                        'created_at',
                        'junior_detachment__overallranking__place',
-                       'detachment__overalltandemranking_main_detachment__place')
+                       'detachment__overalltandemranking_main_detachment__place',
+                       'detachment__copy_ranking_main_detachment__place',
+                       'junior_detachment__copy_ranking_detachment__place')
     ordering = ('junior_detachment__name',
                 'detachment__name',
                 'created_at')
@@ -4980,6 +4984,40 @@ def get_q1_info(request, competition_pk):
         'number_of_payments': detachment.members.filter(
             user__membership_fee=True
         ).count() + (1 if detachment.commander.membership_fee else 0)
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_q1_info_static(request, competition_pk):
+    """
+    Замороженая информация для показателя q1.
+
+    Возвращает следующую информацию на 15-30 сентября 2023 года:
+    'number_of_members': int - число участников отряда
+    'number_of_payments': int - количество участников отряда
+    оплативших членские взносы
+
+    Доступ: все авторизованные пользователи.
+    Если пользователь не командир, либо не участвует в мероприятии -
+    выводится ошибка 404.
+    """
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    if not competition.competition_participants.filter(
+            Q(detachment=detachment) | Q(junior_detachment=detachment)
+    ).exists():
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    try:
+        sep_15_participant = detachment.sep_15_participants.get()
+        number_of_members = sep_15_participant.participants_number
+        number_of_payments = sep_15_participant.members_number
+    except September15Participant.DoesNotExist:
+        number_of_members = 0
+        number_of_payments = 0
+    return Response({
+        'number_of_members': number_of_members,
+        'number_of_payments': number_of_payments
     })
 
 

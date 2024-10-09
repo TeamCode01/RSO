@@ -40,7 +40,7 @@ from competitions.views import (CompetitionApplicationsViewSet,
                                 get_detachment_place, get_detachment_places,
                                 get_place_overall, get_place_q1, get_place_q3,
                                 get_place_q4, get_q1_info,
-                                DetachmentReportView)
+                                DetachmentReportView, get_q1_info_static)
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
                           EventOrganizationDataViewSet,
@@ -638,6 +638,11 @@ user_nested_urls = [
         'competitions/<int:competition_pk>/reports/q1/info/',
         get_q1_info,
         name='get-q1-info'
+    ),
+    path(
+        'competitions/<int:competition_pk>/reports/q1/info-static/',
+        get_q1_info_static,
+        name='get-q1-info-static'
     ),
     path(
         'competitions/<int:competition_pk>/reports/q3/get-place/',
