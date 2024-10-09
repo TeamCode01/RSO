@@ -1,8 +1,13 @@
 import re
+import os
+from urllib.parse import urlparse, unquote
+
 from django.http import Http404
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin, UpdateModelMixin)
 from rest_framework.viewsets import GenericViewSet
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 from rest_framework.response import Response
 
 from headquarters.models import RegionalHeadquarter
@@ -46,7 +51,7 @@ class FormDataNestedFileParser:
     def extract_keys(self, key):
         """
         Извлекает ключи из строкового представления вложенного ключа, например, 'events[0][links][0][link]'.
-        
+
         :param key: Ключ из QueryDict.
         :return: Список ключей.
         """
@@ -62,26 +67,101 @@ class FormDataNestedFileParser:
         :return: Обновленный словарь или список с присвоенным значением.
         """
         current = data
-
         for i, key in enumerate(keys):
+            is_last = i == len(keys) - 1
             if key.isdigit():
                 key = int(key)
 
-            if i == len(keys) - 1:
-                current[key] = value
+            if is_last:
+                value = self.process_value(value)
+                if isinstance(current, list) and isinstance(key, int):
+                    while len(current) <= key:
+                        current.append(None)
+                    current[key] = value
+                else:
+                    current[key] = value
             else:
+                next_key = keys[i + 1] if i + 1 < len(keys) else None
+
+                next_is_index = isinstance(next_key, int) or (isinstance(next_key, str) and next_key.isdigit())
+
                 if isinstance(key, int):
                     if not isinstance(current, list):
-                        current = current.setdefault(keys[i - 1], [])
+                        if isinstance(current, dict):
+                            if key in current:
+                                temp = current[key]
+                            else:
+                                temp = {}
+                            current = [temp] if key == 0 else [{} for _ in range(key)] + [temp]
+                            data[keys[0]] = current
+                        else:
+                            current = []
+                            data[keys[0]] = current
+
                     while len(current) <= key:
                         current.append({})
                     current = current[key]
                 else:
-                    if isinstance(current, dict):
-                        if key not in current:
-                            current[key] = {}
-                        current = current[key]
+                    if key not in current or not isinstance(current[key], (dict, list)):
+                        current[key] = [] if next_is_index else {}
+                    current = current[key]
         return data
+
+    def process_value(self, value):
+        """
+        Обрабатывает значение, проверяя, является ли оно ссылкой на существующий файл в /media/.
+        """
+        if not hasattr(self, 'files_to_delete'):
+            self.files_to_delete = []
+
+        if isinstance(value, str) and '/media/' in value:
+            result = self.get_file_from_media(value)
+            if result:
+                uploaded_file, file_path = result
+                self.files_to_delete.append(file_path)
+                return uploaded_file
+        return value
+
+    def get_file_from_media(self, link):
+        media_url = settings.MEDIA_URL.rstrip('/')
+        parsed_link = urlparse(link)
+        link_path = parsed_link.path
+
+        if link_path.startswith(media_url):
+            relative_path = link_path[len(media_url):].lstrip('/')
+            relative_path = unquote(relative_path)
+            file_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'rb') as f:
+                        file_name = os.path.basename(file_path)
+                        file_content = f.read()
+                        uploaded_file = SimpleUploadedFile(
+                            name=file_name,
+                            content=file_content,
+                            content_type='application/octet-stream'
+                        )
+                    return uploaded_file, file_path
+                except IOError as e:
+                    print(f"Ошибка при чтении файла {file_path}: {e}")
+            else:
+                print(f"Файл не найден по пути: {file_path}")
+        else:
+            print("Путь ссылки не начинается с MEDIA_URL")
+        return None
+
+    def delete_old_files(self):
+        """
+        Удаляет старые файлы, пути к которым хранятся в self.files_to_delete.
+        """
+        for file_path in getattr(self, 'files_to_delete', []):
+            try:
+                os.remove(file_path)
+                print(f"Удален файл: {file_path}")
+            except OSError as e:
+                print(f"Ошибка при удалении файла {file_path}: {e}")
+        self.files_to_delete = []
 
     def remove_duplicate_keys(self, data):
         """
@@ -110,30 +190,30 @@ class FormDataNestedFileParser:
         for key, value in query_dict.items():
             keys = self.extract_keys(key)
             data = self.assign_value(data, keys, value)
-        return self.remove_duplicate_keys(data)
+        result = self.remove_duplicate_keys(data)
+        print(result)
+        return result
 
     def update(self, request, *args, **kwargs):
         """
         Переопределяет метод обновления, обрабатывая QueryDict перед передачей в сериализатор.
-
-        :param request: Запрос с данными.
-        :return: Ответ с данными после обновления.
         """
+        self.files_to_delete = []
         data = self.parse_querydict(request.data)
         serializer = self.get_serializer(self.get_object(), data=data, partial=kwargs.get('partial', False))
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        self.delete_old_files()
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         """
         Переопределяет метод создания, обрабатывая QueryDict перед передачей их в сериализатор.
-
-        :param request: Запрос с данными.
-        :return: Ответ с созданными данными.
         """
+        self.files_to_delete = []
         data = self.parse_querydict(request.data)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        self.delete_old_files()
         return Response(serializer.data)
