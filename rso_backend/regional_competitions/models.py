@@ -579,8 +579,8 @@ class RegionalR101Link(models.Model):
 
 class RegionalR102(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
-        verbose_name = 'Отчет по 10 показателю - "Поклонимся Великим годам"'
-        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся Великим годам"'
+        verbose_name = 'Отчет по 10 показателю - "Поклонимся великим тем годам"'
+        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся великим тем годам"'
 
 
 class RegionalR102Link(models.Model):
@@ -597,8 +597,8 @@ class RegionalR102Link(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ссылка по 10 показателю - "Поклонимся Великим годам"'
-        verbose_name_plural = 'Ссылки по 10 показателю - "Поклонимся Великим годам'
+        verbose_name = 'Ссылка по 10 показателю - "Поклонимся великим тем годам"'
+        verbose_name_plural = 'Ссылки по 10 показателю - "Поклонимся великим тем годам'
 
     def __str__(self):
         return f'ID {self.id}'
