@@ -250,6 +250,11 @@ class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
 
 
 class BaseEventOrProject(models.Model):
+    name = models.TextField(
+        verbose_name='Наименование мероприятия',
+        blank=True,
+        null=True
+    )
     start_date = models.DateField(
         verbose_name='Дата начала проведения мероприятия',
         blank=True,
