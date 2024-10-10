@@ -9,7 +9,7 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -24,6 +24,30 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           r6_models_factory,
                                           r7_models_factory, r9_models_factory, AdditionalStatistic)
 from regional_competitions.utils import get_report_number_by_class_name
+
+
+class DumpStatisticalRegionalReportSerializer(serializers.ModelSerializer):
+    regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
+
+    class Meta:
+        model = DumpStatisticalRegionalReport
+        fields = (
+            'id',
+            'participants_number',
+            'regional_headquarter',
+            'employed_sso',
+            'employed_spo',
+            'employed_sop',
+            'employed_smo',
+            'employed_sservo',
+            'employed_ssho',
+            'employed_specialized_detachments',
+            'employed_production_detachments',
+            'employed_top',
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso'
+        )
 
 
 class AdditionalStatisticSerializer(serializers.ModelSerializer):
