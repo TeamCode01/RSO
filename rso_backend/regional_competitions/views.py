@@ -17,14 +17,14 @@ from api.mixins import SendMixin
 from api.utils import get_calculation
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
-                                 UserDistrictHeadquarterPosition)
+                                 UserDistrictHeadquarterPosition, DistrictHeadquarter)
 from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES, 
                                              EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                           RegionalRMixin, ListRetrieveCreateMixin)
-from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR1, RegionalR18,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -36,7 +36,7 @@ from regional_competitions.models import (CHqRejectingLog, ExpertRole, RegionalR
 from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
-    EventNameSerializer, MassSendSerializer, RegionalR18Serializer,
+    DumpStatisticalRegionalReportSerializer, EventNameSerializer, MassSendSerializer, RegionalR18Serializer,
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
@@ -48,7 +48,6 @@ from regional_competitions.utils import (
     get_all_reports_from_competition, get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
-from django.conf import settings
 
 
 class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
@@ -84,6 +83,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
+        """Эндпоинт для получения своего первого отчета во 2-й части."""
         regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
 
@@ -93,6 +93,13 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
                 status=status.HTTP_200_OK
             )
 
+        # если put и нет дампа, то сначала сохраняем текущую версию в модель дампа
+        if not DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            serializer = DumpStatisticalRegionalReportSerializer(
+                data=StatisticalRegionalReportSerializer(statistical_report).data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(regional_headquarter=regional_headquarter)
+
         serializer = self.get_serializer(
             statistical_report,
             data=request.data,
@@ -101,6 +108,26 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='me_first',
+    )
+    def me_first(self, request, pk=None):
+        """Эндпоинт для получения своего первого отчета в 1-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -179,7 +206,14 @@ class BaseRegionalRViewSet(RegionalRMixin):
         serialized_json = json.dumps(serialized_data, ensure_ascii=False, default=str)
 
         user = request.user
-        district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
+        try:
+            district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
+        except UserDistrictHeadquarterPosition.DoesNotExist:
+            district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+        else:
+            return Response({
+                'non_field_errors': 'Изменение отчетов доступно только командирам окружных штабов.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)

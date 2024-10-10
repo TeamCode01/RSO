@@ -13,6 +13,72 @@ from regional_competitions.factories import RModelFactory
 from regional_competitions.utils import regional_comp_regulations_files_path
 
 
+class DumpStatisticalRegionalReport(models.Model):
+    """
+    Дамп статистического отчета РШ, 1-я часть отчёта РО.
+
+    Сохраненная версия до редактирования во второй части отчёта.
+    """
+
+    regional_headquarter = models.OneToOneField(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб'
+    )
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество членов регионального отделения'
+    )
+    employed_sso = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССО'
+    )
+    employed_spo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СПО'
+    )
+    employed_sop = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СОП'
+    )
+    employed_smo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СМО'
+    )
+    employed_sservo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССервО'
+    )
+    employed_ssho = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССхО'
+    )
+    employed_specialized_detachments = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, профильные отряды'
+    )
+    employed_production_detachments = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, производственные отряды'
+    )
+    employed_top = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, ТОП'
+    )
+    employed_so_poo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ПОО',
+        blank=True,
+        null=True
+    )
+    employed_so_oovo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ООВО',
+        blank=True,
+        null=True
+    )
+    employed_ro_rso = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов РО РСО',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name_plural = 'Дампы статистических отчетов РШ'
+        verbose_name = 'Дамп статистического отчета РШ'
+
+    def __str__(self):
+        return f'Дамп статистического отчет отряда {self.regional_headquarter.name}'
+
+
 class StatisticalRegionalReport(models.Model):
     """Статистический отчет РШ, 1-я часть отчёта РО."""
 
