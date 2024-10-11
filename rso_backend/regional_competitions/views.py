@@ -129,6 +129,31 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
             status=status.HTTP_200_OK
         )
 
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path=r'old_first/(?P<pk>\d+)',
+        permission_classes=(IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),),
+    )
+    def old_first(self, request, pk):
+        """Эндпоинт для получения отчета 1-й части, версии до редактирования во 2-й части.
+
+        Параметр пути id - pk регионального штаба.
+        Доступ: автор отчета или эксперт ЦШ.
+        """
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, pk=pk)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
     def perform_create(self, serializer):
         user = self.request.user
         regional_headquarter = RegionalHeadquarter.objects.get(commander=user)
