@@ -455,7 +455,7 @@ def get_all_reports_from_competition(report_number: int) -> HttpResponse:
 
 def get_all_models(module_name: str):
     """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
-    all_models = ['StatisticalRegionalReport',]
+    all_models = ['StatisticalRegionalReport', 'DumpStatisticalRegionalReport',]
     pattern = re.compile(r'^RegionalR\d+$')
 
     for model in apps.get_models():
@@ -476,7 +476,9 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     for model_name in models_list:
         report_number = model_name.split('RegionalR')[1]
         model = apps.get_model('regional_competitions', model_name)
-
+        if model_name == 'DumpStatisticalRegionalReport':
+            if not model.objects.filter(regional_headquarter_id=regional_headquarter_id).exists():
+                continue
         if report_number == '14':
             instance = model.objects.filter(report_12__regional_headquarter_id=regional_headquarter_id).first()
             if instance is None:
@@ -502,7 +504,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
                 serializer_data
             )
         )
-        if model_name == 'StatisticalRegionalReport':
+        if model_name == 'DumpStatisticalRegionalReport' or model_name == 'StatisticalRegionalReport':
             sheet_name = 'Статистический отчет'
         elif report_number == '101' or report_number == '102':
             sheet_name = '10'
