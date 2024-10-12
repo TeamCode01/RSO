@@ -43,7 +43,7 @@ class MeRouter(SimpleRouter):
             url=r'^{prefix}/all$',
             mapping={
                 'get': 'list',
-                'post': 'create'
+                # 'post': 'create'
             },
             name='{basename}-list',
             detail=False,
