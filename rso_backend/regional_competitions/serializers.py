@@ -529,6 +529,7 @@ class RegionalR4EventSerializer(BaseEventSerializer):
             'links',
             'regional_r4',
             'is_interregional',
+            'name'
         )
         read_only_fields = ('id', 'regional_r4',)
 
@@ -576,7 +577,8 @@ class RegionalR5EventSerializer(BaseEventSerializer):
         fields = BaseEventSerializer.Meta.fields + (
             'links',
             'regional_r5',
-            'ro_participants_number'
+            'ro_participants_number',
+            'name'
         )
         read_only_fields = ('id', 'regional_r5')
 
