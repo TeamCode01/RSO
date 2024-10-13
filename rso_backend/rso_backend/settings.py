@@ -375,10 +375,10 @@ if DEBUG:
             'task': 'regional_competitions.tasks.calc_places_r6',
             'schedule': timedelta(hours=12)  # TODO: пока только дев
         },
-        'calc_places_r7': {
-            'task': 'regional_competitions.tasks.calc_places_r7',
-            'schedule': timedelta(hours=12)  # TODO: пока только дев
-        },
+        # 'calc_places_r7': {
+        #     'task': 'regional_competitions.tasks.calc_places_r7',
+        #     'schedule': timedelta(hours=12)  # TODO: пока только дев
+        # },
         'calc_places_r9': {
             'task': 'regional_competitions.tasks.calc_places_r9',
             'schedule': timedelta(hours=12)  # TODO: пока только дев

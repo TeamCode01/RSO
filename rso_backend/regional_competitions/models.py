@@ -571,14 +571,14 @@ class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
         abstract = True
 
 
-r7_models_factory = RModelFactory(
-    r_number=7,
-    base_r_model=BaseRegionalR7,
-    base_link_model=BaseLink,
-    event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
-    labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
-)
-r7_models_factory.create_models()
+# r7_models_factory = RModelFactory(
+#     r_number=7,
+#     base_r_model=BaseRegionalR7,
+#     base_link_model=BaseLink,
+#     event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
+#     labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
+# )
+# r7_models_factory.create_models()
 
 
 class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
@@ -1002,10 +1002,12 @@ REPORTS_IS_SENT_MODELS = [
     RegionalR13,
     RegionalR16,
 ]
-# REPORTS_IS_SENT_MODELS.extend(r6_models_factory.models)
 REPORTS_IS_SENT_MODELS.extend(
-    [model_class for model_name, model_class in r7_models_factory.models.items() if not model_name.endswith('Link')]
+    [model_class for model_name, model_class in r6_models_factory.models.items() if not model_name.endswith('Link')]
 )
+# REPORTS_IS_SENT_MODELS.extend(
+#     [model_class for model_name, model_class in r7_models_factory.models.items() if not model_name.endswith('Link')]
+# )
 REPORTS_IS_SENT_MODELS.extend(
     [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
 )

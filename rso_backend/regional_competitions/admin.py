@@ -15,8 +15,7 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           RegionalR101Link, RegionalR102,
                                           RegionalR102Link, RVerificationLog,
                                           StatisticalRegionalReport,
-                                          r6_models_factory,
-                                          r7_models_factory, r9_models_factory, RegionalR3)
+                                          r6_models_factory, r9_models_factory, RegionalR3)
 from regional_competitions.r_calculations import calculate_r13_score, calculate_r2_score, calculate_r3_score
 
 
@@ -145,6 +144,8 @@ class RegionalR1Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
+        'is_sent',
         'score',
         'amount_of_money',
         'verified_by_chq',
@@ -156,6 +157,10 @@ class RegionalR1Admin(admin.ModelAdmin):
     list_filter = ('verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
 
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
 
 @admin.register(RegionalR2)
 class RegionalR2Admin(admin.ModelAdmin):
@@ -163,6 +168,7 @@ class RegionalR2Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
         'score',
         'created_at',
         'updated_at'
@@ -177,6 +183,10 @@ class RegionalR2Admin(admin.ModelAdmin):
             calculate_r2_score(obj)
 
     get_ro_score.short_description = 'Вычислить очки по показателю'
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR3)
@@ -216,7 +226,14 @@ class RegionalR4EventAdminInline(admin.StackedInline):
 
 @admin.register(RegionalR4Event)
 class RegionalR4EventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'regional_r4', 'participants_number', 'start_date', 'end_date', 'is_interregional')
+    list_display = (
+        'id',
+        'regional_r4',
+        'participants_number',
+        'start_date',
+        'end_date',
+        'is_interregional'
+    )
     search_fields = ('regional_r4__id',)
     list_filter = ('is_interregional', 'start_date', 'end_date', 'regional_r4')
     inlines = [RegionalR4LinkInline]
@@ -226,6 +243,7 @@ class RegionalR4EventAdmin(admin.ModelAdmin):
 class RegionalR4Admin(admin.ModelAdmin):
     list_display = (
         'regional_headquarter',
+        'get_id_regional_headquarter',
         'id',
         'is_sent',
         'verified_by_chq',
@@ -238,6 +256,10 @@ class RegionalR4Admin(admin.ModelAdmin):
     search_fields = ('regional_headquarter__name', 'comment')
     list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     inlines = [RegionalR4EventAdminInline]
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 class RegionalR5LinkInline(admin.TabularInline):
@@ -267,6 +289,7 @@ class RegionalR5EventAdmin(admin.ModelAdmin):
 @admin.register(RegionalR5)
 class RegionalR5Admin(admin.ModelAdmin):
     list_display = (
+        'get_id_regional_headquarter',
         'regional_headquarter',
         'id',
         'is_sent',
@@ -281,10 +304,15 @@ class RegionalR5Admin(admin.ModelAdmin):
     list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     inlines = [RegionalR5EventAdminInline]
 
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
 
 r6_list_display = (
     'regional_headquarter',
     'id',
+    'is_sent',
     'number_of_members',
     'verified_by_chq',
     'verified_by_dhq',
@@ -294,6 +322,7 @@ r6_list_display = (
 )
 
 r6_list_filter = (
+    'is_sent',
     'verified_by_chq',
     'verified_by_dhq'
 )
@@ -312,40 +341,41 @@ r6_admin_factory = RAdminFactory(
 r6_admin_factory.create_admin_classes()
 
 
-r7_list_display = (
-    'regional_headquarter',
-    'id',
-    'prize_place',
-    'document',
-    'verified_by_chq',
-    'verified_by_dhq',
-    'score',
-    'created_at',
-    'updated_at'
-)
-
-r7_list_filter = (
-    'prize_place',
-    'verified_by_chq',
-    'verified_by_dhq'
-)
-
-r7_search_fields = ('comment', 'regional_headquarter__name')
-
-r7_readonly_fields = ('created_at', 'updated_at')
-
-r7_admin_factory = RAdminFactory(
-    models=r7_models_factory.models,
-    list_display=r7_list_display,
-    list_filter=r7_list_filter,
-    search_fields=r7_search_fields,
-    readonly_fields=r7_readonly_fields
-)
-r7_admin_factory.create_admin_classes()
+# r7_list_display = (
+#     'regional_headquarter',
+#     'id',
+#     'prize_place',
+#     'document',
+#     'verified_by_chq',
+#     'verified_by_dhq',
+#     'score',
+#     'created_at',
+#     'updated_at'
+# )
+#
+# r7_list_filter = (
+#     'prize_place',
+#     'verified_by_chq',
+#     'verified_by_dhq'
+# )
+#
+# r7_search_fields = ('comment', 'regional_headquarter__name')
+#
+# r7_readonly_fields = ('created_at', 'updated_at')
+#
+# r7_admin_factory = RAdminFactory(
+#     models=r7_models_factory.models,
+#     list_display=r7_list_display,
+#     list_filter=r7_list_filter,
+#     search_fields=r7_search_fields,
+#     readonly_fields=r7_readonly_fields
+# )
+# r7_admin_factory.create_admin_classes()
 
 
 r9_list_display = (
     'regional_headquarter',
+    'is_sent',
     'id',
     'event_happened',
     'document',
@@ -355,7 +385,7 @@ r9_list_display = (
     'created_at',
     'updated_at'
 )
-r9_list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+r9_list_filter = ('is_sent', 'event_happened', 'verified_by_chq', 'verified_by_dhq')
 r9_search_fields = ('comment',)
 r9_readonly_fields = ('created_at', 'updated_at')
 
@@ -377,12 +407,25 @@ class RegionalR101LinkInline(admin.TabularInline):
 @admin.register(RegionalR101)
 class RegionalR101Admin(admin.ModelAdmin):
     list_display = (
-        'id', 'event_happened', 'document', 'verified_by_chq', 'verified_by_dhq', 'score', 'created_at', 'updated_at'
+        'id',
+        'get_id_regional_headquarter',
+        'is_sent',
+        'event_happened',
+        'document',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'score',
+        'created_at',
+        'updated_at'
     )
     search_fields = ('comment',)
-    list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+    list_filter = ('is_sent', 'event_happened', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [RegionalR101LinkInline]
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 class RegionalR102LinkInline(admin.TabularInline):
@@ -393,12 +436,26 @@ class RegionalR102LinkInline(admin.TabularInline):
 @admin.register(RegionalR102)
 class RegionalR102Admin(admin.ModelAdmin):
     list_display = (
-        'id', 'event_happened', 'document', 'verified_by_chq', 'verified_by_dhq', 'score', 'created_at', 'updated_at'
+        'id',
+        'get_id_regional_headquarter',
+        'regional_headquarter',
+        'is_sent',
+        'event_happened',
+        'document',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'score',
+        'created_at',
+        'updated_at'
     )
     search_fields = ('comment',)
-    list_filter = ('event_happened', 'verified_by_chq', 'verified_by_dhq')
+    list_filter = ('is_sent', 'event_happened', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [RegionalR102LinkInline]
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR11)
@@ -406,6 +463,8 @@ class RegionalR11Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
+        'is_sent',
         'score',
         'participants_number',
         'verified_by_chq',
@@ -414,8 +473,12 @@ class RegionalR11Admin(admin.ModelAdmin):
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR12)
@@ -423,6 +486,8 @@ class RegionalR12Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
+        'is_sent',
         'score',
         'amount_of_money',
         'verified_by_chq',
@@ -431,8 +496,12 @@ class RegionalR12Admin(admin.ModelAdmin):
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR13)
@@ -440,6 +509,8 @@ class RegionalR13Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
+        'is_sent',
         'score',
         'number_of_members',
         'verified_by_chq',
@@ -448,7 +519,7 @@ class RegionalR13Admin(admin.ModelAdmin):
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
-    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
     actions = ['get_ro_score',]
 
@@ -459,17 +530,26 @@ class RegionalR13Admin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('regional_headquarter')
 
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
 
 @admin.register(RegionalR14)
 class RegionalR14Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
         'report_12',
         'report_13',
         'score'
     )
     search_fields = ('id', 'report_12__regional_headquarter__name')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 class RegionalR16LinkInline(admin.TabularInline):
@@ -500,7 +580,9 @@ class RegionalR16ProjectAdmin(admin.ModelAdmin):
 class RegionalR16Admin(admin.ModelAdmin):
     list_display = (
         'id',
+        'get_id_regional_headquarter',
         'regional_headquarter',
+        'is_sent',
         'is_project',
         'score',
         'verified_by_chq',
@@ -509,9 +591,13 @@ class RegionalR16Admin(admin.ModelAdmin):
         'updated_at'
     )
     search_fields = ('comment',)
-    list_filter = ('is_project', 'verified_by_chq', 'verified_by_dhq')
+    list_filter = ('is_sent', 'is_project', 'verified_by_chq', 'verified_by_dhq')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [RegionalR16ProjectInline]
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR17)
@@ -519,11 +605,16 @@ class RegionalR17Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
         'created_at',
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
     readonly_fields = ('created_at', 'updated_at')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 class RegionalR18LinkInline(admin.TabularInline):
@@ -552,6 +643,7 @@ class RegionalR18Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
         'created_at',
         'updated_at'
     )
@@ -559,17 +651,26 @@ class RegionalR18Admin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     inlines = [RegionalR18ProjectInline]
 
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
 
 @admin.register(RegionalR19)
 class RegionalR19Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'get_id_regional_headquarter',
         'created_at',
         'updated_at'
     )
     search_fields = ('comment', 'regional_headquarter__name')
     readonly_fields = ('created_at', 'updated_at')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(ExpertRole)
