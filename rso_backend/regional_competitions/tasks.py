@@ -12,7 +12,7 @@ from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE, \
 from regional_competitions.models import (
     RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR13, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
     StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
-    r7_models_factory, r9_models_factory
+    r9_models_factory
 )
 from regional_competitions.r_calculations import calc_r_ranking, calculate_r11_score, calculate_r13_score, calculate_r14
 from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
@@ -221,11 +221,11 @@ def calc_places_r6():
     calc_r_ranking(models, 'r6_place')
 
 
-@shared_task
-def calc_places_r7():
-    logger.info('Выполняется подсчет rank7 показателя')
-    models = [model for model_name, model in r7_models_factory.models.items() if not model_name.endswith('Link')]
-    calc_r_ranking(models, 'r7_place')
+# @shared_task
+# def calc_places_r7():
+#     logger.info('Выполняется подсчет rank7 показателя')
+#     models = [model for model_name, model in r7_models_factory.models.items() if not model_name.endswith('Link')]
+#     calc_r_ranking(models, 'r7_place')
 
 
 @shared_task

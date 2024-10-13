@@ -32,7 +32,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           RegionalR102, RVerificationLog,
                                           StatisticalRegionalReport,
                                           r6_models_factory,
-                                          r7_models_factory, r9_models_factory)
+                                          r9_models_factory)
 from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
@@ -41,7 +41,7 @@ from regional_competitions.serializers import (
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
-    StatisticalRegionalReportSerializer, r6_serializers_factory, r7_serializers_factory,
+    StatisticalRegionalReportSerializer, r6_serializers_factory,
     r9_serializers_factory)
 from regional_competitions.tasks import send_email_report_part_1, send_mail
 from regional_competitions.utils import (
@@ -553,17 +553,17 @@ class MassSendViewSet(GenericViewSet):
         """
         return self.send_reports(request, r6_models_factory)
 
-    @action(
-        detail=False,
-        methods=['POST'],
-        url_path='7/send',
-    )
-    def r7_mass_send_for_verification(self, request):
-        """Отправляет все отчеты по 7 показателю на верификацию.
-
-        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
-        """
-        return self.send_reports(request, r7_models_factory)
+    # @action(
+    #     detail=False,
+    #     methods=['POST'],
+    #     url_path='7/send',
+    # )
+    # def r7_mass_send_for_verification(self, request):
+    #     """Отправляет все отчеты по 7 показателю на верификацию.
+    #
+    #     Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
+    #     """
+    #     return self.send_reports(request, r7_models_factory)
 
     @action(
         detail=False,
@@ -701,14 +701,14 @@ r6_view_sets_factory = RViewSetFactory(
 r6_view_sets_factory.create_view_sets()
 
 
-r7_view_sets_factory = RViewSetFactory(
-    models=r7_models_factory.models,
-    serializers=r7_serializers_factory.serializers,
-    base_r_view_set=BaseRegionalRViewSet,
-    base_r_me_view_set=BaseRegionalRMeViewSet,
-    additional_parental_class=FormDataNestedFileParser
-)
-r7_view_sets_factory.create_view_sets()
+# r7_view_sets_factory = RViewSetFactory(
+#     models=r7_models_factory.models,
+#     serializers=r7_serializers_factory.serializers,
+#     base_r_view_set=BaseRegionalRViewSet,
+#     base_r_me_view_set=BaseRegionalRMeViewSet,
+#     additional_parental_class=FormDataNestedFileParser
+# )
+# r7_view_sets_factory.create_view_sets()
 
 r9_view_sets_factory = RViewSetFactory(
     models=r9_models_factory.models,

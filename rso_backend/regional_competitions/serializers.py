@@ -21,8 +21,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           RegionalR102, RegionalR102Link,
                                           RVerificationLog,
                                           StatisticalRegionalReport,
-                                          r6_models_factory,
-                                          r7_models_factory, r9_models_factory, AdditionalStatistic)
+                                          r6_models_factory, r9_models_factory, AdditionalStatistic)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
@@ -627,25 +626,25 @@ r6_serializers_factory = RSerializerFactory(
 r6_serializers_factory.create_serializer_classes()
 
 
-class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
-    objects_name = 'links'
-
-    class Meta:
-        link_model = None
-        model = None
-        fields = (
-            BaseRSerializer.Meta.fields
-            + ('prize_place', 'document', 'links', 'comment')
-            + FileScanSizeSerializerMixin.Meta.fields
-        )
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
-
-
-r7_serializers_factory = RSerializerFactory(
-    models=r7_models_factory.models,
-    base_r_serializer=BaseRegionalR7Serializer
-)
-r7_serializers_factory.create_serializer_classes()
+# class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
+#     objects_name = 'links'
+#
+#     class Meta:
+#         link_model = None
+#         model = None
+#         fields = (
+#             BaseRSerializer.Meta.fields
+#             + ('prize_place', 'document', 'links', 'comment')
+#             + FileScanSizeSerializerMixin.Meta.fields
+#         )
+#         read_only_fields = BaseRSerializer.Meta.read_only_fields
+#
+#
+# r7_serializers_factory = RSerializerFactory(
+#     models=r7_models_factory.models,
+#     base_r_serializer=BaseRegionalR7Serializer
+# )
+# r7_serializers_factory.create_serializer_classes()
 
 
 class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
@@ -933,12 +932,12 @@ REPORTS_SERIALIZERS.extend(
     ]
 )
 
-REPORTS_SERIALIZERS.extend(
-    [
-        serializer_class for serializer_name, serializer_class in r7_serializers_factory.serializers.items()
-        if not serializer_name.endswith('Link')
-    ]
-)
+# REPORTS_SERIALIZERS.extend(
+#     [
+#         serializer_class for serializer_name, serializer_class in r7_serializers_factory.serializers.items()
+#         if not serializer_name.endswith('Link')
+#     ]
+# )
 REPORTS_SERIALIZERS.extend(
     [
         serializer_class for serializer_name, serializer_class in r9_serializers_factory.serializers.items()
