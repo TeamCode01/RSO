@@ -530,6 +530,10 @@ class BaseRegionalR6(BaseEventProjectR):
     Участие бойцов студенческих отрядов РО РСО во всероссийских
     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
     """
+    is_project = models.BooleanField(
+        verbose_name='Наличие',
+        default=False
+    )
     number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,

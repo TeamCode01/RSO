@@ -312,6 +312,7 @@ class RegionalR5Admin(admin.ModelAdmin):
 r6_list_display = (
     'regional_headquarter',
     'id',
+    'is_project',
     'is_sent',
     'number_of_members',
     'verified_by_chq',
