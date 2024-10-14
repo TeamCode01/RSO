@@ -382,6 +382,9 @@ class RegionalR1(BaseEventProjectR):
         verbose_name = 'Отчет по 1 показателю'
         verbose_name_plural = 'Отчеты по 1 показателю'
 
+    def __str__(self):
+        return f'Отчет по 1 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR2(BaseScore, models.Model):
     """
@@ -415,6 +418,9 @@ class RegionalR2(BaseScore, models.Model):
         verbose_name = 'Отчет по 2 показателю'
         verbose_name_plural = 'Отчеты по 2 показателю'
 
+    def __str__(self):
+        return f'Отчет по 2 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR3(BaseScore):
     regional_headquarter = models.ForeignKey(
@@ -436,6 +442,9 @@ class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'
         verbose_name_plural = 'Отчеты по 4 показателю'
+
+    def __str__(self):
+        return f'Отчет по 4 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR4Event(BaseEventOrProject):
@@ -483,6 +492,9 @@ class RegionalR5(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 5 показателю'
         verbose_name_plural = 'Отчеты по 5 показателю'
+
+    def __str__(self):
+        return f'Отчет по 5 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR5Event(BaseEventOrProject):
@@ -539,6 +551,9 @@ class BaseRegionalR6(BaseEventProjectR):
         null=True,
         verbose_name='Количество человек принявших участие'
     )
+
+    def __str__(self):
+        return f'Отчет по 6 показателю РШ {self.regional_headquarter}'
 
 
 r6_models_factory = RModelFactory(
@@ -600,6 +615,9 @@ class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return f'Отчет по 9 показателю РШ {self.regional_headquarter}'
+
 
 r9_models_factory = RModelFactory(
     base_r_model=BaseRegionalR9,
@@ -630,6 +648,9 @@ class RegionalR101(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, Base
         verbose_name = 'Отчет по 10 показателю - "Снежный Десант"'
         verbose_name_plural = 'Отчеты по 10 показателю - "Снежный Десант'
 
+    def __str__(self):
+        return f'Отчет по 10 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR101Link(models.Model):
     regional_r101 = models.ForeignKey(
@@ -656,6 +677,9 @@ class RegionalR102(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, Base
     class Meta:
         verbose_name = 'Отчет по 10 показателю - "Поклонимся великим тем годам"'
         verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся великим тем годам"'
+
+    def __str__(self):
+        return f'Отчет по 10 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR102Link(models.Model):
@@ -701,6 +725,9 @@ class RegionalR11(BaseEventProjectR):
         verbose_name = 'Отчет по 11 показателю'
         verbose_name_plural = 'Отчеты по 11 показателю'
 
+    def __str__(self):
+        return f'Отчет по 11 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR12(BaseEventProjectR):
     """
@@ -723,7 +750,7 @@ class RegionalR12(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 12 показателю'
 
     def __str__(self):
-        return f'Отчет по 12 показателю ID {self.id}'
+        return f'Отчет по 12 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR13(BaseEventProjectR):
@@ -747,7 +774,7 @@ class RegionalR13(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 13 показателю'
 
     def __str__(self):
-        return f'Отчет по 13 показателю ID {self.id}'
+        return f'Отчет по 13 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR14(BaseScore):
@@ -783,6 +810,9 @@ class RegionalR14(BaseScore):
         verbose_name = 'Отчет по 14 показателю'
         verbose_name_plural = 'Отчеты по 14 показателю'
 
+    def __str__(self):
+        return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
@@ -793,6 +823,9 @@ class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 16 показателю'
         verbose_name_plural = 'Отчеты по 16 показателю'
+
+    def __str__(self):
+        return f'Отчет по 16 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR16Project(models.Model):
@@ -830,9 +863,6 @@ class RegionalR16Project(models.Model):
     class Meta:
         verbose_name = 'Проект по 16 показателю'
         verbose_name_plural = 'Проекты по 16 показателю'
-
-    def __str__(self):
-        return f'ID {self.id}'
 
 
 class RegionalR16Link(models.Model):
@@ -884,6 +914,9 @@ class RegionalR17(BaseComment, models.Model):
         verbose_name = 'Отчет по 17 показателю'
         verbose_name_plural = 'Отчеты по 17 показателю'
 
+    def __str__(self):
+        return f'Отчет по 17 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR18(models.Model):
     """Количество научных работ и публикаций по теме СО, выпущенных в текущем году."""
@@ -910,6 +943,9 @@ class RegionalR18(models.Model):
     class Meta:
         verbose_name = 'Отчет по 18 показателю'
         verbose_name_plural = 'Отчеты по 18 показателю'
+
+    def __str__(self):
+        return f'Отчет по 18 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR18Project(models.Model):
@@ -993,6 +1029,9 @@ class RegionalR19(BaseComment, models.Model):
     class Meta:
         verbose_name = 'Отчет по 19 показателю'
         verbose_name_plural = 'Отчеты по 19 показателю'
+
+    def __str__(self):
+        return f'Отчет по 19 показателю РШ {self.regional_headquarter}'
 
 
 REPORTS_IS_SENT_MODELS = [
