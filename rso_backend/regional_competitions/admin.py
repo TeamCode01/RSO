@@ -410,6 +410,7 @@ class RegionalR101Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'get_id_regional_headquarter',
+        'regional_headquarter',
         'is_sent',
         'event_happened',
         'document',
