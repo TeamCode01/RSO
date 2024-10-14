@@ -10,8 +10,8 @@ from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, permissions, status, viewsets, mixins
-from rest_framework.decorators import action, api_view
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api.mixins import (CreateDeleteViewSet, ListRetrieveUpdateViewSet,
@@ -82,10 +82,10 @@ from headquarters.serializers import (
     UserRegionalApplicationReadSerializer,
     UserRegionalApplicationShortReadSerializer,
     UserCentralApplicationShortReadSerializer,)
-from headquarters.swagger_schemas import applications_response
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
                                 get_detachment_members_to_verify,)
+from regional_competitions.utils import generate_rhq_xlsx_report
 from users.serializers import UserVerificationReadSerializer
 
 
@@ -164,7 +164,9 @@ class DistrictViewSet(ApplicationsMixin,
     Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = DistrictHeadquarter.objects.all()
+    queryset = DistrictHeadquarter.objects.all().select_related(
+        'central_headquarter'
+    ).prefetch_related('members', 'events')
     serializer_class = DistrictHeadquarterSerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter)
     search_fields = ('name', 'founding_date')
@@ -200,8 +202,7 @@ class DistrictViewSet(ApplicationsMixin,
 
     def get_application_short_serializer(self):
         return UserDistrictApplicationShortReadSerializer
-    
-    
+
 
 class RegionalViewSet(ApplicationsMixin, 
                       VerificationsMixin, 
@@ -230,7 +231,10 @@ class RegionalViewSet(ApplicationsMixin,
     Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
-    queryset = RegionalHeadquarter.objects.all()
+    queryset = RegionalHeadquarter.objects.all().select_related(
+        'region',
+        'district_headquarter',
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -279,11 +283,20 @@ class RegionalViewSet(ApplicationsMixin,
         return get_regional_hq_members_to_verify
 
 
-class LocalViewSet(ApplicationsMixin, 
-                   VerificationsMixin, 
-                   SubLocalHqsMixin, 
+@api_view(['GET'])
+def download_reg_comp_report(_, pk):
+    """Скачивание всех отчетов РО в одном xlsx файле.
+
+    pk - ID регионального штаба.
+    """
+    return generate_rhq_xlsx_report(pk)
+
+
+class LocalViewSet(ApplicationsMixin,
+                   VerificationsMixin,
+                   SubLocalHqsMixin,
                    BaseLeadershipMixin,
-                   LocalSubCommanderMixin, 
+                   LocalSubCommanderMixin,
                    viewsets.ModelViewSet):
     """Представляет местные штабы.
 
@@ -301,7 +314,9 @@ class LocalViewSet(ApplicationsMixin,
     Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = LocalHeadquarter.objects.all()
+    queryset = LocalHeadquarter.objects.all().select_related(
+        'regional_headquarter',
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -366,7 +381,11 @@ class EducationalViewSet(ApplicationsMixin,
     Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = EducationalHeadquarter.objects.all()
+    queryset = EducationalHeadquarter.objects.all().select_related(
+        'educational_institution',
+        'local_headquarter',
+        'regional_headquarter'
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -435,7 +454,14 @@ class DetachmentViewSet(ApplicationsMixin,
     Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
-    queryset = Detachment.objects.all()
+    queryset = Detachment.objects.all().select_related(
+        'area', 
+        'region', 
+        'educational_institution',
+        'educational_headquarter',
+        'local_headquarter',
+        'regional_headquarter'
+    ).prefetch_related('events', 'members')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -565,7 +591,7 @@ class CentralPositionViewSet(BasePositionViewSet):
             self,
             CentralHeadquarter,
             UserCentralHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
     @method_decorator(cache_page(settings.CENTRALHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -592,7 +618,7 @@ class DistrictPositionViewSet(BasePositionViewSet):
             self,
             DistrictHeadquarter,
             UserDistrictHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
     @method_decorator(cache_page(settings.DISTRCICTHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -622,7 +648,7 @@ class RegionalPositionViewSet(BasePositionViewSet):
             self,
             RegionalHeadquarter,
             UserRegionalHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class LocalPositionViewSet(BasePositionViewSet):
@@ -648,7 +674,7 @@ class LocalPositionViewSet(BasePositionViewSet):
             self,
             LocalHeadquarter,
             UserLocalHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class EducationalPositionViewSet(BasePositionViewSet):
@@ -674,7 +700,7 @@ class EducationalPositionViewSet(BasePositionViewSet):
             self,
             EducationalHeadquarter,
             UserEducationalHeadquarterPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class DetachmentPositionViewSet(BasePositionViewSet):
@@ -700,7 +726,7 @@ class DetachmentPositionViewSet(BasePositionViewSet):
             self,
             Detachment,
             UserDetachmentPosition
-        )))
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class BaseAcceptRejectViewSet(CreateDeleteViewSet):
@@ -1163,7 +1189,9 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
 
 
 class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Detachment.objects.all()
+    queryset = Detachment.objects.all().select_related(
+        'local_headquarter', 'educational_headquarter', 'regional_headquarter'
+    )
     serializer_class = DetachmentListSerializer
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter

@@ -987,6 +987,11 @@ class Q5EducatedParticipantSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('is_verified', 'detachment_report')
 
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        repr['document'] = 'https://' + settings.DEFAULT_SITE_URL + repr['document']
+        return repr
+
 
 class Q5DetachmentReportReadSerializer(serializers.ModelSerializer):
     participants_data = serializers.SerializerMethodField()

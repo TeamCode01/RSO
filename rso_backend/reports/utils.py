@@ -24,7 +24,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking)
-from headquarters.count_hq_members import count_headquarter_participants
+from headquarters.count_hq_members import count_headquarter_participants, get_hq_participants_15_september
 from headquarters.models import UserDetachmentPosition, Detachment
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
@@ -87,7 +87,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         )
     for participant_entry in junior_detachments_queryset:
         detachment = participant_entry.junior_detachment
-        detachment.participants_count = count_headquarter_participants(detachment)
+        detachment.participants_count = get_hq_participants_15_september(detachment)
         detachment.status = 'Младший отряд'
         detachment.nomination = 'Дебют'
         detachment.places = []
@@ -123,12 +123,12 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         )
     for participant_entry in tandem_queryset:
         junior_detachment = participant_entry.junior_detachment
-        junior_detachment.participants_count = count_headquarter_participants(junior_detachment)
+        junior_detachment.participants_count = get_hq_participants_15_september(junior_detachment)
         junior_detachment.status = 'Младший отряд'
         junior_detachment.nomination = 'Тандем'
         junior_detachment.places = []
         detachment = participant_entry.detachment
-        detachment.participants_count = count_headquarter_participants(detachment)
+        detachment.participants_count = get_hq_participants_15_september(detachment)
         detachment.status = 'Наставник'
         detachment.nomination = 'Тандем'
         detachment.places = []
@@ -1063,16 +1063,22 @@ def get_q13_data(competition_id: int) -> list:
 def get_q14_data(competition_id: int) -> list:
     rows = []
     detachments = {d.id: d for d in Detachment.objects.select_related('region').all()}
-    reports = Q14DetachmentReport.objects.select_related('detachment').all()
-    projects = Q14LaborProject.objects.select_related('detachment_report').all()
+    reports = list(Q14DetachmentReport.objects.select_related('detachment').all())
+    projects = list(Q14LaborProject.objects.select_related('detachment_report').all())
     tandem_rankings = {tr.detachment_id: tr.place for tr in Q14TandemRanking.objects.all()}
     individual_rankings = {ir.detachment_id: ir.place for ir in Q14Ranking.objects.all()}
 
-    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+    participants_with_detachment = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=False
+    )
+
+    for participant in participants_with_detachment:
         detachment = detachments.get(participant.detachment_id)
         if detachment:
-            for report in reports.filter(detachment_id=detachment.id):
-                for project in projects.filter(detachment_report_id=report.id):
+            detachment_reports = [r for r in reports if r.detachment_id == detachment.id]
+            for report in detachment_reports:
+                detachment_projects = [p for p in projects if p.detachment_report_id == report.id]
+                for project in detachment_projects:
                     place = tandem_rankings.get(detachment.id, 'Ещё нет в рейтинге')
                     rows.append((
                         detachment.name,
@@ -1084,11 +1090,13 @@ def get_q14_data(competition_id: int) -> list:
                         place
                     ))
 
-    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=False):
+    for participant in participants_with_detachment:
         junior_detachment = detachments.get(participant.junior_detachment_id)
         if junior_detachment:
-            for report in reports.filter(detachment_id=junior_detachment.id):
-                for project in projects.filter(detachment_report_id=report.id):
+            junior_reports = [r for r in reports if r.detachment_id == junior_detachment.id]
+            for report in junior_reports:
+                junior_projects = [p for p in projects if p.detachment_report_id == report.id]
+                for project in junior_projects:
                     place = tandem_rankings.get(junior_detachment.id, 'Ещё нет в рейтинге')
                     rows.append((
                         junior_detachment.name,
@@ -1100,11 +1108,17 @@ def get_q14_data(competition_id: int) -> list:
                         place
                     ))
 
-    for participant in CompetitionParticipants.objects.filter(competition_id=competition_id, detachment__isnull=True):
+    participants_without_detachment = CompetitionParticipants.objects.filter(
+        competition_id=competition_id, detachment__isnull=True
+    )
+
+    for participant in participants_without_detachment:
         detachment = detachments.get(participant.junior_detachment_id)
         if detachment:
-            for report in reports.filter(detachment_id=detachment.id):
-                for project in projects.filter(detachment_report_id=report.id):
+            detachment_reports = [r for r in reports if r.detachment_id == detachment.id]
+            for report in detachment_reports:
+                detachment_projects = [p for p in projects if p.detachment_report_id == report.id]
+                for project in detachment_projects:
                     place = individual_rankings.get(detachment.id, 'Ещё нет в рейтинге')
                     rows.append((
                         detachment.name,
@@ -1117,6 +1131,7 @@ def get_q14_data(competition_id: int) -> list:
                     ))
 
     return rows
+
 
 
 def get_q15_data(competition_id: int) -> list:
@@ -1134,6 +1149,7 @@ def get_q15_data(competition_id: int) -> list:
                 for grant_winner in grant_winners.filter(detachment_report_id=report.id):
                     place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
                     rows.append((
+                        detachment.name,
                         grant_winner.name,
                         grant_winner.status,
                         grant_winner.author_name,
@@ -1150,6 +1166,7 @@ def get_q15_data(competition_id: int) -> list:
                 for grant_winner in grant_winners.filter(detachment_report_id=report.id):
                     place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
                     rows.append((
+                        junior_detachment.name,
                         grant_winner.name,
                         grant_winner.status,
                         grant_winner.author_name,
@@ -1166,6 +1183,7 @@ def get_q15_data(competition_id: int) -> list:
                 for grant_winner in grant_winners.filter(detachment_report_id=report.id):
                     place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
                     rows.append((
+                        detachment.name,
                         grant_winner.name,
                         grant_winner.status,
                         grant_winner.author_name,
@@ -1422,15 +1440,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
         'detachment__region',
-        'detachment__july_15_participants'
+        'detachment__sep_15_participants'
     ).prefetch_related(
         'detachment__q1report_detachment_reports',
         'detachment__q1tandemranking_main_detachment'
     ).values(
         'detachment__name',
         'detachment__region__name',
-        'detachment__july_15_participants__members_number',
-        'detachment__july_15_participants__participants_number',
+        'detachment__sep_15_participants__members_number',
+        'detachment__sep_15_participants__participants_number',
         'detachment__q1report_detachment_reports__score',
         'detachment__q1tandemranking_main_detachment__place',
     ).all()
@@ -1439,15 +1457,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=False)
     ).select_related(
         'junior_detachment__region',
-        'junior_detachment__july_15_participants'
+        'junior_detachment__sep_15_participants'
     ).prefetch_related(
         'junior_detachment__q1report_detachment_reports',
         'junior_detachment__q1tandemranking_junior_detachment'
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
-        'junior_detachment__july_15_participants__members_number',
-        'junior_detachment__july_15_participants__participants_number',
+        'junior_detachment__sep_15_participants__members_number',
+        'junior_detachment__sep_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
         'junior_detachment__q1tandemranking_junior_detachment__place',
     ).all()
@@ -1457,15 +1475,15 @@ def get_membership_fee_data(competition_id: int) -> list:
         Q(competition_id=competition_id) & Q(detachment__isnull=True)
     ).select_related(
         'junior_detachment__region',
-        'junior_detachment__july_15_participants'
+        'junior_detachment__sep_15_participants'
     ).prefetch_related(
         'junior_detachment__q1report_detachment_reports',
         'junior_detachment__q1ranking'
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
-        'junior_detachment__july_15_participants__members_number',
-        'junior_detachment__july_15_participants__participants_number',
+        'junior_detachment__sep_15_participants__members_number',
+        'junior_detachment__sep_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
         'junior_detachment__q1ranking__place',
     ).all()
@@ -1476,8 +1494,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('detachment__name', '-'),
             data.get('detachment__region__name', '-'),
             'Тандем',
-            data.get('detachment__july_15_participants__participants_number'),
-            data.get('detachment__july_15_participants__members_number'),
+            data.get('detachment__sep_15_participants__participants_number'),
+            data.get('detachment__sep_15_participants__members_number'),
             data.get('detachment__q1report_detachment_reports__score', '-') or '-',
             data.get('detachment__q1tandemranking_main_detachment__place', 'Ещё нет в рейтинге') or 'Ещё не подал отчет'
         ) for data in detachment_data
@@ -1489,8 +1507,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
-            data.get('junior_detachment__july_15_participants__participants_number'),
-            data.get('junior_detachment__july_15_participants__members_number'),
+            data.get('junior_detachment__sep_15_participants__participants_number'),
+            data.get('junior_detachment__sep_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
             data.get(
@@ -1505,8 +1523,8 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
-            data.get('junior_detachment__july_15_participants__participants_number'),
-            data.get('junior_detachment__july_15_participants__members_number'),
+            data.get('junior_detachment__sep_15_participants__participants_number'),
+            data.get('junior_detachment__sep_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
                      ) or '-',
             data.get(

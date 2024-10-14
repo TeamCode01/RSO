@@ -1,6 +1,8 @@
 from datetime import datetime
 import os
+from urllib.parse import urlparse
 import requests
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db.models import Q
@@ -29,6 +31,7 @@ class FrontReportsViewSet(viewsets.ModelViewSet):
 
     serializer_class = FrontErrorSerializer
     queryset = FrontError.objects.all()
+    permission_classes = [permissions.AllowAny, ]
 
     @swagger_auto_schema(
                 request_body=openapi.Schema(
@@ -89,9 +92,20 @@ class FrontReportsViewSet(viewsets.ModelViewSet):
             f"User ID: {error_data.get('user')}"
         )
         url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+        error_url_host = urlparse( error_data.get('url')).netloc.split(':')[0]
+        try:
+            if error_url_host == '127.0.0.1' or error_url_host == 'localhost':
+                message_thread_id = os.getenv('TG_LOCAL_TOPIC_ID')
+            elif error_url_host == '213.139.208.147':
+                message_thread_id = os.getenv('TG_DEV_TOPIC_ID')
+            else:
+                message_thread_id = os.getenv('TG_MAIN_TOPIC_ID')
+        except Exception:
+            message_thread_id = None
         payload = {
             'chat_id': chat_id,
-            'text': message
+            'text': message,
+            'message_thread_id': message_thread_id
         }
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -143,8 +157,8 @@ class VKLoginAPIView(APIView):
 
             if 'response' in response_data:
                 access_token = response_data['response']['access_token']
-                email = response_data['response']['email']
-                phone = response_data['response']['phone']
+                email = response_data['response'].get('email')
+                phone = response_data['response'].get('phone')
             else:
                 return Response(
                     {'error': response_data.get('error', 'Unknown error')},

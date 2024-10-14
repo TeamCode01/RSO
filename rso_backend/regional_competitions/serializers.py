@@ -1,12 +1,15 @@
+from datetime import datetime
 from django.db import models
+from django.http import QueryDict
 from rest_framework import serializers
 
-from api.utils import create_first_or_exception
+from django.db import transaction
+from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE,
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -18,12 +21,45 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RegionalR102, RegionalR102Link,
                                           RVerificationLog,
                                           StatisticalRegionalReport,
-                                          r6_models_factory,
-                                          r7_models_factory, r9_models_factory)
+                                          r6_models_factory, r9_models_factory, AdditionalStatistic)
 from regional_competitions.utils import get_report_number_by_class_name
 
 
+class DumpStatisticalRegionalReportSerializer(serializers.ModelSerializer):
+    regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
+
+    class Meta:
+        model = DumpStatisticalRegionalReport
+        fields = (
+            'id',
+            'participants_number',
+            'regional_headquarter',
+            'employed_sso',
+            'employed_spo',
+            'employed_sop',
+            'employed_smo',
+            'employed_sservo',
+            'employed_ssho',
+            'employed_specialized_detachments',
+            'employed_production_detachments',
+            'employed_top',
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso'
+        )
+
+
+class AdditionalStatisticSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdditionalStatistic
+        fields = ('name', 'value',)
+        read_only_fields = ('id', 'statistical_report')
+
+
 class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
+    additional_statistics = AdditionalStatisticSerializer(required=False, allow_null=True, many=True)
+    regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
+
     class Meta:
         model = StatisticalRegionalReport
         fields = (
@@ -39,6 +75,10 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'employed_specialized_detachments',
             'employed_production_detachments',
             'employed_top',
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso',
+            'additional_statistics',
         )
         read_only_fields = ('id', 'regional_headquarter')
         extra_kwargs = {
@@ -49,12 +89,37 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        return create_first_or_exception(
-            self,
-            validated_data,
-            StatisticalRegionalReport,
-            STATISTICAL_REPORT_EXISTS_MESSAGE
-        )
+        regional_headquarter = validated_data.get('regional_headquarter')
+
+        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            raise serializers.ValidationError({'non_field_errors': STATISTICAL_REPORT_EXISTS_MESSAGE})
+
+        additional_statistics_data = validated_data.pop('additional_statistics', None)
+
+        with transaction.atomic():
+            report = StatisticalRegionalReport.objects.create(**validated_data)
+
+            if additional_statistics_data:
+                for statistic_data in additional_statistics_data:
+                    AdditionalStatistic.objects.create(statistical_report=report, **statistic_data)
+
+        return report
+
+    def update(self, instance, validated_data):
+        additional_statistics_data = validated_data.pop('additional_statistics', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if additional_statistics_data is not None:
+            instance.additional_statistics.all().delete()
+
+            for statistic_data in additional_statistics_data:
+                AdditionalStatistic.objects.create(statistical_report=instance, **statistic_data)
+
+        return instance
 
 
 class FileScanSizeSerializerMixin(serializers.ModelSerializer):
@@ -94,6 +159,37 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         if check_file:
             return check_file.name.split('.')[-1]
         return None
+
+
+class EmptyAsNoneMixin:
+    """
+    Миксин для сериализаторов с полями типа FileField, где при отправке 
+    с multipart/form-data требуется обработка пустых строк "" как None (null).
+    """
+
+    def treat_empty_string_as_none(self, data):
+        """
+        Рекурсивно обрабатывает словарь, заменяя пустые строки на None.
+        """
+        if isinstance(data, QueryDict):
+            data = data.copy()
+
+        for key, val in data.items():
+            if val == '':
+                data[key] = None
+            elif isinstance(val, dict):
+                data[key] = self.treat_empty_string_as_none(val)
+            elif isinstance(val, list):
+                data[key] = [self.treat_empty_string_as_none(item) if isinstance(item, dict) else item for item in val]
+
+        return data
+
+    def to_internal_value(self, data):
+        """
+        Переопределяем to_internal_value для обработки пустых строк как None перед валидацией.
+        """
+        return super().to_internal_value(self.treat_empty_string_as_none(data))
+
 
 
 class NestedCreateUpdateMixin:
@@ -158,27 +254,87 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
         raise NotImplementedError('Определите create_objects для CreateUpdateSerializerMixin')
 
     def _create_or_update_objects(self, created_objects, received_objects):
+        """
+        Метод для создания или обновления связанных объектов (events, projects, etc.),
+        а также вложенных объектов. Если объект с указанным id существует, он обновляется, 
+        если нет — создается новый объект. Если файл (например, scan_file) не передан, 
+        используется существующий файл. Старые объекты удаляются, если их нет в новых данных.
+
+        Логика работы метода:
+        
+        1. Создаем словарь с существующими объектами, сопоставляя их по id.
+        2. Проходим по каждому объекту из новых данных:
+            - Если объект содержит id и он есть в базе:
+                - Обновляем объект, сохраняя файлы, если они не были переданы заново.
+                - Обновляем вложенные объекты, если они есть.
+                - Удаляем этот объект из списка существующих, чтобы в конце не удалить его.
+            
+            - Если id не передан (новый объект):
+                - Пытаемся сопоставить с существующим объектом по порядку (берем первый 
+                из оставшихся объектов).
+                - Используем файлы из сопоставленного объекта, если они не были переданы.
+                - Создаем новый объект с данными.
+                - Обновляем вложенные объекты для нового объекта, если они есть.
+                - Удаляем сопоставленный объект, так как он был заменен новым.
+        
+        3. В конце удаляем все оставшиеся объекты, которые не были обновлены или заменены.
+        """
         existing_objects = {obj.id: obj for obj in getattr(created_objects, self.objects_name).all()}
+
         for obj_data in received_objects:
-            print(f'self.nested_objects_name = {self.nested_objects_name}')
+            obj_id = obj_data.get('id', None)
+
             if self.nested_objects_name:
                 nested_data = obj_data.pop(self.nested_objects_name, [])
-            obj_id = obj_data.get('id', None)
+
             if obj_id and obj_id in existing_objects:
+                obj_instance = existing_objects[obj_id]
+
+                for field in obj_instance._meta.fields:
+                    if isinstance(field, models.FileField) and field.name not in obj_data:
+                        obj_data[field.name] = getattr(obj_instance, field.name)
+
                 existing_objects[obj_id].__class__.objects.filter(id=obj_id).update(**obj_data)
+
                 if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     obj_instance = existing_objects[obj_id].__class__.objects.get(id=obj_id)
                     self._create_or_update_nested_objects(obj_instance, nested_data)
+
                 existing_objects.pop(obj_id)
+
             else:
+                matched_obj = None
+                if existing_objects:
+                    matched_obj = list(existing_objects.values())[0]
+
+                    for field in matched_obj._meta.fields:
+                        if isinstance(field, models.FileField) and field.name not in obj_data:
+                            obj_data[field.name] = getattr(matched_obj, field.name)
+
                 new_obj = self.create_objects(created_objects, obj_data)
+
                 if hasattr(self, '_create_or_update_nested_objects') and self.nested_objects_name:
                     self._create_or_update_nested_objects(new_obj, nested_data)
+
+                if matched_obj:
+                    existing_objects.pop(matched_obj.id, None)
+
+                    matched_obj.delete()
+
         for obj in existing_objects.values():
             obj.delete()
 
 
-class BaseRSerializer(serializers.ModelSerializer):
+class ReportExistsValidationMixin:
+    def validate(self, data):
+        if self.context.get('action') == 'create':
+            user = self.context['request'].user
+            if self.Meta.model.objects.filter(regional_headquarter__commander=user).exists():
+                raise serializers.ValidationError(REPORT_EXISTS_MESSAGE)
+        return data
+
+
+class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
     """Базовый класс для сериализаторов шаблона RegionalR<int>Serializer.
 
     - regional_version: Данные последней версии отчета, отправленного региональным штабом.
@@ -286,7 +442,7 @@ class BaseLinkSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class BaseEventSerializer(serializers.ModelSerializer):
+class BaseEventSerializer(FileScanSizeSerializerMixin):
 
     class Meta:
         model = None
@@ -296,8 +452,28 @@ class BaseEventSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'regulations',
-        )
+        ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = ('id',)
+
+    def to_internal_value(self, data):
+        print(f"Original data: {data}")
+        
+        if 'is_interregional' in data:
+            data['is_interregional'] = True if data['is_interregional'].lower() == 'true' else False
+
+        for date_field in ['start_date', 'end_date']:
+            if date_field in data:
+                try:
+                    print(f"Parsing date field: {date_field} with value {data[date_field]}")
+                    data[date_field] = datetime.strptime(data[date_field], '%Y-%m-%d').date()
+                except ValueError:
+                    raise serializers.ValidationError({
+                        date_field: 'Неправильный формат date. Используйте формат: YYYY-MM-DD.'
+                    })
+
+        print(f"Modified data: {data}")
+        return super().to_internal_value(data)
+
 
 
 class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
@@ -305,9 +481,31 @@ class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
         model = RegionalR1
         fields = (
             BaseRSerializer.Meta.fields + FileScanSizeSerializerMixin.Meta.fields
-            + ('comment', 'amount_of_money')
+            + ('comment', 'scan_file', 'amount_of_money')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR2Serializer(serializers.ModelSerializer):
+    """Сериализатор используется в выгрузках отчетов."""
+
+    class Meta:
+        model = RegionalR2
+        fields = (
+            'id',
+            'regional_headquarter',
+            'created_at',
+            'updated_at',
+            'score',
+            'full_time_students'
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+            'created_at',
+            'updated_at',
+            'score',
+        )
 
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
@@ -330,6 +528,7 @@ class RegionalR4EventSerializer(BaseEventSerializer):
             'links',
             'regional_r4',
             'is_interregional',
+            'name'
         )
         read_only_fields = ('id', 'regional_r4',)
 
@@ -377,7 +576,8 @@ class RegionalR5EventSerializer(BaseEventSerializer):
         fields = BaseEventSerializer.Meta.fields + (
             'links',
             'regional_r5',
-            'ro_participants_number'
+            'ro_participants_number',
+            'name'
         )
         read_only_fields = ('id', 'regional_r5')
 
@@ -426,25 +626,25 @@ r6_serializers_factory = RSerializerFactory(
 r6_serializers_factory.create_serializer_classes()
 
 
-class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
-    objects_name = 'links'
-
-    class Meta:
-        link_model = None
-        model = None
-        fields = (
-            BaseRSerializer.Meta.fields
-            + ('prize_place', 'document', 'links',)
-            + FileScanSizeSerializerMixin.Meta.fields
-        )
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
-
-
-r7_serializers_factory = RSerializerFactory(
-    models=r7_models_factory.models,
-    base_r_serializer=BaseRegionalR7Serializer
-)
-r7_serializers_factory.create_serializer_classes()
+# class BaseRegionalR7Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
+#     objects_name = 'links'
+#
+#     class Meta:
+#         link_model = None
+#         model = None
+#         fields = (
+#             BaseRSerializer.Meta.fields
+#             + ('prize_place', 'document', 'links', 'comment')
+#             + FileScanSizeSerializerMixin.Meta.fields
+#         )
+#         read_only_fields = BaseRSerializer.Meta.read_only_fields
+#
+#
+# r7_serializers_factory = RSerializerFactory(
+#     models=r7_models_factory.models,
+#     base_r_serializer=BaseRegionalR7Serializer
+# )
+# r7_serializers_factory.create_serializer_classes()
 
 
 class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
@@ -455,7 +655,7 @@ class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('event_happened', 'document', 'links')
+            + ('comment', 'event_happened', 'document', 'links')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -476,7 +676,7 @@ class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fi
         model = None
         fields = (
             BaseRSerializer.Meta.fields
-            + ('event_happened', 'document', 'links')
+            + ('comment', 'event_happened', 'document', 'links')
             + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
@@ -594,7 +794,7 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
 
     class Meta:
         model = RegionalR16
-        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects',)
+        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects', 'comment')
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
     def create_objects(self, created_objects, project_data):
@@ -608,16 +808,22 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
         )
 
 
-class RegionalR17Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
+class RegionalR17Serializer(
+    EmptyAsNoneMixin, ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer
+):
 
     class Meta:
         model = RegionalR17
         fields = (
-            BaseRSerializer.Meta.fields
-            + FileScanSizeSerializerMixin.Meta.fields
-            + ('scan_file', 'comment',)
+            'id',
+            'regional_headquarter',
+            'scan_file',
+            'comment',
+        ) + FileScanSizeSerializerMixin.Meta.fields
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
         )
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
 class RegionalR18LinkSerializer(serializers.ModelSerializer):
@@ -645,7 +851,9 @@ class RegionalR18ProjectSerializer(FileScanSizeSerializerMixin):
         read_only_fields = ('id', 'regional_r18',)
 
 
-class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
+class RegionalR18Serializer(
+    EmptyAsNoneMixin, ReportExistsValidationMixin, CreateUpdateSerializerMixin, NestedCreateUpdateMixin
+):
     projects = RegionalR18ProjectSerializer(many=True, allow_null=True, required=False)
 
     objects_name = 'projects'
@@ -679,11 +887,20 @@ class RegionalR18Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin
         )
 
 
-class RegionalR19Serializer(BaseRSerializer):
+class RegionalR19Serializer(ReportExistsValidationMixin, serializers.ModelSerializer):
     class Meta:
         model = RegionalR19
-        fields = BaseRSerializer.Meta.fields + ('employed_student_start', 'employed_student_end', 'comment',)
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
+        fields = (
+            'id',
+            'regional_headquarter',
+            'employed_student_start',
+            'employed_student_end',
+            'comment',
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+        )
 
 
 class EventNameSerializer(serializers.Serializer):
@@ -707,14 +924,20 @@ REPORTS_SERIALIZERS = [
     RegionalR13Serializer,
     RegionalR16Serializer,
 ]
-# REPORTS_SERIALIZERS.extend(r6_serializers_factory.serializers)
 
 REPORTS_SERIALIZERS.extend(
     [
-        serializer_class for serializer_name, serializer_class in r7_serializers_factory.serializers.items()
+        serializer_class for serializer_name, serializer_class in r6_serializers_factory.serializers.items()
         if not serializer_name.endswith('Link')
     ]
 )
+
+# REPORTS_SERIALIZERS.extend(
+#     [
+#         serializer_class for serializer_name, serializer_class in r7_serializers_factory.serializers.items()
+#         if not serializer_name.endswith('Link')
+#     ]
+# )
 REPORTS_SERIALIZERS.extend(
     [
         serializer_class for serializer_name, serializer_class in r9_serializers_factory.serializers.items()

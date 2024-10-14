@@ -1,27 +1,30 @@
-import datetime
 import json
-from contextlib import suppress
 
-import django.core.exceptions
+from django.conf import settings
 from django.db import transaction
+from django.forms import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 
-from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
-                                 UserDistrictHeadquarterPosition)
-from rest_framework import permissions, status
-from rest_framework.decorators import action
+from rest_framework import filters, permissions, status
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
-
+from api.mixins import SendMixin
 from api.utils import get_calculation
-from regional_competitions.constants import R6_DATA, R7_DATA, R9_EVENTS_NAMES
+from headquarters.serializers import ShortRegionalHeadquarterSerializer
+from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
+                                 UserDistrictHeadquarterPosition, DistrictHeadquarter)
+from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES, 
+                                             EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
-from regional_competitions.mixins import RegionalRMeMixin, RegionalRMixin, RetrieveCreateMixin
-from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR18,
+from regional_competitions.filters import StatisticalRegionalReportFilter
+from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
+                                          RegionalRMixin, ListRetrieveCreateMixin)
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RegionalR1, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -29,75 +32,139 @@ from regional_competitions.models import (CHqRejectingLog, RegionalR1, RegionalR
                                           RegionalR102, RVerificationLog,
                                           StatisticalRegionalReport,
                                           r6_models_factory,
-                                          r7_models_factory, r9_models_factory)
-from regional_competitions.permissions import IsRegionalCommander
+                                          r9_models_factory)
+from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
+                                               IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
-    EventNameSerializer, MassSendSerializer, RegionalR18Serializer, RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    DumpStatisticalRegionalReportSerializer, EventNameSerializer, MassSendSerializer, RegionalR18Serializer,
+    RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
-    StatisticalRegionalReportSerializer, r6_serializers_factory, r7_serializers_factory,
+    StatisticalRegionalReportSerializer, r6_serializers_factory,
     r9_serializers_factory)
-from regional_competitions.tasks import send_email_report_part_1
+from regional_competitions.tasks import send_email_report_part_1, send_mail
 from regional_competitions.utils import (
-    get_report_number_by_class_name, get_report_xlsx, swagger_schema_for_central_review,
+    get_all_reports_from_competition, get_report_number_by_class_name, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
-    swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
-from django.conf import settings
+    swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 
 
-class StatisticalRegionalViewSet(RetrieveCreateMixin):
-    """Отчет 1 ч. Get принимает id РШ и возвращает его последний отчет, если существует."""
-    queryset = StatisticalRegionalReport.objects.all()
+class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
+    """Отчет 1 ч.
+
+    Фильтрация:
+        - district_id: поиск по id окружного штаба
+        - district_name: поиск по названию окружного штаба, полное совпадение
+        - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
+    Сортировка:
+        - доступные поля для сортировки:
+            - regional_headquarter_name: сортировка по названию регионального штаба
+          Можно сортировать в обратном порядке добавив признак '-' перед названием поля
+    """
+    queryset = StatisticalRegionalReport.objects.all().select_related(
+        'regional_headquarter'
+    ).prefetch_related('additional_statistics')
     serializer_class = StatisticalRegionalReportSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = StatisticalRegionalReportFilter
+    ordering_fields = ('regional_headquarter__name',)
 
     def get_permissions(self):
         if self.action == 'retrieve':
-            return (permissions.IsAuthenticated(),)
+            return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
+        if self.action == 'list':
+            return (IsCentralHeadquarterExpert(),)
         return permissions.IsAuthenticated(), IsRegionalCommander()
-
-    def retrieve(self, request, *args, **kwargs):
-        regional_headquarter_id = kwargs.get('pk')
-        statistical_report = StatisticalRegionalReport.objects.filter(
-            regional_headquarter_id=regional_headquarter_id
-        ).last()
-
-        if not statistical_report:
-            return Response(
-                {"detail": "Отчет не найден."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = self.get_serializer(statistical_report)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
-        methods=['GET', 'PATCH'],
+        methods=['GET', 'PUT'],
         url_path='me',
     )
     def my_statistical_report(self, request, pk=None):
-        regional_headquarter = RegionalHeadquarter.objects.get(
-            commander=self.request.user
-        )
+        """Эндпоинт для получения своего первого отчета во 2-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
         statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+
         if request.method == "GET":
             return Response(
                 data=self.get_serializer(statistical_report).data,
                 status=status.HTTP_200_OK
             )
-        # TODO: Ограничение на изменение отчета (нельзя редактировать, если первый показатель отправлен is_sent=True)
+
+        # если put и нет дампа, то сначала сохраняем текущую версию в модель дампа
+        if not DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            serializer = DumpStatisticalRegionalReportSerializer(
+                data=StatisticalRegionalReportSerializer(statistical_report).data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(regional_headquarter=regional_headquarter)
+
         serializer = self.get_serializer(
-            request.user,
+            statistical_report,
             data=request.data,
-            partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='me_first',
+    )
+    def me_first(self, request, pk=None):
+        """Эндпоинт для получения своего первого отчета в 1-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path=r'old_first/(?P<pk>\d+)',
+        permission_classes=(IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),),
+    )
+    def old_first(self, request, pk):
+        """Эндпоинт для получения отчета 1-й части, версии до редактирования во 2-й части.
+
+        Параметр пути id - pk регионального штаба.
+        Доступ: автор отчета или эксперт ЦШ.
+        """
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, pk=pk)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
     def perform_create(self, serializer):
-        report = serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-        send_email_report_part_1.delay(report.id)
+        user = self.request.user
+        regional_headquarter = RegionalHeadquarter.objects.get(commander=user)
+
+        should_send = True
+        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            should_send = False
+
+        report = serializer.save(regional_headquarter=regional_headquarter)
+        if should_send:
+            send_email_report_part_1.delay(report.id)
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
@@ -112,28 +179,19 @@ class BaseRegionalRViewSet(RegionalRMixin):
             self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
             self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
 
-    def get_report_number(self):
-        return get_report_number_by_class_name(self)
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        if self.action not in ('district_review', 'central_review'):
+        context.update({'action': self.action})
+        if self.action == 'create':
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                    'action': self.action
                 }
             )
         return context
 
-    def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-
-    def perform_update(self, request, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-
     @action(
-        methods=['PATCH'],
+        methods=['PUT'],
         detail=True,
         url_path='district_review',
         permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
@@ -152,7 +210,9 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        verification_action = request.data.pop('action', None)
+        parser = FormDataNestedFileParser()
+        data = parser.parse_querydict(request.data)
+        verification_action = data.pop('action', None)
         report = self.get_object()
 
         if not report.is_sent:
@@ -171,10 +231,17 @@ class BaseRegionalRViewSet(RegionalRMixin):
         serialized_json = json.dumps(serialized_data, ensure_ascii=False, default=str)
 
         user = request.user
-        district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
+        try:
+            district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
+        except UserDistrictHeadquarterPosition.DoesNotExist:
+            district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+        else:
+            return Response({
+                'non_field_errors': 'Изменение отчетов доступно только командирам окружных штабов.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data, partial=True)
+            update_serializer = self.get_serializer(report, data=data)
 
             if update_serializer.is_valid():
                 update_serializer.save()
@@ -196,7 +263,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         }, status=status.HTTP_200_OK)
 
     @action(
-        methods=['PATCH', 'DELETE'],
+        methods=['PUT', 'DELETE'],
         detail=True,
         url_path='central_review',
         permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
@@ -204,19 +271,19 @@ class BaseRegionalRViewSet(RegionalRMixin):
     def central_review(self, request, pk=None):
         """Обрабатывает верификацию или отклонение отчета Центральным Штабом.
 
-        Метод поддерживает обработку запросов PATCH и DELETE.
-        - PATCH для верификации отчета.
+        Метод поддерживает обработку запросов PUT и DELETE.
+        - PUT для верификации отчета.
         - DELETE для отклонения отчета с указанием причин.
 
         В теле запроса необходимо передать:
-        - `action`: с любым значением. Необязательное поле, указывающее на то, что Окружной Штаб верифицирует отчет
+        - `action`: с любым значением. Необязательное поле, указывающее на то, что Центральный Штаб верифицирует отчет
            без изменений. В таком случае нет необходимости передавать остальные поля отчета.
         - Стандартные поля отчета - будут использоваться для обновления отчета при отсутствии поля `action`.
         - `reasons`: словарь, обязательное поле для DELETE, содержащий причины отклонения, где ключи
            соответствуют полям отчета, а значения являются строками.
 
         При успешной обработке возвращает:
-        - `HTTP 200 OK` для PATCH.
+        - `HTTP 200 OK` для PUT.
         - `HTTP 204 No Content` для DELETE.
 
         Возвращает ошибку `HTTP 400 Bad Request` в случаях:
@@ -228,8 +295,10 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         Доступ: TODO
         """
-        verification_action = request.data.pop('action', None)
-        reasons = request.data.pop('reasons', {})
+        parser = FormDataNestedFileParser()
+        data = parser.parse_querydict(request.data)
+        verification_action = data.pop('action', None)
+        reasons = data.pop('reasons', {})
         report = self.get_object()
 
         if not report.is_sent or not report.verified_by_dhq:
@@ -266,17 +335,18 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
-            update_serializer = self.get_serializer(report, data=request.data, partial=True)
+            update_serializer = self.get_serializer(report, data=data)
             if update_serializer.is_valid():
                 update_serializer.save()
 
-        if request.method == 'PATCH':
+        if request.method == 'PUT':
 
             report.verified_by_chq = True
-            report.save()
+            with transaction.atomic():
+                report.save()
 
-            # Вызываем функцию подсчета очков
-            get_calculation(report=report, report_number=self.get_report_number())
+                # Вызываем функцию подсчета очков
+                get_calculation(report=report, report_number=self.get_report_number())
 
             RVerificationLog.objects.create(
                 user=user,
@@ -332,37 +402,48 @@ class BaseRegionalRViewSet(RegionalRMixin):
                 reasons=json.dumps(reasons, ensure_ascii=False)
             )
 
+            # Отправляем email сообщение о необходимости внести изменения в отчет
+            send_mail.delay(
+                subject='Конкурсная комиссия Центрального штаба РСО внесла комментарии '
+                        'по 2 части отчета за 2024 год. Необходимо внести корректировки.',
+                message=EMAIL_REPORT_DECLINED_MESSAGE,
+                recipients=get_emails(report),
+                file_path=''
+            )
+
             return Response({
                 'detail': 'Отчет успешно отклонен с указанием причин'
             }, status=status.HTTP_204_NO_CONTENT)
 
+    @action(
+        detail=False,
+        methods=['GET',],
+        url_path='download_all_reports_data',
+    )
+    def download_all_reports_data(self, request, pk=None):
+        """Скачивание данных отчета в формате XLSX."""
+        return get_all_reports_from_competition(self.get_report_number())
 
-class BaseRegionalRWithoutVerifViewSet(RegionalRMixin):
+
+class RegionalRNoVerifViewSet(RegionalRMixin):
     """
     Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet,
     которые не требуют верификации.
     """
+    model = None
     serializer_class = None
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
-    def get_report_number(self):
-        return get_report_number_by_class_name(self)
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context.update(
-            {
-                'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                # 'action': self.action
-            }
-        )
+        if self.action == 'create':
+            context.update(
+                {
+                    'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                    'action': self.action
+                }
+            )
         return context
-
-    def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
-
-    def perform_update(self, request, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
 
 class BaseRegionalRMeViewSet(RegionalRMeMixin):
@@ -431,52 +512,6 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
     def get_report_number(self):
         return get_report_number_by_class_name(self)
 
-    @action(
-        detail=True,
-        methods=['GET',],
-        url_path='download_report_data',
-    )
-    def download_report_data(self, request, pk=None):
-        """Скачивание данных отчета в формате XLSX."""
-        return get_report_xlsx(self)
-
-
-class BaseRegionalRMeWithSendViewSet(BaseRegionalRMeViewSet):
-
-    @action(
-        detail=True,
-        methods=['POST'],
-        url_path='send',
-    )
-    def send_for_verification(self, request, pk=None):
-        """Отправляет отчет на верификацию.
-
-        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
-        """
-        regional_r = self.get_object()
-        # TODO: Перенести в один из последних показателей и раскомментировать
-        # schedule, _ = IntervalSchedule.objects.get_or_create(
-        #     every=5,
-        #     period=IntervalSchedule.MINUTES,
-        # )
-        # with suppress(django.core.exceptions.ValidationError):
-        #     PeriodicTask.objects.get_or_create(
-        #         interval=schedule,
-        #         name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
-        #         task='regional_competitions.tasks.send_email_report_part_2',
-        #         args=json.dumps([regional_r.regional_headquarter.id]),
-        #         expire_seconds=3600
-        #     )
-        if hasattr(regional_r, 'is_sent'):
-            regional_r.is_sent = True
-            regional_r.save()
-            return Response(
-                {'detail': 'Данные отправлены на верификацию окружному штабу'},
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
 
 class MassSendViewSet(GenericViewSet):
     serializer_class = MassSendSerializer
@@ -518,17 +553,17 @@ class MassSendViewSet(GenericViewSet):
         """
         return self.send_reports(request, r6_models_factory)
 
-    @action(
-        detail=False,
-        methods=['POST'],
-        url_path='7/send',
-    )
-    def r7_mass_send_for_verification(self, request):
-        """Отправляет все отчеты по 7 показателю на верификацию.
-
-        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
-        """
-        return self.send_reports(request, r7_models_factory)
+    # @action(
+    #     detail=False,
+    #     methods=['POST'],
+    #     url_path='7/send',
+    # )
+    # def r7_mass_send_for_verification(self, request):
+    #     """Отправляет все отчеты по 7 показателю на верификацию.
+    #
+    #     Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
+    #     """
+    #     return self.send_reports(request, r7_models_factory)
 
     @action(
         detail=False,
@@ -557,7 +592,14 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         url_path='r6-event-names',
     )
     def get_event_names_r6(self, request):
-        event_data = [{'id': list(tup[0].keys())[0], 'name': list(tup[0].values())[0], 'month': list(tup[1].values())[0], 'city': list(tup[2].values())[0]} for tup in R6_DATA]
+        event_data = [
+            {
+                'id': list(tup[0].keys())[0],
+                'name': list(tup[0].values())[0],
+                'month': list(tup[1].values())[0],
+                'city': list(tup[2].values())[0]
+            } for tup in R6_DATA
+        ]
         return Response(event_data)
 
     @action(
@@ -566,7 +608,14 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         url_path='r7-event-names',
     )
     def get_event_names_r7(self, request):
-        event_data = [{'id': list(tup[0].keys())[0], 'name': list(tup[0].values())[0], 'month': list(tup[1].values())[0], 'city': list(tup[2].values())[0]} for tup in R7_DATA]
+        event_data = [
+            {
+                'id': list(tup[0].keys())[0],
+                'name': list(tup[0].values())[0],
+                'month': list(tup[1].values())[0],
+                'city': list(tup[2].values())[0]
+            } for tup in R7_DATA
+        ]
         return Response(event_data)
 
     @action(
@@ -579,41 +628,40 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         return Response(event_data)
 
 
-class RegionalR1ViewSet(BaseRegionalRViewSet):
+class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR1MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR1
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4ViewSet(BaseRegionalRViewSet):
+class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR4MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR4MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5ViewSet(BaseRegionalRViewSet):
+class RegionalR5ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     """
     Организация всероссийских (международных) (организатор – региональное отделение РСО),
     окружных и межрегиональных трудовых проектов в соответствии с Положением об организации
     трудовых проектов РСО.
 
     Принимает JSON:
-    {
+    ```{
     "comment": "комментарий согласующего",
     "events": [ - проекты передаются в списке
         {
@@ -628,7 +676,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
         "ro_participants_number": 5 - Количество участников РО
         }
     ]
-    }
+    }```
     """
 
     queryset = RegionalR5.objects.all()
@@ -636,7 +684,7 @@ class RegionalR5ViewSet(BaseRegionalRViewSet):
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR5MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR5MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR5
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalR5Serializer
@@ -648,162 +696,140 @@ r6_view_sets_factory = RViewSetFactory(
     serializers=r6_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r6_view_sets_factory.create_view_sets()
 
 
-r7_view_sets_factory = RViewSetFactory(
-    models=r7_models_factory.models,
-    serializers=r7_serializers_factory.serializers,
-    base_r_view_set=BaseRegionalRViewSet,
-    base_r_me_view_set=BaseRegionalRMeViewSet,
-)
-r7_view_sets_factory.create_view_sets()
+# r7_view_sets_factory = RViewSetFactory(
+#     models=r7_models_factory.models,
+#     serializers=r7_serializers_factory.serializers,
+#     base_r_view_set=BaseRegionalRViewSet,
+#     base_r_me_view_set=BaseRegionalRMeViewSet,
+#     additional_parental_class=FormDataNestedFileParser
+# )
+# r7_view_sets_factory.create_view_sets()
 
 r9_view_sets_factory = RViewSetFactory(
     models=r9_models_factory.models,
     serializers=r9_serializers_factory.serializers,
     base_r_view_set=BaseRegionalRViewSet,
     base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
 )
 r9_view_sets_factory.create_view_sets()
 
 
-class RegionalR101ViewSet(BaseRegionalRViewSet):
+class RegionalR101ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR101MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR101MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR101
     queryset = RegionalR101.objects.all()
     serializer_class = RegionalR101Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102ViewSet(BaseRegionalRViewSet):
+class RegionalR102ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR102MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR102MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR102
     queryset = RegionalR102.objects.all()
     serializer_class = RegionalR102Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR11ViewSet(BaseRegionalRViewSet):
+class RegionalR11ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR11MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR11MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR11
     queryset = RegionalR11.objects.all()
     serializer_class = RegionalR11Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR12ViewSet(BaseRegionalRViewSet):
+class RegionalR12ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR12MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR12MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR12
     queryset = RegionalR12.objects.all()
     serializer_class = RegionalR12Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR13ViewSet(BaseRegionalRViewSet):
+class RegionalR13ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR13MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR13MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
     model = RegionalR13
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16ViewSet(BaseRegionalRViewSet):
+class RegionalR16ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR16MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
     model = RegionalR16
     queryset = RegionalR16.objects.all()
     serializer_class = RegionalR16Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR17ViewSet(BaseRegionalRViewSet):
+class RegionalR17ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
     """Дислокация студенческих отрядов РО РСО.
 
     file_size выводится в мегабайтах.
+
+    ```json
+    {
+    "scan_file": документ,
+    "comment": строка
+    }
+    ```
     """
 
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
 
 
-class RegionalR17MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     model = RegionalR17
     queryset = RegionalR17.objects.all()
     serializer_class = RegionalR17Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR18ViewSet(BaseRegionalRWithoutVerifViewSet):
-    """Вьюсет для просмотра и создания отчета по 18 показателю.
-
-    Показатель не требует верификации.
-    Доступ - только региональным командирам.
-    """
+class RegionalR18ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalR18Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
-    parser_classes = (MultiPartParser, FormParser)
-
-    def create(self, request, *args, **kwargs):
-        """Метод для создания отчета по 18 показателю.
-        Пример отчета:
-        ```json
-                {
-        "comment": "Комментарий",
-        "projects": [
-            {
-                "links": [
-                    {
-                    "link": "http://127.0.0.1:8000/swagger/"
-                    }
-                ]
-            }
-        ]
-        }
-        ```
-
-        Также стоят MultiPartParser, FormParser.
-        """
-        return super().create(request, *args, **kwargs)
 
 
-class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
+class RegionalR18MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
     """Вьюсет для просмотра и редактирования отчета по 18 показателю.
 
     Показатель не требует верификации.
@@ -822,16 +848,94 @@ class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
-class RegionalR19ViewSet(BaseRegionalRViewSet):
-    """Трудоустройство."""
+class RegionalR19ViewSet(RegionalRNoVerifViewSet):
+    """Трудоустройство.
+
+    employed_student_start - Фактическое количество трудоустроенных студентов в третий
+    трудовой семестр
+    employed_student_end - Фактическое количество трудоустроенных в штат принимающей
+    организации по итогам третьего трудового семестра.
+
+    ```json
+    {
+      "employed_student_start": 0,
+      "employed_student_end": 0,
+      "comment": "string"
+    }
+    ```
+    """
 
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR19MeViewSet(BaseRegionalRMeWithSendViewSet):
+class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR19
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+@api_view(['GET'])
+@permission_classes((IsCentralOrDistrictHeadquarterExpert,))
+def get_sent_reports(request):
+    """
+    Эндпоинт для получения списка рег штабов, которые отправили отчеты по 2 части.
+
+    Доступ - только экспертам окружных и центрального штабов.
+
+    Для экспертов окр штабов выводит список рег штабов, отчеты которых отправлены, но не верифицирован окр штабом.
+    Для экспертов центрального штаба выводит список рег штабов, которые верифицированы окр штабом,
+    но не верифицированы и не отклонены центральным штабом.
+
+    Для окружных штабов выводит заявки только подвластных им рег штабов.
+    """
+    is_central_expert = ExpertRole.objects.filter(
+        user=request.user, central_headquarter__isnull=False
+    ).exists()
+    if is_central_expert:
+        reg_ids = RegionalR16.objects.filter(
+            verified_by_dhq=True,
+            verified_by_chq=None,
+        ).values_list('regional_headquarter_id', flat=True).distinct()
+        qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
+    else:
+        district_headquarter_id = ExpertRole.objects.get(user=request.user).district_headquarter_id
+        reg_ids = RegionalR16.objects.filter(
+            is_sent=True,
+            verified_by_dhq=False,
+        ).values_list('regional_headquarter', flat=True).distinct()
+        qs = RegionalHeadquarter.objects.filter(
+            id__in=reg_ids,
+            district_headquarter_id=district_headquarter_id
+        )
+    return Response(ShortRegionalHeadquarterSerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def user_info(request):
+    """Информация о пользователе.
+
+    Возвращает три ключа:
+    - is_central_expert - является ли пользователь экспертом центрального штаба или командиром центрального штаба.
+    - is_district_expert - является ли пользователь экспертом окружного штаба.
+    - is_reg_commander - является ли пользователь командиром регионального штаба.
+
+    Доступ: все аутентифицированные пользователи.
+    """
+    is_central_expert = ExpertRole.objects.filter(
+        user=request.user, central_headquarter__isnull=False
+    ).exists()
+    is_district_expert = ExpertRole.objects.filter(
+        user=request.user, district_headquarter__isnull=False
+    ).exists()
+    is_commander = RegionalHeadquarter.objects.filter(
+        commander=request.user
+    ).exists()
+    return Response({
+        'is_central_expert': is_central_expert,
+        'is_district_expert': is_district_expert,
+        'is_reg_commander': is_commander
+    })

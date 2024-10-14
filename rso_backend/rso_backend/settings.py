@@ -8,6 +8,8 @@ from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
+SHOW_RESERVED_PLACE = True
+
 DEFAULT_POSITION_ID = 1
 CENTRAL_HQ_ID = 1
 
@@ -221,11 +223,20 @@ LOGGING = {
             'style': '{',
         },
     },
-
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+        },
+        'debug_console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
         },
         'tasks': {
             'level': 'DEBUG',
@@ -283,9 +294,12 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['debug_console'],
+        # }
     }
 }
-
 
 REDIS_HOST = '127.0.0.1' if RUN_TYPE != 'DOCKER' else 'redis'
 
@@ -325,9 +339,69 @@ if DEBUG:
                 month_of_year=10,
             )
         },
-        'calculate_q14_report_task': {
-            'task': 'regional_competitions.tasks.calculate_q14_report_task',
-            'schedule': timedelta(hours=12)  # пока только дев
+        'calculate_r11_report_task': {
+            'task': 'regional_competitions.tasks.calculate_r11_report_task',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calculate_r13_report_task': {
+            'task': 'regional_competitions.tasks.calculate_r13_report_task',
+            'schedule': timedelta(minutes=12)  # TODO: пока только дев
+        },
+        'calculate_r14_report_task': {
+            'task': 'regional_competitions.tasks.calculate_r14_report_task',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r1': {
+            'task': 'regional_competitions.tasks.calc_places_r1',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r2': {
+            'task': 'regional_competitions.tasks.calc_places_r2',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r3': {
+            'task': 'regional_competitions.tasks.calc_places_r3',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r4': {
+            'task': 'regional_competitions.tasks.calc_places_r4',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r5': {
+            'task': 'regional_competitions.tasks.calc_places_r5',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r6': {
+            'task': 'regional_competitions.tasks.calc_places_r6',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        # 'calc_places_r7': {
+        #     'task': 'regional_competitions.tasks.calc_places_r7',
+        #     'schedule': timedelta(hours=12)  # TODO: пока только дев
+        # },
+        'calc_places_r9': {
+            'task': 'regional_competitions.tasks.calc_places_r9',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r10': {
+            'task': 'regional_competitions.tasks.calc_places_r10',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r11': {
+            'task': 'regional_competitions.tasks.calc_places_r11',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r12': {
+            'task': 'regional_competitions.tasks.calc_places_r12',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r13': {
+            'task': 'regional_competitions.tasks.calc_places_r13',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r14': {
+            'task': 'regional_competitions.tasks.calc_places_r14',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
         },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',
@@ -623,7 +697,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '65/min',
-        'user': '400/min'
+        'user': '650/min'
     },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -717,7 +791,7 @@ SWAGGER_SETTINGS = {
 
 REQUESTLOGS = {
     'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
-    'ENTRY_CLASS': 'requestlogs.entries.RequestLogEntry',
+    'ENTRY_CLASS': 'api.log_entries.CustomRequestLogEntry',
     'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
     'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
     'ATTRIBUTE_NAME': '_requestlog',
@@ -735,3 +809,5 @@ LOG_VIEWER_MAX_READ_LINES = 12000
 LOG_VIEWER_FILE_LIST_MAX_ITEMS_PER_PAGE = 25
 LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL', "{'action_name':"]
 LOG_VIEWER_EXCLUDE_TEXT_PATTERN = None
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None

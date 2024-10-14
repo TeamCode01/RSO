@@ -79,14 +79,14 @@ def get_detachment_members_to_verify(detachment):
     )
     members_to_verify = detachment.members.filter(
         user__id__in=user_ids_in_verification_request
-    ).select_related('user')
+    ).select_related('user__media')
     return members_to_verify
 
 
 def get_regional_hq_members_to_verify(regional_headquarter):
     return UserVerificationRequest.objects.filter(
             user__region=regional_headquarter.region,
-        ).select_related('user')
+        ).select_related('user__media')
 
 
 def check_existing_record(engine, headquarter_id, user_id, position_id):

@@ -1,3 +1,4 @@
+from competitions.models import September15Participant
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  LocalHeadquarter, RegionalHeadquarter,
@@ -48,3 +49,8 @@ def count_headquarter_participants(headquarter):
         raise ValueError('Будьте внимательны :)')
 
     return member_count + 1
+
+
+def get_hq_participants_15_september(detachment):
+     inst = September15Participant.objects.filter(detachment=detachment).last()
+     return 1 if not inst else inst.participants_number

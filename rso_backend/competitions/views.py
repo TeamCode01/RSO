@@ -65,8 +65,8 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, Q20Report,
-                                 QVerificationLog, DemonstrationBlock, PatrioticActionBlock, SafetyWorkWeekBlock,
-                                 CommanderCommissionerSchoolBlock, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 QVerificationLog, DemonstrationBlock, PatrioticActionBlock, RankingCopy, SafetyWorkWeekBlock,
+                                 CommanderCommissionerSchoolBlock, September15Participant, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
                                  ProfessionalCompetitionBlock, SpartakiadBlock, Q1Report)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
@@ -74,7 +74,8 @@ from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
 from competitions.serializers import (CompetitionApplicationsObjectSerializer,
                                       CompetitionApplicationsSerializer,
-                                      CompetitionParticipantsObjectSerializer, CompetitionParticipantsRegObjectSerializer,
+                                      CompetitionParticipantsObjectSerializer,
+                                      CompetitionParticipantsRegObjectSerializer,
                                       CompetitionParticipantsSerializer,
                                       CompetitionSerializer,
                                       CreateQ7Serializer, CreateQ8Serializer,
@@ -552,7 +553,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
             'detachment__name',
             'created_at',
             'junior_detachment__overallranking__place' (старт рейтинг),
-            'detachment__overalltandemranking_main_detachment__place' (тандем).
+            'detachment__overalltandemranking_main_detachment__place' (тандем),
+            'detachment__copy_ranking_main_detachment__place' (тандем замороженный рейтинг),
+            'junior_detachment__copy_ranking_detachment__place' (старт замороженный рейтинг)'.
           Можно сортировать в обратном порядке добавив признак '-'
           перед названием поля, например -created_at.
         - порядок сортировки по дефолту: junior_detachment__name,
@@ -574,7 +577,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
                        'junior_detachment__name',
                        'created_at',
                        'junior_detachment__overallranking__place',
-                       'detachment__overalltandemranking_main_detachment__place')
+                       'detachment__overalltandemranking_main_detachment__place',
+                       'detachment__copy_ranking_main_detachment__place',
+                       'junior_detachment__copy_ranking_detachment__place')
     ordering = ('junior_detachment__name',
                 'detachment__name',
                 'created_at')
@@ -715,57 +720,6 @@ class CompetitionJuniorDetachmentAutoComplete(
             qs = qs.filter(name__icontains=self.q)
 
         return qs.order_by('name')
-
-    @action(detail=False,
-            methods=['get'],
-            url_path='status',
-            permission_classes=(permissions.IsAuthenticated,))
-    @swagger_auto_schema(responses={
-        status.HTTP_200_OK: openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'is_commander_detachment': openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    title='Является ли командиром отряда-участника конкурса',
-                    read_only=True
-                ),
-                'is_commissar_detachment': openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    title='Является ли комиссаром отряда-участника конкурса',
-                    read_only=True
-                )
-            }
-        )
-    })
-    def status(self, request, competition_pk, *args, **kwargs):
-        """Action для получения статуса пользователя в конкурсе.
-
-        Доступ: все пользователи.
-        """
-        if self.get_queryset().filter(
-                Q(detachment__commander=request.user) |
-                Q(junior_detachment__commander=request.user)
-        ).exists():
-            return Response({
-                'is_commander_detachment': True,
-                'is_commissar_detachment': False
-            })
-        try:
-            position = request.user.userdetachmentposition.position
-        except UserDetachmentPosition.DoesNotExist:
-            return Response({
-                'is_commander_detachment': False,
-                'is_commissar_detachment': False
-            })
-        if position.name == 'Комиссар':
-            return Response({
-                'is_commander_detachment': False,
-                'is_commissar_detachment': True
-            })
-        return Response({
-            'is_commander_detachment': False,
-            'is_commissar_detachment': False
-        })
 
 
 class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
@@ -1363,49 +1317,79 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
             detachment_report__competition_id=competition_pk
         ).first()
         if not report:
-            # Отряд участник, но еще не подал отчет по данному показателю.
             return Response(status=status.HTTP_404_NOT_FOUND)
+
         if not report.is_verified:
             return Response(
                 {"place": "Показатель в обработке"},
                 status=status.HTTP_200_OK
             )
-        class_name = self.serializer_class.Meta.model.__name__  # Q7
-        ranking_fk = f'{class_name.lower()}ranking'  # q7ranking
-        # Если есть FK на стартовый рейтинг
-        ranking = getattr(detachment, ranking_fk).filter(
-            competition_id=competition_pk
-        ).first()
-        if ranking:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
+
+        class_name = self.serializer_class.Meta.model.__name__
+        ranking_fk = f'{class_name.lower()}ranking'
+
+        if settings.SHOW_RESERVED_PLACE:
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if ranking_copy and getattr(ranking_copy, f'{class_name.lower()}_place', None) is not None:
+                return Response(
+                    {"place": getattr(ranking_copy, f'{class_name.lower()}_place')},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking_copy and getattr(tandem_ranking_copy, f'{class_name.lower()}_place', None) is not None:
+                return Response(
+                    {"place": getattr(tandem_ranking_copy, f'{class_name.lower()}_place')},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking_copy and getattr(tandem_ranking_copy, f'{class_name.lower()}_place', None) is not None:
+                return Response(
+                    {"place": getattr(tandem_ranking_copy, f'{class_name.lower()}_place')},
+                    status=status.HTTP_200_OK
+                )
+
+        else:
+            ranking = getattr(detachment, ranking_fk).filter(
+                competition_id=competition_pk
+            ).first()
+            if ranking:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
+            tandem_ranking_fk = (
+                f'{class_name.lower()}tandemranking_main_detachment'
             )
-        #  Если нет, то ищем в тандем рейтингах
-        tandem_ranking_fk = (
-            f'{class_name.lower()}tandemranking_main_detachment'
-        )
-        # Если есть FK на наставника
-        tandem_ranking = getattr(detachment, tandem_ranking_fk).filter(
-            competition_id=competition_pk
-        ).first()
-        if tandem_ranking:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
+            tandem_ranking = getattr(detachment, tandem_ranking_fk).filter(
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+            tandem_ranking_fk = (
+                f'{class_name.lower()}tandemranking_junior_detachment'
             )
-        tandem_ranking_fk = (
-            f'{class_name.lower()}tandemranking_junior_detachment'
-        )
-        # Если есть FK на junior
-        tandem_ranking = getattr(
-            detachment, tandem_ranking_fk
-        ).filter(competition_id=competition_pk).first()
-        if tandem_ranking:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
-        # Отчет уже есть(проверяли в начале), значит еще не верифицировано ни одно мероприятие
+            tandem_ranking = getattr(
+                detachment, tandem_ranking_fk
+            ).filter(competition_id=competition_pk).first()
+            if tandem_ranking:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+
         return Response(
             {"place": "Показатель в обработке"},
             status=status.HTTP_200_OK
@@ -2356,6 +2340,10 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
     def create(self, request, *args, **kwargs):
         today = date.today()
+        cutoff_date = date(year=2024, month=10, day=15)
+        if today >= (cutoff_date + timedelta(days=1)):
+            return get_deadline_response(deadline=cutoff_date)
+
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
         try:
             detachment_id = request.user.detachment_commander.id
@@ -2675,34 +2663,64 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
         competition_id = self.kwargs.get('competition_pk')
         report = Q6DetachmentReport.objects.filter(
             detachment=detachment,
-            competition_id=self.kwargs.get('competition_pk')
+            competition_id=competition_id
         ).first()
+
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        tandem_ranking = Q6TandemRanking.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
-        ).first()
-        if not tandem_ranking:
-            tandem_ranking = Q6TandemRanking.objects.filter(
-                junior_detachment=report.detachment,
+
+        if settings.SHOW_RESERVED_PLACE:
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=report.detachment,
                 competition_id=competition_id
             ).first()
+            if not tandem_ranking_copy:
+                tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                    junior_detachment=report.detachment,
+                    competition_id=competition_id
+                ).first()
 
-        if tandem_ranking and tandem_ranking.place is not None:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
+            if tandem_ranking_copy and tandem_ranking_copy.q6_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q6_place},
+                    status=status.HTTP_200_OK
+                )
 
-        ranking = Q6Ranking.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
-        ).first()
-        if ranking and ranking.place is not None:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
-            )
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking_copy and ranking_copy.q6_place is not None:
+                return Response(
+                    {"place": ranking_copy.q6_place},
+                    status=status.HTTP_200_OK
+                )
+
+        else:
+            tandem_ranking = Q6TandemRanking.objects.filter(
+                detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+            if not tandem_ranking:
+                tandem_ranking = Q6TandemRanking.objects.filter(
+                    junior_detachment=report.detachment,
+                    competition_id=competition_id
+                ).first()
+
+            if tandem_ranking and tandem_ranking.place is not None:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+
+            ranking = Q6Ranking.objects.filter(
+                detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking and ranking.place is not None:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
 
         return Response(
             {"place": "Показатель в обработке"},
@@ -2828,6 +2846,11 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(year=2024, month=10, day=15)
+        if today >= (cutoff_date + timedelta(days=1)):
+            return get_deadline_response(deadline=cutoff_date)
+
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
@@ -2891,41 +2914,76 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
+
         report = Q15DetachmentReport.objects.filter(
             detachment=detachment,
             competition_id=competition_id
         ).first()
+
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        tandem_ranking = Q15TandemRank.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
-        ).first()
-        if not tandem_ranking:
-            tandem_ranking = Q15Rank.objects.filter(
+
+        if settings.SHOW_RESERVED_PLACE:
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking_copy and ranking_copy.q15_place is not None:
+                return Response(
+                    {"place": ranking_copy.q15_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q15_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q15_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q15_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q15_place},
+                    status=status.HTTP_200_OK
+                )
+        else:
+            tandem_ranking = Q15TandemRank.objects.filter(
                 detachment=report.detachment,
                 competition_id=competition_id
             ).first()
+            if not tandem_ranking:
+                tandem_ranking = Q15Rank.objects.filter(
+                    detachment=report.detachment,
+                    competition_id=competition_id
+                ).first()
 
-        if tandem_ranking and tandem_ranking.place is not None:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
+            if tandem_ranking and tandem_ranking.place is not None:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
 
-        ranking = Q15Rank.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
-        ).first()
-        if ranking and ranking.place is not None:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
-            )
+            ranking = Q15Rank.objects.filter(
+                detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking and ranking.place is not None:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
 
         return Response(
             {"place": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
         )
+
 
     @action(
         detail=True,
@@ -3146,6 +3204,10 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ),
     )
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(year=2024, month=10, day=15)
+        if today >= (cutoff_date + timedelta(days=1)):
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
@@ -3212,45 +3274,77 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def get_place(self, request, **kwargs):
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
+
         report = Q13DetachmentReport.objects.filter(
             detachment=detachment,
             competition_id=competition_id
         ).first()
+
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        tandem_ranking = Q13TandemRanking.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
 
-        ).first()
-        if not tandem_ranking:
+        if settings.SHOW_RESERVED_PLACE:
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking_copy and ranking_copy.q13_place is not None:
+                return Response(
+                    {"place": ranking_copy.q13_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q13_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q13_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q13_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q13_place},
+                    status=status.HTTP_200_OK
+                )
+        else:
             tandem_ranking = Q13TandemRanking.objects.filter(
-                junior_detachment=report.detachment,
+                detachment=report.detachment,
                 competition_id=competition_id
             ).first()
 
-        # Пытаемся найти place в Q13TandemRanking
-        if tandem_ranking and tandem_ranking.place is not None:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
+            if not tandem_ranking:
+                tandem_ranking = Q13TandemRanking.objects.filter(
+                    junior_detachment=report.detachment,
+                    competition_id=competition_id
+                ).first()
 
-        # Если не найдено в Q13TandemRanking, ищем в Q13Ranking
-        ranking = Q13Ranking.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
-        ).first()
-        if ranking and ranking.place is not None:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
-            )
+            if tandem_ranking and tandem_ranking.place is not None:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
 
-        # Если не найдено ни в одной из моделей
+            ranking = Q13Ranking.objects.filter(
+                detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking and ranking.place is not None:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
+
         return Response(
             {"place": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
         )
+
 
     @action(
         detail=True,
@@ -3539,6 +3633,10 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         )
     )
     def create(self, request, *args, **kwargs):
+        today = date.today()
+        cutoff_date = date(2024, 10, 1)
+        if today > cutoff_date:
+            return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
         )
@@ -3916,44 +4014,74 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ]
     )
     def get_place(self, request, **kwargs):
-
         detachment = self.request.user.detachment_commander
         competition_id = self.kwargs.get('competition_pk')
+
         report = Q17DetachmentReport.objects.filter(
             detachment=detachment,
             competition_id=competition_id
         ).first()
+
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        tandem_ranking = Q17TandemRanking.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
 
-        ).first()
-        if not tandem_ranking:
+        if settings.SHOW_RESERVED_PLACE:
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking_copy and ranking_copy.q17_place is not None:
+                return Response(
+                    {"place": ranking_copy.q17_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q17_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q17_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition_id=competition_id
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q17_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q17_place},
+                    status=status.HTTP_200_OK
+                )
+        else:
             tandem_ranking = Q17TandemRanking.objects.filter(
-                junior_detachment=report.detachment,
+                detachment=report.detachment,
                 competition_id=competition_id
             ).first()
 
-        # Пытаемся найти place в Q17TandemRanking
-        if tandem_ranking and tandem_ranking.place is not None:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
+            if not tandem_ranking:
+                tandem_ranking = Q17TandemRanking.objects.filter(
+                    junior_detachment=report.detachment,
+                    competition_id=competition_id
+                ).first()
 
-        # Если не найдено в Q17TandemRanking, ищем в Q17Ranking
-        ranking = Q17Ranking.objects.filter(
-            detachment=report.detachment,
-            competition_id=competition_id
-        ).first()
-        if ranking and ranking.place is not None:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
-            )
+            if tandem_ranking and tandem_ranking.place is not None:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
 
-        # Если не найдено ни в одной из моделей
+            ranking = Q17Ranking.objects.filter(
+                detachment=report.detachment,
+                competition_id=competition_id
+            ).first()
+            if ranking and ranking.place is not None:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
+
         return Response(
             {"place": "Показатель в обработке"},
             status=status.HTTP_404_NOT_FOUND
@@ -4351,9 +4479,6 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         Доступ: рег. командиры или админ
         """
         today = date.today()
-        cutoff_date = date(2024, 9, 30)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -4677,40 +4802,79 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         {"place": int}
         """
         detachment = self.request.user.detachment_commander
+
         report = Q20Report.objects.filter(
             detachment=detachment,
             competition_id=competition_pk
         ).first()
+
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
         if not report.is_verified:
             return Response(
                 {"place": "Показатель в обработке"},
                 status=status.HTTP_200_OK
             )
-        ranking = getattr(
-            detachment, 'q20ranking'
-        ).filter(competition_id=competition_pk).first()
-        if ranking:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
-            )
-        tandem_ranking = getattr(
-            detachment, 'q20tandemranking_main_detachment'
-        ).filter(competition_id=competition_pk).first()
-        if tandem_ranking:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
-        tandem_ranking = getattr(
-            detachment, 'q20tandemranking_junior_detachment'
-        ).filter(competition_id=competition_pk).first()
-        if tandem_ranking:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
+
+        if settings.SHOW_RESERVED_PLACE:
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if ranking_copy and ranking_copy.q20_place is not None:
+                return Response(
+                    {"place": ranking_copy.q20_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q20_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q20_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q20_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q20_place},
+                    status=status.HTTP_200_OK
+                )
+        else:
+            ranking = getattr(
+                detachment, 'q20ranking'
+            ).filter(competition_id=competition_pk).first()
+
+            if ranking:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
+
+            tandem_ranking = getattr(
+                detachment, 'q20tandemranking_main_detachment'
+            ).filter(competition_id=competition_pk).first()
+            if tandem_ranking:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking = getattr(
+                detachment, 'q20tandemranking_junior_detachment'
+            ).filter(competition_id=competition_pk).first()
+            if tandem_ranking:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+
         return Response(
             {"place": "Показатель в обработке"},
             status=status.HTTP_200_OK
@@ -4821,6 +4985,40 @@ def get_q1_info(request, competition_pk):
         'number_of_payments': detachment.members.filter(
             user__membership_fee=True
         ).count() + (1 if detachment.commander.membership_fee else 0)
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_q1_info_static(request, competition_pk):
+    """
+    Замороженая информация для показателя q1.
+
+    Возвращает следующую информацию на 15-30 сентября 2023 года:
+    'number_of_members': int - число участников отряда
+    'number_of_payments': int - количество участников отряда
+    оплативших членские взносы
+
+    Доступ: все авторизованные пользователи.
+    Если пользователь не командир, либо не участвует в мероприятии -
+    выводится ошибка 404.
+    """
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    if not competition.competition_participants.filter(
+            Q(detachment=detachment) | Q(junior_detachment=detachment)
+    ).exists():
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    try:
+        sep_15_participant = detachment.sep_15_participants.get()
+        number_of_members = sep_15_participant.participants_number
+        number_of_payments = sep_15_participant.members_number
+    except September15Participant.DoesNotExist:
+        number_of_members = 0
+        number_of_payments = 0
+    return Response({
+        'number_of_members': number_of_members,
+        'number_of_payments': number_of_payments
     })
 
 
@@ -5061,40 +5259,79 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         {"place": int}
         """
         detachment = self.request.user.detachment_commander
+
         report = Q16Report.objects.filter(
             detachment=detachment,
             competition_id=competition_pk
         ).first()
+
         if not report:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
         if not report.is_verified:
             return Response(
                 {"place": "Показатель в обработке"},
                 status=status.HTTP_200_OK
             )
-        ranking = getattr(
-            detachment, 'q16ranking'
-        ).filter(competition_id=competition_pk).first()
-        if ranking:
-            return Response(
-                {"place": ranking.place}, status=status.HTTP_200_OK
-            )
-        tandem_ranking = getattr(
-            detachment, 'q16tandemranking_main_detachment'
-        ).filter(competition_id=competition_pk).first()
-        if tandem_ranking:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
-        tandem_ranking = getattr(
-            detachment, 'q16tandemranking_junior_detachment'
-        ).filter(competition_id=competition_pk).first()
-        if tandem_ranking:
-            return Response(
-                {"place": tandem_ranking.place},
-                status=status.HTTP_200_OK
-            )
+
+        if settings.SHOW_RESERVED_PLACE:
+            ranking_copy = RankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if ranking_copy and ranking_copy.q16_place is not None:
+                return Response(
+                    {"place": ranking_copy.q16_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q16_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q16_place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition_id=competition_pk
+            ).first()
+            if tandem_ranking_copy and tandem_ranking_copy.q16_place is not None:
+                return Response(
+                    {"place": tandem_ranking_copy.q16_place},
+                    status=status.HTTP_200_OK
+                )
+        else:
+            ranking = getattr(
+                detachment, 'q16ranking'
+            ).filter(competition_id=competition_pk).first()
+
+            if ranking:
+                return Response(
+                    {"place": ranking.place}, status=status.HTTP_200_OK
+                )
+
+            tandem_ranking = getattr(
+                detachment, 'q16tandemranking_main_detachment'
+            ).filter(competition_id=competition_pk).first()
+            if tandem_ranking:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+
+            tandem_ranking = getattr(
+                detachment, 'q16tandemranking_junior_detachment'
+            ).filter(competition_id=competition_pk).first()
+            if tandem_ranking:
+                return Response(
+                    {"place": tandem_ranking.place},
+                    status=status.HTTP_200_OK
+                )
+
         return Response(
             {"place": "Показатель в обработке"},
             status=status.HTTP_200_OK
@@ -5134,9 +5371,7 @@ def get_place_overall(request, competition_pk=None):
 
     Возвращает финальное место и сумму всех мест в формате
 
-    ```
     {'place': 10, 'places_sum': 547}
-    ```
 
     Для тандем заявки место для обоих участников будет одинаковым.
 
@@ -5146,50 +5381,96 @@ def get_place_overall(request, competition_pk=None):
     """
     detachment = get_object_or_404(Detachment, commander=request.user)
     competition = get_object_or_404(Competitions, pk=competition_pk)
-    tandem_ranking = OverallTandemRanking.objects.filter(
-        detachment=detachment,
-        competition=competition
-    ).first()
-    is_older_detachment = False
-    if not tandem_ranking:
-        tandem_ranking = OverallTandemRanking.objects.filter(
-            junior_detachment=detachment,
+
+    if settings.SHOW_RESERVED_PLACE:
+        ranking_copy = RankingCopy.objects.filter(
+            detachment=detachment,
             competition=competition
         ).first()
-        is_older_detachment = True
-    if tandem_ranking and tandem_ranking.place is not None:
-        return Response(
-            {
-                "place": tandem_ranking.place,
-                "places_sum": tandem_ranking.places_sum,
-                "partner_detachment": (
-                    ShortDetachmentSerializer(
-                        tandem_ranking.detachment
-                    ).data if is_older_detachment else
-                    ShortDetachmentSerializer(
-                        tandem_ranking.junior_detachment
-                    ).data
-                )
-            },
-            status=status.HTTP_200_OK
-        )
-    elif tandem_ranking:
-        return Response(
-            {"error": "Рейтинг еще не сформирован"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    ranking = OverallRanking.objects.filter(
-        detachment=detachment,
-        competition=competition
-    ).first()
-    if ranking and ranking.place is not None:
-        return Response(
-            {
-                "place": ranking.place,
-                "places_sum": ranking.places_sum,
+        if ranking_copy and ranking_copy.place is not None:
+            return Response(
+                {
+                    "place": ranking_copy.place,
+                    "places_sum": ranking_copy.places_sum
+                },
+                status=status.HTTP_200_OK
+            )
 
-            }, status=status.HTTP_200_OK
-        )
+        tandem_ranking_copy = TandemRankingCopy.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).first()
+        is_older_detachment = False
+        if not tandem_ranking_copy:
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition=competition
+            ).first()
+            is_older_detachment = True
+
+        if tandem_ranking_copy and tandem_ranking_copy.place is not None:
+            return Response(
+                {
+                    "place": tandem_ranking_copy.place,
+                    "places_sum": tandem_ranking_copy.places_sum,
+                    "partner_detachment": (
+                        ShortDetachmentSerializer(
+                            tandem_ranking_copy.detachment
+                        ).data if is_older_detachment else
+                        ShortDetachmentSerializer(
+                            tandem_ranking_copy.junior_detachment
+                        ).data
+                    )
+                },
+                status=status.HTTP_200_OK
+            )
+    else:
+        tandem_ranking = OverallTandemRanking.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).first()
+        is_older_detachment = False
+        if not tandem_ranking:
+            tandem_ranking = OverallTandemRanking.objects.filter(
+                junior_detachment=detachment,
+                competition=competition
+            ).first()
+            is_older_detachment = True
+
+        if tandem_ranking and tandem_ranking.place is not None:
+            return Response(
+                {
+                    "place": tandem_ranking.place,
+                    "places_sum": tandem_ranking.places_sum,
+                    "partner_detachment": (
+                        ShortDetachmentSerializer(
+                            tandem_ranking.detachment
+                        ).data if is_older_detachment else
+                        ShortDetachmentSerializer(
+                            tandem_ranking.junior_detachment
+                        ).data
+                    )
+                },
+                status=status.HTTP_200_OK
+            )
+        elif tandem_ranking:
+            return Response(
+                {"error": "Рейтинг еще не сформирован"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        ranking = OverallRanking.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).first()
+        if ranking and ranking.place is not None:
+            return Response(
+                {
+                    "place": ranking.place,
+                    "places_sum": ranking.places_sum
+                },
+                status=status.HTTP_200_OK
+            )
 
     return Response(
         {"place": "Рейтинг еще не сформирован"},
@@ -5202,39 +5483,69 @@ def get_place_overall(request, competition_pk=None):
 def get_detachment_place(request, detachment_pk=None, competition_pk=None):
     detachment = get_object_or_404(Detachment, pk=detachment_pk)
     competition = get_object_or_404(Competitions, pk=competition_pk)
-    tandem_ranking = OverallTandemRanking.objects.filter(
-        detachment=detachment,
-        competition=competition
-    ).first()
-    if not tandem_ranking:
-        tandem_ranking = OverallTandemRanking.objects.filter(
-            junior_detachment=detachment,
+
+    if settings.SHOW_RESERVED_PLACE:
+        ranking_copy = RankingCopy.objects.filter(
+            detachment=detachment,
             competition=competition
         ).first()
+        if ranking_copy and ranking_copy.place is not None:
+            return Response(
+                {"place": ranking_copy.place},
+                status=status.HTTP_200_OK
+            )
 
-    if tandem_ranking and tandem_ranking.place is not None:
-        return Response(
-            {"place": tandem_ranking.place},
-            status=status.HTTP_200_OK
-        )
-    elif tandem_ranking:
-        return Response(
-            {"error": "Рейтинг еще не сформирован"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    ranking = OverallRanking.objects.filter(
-        detachment=detachment,
-        competition=competition
-    ).first()
-    if ranking and ranking.place is not None:
-        return Response(
-            {"place": ranking.place}, status=status.HTTP_200_OK
-        )
+        tandem_ranking_copy = TandemRankingCopy.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).first()
+        if not tandem_ranking_copy:
+            tandem_ranking_copy = TandemRankingCopy.objects.filter(
+                junior_detachment=detachment,
+                competition=competition
+            ).first()
+
+        if tandem_ranking_copy and tandem_ranking_copy.place is not None:
+            return Response(
+                {"place": tandem_ranking_copy.place},
+                status=status.HTTP_200_OK
+            )
+    else:
+        tandem_ranking = OverallTandemRanking.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).first()
+        if not tandem_ranking:
+            tandem_ranking = OverallTandemRanking.objects.filter(
+                junior_detachment=detachment,
+                competition=competition
+            ).first()
+
+        if tandem_ranking and tandem_ranking.place is not None:
+            return Response(
+                {"place": tandem_ranking.place},
+                status=status.HTTP_200_OK
+            )
+        elif tandem_ranking:
+            return Response(
+                {"error": "Рейтинг еще не сформирован"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        ranking = OverallRanking.objects.filter(
+            detachment=detachment,
+            competition=competition
+        ).first()
+        if ranking and ranking.place is not None:
+            return Response(
+                {"place": ranking.place}, status=status.HTTP_200_OK
+            )
 
     return Response(
         {"place": "Рейтинг еще не сформирован"},
         status=status.HTTP_404_NOT_FOUND
     )
+
 
 
 class DetachmentCompetitionIsTandemView(APIView):
@@ -5319,27 +5630,53 @@ def get_detachment_places(request, competition_pk, detachment_pk):
         junior_detachment=detachment,
         detachment__isnull=True
     ).exists()
+
+    ranking_copy = RankingCopy.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+
+    tandem_ranking_copy = TandemRankingCopy.objects.filter(
+        detachment=detachment,
+        competition=competition
+    ).first()
+
+    junior_tandem_ranking_copy = TandemRankingCopy.objects.filter(
+        junior_detachment=detachment,
+        competition=competition
+    ).first()
+
     if is_solo:
         response['partner_detachment'] = None
         response['is_tandem'] = False
         response['is_junior_detachment'] = True
-        try:
-            response['overall_place'] = OverallRanking.objects.get(
-                detachment=detachment, competition=competition
-            ).place
-            response['places_sum'] = OverallRanking.objects.get(
-                detachment=detachment, competition=competition
-            ).places_sum
-        except OverallRanking.DoesNotExist:
-            response['overall_place'] = 'Рейтинг ещё не сформирован'
-            response['places_sum'] = 'Рейтинг ещё не сформирован'
-        for q_number, q_ranking in enumerate(SOLO_RANKING_MODELS, start=1):
+
+        if ranking_copy:
+            response['overall_place'] = ranking_copy.place
+            response['places_sum'] = ranking_copy.places_sum
+        else:
             try:
-                response[f'q{q_number}_place'] = q_ranking.objects.get(
+                overall_ranking = OverallRanking.objects.get(
                     detachment=detachment, competition=competition
-                ).place
-            except q_ranking.DoesNotExist:
-                response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+                )
+                response['overall_place'] = overall_ranking.place
+                response['places_sum'] = overall_ranking.places_sum
+            except OverallRanking.DoesNotExist:
+                response['overall_place'] = 'Рейтинг ещё не сформирован'
+                response['places_sum'] = 'Рейтинг ещё не сформирован'
+
+        for q_number, q_ranking in enumerate(SOLO_RANKING_MODELS, start=1):
+            ranking_field = f'q{q_number}_place'
+            if hasattr(ranking_copy, ranking_field) and getattr(ranking_copy, ranking_field) is not None:
+                response[ranking_field] = getattr(ranking_copy, ranking_field)
+            else:
+                try:
+                    response[ranking_field] = q_ranking.objects.get(
+                        detachment=detachment, competition=competition
+                    ).place
+                except q_ranking.DoesNotExist:
+                    response[ranking_field] = 'Рейтинг ещё не сформирован'
+
     if not is_solo:
         is_tandem_junior = CompetitionParticipants.objects.filter(
             junior_detachment=detachment,
@@ -5353,23 +5690,33 @@ def get_detachment_places(request, competition_pk, detachment_pk):
             }
             response['is_tandem'] = True
             response['is_junior_detachment'] = True
-            try:
-                response['overall_place'] = OverallTandemRanking.objects.get(
-                    junior_detachment=detachment, competition=competition
-                ).place
-                response['places_sum'] = OverallTandemRanking.objects.get(
-                    junior_detachment=detachment, competition=competition
-                ).places_sum
-            except OverallTandemRanking.DoesNotExist:
-                response['overall_place'] = 'Рейтинг ещё не сформирован'
-                response['places_sum'] = 'Рейтинг ещё не сформирован'
-            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+
+            if junior_tandem_ranking_copy:
+                response['overall_place'] = junior_tandem_ranking_copy.place
+                response['places_sum'] = junior_tandem_ranking_copy.places_sum
+            else:
                 try:
-                    response[f'q{q_number}_place'] = q_ranking.objects.get(
+                    overall_tandem_ranking = OverallTandemRanking.objects.get(
                         junior_detachment=detachment, competition=competition
-                    ).place
-                except q_ranking.DoesNotExist:
-                    response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+                    )
+                    response['overall_place'] = overall_tandem_ranking.place
+                    response['places_sum'] = overall_tandem_ranking.places_sum
+                except OverallTandemRanking.DoesNotExist:
+                    response['overall_place'] = 'Рейтинг ещё не сформирован'
+                    response['places_sum'] = 'Рейтинг ещё не сформирован'
+
+            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+                ranking_field = f'q{q_number}_place'
+                if hasattr(junior_tandem_ranking_copy, ranking_field) and getattr(junior_tandem_ranking_copy,
+                                                                                  ranking_field) is not None:
+                    response[ranking_field] = getattr(junior_tandem_ranking_copy, ranking_field)
+                else:
+                    try:
+                        response[ranking_field] = q_ranking.objects.get(
+                            junior_detachment=detachment, competition=competition
+                        ).place
+                    except q_ranking.DoesNotExist:
+                        response[ranking_field] = 'Рейтинг ещё не сформирован'
 
         is_older_detachment = CompetitionParticipants.objects.filter(
             detachment=detachment,
@@ -5382,25 +5729,37 @@ def get_detachment_places(request, competition_pk, detachment_pk):
             }
             response['is_tandem'] = True
             response['is_junior_detachment'] = False
-            try:
-                response['overall_place'] = OverallTandemRanking.objects.get(
-                    detachment=detachment, competition=competition
-                ).place
-                response['places_sum'] = OverallTandemRanking.objects.get(
-                    detachment=detachment, competition=competition
-                ).places_sum
-            except OverallTandemRanking.DoesNotExist:
-                response['overall_place'] = 'Рейтинг ещё не сформирован'
-                response['places_sum'] = 'Рейтинг ещё не сформирован'
-            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+
+            if tandem_ranking_copy:
+                response['overall_place'] = tandem_ranking_copy.place
+                response['places_sum'] = tandem_ranking_copy.places_sum
+            else:
                 try:
-                    response[f'q{q_number}_place'] = q_ranking.objects.get(
+                    overall_tandem_ranking = OverallTandemRanking.objects.get(
                         detachment=detachment, competition=competition
-                    ).place
-                except q_ranking.DoesNotExist:
-                    response[f'q{q_number}_place'] = 'Рейтинг ещё не сформирован'
+                    )
+                    response['overall_place'] = overall_tandem_ranking.place
+                    response['places_sum'] = overall_tandem_ranking.places_sum
+                except OverallTandemRanking.DoesNotExist:
+                    response['overall_place'] = 'Рейтинг ещё не сформирован'
+                    response['places_sum'] = 'Рейтинг ещё не сформирован'
+
+            for q_number, q_ranking in enumerate(TANDEM_RANKING_MODELS, start=1):
+                ranking_field = f'q{q_number}_place'
+                if hasattr(tandem_ranking_copy, ranking_field) and getattr(tandem_ranking_copy,
+                                                                           ranking_field) is not None:
+                    response[ranking_field] = getattr(tandem_ranking_copy, ranking_field)
+                else:
+                    try:
+                        response[ranking_field] = q_ranking.objects.get(
+                            detachment=detachment, competition=competition
+                        ).place
+                    except q_ranking.DoesNotExist:
+                        response[ranking_field] = 'Рейтинг ещё не сформирован'
+
         else:
             return Response({'detail': 'Отряд не участвует в конкурсе'}, status=status.HTTP_400_BAD_REQUEST)
+
     return Response(response, status=status.HTTP_200_OK)
 
 
