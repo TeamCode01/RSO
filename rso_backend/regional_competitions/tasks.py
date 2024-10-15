@@ -50,14 +50,12 @@ def send_email_report_part_2(regional_headquarter_id: int):
     try:
         logger.info(
             f'Региональный штаб {regional_headquarter} отправил часть '
-            f'показателей по 2-й части отчета на верификацию...'
+            f'показателей по 2-й части отчета на верификацию... Проверяем отправку'
         )
         not_sent_exists = False
         for model in REPORTS_IS_SENT_MODELS:
             if not hasattr(model, 'is_sent'):
                 continue
-
-            logger.info(f'Проверяем {model._meta.verbose_name} для РШ {regional_headquarter}')
 
             try:
                 instance = model.objects.get(regional_headquarter_id=regional_headquarter_id)
@@ -69,11 +67,7 @@ def send_email_report_part_2(regional_headquarter_id: int):
                 )
                 continue
 
-            if instance.is_sent:
-                logger.info(
-                    f'Региональный штаб {regional_headquarter} отправил {model._meta.verbose_name} на верификацию'
-                )
-            else:
+            if not instance.is_sent:
                 not_sent_exists = True
                 logger.warning(
                     f'Региональный штаб {regional_headquarter} НЕ! отправил '
