@@ -99,7 +99,7 @@ def send_email_report_part_2(regional_headquarter_id: int):
         send_email_with_attachment(
             subject='Получен отчет о деятельности регионального отделения РСО за 2024 год - часть 2',
             message=EMAIL_REPORT_PART_2_MESSAGE,
-            recipients=get_emails(regional_headquarter_id),
+            recipients=get_emails(regional_headquarter),
             file_path=pdf_file_p2,
             additional_file_path=pdf_file_p1
         )
