@@ -191,7 +191,6 @@ class FormDataNestedFileParser:
             keys = self.extract_keys(key)
             data = self.assign_value(data, keys, value)
         result = self.remove_duplicate_keys(data)
-        print(result)
         return result
 
     def update(self, request, *args, **kwargs):
