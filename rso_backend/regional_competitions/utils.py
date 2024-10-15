@@ -709,7 +709,6 @@ def add_verbose_names_and_values_to_pdf(
     header_background_color = colors.HexColor('#F0F0F0')
     cell_background_color = colors.white
 
-    data = []
     nested_structures = []
 
     for field_name, field_value in verbose_names_and_values.items():
@@ -726,24 +725,9 @@ def add_verbose_names_and_values_to_pdf(
             continue
 
         if not isinstance(field_value_content, dict):
-            data.append([
-                Paragraph(f"<b>{verbose_name}:</b>", styles['Normal']),
-                Paragraph(str(field_value_content), styles['Normal'])
-            ])
-
-    if data:
-        table = Table(data, colWidths=[6 * cm, 10 * cm], splitByRow=True)
-        table.setStyle(TableStyle([
-            ('TEXTCOLOR', (0, 0), (-1, 0), primary_color),
-            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND', (0, 0), (-1, -1), cell_background_color),
-        ]))
-        elements.append(table)
-        elements.append(Spacer(1, 10))
+            # Directly add the content as Paragraphs
+            elements.append(Paragraph(f"<b>{verbose_name}:</b> {str(field_value_content)}", styles['Normal']))
+            elements.append(Spacer(1, 5))
 
     for nested_name, nested_items in nested_structures:
         singular_names = {
