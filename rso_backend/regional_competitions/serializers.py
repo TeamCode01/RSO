@@ -9,7 +9,8 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR2,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR18,
+                                          RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -189,7 +190,6 @@ class EmptyAsNoneMixin:
         Переопределяем to_internal_value для обработки пустых строк как None перед валидацией.
         """
         return super().to_internal_value(self.treat_empty_string_as_none(data))
-
 
 
 class NestedCreateUpdateMixin:
@@ -443,21 +443,20 @@ class BaseLinkSerializer(serializers.ModelSerializer):
 
 
 class BaseEventSerializer(FileScanSizeSerializerMixin):
-
     class Meta:
         model = None
         fields = (
-            'id',
-            'participants_number',
-            'start_date',
-            'end_date',
-            'regulations',
-        ) + FileScanSizeSerializerMixin.Meta.fields
+                     'id',
+                     'participants_number',
+                     'start_date',
+                     'end_date',
+                     'regulations',
+                 ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = ('id',)
 
     def to_internal_value(self, data):
         print(f"Original data: {data}")
-        
+
         if 'is_interregional' in data:
             data['is_interregional'] = True if data['is_interregional'].lower() == 'true' else False
 
@@ -475,13 +474,12 @@ class BaseEventSerializer(FileScanSizeSerializerMixin):
         return super().to_internal_value(data)
 
 
-
 class RegionalR1Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR1
         fields = (
-            BaseRSerializer.Meta.fields + FileScanSizeSerializerMixin.Meta.fields
-            + ('comment', 'scan_file', 'amount_of_money')
+                BaseRSerializer.Meta.fields + FileScanSizeSerializerMixin.Meta.fields
+                + ('comment', 'scan_file', 'amount_of_money')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -613,8 +611,8 @@ class BaseRegionalR6Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
         link_model = None
         model = None
         fields = (
-            BaseRSerializer.Meta.fields
-            + ('number_of_members', 'links', 'comment')
+                BaseRSerializer.Meta.fields
+                + ('number_of_members', 'links', 'comment')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -654,9 +652,9 @@ class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         link_model = None
         model = None
         fields = (
-            BaseRSerializer.Meta.fields
-            + ('comment', 'event_happened', 'document', 'links')
-            + FileScanSizeSerializerMixin.Meta.fields
+                BaseRSerializer.Meta.fields
+                + ('comment', 'event_happened', 'document', 'links')
+                + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -675,9 +673,9 @@ class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fi
         link_model = None
         model = None
         fields = (
-            BaseRSerializer.Meta.fields
-            + ('comment', 'event_happened', 'document', 'links')
-            + FileScanSizeSerializerMixin.Meta.fields
+                BaseRSerializer.Meta.fields
+                + ('comment', 'event_happened', 'document', 'links')
+                + FileScanSizeSerializerMixin.Meta.fields
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -730,9 +728,9 @@ class RegionalR11Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR11
         fields = (
-            BaseRSerializer.Meta.fields
-            + FileScanSizeSerializerMixin.Meta.fields
-            + ('comment', 'participants_number', 'scan_file')
+                BaseRSerializer.Meta.fields
+                + FileScanSizeSerializerMixin.Meta.fields
+                + ('comment', 'participants_number', 'scan_file')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -741,9 +739,9 @@ class RegionalR12Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR12
         fields = (
-            BaseRSerializer.Meta.fields
-            + FileScanSizeSerializerMixin.Meta.fields
-            + ('comment', 'amount_of_money', 'scan_file')
+                BaseRSerializer.Meta.fields
+                + FileScanSizeSerializerMixin.Meta.fields
+                + ('comment', 'amount_of_money', 'scan_file')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -752,9 +750,9 @@ class RegionalR13Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR13
         fields = (
-            BaseRSerializer.Meta.fields
-            + FileScanSizeSerializerMixin.Meta.fields
-            + ('comment', 'number_of_members', 'scan_file')
+                BaseRSerializer.Meta.fields
+                + FileScanSizeSerializerMixin.Meta.fields
+                + ('comment', 'number_of_members', 'scan_file')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
@@ -776,14 +774,14 @@ class RegionalR16ProjectSerializer(FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR16Project
         fields = (
-            'id',
-            'regional_r16',
-            'name',
-            'project_scale',
-            'regulations',
-            'links'
-        ) + FileScanSizeSerializerMixin.Meta.fields
-        read_only_fields = ('id', 'regional_r16', )
+                     'id',
+                     'regional_r16',
+                     'name',
+                     'project_scale',
+                     'regulations',
+                     'links'
+                 ) + FileScanSizeSerializerMixin.Meta.fields
+        read_only_fields = ('id', 'regional_r16',)
 
 
 class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
@@ -811,15 +809,14 @@ class RegionalR16Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Nested
 class RegionalR17Serializer(
     EmptyAsNoneMixin, ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer
 ):
-
     class Meta:
         model = RegionalR17
         fields = (
-            'id',
-            'regional_headquarter',
-            'scan_file',
-            'comment',
-        ) + FileScanSizeSerializerMixin.Meta.fields
+                     'id',
+                     'regional_headquarter',
+                     'scan_file',
+                     'comment',
+                 ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = (
             'id',
             'regional_headquarter',
@@ -843,11 +840,11 @@ class RegionalR18ProjectSerializer(FileScanSizeSerializerMixin):
     class Meta:
         model = RegionalR18Project
         fields = (
-            'id',
-            'regional_r18',
-            'file',
-            'links'
-        ) + FileScanSizeSerializerMixin.Meta.fields
+                     'id',
+                     'regional_r18',
+                     'file',
+                     'links'
+                 ) + FileScanSizeSerializerMixin.Meta.fields
         read_only_fields = ('id', 'regional_r18',)
 
 
@@ -917,12 +914,6 @@ REPORTS_SERIALIZERS = [
     RegionalR1Serializer,
     RegionalR4Serializer,
     RegionalR5Serializer,
-    RegionalR101Serializer,
-    RegionalR102Serializer,
-    RegionalR11Serializer,
-    RegionalR12Serializer,
-    RegionalR13Serializer,
-    RegionalR16Serializer,
 ]
 
 REPORTS_SERIALIZERS.extend(
@@ -942,5 +933,15 @@ REPORTS_SERIALIZERS.extend(
     [
         serializer_class for serializer_name, serializer_class in r9_serializers_factory.serializers.items()
         if not serializer_name.endswith('Link')
+    ]
+)
+REPORTS_SERIALIZERS.extend(
+    [
+        RegionalR101Serializer,
+        RegionalR102Serializer,
+        RegionalR11Serializer,
+        RegionalR12Serializer,
+        RegionalR13Serializer,
+        RegionalR16Serializer,
     ]
 )
