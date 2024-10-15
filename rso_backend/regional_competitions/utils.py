@@ -149,6 +149,8 @@ def get_emails(report_instance) -> list:
 
     if isinstance(report_instance, RegionalHeadquarter):
         regional_headquarter = report_instance
+    elif isinstance(report_instance, int):
+        regional_headquarter = RegionalHeadquarter.objects.get(pk=report_instance)
     else:
         regional_headquarter = report_instance.regional_headquarter
 
