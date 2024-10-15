@@ -312,6 +312,7 @@ class RegionalR5Admin(admin.ModelAdmin):
 r6_list_display = (
     'regional_headquarter',
     'id',
+    'is_project',
     'is_sent',
     'number_of_members',
     'verified_by_chq',
@@ -409,6 +410,7 @@ class RegionalR101Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'get_id_regional_headquarter',
+        'regional_headquarter',
         'is_sent',
         'event_happened',
         'document',
