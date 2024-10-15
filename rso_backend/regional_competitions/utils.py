@@ -166,9 +166,8 @@ def get_emails(report_instance) -> list:
             f'Не найден почтовый адрес в RegionalHeadquarterEmail '
             f'для РШ {regional_headquarter} ID {regional_headquarter.id}'
         )
-    if settings.PRODUCTION:
-        addresses.append('rso.login@yandex.ru')
-        addresses.append('delightxxls@gmail.com')
+    addresses.append('rso.login@yandex.ru')
+    addresses.append('delightxxls@gmail.com')
     return addresses
 
 
@@ -733,7 +732,7 @@ def add_verbose_names_and_values_to_pdf(
             ])
 
     if data:
-        table = Table(data, colWidths=[6 * cm, 10 * cm])
+        table = Table(data, colWidths=[6 * cm, 10 * cm], splitByRow=True)
         table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, 0), primary_color),
             ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
