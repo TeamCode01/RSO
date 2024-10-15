@@ -187,9 +187,9 @@ class BaseRegionalR(models.Model):
                     return
                 else:
                     raise ValidationError(REPORT_EXISTS_MESSAGE)
-        else:  # редактирование существующего объекта
-            if not isinstance(report, RegionalR13) and report.is_sent is True:
-                raise ValidationError(REPORT_SENT_MESSAGE)
+        # else:  # редактирование существующего объекта
+        #     if not isinstance(report, RegionalR13) and report.is_sent is True:
+        #         raise ValidationError(REPORT_SENT_MESSAGE)
 
     class Meta:
         abstract = True

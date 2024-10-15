@@ -60,11 +60,11 @@ def send_email_report_part_2(regional_headquarter_id: int):
             try:
                 instance = model.objects.get(regional_headquarter_id=regional_headquarter_id)
             except model.DoesNotExist:
-                not_sent_exists = True
-                logger.warning(
-                    f'Региональный штаб {regional_headquarter} НЕ! '
-                    f'приступил к заполнению {model._meta.verbose_name}'
-                )
+                # not_sent_exists = True
+                # logger.warning(
+                #     f'Региональный штаб {regional_headquarter} НЕ! '
+                #     f'приступил к заполнению {model._meta.verbose_name}'
+                # )
                 continue
 
             if not instance.is_sent:
