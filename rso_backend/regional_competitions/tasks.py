@@ -57,12 +57,11 @@ def send_email_report_part_2(regional_headquarter_id: int):
             if not hasattr(model, 'is_sent'):
                 continue
 
-            try:
-                instance = model.objects.get(
-                    regional_headquarter_id=regional_headquarter_id,
-                    is_sent=True
-                )
-            except model.DoesNotExist:
+            instance = model.objects.filter(
+                regional_headquarter_id=regional_headquarter_id,
+                is_sent=True
+            ).last()
+            if not instance:
                 # not_sent_exists = True
                 # logger.warning(
                 #     f'Региональный штаб {regional_headquarter} НЕ! '
