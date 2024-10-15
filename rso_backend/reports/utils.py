@@ -52,20 +52,24 @@ def get_competition_users(
     competition_members_data: List[Tuple[Detachment, List[RSOUser]]] = []
     for participant_entry in competition_participants:
         if participant_entry.detachment:
+            area_name = participant_entry.detachment.area.name if participant_entry.detachment.area else '-'
             users_to_append = process_detachment_users(
                 participant_entry.detachment,
                 'Наставник',
-                'Тандем'
+                'Тандем',
             )
+            participant_entry.detachment.area_name = area_name
             competition_members_data.append((participant_entry.detachment, users_to_append))
 
         if participant_entry.junior_detachment:
+            area_name = participant_entry.junior_detachment.area.name if participant_entry.junior_detachment.area else '-'
             nomination = 'Тандем' if participant_entry.detachment else 'Дебют'
             users_to_append = process_detachment_users(
                 participant_entry.junior_detachment,
                 'Младший отряд',
-                nomination
+                nomination,
             )
+            participant_entry.junior_detachment.area_name = area_name
             competition_members_data.append((participant_entry.junior_detachment, users_to_append))
 
     return competition_members_data
@@ -90,6 +94,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         detachment.participants_count = get_hq_participants_15_september(detachment)
         detachment.status = 'Младший отряд'
         detachment.nomination = 'Дебют'
+        detachment.area_name = detachment.area.name
         detachment.places = []
         try:
             detachment.overall_ranking = OverallRanking.objects.get(
@@ -126,11 +131,13 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         junior_detachment.participants_count = get_hq_participants_15_september(junior_detachment)
         junior_detachment.status = 'Младший отряд'
         junior_detachment.nomination = 'Тандем'
+        junior_detachment.area_name = junior_detachment.area.name
         junior_detachment.places = []
         detachment = participant_entry.detachment
         detachment.participants_count = get_hq_participants_15_september(detachment)
         detachment.status = 'Наставник'
         detachment.nomination = 'Тандем'
+        detachment.area_name = detachment.area.name
         detachment.places = []
         try:
             overall_ranking = OverallTandemRanking.objects.get(
@@ -170,6 +177,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
             row.name,
             row.status,
             row.nomination,
+            row.area_name,
             row.participants_count,
             row.overall_ranking,
             row.places_sum,
@@ -208,6 +216,7 @@ def get_safety_results():
             row.user.first_name,
             row.user.patronymic_name,
             row.detachment if row.detachment else '-',
+            row.detachment.area.name if row.detachment.area else '-',
             row.detachment_position if row.detachment_position else '-',
             row.attempt_number,
             row.is_valid,
@@ -226,6 +235,7 @@ def get_competition_participants_data():
         for user in users:
             row = (
                 detachment.region.name if detachment.region else '-',
+                detachment.area.name if detachment.area else '-',
                 f'{user.last_name} {user.first_name} '
                 f'{user.patronymic_name if user.patronymic_name else "(без отчества)"}',
                 detachment.name if detachment else '-',
@@ -333,6 +343,7 @@ def get_commander_school_data(competition_id: int) -> list:
     ).values(
         'detachment__name',
         'detachment__region__name',
+        'detachment__area__name',
         'detachment__q2detachmentreport_detachment_reports__commander_achievement',
         'detachment__q2detachmentreport_detachment_reports__commissioner_achievement',
         'detachment__q2detachmentreport_detachment_reports__commander_link',
@@ -351,6 +362,7 @@ def get_commander_school_data(competition_id: int) -> list:
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
+        'junior_detachment__area__name',
         'junior_detachment__q2detachmentreport_detachment_reports__commander_achievement',
         'junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement',
         'junior_detachment__q2detachmentreport_detachment_reports__commander_link',
@@ -369,6 +381,7 @@ def get_commander_school_data(competition_id: int) -> list:
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
+        'junior_detachment__area__name',
         'junior_detachment__q2detachmentreport_detachment_reports__commander_achievement',
         'junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement',
         'junior_detachment__q2detachmentreport_detachment_reports__commander_link',
@@ -382,6 +395,7 @@ def get_commander_school_data(competition_id: int) -> list:
             data.get('detachment__name', '-'),
             data.get('detachment__region__name', '-'),
             'Тандем',
+            data.get('detachment__area__name', '-') or '-',
             'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
             'Да' if data.get('detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
             data.get('detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
@@ -396,6 +410,7 @@ def get_commander_school_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
+            data.get('junior_detachment__area__name', '-') or '-',
             'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
             'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
             data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
@@ -410,6 +425,7 @@ def get_commander_school_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
+            data.get('junior_detachment__area__name', '-') or '-',
             'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_achievement') else 'Нет',
             'Да' if data.get('junior_detachment__q2detachmentreport_detachment_reports__commissioner_achievement') else 'Нет',
             data.get('junior_detachment__q2detachmentreport_detachment_reports__commander_link', '-') or '-',
@@ -442,6 +458,7 @@ def get_q5_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         edu_participant.name,
                         document_url,
                         'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
@@ -460,6 +477,7 @@ def get_q5_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         edu_participant.name,
                         document_url,
                         'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
@@ -478,6 +496,7 @@ def get_q5_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         edu_participant.name,
                         document_url,
                         'Верифицирован' if edu_participant.is_verified else 'Не верифицирован',
@@ -522,6 +541,7 @@ def get_q6_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Тандем',
+                    detachment.area.name if detachment.area else '-',
                     'Да' if demonstration and demonstration.first_may_demonstration else 'Нет',
                     demonstration.first_may_demonstration_participants if demonstration else '-',
                     'Да' if patriotic_action and patriotic_action.patriotic_action else 'Нет',
@@ -556,6 +576,7 @@ def get_q6_data(competition_id: int) -> list:
                     junior_detachment.name,
                     junior_detachment.region.name if junior_detachment.region else '-',
                     'Тандем',
+                    junior_detachment.area.name if junior_detachment.area else '-',
                     'Да' if demonstration and demonstration.first_may_demonstration else 'Нет',
                     demonstration.first_may_demonstration_participants if demonstration else '-',
                     'Да' if patriotic_action and patriotic_action.patriotic_action else 'Нет',
@@ -590,6 +611,7 @@ def get_q6_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Дебют',
+                    detachment.area.name if detachment.area else '-',
                     'Да' if demonstration and demonstration.first_may_demonstration else 'Нет',
                     demonstration.first_may_demonstration_participants if demonstration else '-',
                     'Да' if patriotic_action and patriotic_action.patriotic_action else 'Нет',
@@ -629,6 +651,7 @@ def get_q7_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.number_of_participants if participation.number_of_participants else '-',
                         social_link,
@@ -649,6 +672,7 @@ def get_q7_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.number_of_participants if participation.number_of_participants else '-',
                         social_link,
@@ -669,6 +693,7 @@ def get_q7_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.number_of_participants if participation.number_of_participants else '-',
                         social_link,
@@ -699,6 +724,7 @@ def get_q8_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.number_of_participants if participation.number_of_participants else '-',
                         certificate_link,
@@ -717,6 +743,7 @@ def get_q8_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.number_of_participants if participation.number_of_participants else '-',
                         certificate_link,
@@ -735,6 +762,7 @@ def get_q8_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.number_of_participants if participation.number_of_participants else '-',
                         certificate_link,
@@ -764,6 +792,7 @@ def get_q9_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -782,6 +811,7 @@ def get_q9_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -800,6 +830,7 @@ def get_q9_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -829,6 +860,7 @@ def get_q10_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -847,6 +879,7 @@ def get_q10_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -865,6 +898,7 @@ def get_q10_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -894,6 +928,7 @@ def get_q11_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -912,6 +947,7 @@ def get_q11_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -930,6 +966,7 @@ def get_q11_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -959,6 +996,7 @@ def get_q12_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -977,6 +1015,7 @@ def get_q12_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -995,6 +1034,7 @@ def get_q12_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         participation.event_name if participation.event_name else '-',
                         participation.prize_place if participation.prize_place else '-',
                         certificate_link,
@@ -1022,6 +1062,7 @@ def get_q13_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         event.event_type,
                         event.event_link,
                         place
@@ -1037,6 +1078,7 @@ def get_q13_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         event.event_type,
                         event.event_link,
                         place
@@ -1052,6 +1094,7 @@ def get_q13_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'дебют',
+                        detachment.area.name if detachment.area else '-',
                         event.event_type,
                         event.event_link,
                         place
@@ -1084,6 +1127,7 @@ def get_q14_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         project.lab_project_name,
                         project.amount,
                         report.score,
@@ -1102,6 +1146,7 @@ def get_q14_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         project.lab_project_name,
                         project.amount,
                         report.score,
@@ -1124,6 +1169,7 @@ def get_q14_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         project.lab_project_name,
                         project.amount,
                         report.score,
@@ -1150,6 +1196,7 @@ def get_q15_data(competition_id: int) -> list:
                     place = tandem_rankings.get(detachment.id).place if detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
                     rows.append((
                         detachment.name,
+                        detachment.area.name if detachment.area else '-',
                         grant_winner.name,
                         grant_winner.status,
                         grant_winner.author_name,
@@ -1167,6 +1214,7 @@ def get_q15_data(competition_id: int) -> list:
                     place = tandem_rankings.get(junior_detachment.id).place if junior_detachment.id in tandem_rankings else 'Ещё нет в рейтинге'
                     rows.append((
                         junior_detachment.name,
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         grant_winner.name,
                         grant_winner.status,
                         grant_winner.author_name,
@@ -1184,6 +1232,7 @@ def get_q15_data(competition_id: int) -> list:
                     place = individual_rankings.get(detachment.id).place if detachment.id in individual_rankings else 'Ещё нет в рейтинге'
                     rows.append((
                         detachment.name,
+                        detachment.area.name if detachment.area else '-',
                         grant_winner.name,
                         grant_winner.status,
                         grant_winner.author_name,
@@ -1212,6 +1261,7 @@ def get_q16_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Тандем',
+                    detachment.area.name if detachment.area else '-',
                     report.link_vk_commander,
                     report.link_vk_commissar,
                     report.vk_rso_number_subscribers,
@@ -1232,6 +1282,7 @@ def get_q16_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         report.link_vk_commander,
                         report.link_vk_commissar,
                         report.vk_rso_number_subscribers,
@@ -1253,6 +1304,7 @@ def get_q16_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Дебют',
+                    detachment.area.name if detachment.area else '-',
                     report.link_vk_commander,
                     report.link_vk_commissar,
                     report.vk_rso_number_subscribers,
@@ -1285,6 +1337,7 @@ def get_q17_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Тандем',
+                        detachment.area.name if detachment.area else '-',
                         str(event_link.detachment_report),
                         event_link.link,
                         place
@@ -1303,6 +1356,7 @@ def get_q17_data(competition_id: int) -> list:
                             junior_detachment.name,
                             junior_detachment.region.name if junior_detachment.region else '-',
                             'Тандем',
+                            junior_detachment.area.name if junior_detachment.area else '-',
                             str(event_link.detachment_report),
                             event_link.link,
                             place
@@ -1321,6 +1375,7 @@ def get_q17_data(competition_id: int) -> list:
                         detachment.name,
                         detachment.region.name if detachment.region else '-',
                         'Дебют',
+                        detachment.area.name if detachment.area else '-',
                         str(event_link.detachment_report),
                         event_link.link,
                         place
@@ -1345,6 +1400,7 @@ def get_q18_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Тандем',
+                    detachment.area.name if detachment.area else '-',
                     report.participants_number,
                     report.score,
                     place
@@ -1360,6 +1416,7 @@ def get_q18_data(competition_id: int) -> list:
                         junior_detachment.name,
                         junior_detachment.region.name if junior_detachment.region else '-',
                         'Тандем',
+                        junior_detachment.area.name if junior_detachment.area else '-',
                         report.participants_number,
                         report.score,
                         place
@@ -1376,6 +1433,7 @@ def get_q18_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Дебют',
+                    detachment.area.name if detachment.area else '-',
                     report.participants_number,
                     report.score,
                     place
@@ -1400,6 +1458,7 @@ def get_q19_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Тандем',
+                    detachment.area.name if detachment.area else '-',
                     report.safety_violations,
                     place
                 ))
@@ -1413,6 +1472,7 @@ def get_q19_data(competition_id: int) -> list:
                     junior_detachment.name,
                     junior_detachment.region.name if junior_detachment.region else '-',
                     'Тандем',
+                    junior_detachment.area.name if junior_detachment.area else '-',
                     report.safety_violations,
                     place
                 ))
@@ -1426,6 +1486,7 @@ def get_q19_data(competition_id: int) -> list:
                     detachment.name,
                     detachment.region.name if detachment.region else '-',
                     'Дебют',
+                    detachment.area.name if detachment.area else '-',
                     report.safety_violations,
                     place
                 ))
@@ -1447,6 +1508,7 @@ def get_membership_fee_data(competition_id: int) -> list:
     ).values(
         'detachment__name',
         'detachment__region__name',
+        'detachment__area__name',
         'detachment__sep_15_participants__members_number',
         'detachment__sep_15_participants__participants_number',
         'detachment__q1report_detachment_reports__score',
@@ -1464,6 +1526,7 @@ def get_membership_fee_data(competition_id: int) -> list:
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
+        'junior_detachment__area__name',
         'junior_detachment__sep_15_participants__members_number',
         'junior_detachment__sep_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
@@ -1482,6 +1545,7 @@ def get_membership_fee_data(competition_id: int) -> list:
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
+        'junior_detachment__area__name',
         'junior_detachment__sep_15_participants__members_number',
         'junior_detachment__sep_15_participants__participants_number',
         'junior_detachment__q1report_detachment_reports__score',
@@ -1494,6 +1558,7 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('detachment__name', '-'),
             data.get('detachment__region__name', '-'),
             'Тандем',
+            data.get('detachment__area__name', '-') or '-',
             data.get('detachment__sep_15_participants__participants_number'),
             data.get('detachment__sep_15_participants__members_number'),
             data.get('detachment__q1report_detachment_reports__score', '-') or '-',
@@ -1507,6 +1572,7 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
+            data.get('junior_detachment__area__name', '-') or '-',
             data.get('junior_detachment__sep_15_participants__participants_number'),
             data.get('junior_detachment__sep_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
@@ -1523,6 +1589,7 @@ def get_membership_fee_data(competition_id: int) -> list:
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
+            data.get('junior_detachment__area__name', '-') or '-',
             data.get('junior_detachment__sep_15_participants__participants_number'),
             data.get('junior_detachment__sep_15_participants__members_number'),
             data.get('junior_detachment__q1report_detachment_reports__score', '-'
@@ -1547,6 +1614,7 @@ def get_attributes_of_uniform_data(competition_id):
     ).values(
         'detachment__name',
         'detachment__region__name',
+        'detachment__area__name',
         'detachment__q20report_detachment_reports__score',
         'detachment__q20report_detachment_reports__link_emblem',
         'detachment__q20report_detachment_reports__link_emblem_img',
@@ -1568,6 +1636,7 @@ def get_attributes_of_uniform_data(competition_id):
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
+        'junior_detachment__area__name',
         'junior_detachment__q20report_detachment_reports__score',
         'junior_detachment__q20report_detachment_reports__link_emblem',
         'junior_detachment__q20report_detachment_reports__link_emblem_img',
@@ -1590,6 +1659,7 @@ def get_attributes_of_uniform_data(competition_id):
     ).values(
         'junior_detachment__name',
         'junior_detachment__region__name',
+        'junior_detachment__area__name',
         'junior_detachment__q20report_detachment_reports__score',
         'junior_detachment__q20report_detachment_reports__link_emblem',
         'junior_detachment__q20report_detachment_reports__link_emblem_img',
@@ -1607,6 +1677,7 @@ def get_attributes_of_uniform_data(competition_id):
             data.get('detachment__name', '-'),
             data.get('detachment__region__name', '-'),
             'Тандем',
+            data.get('detachment__area__name', '-') or '-',
             data.get('detachment__q20report_detachment_reports__link_emblem', '-') or '-',
             data.get('detachment__q20report_detachment_reports__link_emblem_img', '-') or '-',
             data.get('detachment__q20report_detachment_reports__link_flag', '-') or '-',
@@ -1625,6 +1696,7 @@ def get_attributes_of_uniform_data(competition_id):
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Тандем',
+            data.get('junior_detachment__area__name', '-') or '-',
             data.get('junior_detachment__q20report_detachment_reports__link_emblem', '-') or '-',
             data.get('junior_detachment__q20report_detachment_reports__link_emblem_img', '-') or '-',
             data.get('junior_detachment__q20report_detachment_reports__link_flag', '-') or '-',
@@ -1646,6 +1718,7 @@ def get_attributes_of_uniform_data(competition_id):
             data.get('junior_detachment__name', '-'),
             data.get('junior_detachment__region__name', '-'),
             'Дебют',
+            data.get('junior_detachment__area__name', '-') or '-',
             data.get('junior_detachment__q20report_detachment_reports__link_emblem', '-') or '-',
             data.get('junior_detachment__q20report_detachment_reports__link_emblem_img', '-') or '-',
             data.get('junior_detachment__q20report_detachment_reports__link_flag', '-') or '-',
