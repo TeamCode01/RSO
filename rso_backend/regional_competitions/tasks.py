@@ -58,7 +58,10 @@ def send_email_report_part_2(regional_headquarter_id: int):
                 continue
 
             try:
-                instance = model.objects.get(regional_headquarter_id=regional_headquarter_id)
+                instance = model.objects.get(
+                    regional_headquarter_id=regional_headquarter_id,
+                    is_sent=True
+                )
             except model.DoesNotExist:
                 # not_sent_exists = True
                 # logger.warning(
