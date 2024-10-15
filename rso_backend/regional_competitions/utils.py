@@ -574,14 +574,14 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     doc_style = getSampleStyleSheet()
 
     doc_style['Normal'].fontName = 'Times_New_Roman'
-    doc_style['Normal'].fontSize = 12
-    doc_style['Normal'].leading = 14
+    doc_style['Normal'].fontSize = 10
+    doc_style['Normal'].leading = 10
 
     doc_style.add(
         ParagraphStyle(
             name='CustomTitle',
             parent=doc_style['Normal'],
-            fontSize=18,
+            fontSize=14,
             spaceAfter=20,
             alignment=TA_CENTER,
             leading=24,
@@ -600,7 +600,7 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
         ParagraphStyle(
             name='SectionHeader',
             parent=doc_style['Normal'],
-            fontSize=16,
+            fontSize=12,
             spaceBefore=20,
             spaceAfter=10,
             textColor=colors.HexColor('#003366')
