@@ -541,14 +541,17 @@ def calculate_q18_place(competition_id):
             calculate_18th_detachment_members(entry, partner_entry)
 
         if entry:
-            entry.score = entry.participants_number / entry.june_15_detachment_members
+            new_score = round_math((entry.participants_number / entry.june_15_detachment_members), 2)
+            entry.score = new_score if new_score <= 1 else 1
             entry.save()
 
         if partner_entry and entry:
-            partner_entry.score = partner_entry.participants_number / partner_entry.june_15_detachment_members
+            new_score = round_math((partner_entry.participants_number / partner_entry.june_15_detachment_members), 2)
+            partner_entry.score = new_score if new_score <= 1 else 1
             partner_entry.save()
             tuple_to_append = (
-                entry, partner_entry, entry.score + partner_entry.score)
+                entry, partner_entry, entry.score + partner_entry.score
+            )
             if tuple_to_append not in category:
                 print(f'В категорию {"tandem entries" if category is tandem_entries else "solo entries"} добавили {tuple_to_append}')
                 category.append(tuple_to_append)
