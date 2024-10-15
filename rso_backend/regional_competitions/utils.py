@@ -141,7 +141,6 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     return f'regional_comp/regulations/{instance.__class__.__name__}/{regional_hq_id}/{base_filename}.{file_extension}'
 
 
-
 def get_emails(report_instance) -> list:
     if settings.DEBUG:
         return settings.TEST_EMAIL_ADDRESSES
@@ -335,10 +334,10 @@ def get_verbose_names_and_values(serializer) -> dict:
     custom_values_dict = {
         'True': 'Да',
         'False': 'Нет',
-        'None': 'Неизвестно',
+        'None': '-',
         'True': 'Да',
         'False': 'Нет',
-        'None': 'Неизвестно',
+        'None': '-',
     }
     verbose_names_and_values = {}
     model_meta = serializer.Meta.model._meta
