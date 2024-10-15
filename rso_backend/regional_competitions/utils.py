@@ -323,7 +323,7 @@ def generate_pdf_report_part_1(report_id) -> str:
     return pdf_file_path
 
 
-def get_verbose_names_and_values(serializer) -> dict:
+def get_verbose_names_and_values(serializer, full_path: bool = False) -> dict:
     """Возвращает словарь с названиями полей и значениями полей из сериализатора."""
 
     custom_verbose_names_dict = {
@@ -331,9 +331,6 @@ def get_verbose_names_and_values(serializer) -> dict:
         'links': 'Ссылки',
     }
     custom_values_dict = {
-        'True': 'Да',
-        'False': 'Нет',
-        'None': '-',
         'True': 'Да',
         'False': 'Нет',
         'None': '-',
@@ -356,7 +353,7 @@ def get_verbose_names_and_values(serializer) -> dict:
                 nested_verbose_names_and_values = []
                 for nested_instance in field_value.all():
                     nested_serializer = field.child.__class__(nested_instance)
-                    nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer))
+                    nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer, full_path))
                 verbose_names_and_values[field_name] = nested_verbose_names_and_values
             else:
                 verbose_names_and_values[field_name] = field_value
@@ -364,7 +361,7 @@ def get_verbose_names_and_values(serializer) -> dict:
         elif isinstance(field, serializers.ModelSerializer):
             if field_value is not None and hasattr(field_value, '_meta'):
                 nested_serializer = field.__class__(field_value)
-                nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer)
+                nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer, full_path)
                 for nested_field_name, nested_verbose_name_and_value in nested_verbose_names_and_values.items():
                     verbose_names_and_values[f"{field_name}.{nested_field_name}"] = nested_verbose_name_and_value
             else:
@@ -375,9 +372,7 @@ def get_verbose_names_and_values(serializer) -> dict:
                 verbose_name = model_meta.get_field(field_name).verbose_name
                 if hasattr(field_value, '__str__'):
                     field_value = str(field_value)
-                    if not field_value[:4] == 'http':
-                        field_value = os.path.basename(field_value)
-                    if not field_value[:4] == 'http':
+                    if full_path is False and not field_value[:4] == 'http':
                         field_value = os.path.basename(field_value)
                 verbose_names_and_values[field_name] = (verbose_name, field_value)
             except FieldDoesNotExist:
@@ -435,7 +430,9 @@ def get_all_reports_from_competition(report_number: int) -> HttpResponse:
 
             for report in reports:
                 serializer = serializer_class(report)
-                flat_data_dict = get_headers_values(fields_dict=get_verbose_names_and_values(serializer))
+                flat_data_dict = get_headers_values(fields_dict=get_verbose_names_and_values(
+                    serializer, full_path=True
+                ))
 
                 if not headers_written:
                     worksheet.append(list(flat_data_dict.keys()))
@@ -464,7 +461,7 @@ def get_all_reports_from_competition(report_number: int) -> HttpResponse:
 
 def get_all_models(module_name: str):
     """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
-    all_models = ['StatisticalRegionalReport', 'DumpStatisticalRegionalReport',]
+    all_models = ['DumpStatisticalRegionalReport', 'StatisticalRegionalReport',]
     pattern = re.compile(r'^RegionalR\d+$')
 
     for model in apps.get_models():
@@ -481,6 +478,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     models_list = get_all_models('regional_competitions.models')
     first_ws_is_filled = False
     workbook = Workbook()
+    STATISTICAL_REPORT_POSITION = 1
 
     for model_name in models_list:
         report_number = model_name.split('RegionalR')[1]
@@ -488,6 +486,8 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
         if model_name == 'DumpStatisticalRegionalReport':
             if not model.objects.filter(regional_headquarter_id=regional_headquarter_id).exists():
                 continue
+            else:
+                models_list.pop(STATISTICAL_REPORT_POSITION)
         if report_number == '14':
             instance = model.objects.filter(report_12__regional_headquarter_id=regional_headquarter_id).first()
             if instance is None:
@@ -510,7 +510,8 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
         serializer_data = serializer_class(instance)
         report_data = get_headers_values(
             get_verbose_names_and_values(
-                serializer_data
+                serializer_data,
+                full_path=True
             )
         )
         if model_name == 'DumpStatisticalRegionalReport' or model_name == 'StatisticalRegionalReport':
