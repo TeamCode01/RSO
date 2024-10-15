@@ -159,6 +159,7 @@ def get_emails(report_instance) -> list:
         )
     if settings.PRODUCTION:
         addresses.append('rso.login@yandex.ru')
+        addresses.append('delightxxls@gmail.com')
     return addresses
 
 
