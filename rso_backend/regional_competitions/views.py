@@ -10,7 +10,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from api.mixins import SendMixin
@@ -19,7 +18,7 @@ from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition, DistrictHeadquarter)
 from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES, 
-                                             EMAIL_REPORT_DECLINED_MESSAGE, REPORT_EXISTS_MESSAGE)
+                                             EMAIL_REPORT_DECLINED_MESSAGE)
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 

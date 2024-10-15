@@ -135,8 +135,8 @@ class SendMixin:
         regional_r = self.get_object()
         if self.get_report_number() == '16': 
             schedule, _ = IntervalSchedule.objects.get_or_create(
-                every=45,
-                period=IntervalSchedule.SECONDS,
+                every=35,
+                period=IntervalSchedule.MINUTES,
             )
             with suppress(django.core.exceptions.ValidationError):
                 f, created = PeriodicTask.objects.get_or_create(
@@ -146,7 +146,6 @@ class SendMixin:
                     args=json.dumps([regional_r.regional_headquarter.id])
                 )
 
-                print(f'Получили таску: {f}. created: {created}. task expires: {f.expires}')
 
                 if not f.expires or f.expires < now():
                     print('Таска истекла или нет времени истечения. Устанавливаем актуальное время истечения...')
