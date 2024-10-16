@@ -224,7 +224,7 @@ def calculate_r11_score():
             ro_score = (rso_vk_members / (members_with_fees))
         else:
             ro_score = (rso_vk_members / (members_with_fees)) + (rso_vk_members / (2 * report.participants_number))
-        report.score = ro_score
+        report.score = round(ro_score, 2)
         logger.info(f'Подсчитали очки 11-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
         updated_r11_reports.append(report)
     try:
