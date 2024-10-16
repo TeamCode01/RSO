@@ -32,7 +32,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           StatisticalRegionalReport,
                                           r6_models_factory,
                                           r9_models_factory)
-from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
+from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
     DumpStatisticalRegionalReportSerializer, EventNameSerializer, MassSendSerializer, RegionalR18Serializer,
@@ -193,7 +193,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         methods=['PUT'],
         detail=True,
         url_path='district_review',
-        permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
+        permission_classes=(IsDistrictHeadquarterExpert,),
     )
     def district_review(self, request, pk=None):
         """Верифицирует отчет РШ Окружным Штабом.
@@ -207,7 +207,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         - Если отчет еще не был отправлен на верификацию - `Отчет еще не был отправлен на верификацию`.
         - Если отчет уже был верифицирован Окружным Штабом - `Отчет уже верифицирован Окружным Штабом`.
 
-        Доступ: TODO
+        Доступ: эксперт ОШ.
         """
         parser = FormDataNestedFileParser()
         data = parser.parse_querydict(request.data)
@@ -265,7 +265,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         methods=['PUT', 'DELETE'],
         detail=True,
         url_path='central_review',
-        permission_classes=(permissions.IsAuthenticated,),  # TODO: permission
+        permission_classes=(IsCentralHeadquarterExpert,),
     )
     def central_review(self, request, pk=None):
         """Обрабатывает верификацию или отклонение отчета Центральным Штабом.
@@ -292,7 +292,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         - Если для DELETE не указаны причины отклонения - `Необходимо указать причины отклонения отчета.`.
         - Если ключи в `reasons` не соответствуют полям отчета или значения не являются строками.
 
-        Доступ: TODO
+        Доступ: эксперт ЦШ или командир ЦШ.
         """
         parser = FormDataNestedFileParser()
         data = parser.parse_querydict(request.data)
