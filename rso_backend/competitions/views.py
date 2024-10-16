@@ -1249,10 +1249,6 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1496,10 +1492,6 @@ class Q8ViewSet(Q7ViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1628,10 +1620,6 @@ class Q9ViewSet(Q7ViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1759,10 +1747,6 @@ class Q10ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1893,10 +1877,6 @@ class Q11ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -2027,10 +2007,6 @@ class Q12ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -4745,10 +4721,6 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -5212,10 +5184,6 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
