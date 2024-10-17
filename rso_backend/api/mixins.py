@@ -133,28 +133,27 @@ class SendMixin:
         Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
         """
         regional_r = self.get_object()
-        if self.get_report_number() == '16': 
-            schedule, _ = IntervalSchedule.objects.get_or_create(
-                every=35,
-                period=IntervalSchedule.MINUTES,
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=35,
+            period=IntervalSchedule.MINUTES,
+        )
+        with suppress(django.core.exceptions.ValidationError):
+            f, created = PeriodicTask.objects.get_or_create(
+                interval=schedule,
+                name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
+                task='regional_competitions.tasks.send_email_report_part_2',
+                args=json.dumps([regional_r.regional_headquarter.id])
             )
-            with suppress(django.core.exceptions.ValidationError):
-                f, created = PeriodicTask.objects.get_or_create(
-                    interval=schedule,
-                    name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
-                    task='regional_competitions.tasks.send_email_report_part_2',
-                    args=json.dumps([regional_r.regional_headquarter.id])
-                )
 
 
-                if not f.expires or f.expires < now():
-                    print('Таска истекла или нет времени истечения. Устанавливаем актуальное время истечения...')
-                elif created:
-                    f.expires = now() + datetime.timedelta(seconds=3600)
-                    f.save()
-                    print(f'Новая таска создана. Expiration time: {f.expires}')
-                else:
-                    print(f'Таска уже существует и еще не истекла. Expiration time: {f.expires}')
+            if not f.expires or f.expires < now():
+                print('Таска истекла или нет времени истечения. Устанавливаем актуальное время истечения...')
+            elif created:
+                f.expires = now() + datetime.timedelta(seconds=3600)
+                f.save()
+                print(f'Новая таска создана. Expiration time: {f.expires}')
+            else:
+                print(f'Таска уже существует и еще не истекла. Expiration time: {f.expires}')
         if hasattr(regional_r, 'is_sent'):
             regional_r.is_sent = True
             regional_r.save()
