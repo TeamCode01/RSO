@@ -168,6 +168,7 @@ def get_emails(report_instance) -> list:
         )
     addresses.append('rso.login@yandex.ru')
     addresses.append('delightxxls@gmail.com')
+    addresses.append('olegfreon@yandex.ru')
     return addresses
 
 
