@@ -968,7 +968,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         При удалении отчета удаляются записи из таблиц Rankin и TandemRankin.
         """
-
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         competition = detachment_report.competition
         detachment = detachment_report.detachment
@@ -1249,6 +1249,8 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1492,6 +1494,8 @@ class Q8ViewSet(Q7ViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1620,6 +1624,8 @@ class Q9ViewSet(Q7ViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1747,6 +1753,8 @@ class Q10ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1877,6 +1885,8 @@ class Q11ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -2007,6 +2017,8 @@ class Q12ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -2233,6 +2245,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
         report = self.get_object()
         raw = get_object_or_404(
             Q5EducatedParticipant,
@@ -2403,6 +2416,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-demonstration-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_demonstration_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2431,6 +2445,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-patriotic-action-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_patriotic_action_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2459,6 +2474,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-safety-work-week-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_safety_work_week_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2487,6 +2503,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-commander-commissioner-school-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_commander_commissioner_school_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2515,6 +2532,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-working-semester-opening-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_working_semester_opening_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2543,6 +2562,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-creative-festival-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_creative_festival_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2571,6 +2592,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-professional-competition-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_professional_competition_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2599,6 +2622,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block',
             permission_classes=[permissions.IsAuthenticated, ])
     def verify_spartakiad_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2974,6 +2999,8 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         detachment = report.detachment
         if detachment.regional_headquarter.commander != request.user:
@@ -3335,6 +3362,8 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         competition_id = self.kwargs.get('competition_pk')
         event = get_object_or_404(
@@ -3744,6 +3773,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         При удалении отчета удаляются записи из таблиц Ranking и TandemRanking.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
         detachment_report = self.get_object()
         q14_labor_project = get_object_or_404(
@@ -4084,6 +4114,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         При удалении отчета удаляются записи из таблиц Rankin и TandemRankin.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
         detachment_report = self.get_object()
         source_data = get_object_or_404(
@@ -4277,6 +4308,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         Если отчет уже верифицирован, возвращается 400 Bad Request с описанием
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         if detachment.regional_headquarter.commander != request.user:
@@ -4454,6 +4486,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
 
         Доступ: рег. командиры или админ
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
         today = date.today()
         report = self.get_object()
         if report.is_verified:
@@ -4721,6 +4754,8 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -5184,6 +5219,8 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
