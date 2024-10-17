@@ -133,12 +133,13 @@ class CompetitionApplicationsAdmin(admin.ModelAdmin):
 @admin.register(CompetitionParticipants)
 class CompetitionParticipantsAdmin(admin.ModelAdmin):
     form = CompetitionParticipantsForm
-    list_filter = ('competition__name',)
+    list_filter = ('competition__name', 'confirmed')
     search_fields = ('detachment__name',
                      'junior_detachment__name',
                      'competition__name',
                      'detachment__region__name',
-                     'junior_detachment__region__name')
+                     'junior_detachment__region__name',
+                     )
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_display = ('id',
@@ -146,6 +147,7 @@ class CompetitionParticipantsAdmin(admin.ModelAdmin):
                     'is_tandem',
                     'detachment',
                     'junior_detachment',
+                    'confirmed',
                     'created_at')
     ordering = ('detachment', 'junior_detachment', 'created_at')
 

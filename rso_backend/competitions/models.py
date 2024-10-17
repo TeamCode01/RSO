@@ -108,6 +108,10 @@ class CompetitionParticipants(models.Model):
         verbose_name='Дата и время создания заявки',
         auto_now_add=True
     )
+    confirmed = models.BooleanField(
+        verbose_name='Подтвержденный участник конкурса',
+        default=True
+    )
 
     def __str__(self):
         return f'Участник(и) id {self.id} в конкурсе id {self.competition.id}'
