@@ -1676,6 +1676,7 @@ def calculate_q15_place(competition_id: int):
     if tandem_entries:
         logger.info('Есть записи для тандем-участников. Удаляем записи из таблицы Q15 TandemRanking')
         Q15TandemRank.objects.all().delete()
+        print(tandem_entries)
         tandem_entries.sort(key=lambda entry: entry[2], reverse=True)
         last_score = None
         last_place = 0
