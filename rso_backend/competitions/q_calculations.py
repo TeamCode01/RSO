@@ -217,6 +217,7 @@ def calculate_q13_places():
 
     for tandem_entry in tandem_entries:
         try:
+            # trying to build container ?
             junior_report = Q13DetachmentReport.objects.get(detachment=tandem_entry.junior_detachment)
             detachment_report = Q13DetachmentReport.objects.get(detachment=tandem_entry.detachment)
         except Q13DetachmentReport.DoesNotExist:
