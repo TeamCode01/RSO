@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from contextlib import suppress
 from datetime import date
 from typing import List
 
@@ -26,9 +27,12 @@ from competitions.models import (CompetitionParticipants, July15Participant, Ove
                                  Q17EventLink, Q17Ranking, Q17TandemRanking,
                                  Q18DetachmentReport, Q18Ranking,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
-                                 Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, RankingCopy, SafetyWorkWeekBlock,
-                                 CommanderCommissionerSchoolBlock, September15Participant, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
-                                 ProfessionalCompetitionBlock, SpartakiadBlock)
+                                 Q19TandemRanking, DemonstrationBlock, PatrioticActionBlock, RankingCopy,
+                                 SafetyWorkWeekBlock,
+                                 CommanderCommissionerSchoolBlock, September15Participant, TandemRankingCopy,
+                                 WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 ProfessionalCompetitionBlock, SpartakiadBlock, Q13DetachmentReport, Q13TandemRanking,
+                                 Q13Ranking)
 from competitions.utils import (assign_ranks, find_second_element_by_first,
                                 get_place_q2, is_main_detachment,
                                 tandem_or_start, round_math)
@@ -179,6 +183,71 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
 
         last_place = current_place
         previous_places_sum = tandem_ranking_entry['place']
+
+
+def calculate_q13_places():
+    Q13Ranking.objects.all().delete()
+    Q13TandemRanking.objects.all().delete()
+    solo_entries = CompetitionParticipants.objects.filter(
+        competition_id=1,
+        junior_detachment__isnull=False,
+        confirmed=True,
+        detachment__isnull=True
+    )
+    tandem_entries = CompetitionParticipants.objects.filter(
+        competition_id=1,
+        junior_detachment__isnull=False,
+        confirmed=True,
+        detachment__isnull=False
+    )
+    for solo_entry in solo_entries:
+        try:
+            report = Q13DetachmentReport.objects.get(detachment=solo_entry.junior_detachment)
+        except Q13DetachmentReport.DoesNotExist:
+            continue
+        event_organizations = report.organization_data.filter(is_verified=True)
+        if not event_organizations:
+            continue
+        solo_entry_place = calculate_q13_place(event_organizations)
+        Q13Ranking.objects.create(
+            competition_id=1,
+            place=solo_entry_place,
+            detachment=report.detachment
+        )
+
+    for tandem_entry in tandem_entries:
+        try:
+            junior_report = Q13DetachmentReport.objects.get(junior_detachment=tandem_entry.junior_detachment)
+            detachment_report = Q13DetachmentReport.objects.get(detachment=tandem_entry.detachment)
+        except Q13DetachmentReport.DoesNotExist:
+            junior_report = None
+            detachment_report = None
+
+        junior_event_organizations = junior_report.organization_data.filter(is_verified=True)
+        detachment_event_organizations = detachment_report.organization_data.filter(is_verified=True)
+
+        if (
+                not junior_report and not detachment_report
+                or not junior_event_organizations
+                and not detachment_event_organizations
+        ):
+            continue
+
+        junior_entry_place = 6
+        detachment_report_place = 6
+
+        if junior_report:
+            junior_entry_place = calculate_q13_place(junior_event_organizations)
+        if detachment_report:
+            detachment_report_place = calculate_q13_place(detachment_event_organizations)
+
+        tandem_place = round_math(((junior_entry_place + detachment_report_place) / 2))
+        Q13TandemRanking.objects.create(
+            competition_id=1,
+            place=tandem_place,
+            junior_detachment=junior_report.detachment,
+            detachment=detachment_report.detachment
+        )
 
 
 def calculate_q13_place(objects: list[Q13EventOrganization]) -> int:
