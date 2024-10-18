@@ -56,7 +56,7 @@ TANDEM_RANKING_MODELS = [
     Q10TandemRanking,
     Q11TandemRanking,
     Q12TandemRanking,
-    Q13Ranking,
+    Q13TandemRanking,
     Q14TandemRanking,
     Q15TandemRank,
     Q16TandemRanking,
