@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from rest_framework.response import Response
 from rest_framework import status
-from competitions.models import (Q1Ranking, Q1TandemRanking, Q2Ranking,
+from competitions.models import (Q13UpdatedRanking, Q13UpdatedTandemRanking, Q1Ranking, Q1TandemRanking, Q2Ranking,
                                  Q2TandemRanking, Q3Ranking, Q3TandemRanking,
                                  Q4Ranking, Q4TandemRanking, Q5Ranking,
                                  Q5TandemRanking, Q6Ranking, Q6TandemRanking,
@@ -34,7 +34,7 @@ SOLO_RANKING_MODELS = [
     Q10Ranking,
     Q11Ranking,
     Q12Ranking,
-    Q13Ranking,
+    Q13UpdatedRanking,
     Q14Ranking,
     Q15Rank,
     Q16Ranking,
@@ -56,7 +56,7 @@ TANDEM_RANKING_MODELS = [
     Q10TandemRanking,
     Q11TandemRanking,
     Q12TandemRanking,
-    Q13TandemRanking,
+    Q13UpdatedTandemRanking,
     Q14TandemRanking,
     Q15TandemRank,
     Q16TandemRanking,
