@@ -224,8 +224,12 @@ def calculate_q13_places():
             junior_report = None
             detachment_report = None
 
-        junior_event_organizations = junior_report.organization_data.filter(is_verified=True)
-        detachment_event_organizations = detachment_report.organization_data.filter(is_verified=True)
+        junior_event_organizations = None
+        detachment_event_organizations = None
+        if junior_report:
+            junior_event_organizations = junior_report.organization_data.filter(is_verified=True)
+        if detachment_report:
+            detachment_event_organizations = detachment_report.organization_data.filter(is_verified=True)
 
         if (
                 not junior_report and not detachment_report
