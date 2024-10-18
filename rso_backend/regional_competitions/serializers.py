@@ -148,8 +148,11 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         if not file_field_name:
             return None
         check_file = getattr(obj, file_field_name)
-        if check_file:
-            return round(check_file.size / CONVERT_TO_MB, ROUND_2_SIGNS)
+        if check_file and hasattr(check_file, 'size'):
+            try:
+                return round(check_file.size / CONVERT_TO_MB, ROUND_2_SIGNS)
+            except FileNotFoundError:
+                return None
         return None
 
     def get_file_type(self, obj):
@@ -157,8 +160,11 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         if not file_field_name:
             return None
         check_file = getattr(obj, file_field_name)
-        if check_file:
-            return check_file.name.split('.')[-1]
+        if check_file and hasattr(check_file, 'name'):
+            try:
+                return check_file.name.split('.')[-1]
+            except FileNotFoundError:
+                return None
         return None
 
 
