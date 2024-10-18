@@ -1953,26 +1953,3 @@ class RankingCopy(models.Model):
 
     def __str__(self):
         return f"Отряд: {self.detachment.name}"
-
-
-class Q13UpdatedTandemRanking(QBaseTandemRanking):
-    place = models.FloatField(
-        verbose_name='Итоговое место по показателю',
-        default=6.0
-    )
-
-    class Meta:
-        verbose_name = 'Тандем-места по 13 показателю (АКТУАЛЬНЫЕ)'
-        verbose_name_plural = 'Тандем-места по 13 показателю (АКТУАЛЬНЫЕ)'
-
-
-class Q13UpdatedRanking(QBaseRanking):
-    place = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(6)],
-        default=6,
-        verbose_name='Итоговое место по показателю'
-    )
-
-    class Meta:
-        verbose_name = 'Места по 13 показателю (АКТУАЛЬНЫЕ)'
-        verbose_name_plural = 'Места по 13 показателю (АКТУАЛЬНЫЕ)'

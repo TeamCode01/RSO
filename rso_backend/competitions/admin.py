@@ -7,7 +7,7 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
                                  CompetitionApplications,
                                  CompetitionParticipants, Competitions,
                                  LinksQ7, LinksQ8, OverallRanking,
-                                 OverallTandemRanking, Q13UpdatedRanking, Q13UpdatedTandemRanking, Q1Ranking, Q1Report,
+                                 OverallTandemRanking, Q1Ranking, Q1Report,
                                  Q1TandemRanking, Q2DetachmentReport,
                                  Q2Ranking, Q2TandemRanking, Q3Ranking,
                                  Q3TandemRanking, Q4Ranking, Q4TandemRanking,
@@ -770,16 +770,6 @@ class Q13RankingAdmin(QBaseRankingAdmin):
 
 @admin.register(Q13TandemRanking)
 class Q13TandemRankingAdmin(QBaseTandemRankingAdmin):
-    pass
-
-
-@admin.register(Q13UpdatedRanking)
-class Q13UpdatedRankingAdmin(QBaseRankingAdmin):
-    pass
-
-
-@admin.register(Q13UpdatedTandemRanking)
-class Q13UpdatedTandemRankingAdmin(QBaseTandemRankingAdmin):
     pass
 
 
