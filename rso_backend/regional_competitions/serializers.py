@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from django.db import models
 from django.http import QueryDict
@@ -148,10 +149,14 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         if not file_field_name:
             return None
         check_file = getattr(obj, file_field_name)
-        if check_file and hasattr(check_file, 'size'):
-            try:
-                return round(check_file.size / CONVERT_TO_MB, ROUND_2_SIGNS)
-            except FileNotFoundError:
+        if check_file and hasattr(check_file, 'path'):
+            file_path = check_file.path
+            if os.path.exists(file_path):
+                try:
+                    return round(check_file.size / CONVERT_TO_MB, ROUND_2_SIGNS)
+                except (FileNotFoundError, OSError):
+                    return None
+            else:
                 return None
         return None
 
@@ -163,9 +168,10 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         if check_file and hasattr(check_file, 'name'):
             try:
                 return check_file.name.split('.')[-1]
-            except FileNotFoundError:
+            except (FileNotFoundError, OSError):
                 return None
         return None
+
 
 
 class EmptyAsNoneMixin:
