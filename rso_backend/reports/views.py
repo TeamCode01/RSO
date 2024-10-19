@@ -3,6 +3,8 @@ import datetime
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files.storage import default_storage
+from rest_framework import views, permissions, status
+from rest_framework.response import Response
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -22,13 +24,19 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                Q18_DATA_HEADERS,
                                COMMANDER_SCHOOL_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
-                               Q19_DATA_HEADERS)
+                               Q19_DATA_HEADERS, DISTRICT_HQ_HEADERS, REGIONAL_HQ_HEADERS,
+                               LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS, CENTRAL_HQ_HEADERS,
+                               DIRECTIONS_HEADERS, USERS_HEADERS,)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
-    get_competition_users, get_detachment_q_results,
-    adapt_attempts, get_membership_fee_data
+    get_competition_users, get_debut_results, get_detachment_q_results,
+    adapt_attempts, get_membership_fee_data, get_tandem_results
 )
+from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import PermissionDenied
+from api.permissions import (IsCentralCommanderRegistry, IsDistrictCommanderRegistry, IsDetachmentCommanderRegistry,
+                             IsEducationalCommanderRegistry, IsLocalCommanderRegistry, IsRegionalCommanderRegistry)
 
 
 def has_reports_access(user):
@@ -49,35 +57,61 @@ class TaskStatusView(View):
         return JsonResponse({'status': task.state})
 
 
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
-class BaseExcelExportView(View):
-
+class BaseExcelExportMixin:
     def get_worksheet_title(self):
-        """К переопределению."""
-        raise NotImplementedError('Определите метод для получения названия Worksheet Excel-файла.')
+        """To be overridden."""
+        raise NotImplementedError('Define a method to get the Worksheet title of the Excel file.')
 
     def get_headers(self):
-        """К переопределению."""
-        raise NotImplementedError('Определите метод для получения хедеров для Excel-файла.')
+        """To be overridden."""
+        raise NotImplementedError('Define a method to get headers for the Excel file.')
 
     def get_filename(self):
-        """К переопределению."""
-        raise NotImplementedError('Определите метод для получения названия для Excel-файла.')
+        """To be overridden."""
+        raise NotImplementedError('Define a method to get the filename for the Excel file.')
 
     def get_data_func(self):
-        """Для вызова нужной функции в селери-задаче. Может быть переопределено в саб-классе."""
+        """For calling the required function in the Celery task. Can be overridden in subclass."""
         return 'default'
+    
+    def get_fields(self):
+        return None
 
-    def get(self, request):
+    def process_request(self, request):
         headers = self.get_headers()
         worksheet_title = self.get_worksheet_title()
         filename = self.get_filename()
         safe_filename = quote(filename)
         data_func = self.get_data_func()
-        task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func)
+        
+        if isinstance(data_func, dict):
+            return data_func
 
-        return JsonResponse({'task_id': task.id})
+        if hasattr(self, 'get_fields'):
+            fields = self.get_fields()
+            
+        if fields:
+            task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func, fields)
+        else:
+            task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func)
+
+        return {'task_id': task.id}
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
+class BaseExcelExportView(BaseExcelExportMixin, View):
+    def get(self, request):
+        result = self.process_request(request)
+        return JsonResponse(result)
+
+
+class BaseExcelExportAPIView(BaseExcelExportMixin, views.APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        result = self.process_request(request)
+        return Response(result, status=status.HTTP_200_OK)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -96,6 +130,7 @@ class SafetyTestResultsView(View):
 
 class ExportSafetyTestResultsView(BaseExcelExportView):
     def get_data_func(self):
+        print('экспорт ТБ')
         return 'safety_test_results'
 
     def get_headers(self):
@@ -142,6 +177,28 @@ class DetachmentQResultsView(View):
 
     def get(self, request):
         detachment_q_results = get_detachment_q_results(settings.COMPETITION_ID, is_sample=True)
+        context = {'sample_results': detachment_q_results}
+        return render(request, self.template_name, context)
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
+class DetachmentQTandemResultsView(View):
+    template_name = 'reports/detachment_q_results.html'
+
+    def get(self, request):
+        detachment_q_results = get_tandem_results(settings.COMPETITION_ID, is_sample=True)
+        context = {'sample_results': detachment_q_results}
+        return render(request, self.template_name, context)
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
+class DetachmentQDebutResultsView(View):
+    template_name = 'reports/detachment_q_results.html'
+
+    def get(self, request):
+        detachment_q_results = get_debut_results(settings.COMPETITION_ID, is_sample=True)
         context = {'sample_results': detachment_q_results}
         return render(request, self.template_name, context)
 
@@ -483,3 +540,297 @@ class AttributesOfUniformDataView(View):
         context = {'sample_results': results,
                    'columns': ATTRIBUTION_DATA_HEADERS}
         return render(request, self.template_name, context)
+    
+
+class CommanerPermissionMixin:
+    def get_user_role(self):
+        user = self.request.user
+        
+        if hasattr(user, 'centralheadquarter_commander'):
+            return 'central'
+        elif hasattr(user, 'districtheadquarter_commander'):
+            return 'district'
+        elif hasattr(user, 'regionalheadquarter_commander'):
+            return 'regional'
+        elif hasattr(user, 'localheadquarter_commander'):
+            return 'local'
+        elif hasattr(user, 'educationalheadquarter_commander'):
+            return 'educational'
+        elif hasattr(user, 'detachment_commander'):
+            return 'detachment'
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+
+    def filter_fields_by_role(self, fields, role):
+        if role == 'regional':
+            return [field for field in fields if field not in ['district_headquarters']]
+        elif role == 'local':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters']]
+        elif role == 'educational':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters']]
+        elif role == 'detachment':
+            return [field for field in fields if field not in ['district_headquarters', 'regional_headquarters', 'local_headquarters', 'educational_headquarters']]
+        return fields
+
+    def get_fields(self):
+        fields = super().get_fields()
+        user_role = self.get_user_role()
+        return self.filter_fields_by_role(fields, user_role)
+
+
+class ExportCentralHqDataMixin:
+    def get_headers(self):
+        return CENTRAL_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Центральный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Центральный штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+    
+    def get_data_func(self):  
+        return 'get_central_hq_data'
+    
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportCentralDataAPIView(CommanerPermissionMixin, ExportCentralHqDataMixin, BaseExcelExportAPIView):
+    permission_classes = [IsCentralCommanderRegistry]
+
+
+class ExportDistrictHqDataMixin:
+    def get_headers(self):
+        return DISTRICT_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Окружной_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Окружной штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+
+    def get_data_func(self):
+        return 'get_district_hq_data'
+    
+
+class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportDistrictDataAPIView(CommanerPermissionMixin, ExportDistrictHqDataMixin, BaseExcelExportAPIView):
+    permission_classes = [IsDistrictCommanderRegistry]
+    
+
+class ExportRegionalHqDataMixin:
+    def get_headers(self):
+        return REGIONAL_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Региональный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Региональный штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'district_headquarters','local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+
+    def get_data_func(self):
+        return 'get_regional_hq_data'
+    
+
+class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportRegionalDataAPIView(CommanerPermissionMixin, ExportRegionalHqDataMixin, BaseExcelExportAPIView):
+    permission_classes = [IsRegionalCommanderRegistry]
+
+
+class ExportLocalHqDataMixin:
+    def get_headers(self):
+        return LOCAL_HQ_HEADERS
+
+    def get_filename(self):
+        return f'Местный_штаб_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Местный штаб'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'district_headquarters', 'regional_headquarters',
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+
+    def get_data_func(self):
+        return 'get_local_hq_data'
+    
+
+class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportLocalDataAPIView(CommanerPermissionMixin, ExportLocalHqDataMixin, BaseExcelExportAPIView):
+    permission_classes = [IsLocalCommanderRegistry]
+
+
+class ExportEducationHqDataMixin:
+    def get_headers(self):
+        return EDUCATION_HQ_HEADERS
+
+    def get_filename(self):
+        return f'СО_ОО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'СО ОО'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'district_headquarters', 'regional_headquarters',
+            'local_headquarters','detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+
+    def get_data_func(self):
+        return 'get_educational_hq_data'
+    
+
+class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportEducationDataAPIView(CommanerPermissionMixin, ExportEducationHqDataMixin, BaseExcelExportAPIView):
+    permission_classes = [IsEducationalCommanderRegistry]
+
+
+class ExportDetachmentDataMixin:
+    def get_headers(self):
+        return DETACHMENT_HEADERS
+
+    def get_filename(self):
+        return f'ЛСО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'ЛСО'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or[
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+
+    def get_data_func(self):
+        return 'get_detachment_data'
+
+
+class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportDetachmentDataAPIView(CommanerPermissionMixin, ExportDetachmentDataMixin, BaseExcelExportAPIView):
+    permission_classes = [IsDetachmentCommanderRegistry]
+
+
+class ExportDirectionDataMixin:
+    def get_headers(self):
+        return DIRECTIONS_HEADERS
+    
+    def get_filename(self):
+        return f'Направление_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+    
+    def get_worksheet_title(self):
+        return 'Направление'
+    
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or [
+            'detachments',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        
+    def get_data_func(self):
+        return 'get_direction_data'
+    
+
+class ExportDirectionDataView(ExportDirectionDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportDirectionDataAPIView(CommanerPermissionMixin, ExportDirectionDataMixin, BaseExcelExportAPIView):
+    pass
+
+
+class ExportUsersDataMixin:
+    def get_headers(self):
+        return USERS_HEADERS
+    
+    def get_filename(self):
+        return f'Участники_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
+
+    def get_worksheet_title(self):
+        return 'Участники'
+
+    def get_fields(self):
+        fields = self.request.POST.getlist('fields')
+        return fields or [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions', 'verification', 
+            'membership_fee', 'test_done', 
+            'events_organizations', 'event_participants',
+            'area', 'position', 'detachment'
+            ]
+
+    def get_data_func(self):
+        return 'get_users_registry_data'
+
+
+class ExportUsersDataView(ExportUsersDataMixin, BaseExcelExportView):
+    pass
+
+
+class ExportUsersDataAPIView(CommanerPermissionMixin, ExportUsersDataMixin, BaseExcelExportAPIView):
+    pass
