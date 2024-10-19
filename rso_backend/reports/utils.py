@@ -238,7 +238,7 @@ def get_safety_results():
                     row.score,
                     None,
                     row.user.membership_fee,
-                    sep_15_data[row.detachment] if row.detachment else '-',
+                    sep_15_data.get(row.detachment) if row.detachment else '-',
                 ))
             except Exception:
                 pass
@@ -264,7 +264,7 @@ def get_safety_results():
                 row.score,
                 timestamp,
                 row.user.membership_fee,
-                sep_15_data[row.detachment.name] if row.detachment else '-',
+                sep_15_data.get(row.detachment) if row.detachment else '-',
             ))
         except Exception:
             pass
