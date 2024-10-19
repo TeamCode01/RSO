@@ -1626,6 +1626,8 @@ def calculate_q3_q4_place(competition_id: int):
         q4_place_2 = get_q3_q4_place(tandem_entry.detachment, 'safety')
         if q3_place_1 and q3_place_2:
             final_place = round_math((q3_place_1 + q3_place_2) / 2)
+            if final_place > 8:
+                continue
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q3 место - {final_place}')
             Q3TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -1635,6 +1637,8 @@ def calculate_q3_q4_place(competition_id: int):
             )
         if q4_place_1 and q4_place_2:
             final_place = round_math((q4_place_1 + q4_place_2) / 2)
+            if final_place > 8:
+                continue
             logger.info(f'Для ТАНДЕМ {tandem_entry} посчитали Q4 место - {final_place}')
             Q4TandemRanking.objects.create(
                 competition_id=competition_id,
@@ -2011,6 +2015,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         participants = UserDetachmentPosition.objects.filter(
             headquarter=detachment
         )
+        members_number = September15Participant.objects.get(detachment=detachment).members_number
         logger.info(f'{participants.count()} участников для отряда {detachment}')
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
@@ -2023,7 +2028,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
                 score += participant_max_score
 
         # Рассчитываем средний балл
-        average_score = (commander_score + score) / (len(participants) + 1)
+        average_score = (commander_score + score) / members_number
         logger.info(
             f'Средний балл отряда - {average_score}. '
             f'Рассчитано по формуле {commander_score + score} / {len(participants)+1}'
