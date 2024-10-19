@@ -24,11 +24,12 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking, LinksQ8)
-from headquarters.count_hq_members import count_headquarter_participants, get_hq_participants_15_september
-from headquarters.models import UserDetachmentPosition, Detachment
+from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september
+from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area, UserDistrictHeadquarterPosition, UserLocalHeadquarterPosition, UserEducationalHeadquarterPosition, UserRegionalHeadquarterPosition, UserUnitPosition
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
+from events.models import Event, EventParticipants
 
 
 def process_detachment_users(detachment: Detachment, status: str, nomination: str) -> List[RSOUser]:
@@ -1783,6 +1784,597 @@ def get_attributes_of_uniform_data(competition_id):
     return rows
 
 
+def get_central_hq_data(fields):
+    if not fields:
+        fields = [
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+                ]
+    
+    central_headquarters = CentralHeadquarter.objects.all()
+    rows = []
+
+    try:
+        for central_headquarter in central_headquarters:
+            row = [central_headquarter.name]
+    
+            if 'regional_headquarters' in fields:
+                row.append(RegionalHeadquarter.objects.filter(
+                    district_headquarter__central_headquarter=central_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')               
+            if 'local_headquarters' in fields:
+                row.append(LocalHeadquarter.objects.filter(
+                    regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'educational_headquarters' in fields:
+                row.append(EducationalHeadquarter.objects.filter(
+                    regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')               
+            if 'detachments' in fields:
+                row.append(Detachment.objects.filter(
+                    regional_headquarter__district_headquarter__central_headquarter=central_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')                
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(central_headquarter) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')   
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        row.append(count_verified_users(central_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        row.append(count_membership_fee(central_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        row.append(count_test_membership(central_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-'] * 3
+            else:
+                row += ['-'] * 3  
+            if 'events_organizations' in fields:
+                row.append(count_events_organizations(central_headquarter) or 0)
+            else:
+                row.append('-')                
+            if 'event_participants' in fields:
+                row.append(count_events_participants(central_headquarter) or 0)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    return rows
+
+
+
+def get_district_hq_data(fields):
+    if not fields:
+        fields = [
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+                ]
+    
+    district_headquarters = DistrictHeadquarter.objects.all()
+    rows = []
+
+    try:
+        for district_headquarter in district_headquarters:
+            row = [district_headquarter.name]
+            if 'regional_headquarters' in fields:
+                row.append(RegionalHeadquarter.objects.filter(
+                    district_headquarter=district_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'local_headquarters' in fields:
+                row.append(LocalHeadquarter.objects.filter(
+                    regional_headquarter__district_headquarter=district_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'educational_headquarters' in fields:
+                row.append(EducationalHeadquarter.objects.filter(
+                    regional_headquarter__district_headquarter=district_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'detachments' in fields:
+                row.append(Detachment.objects.filter(
+                    regional_headquarter__district_headquarter=district_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(district_headquarter) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        row.append(count_verified_users(district_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        row.append(count_membership_fee(district_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        row.append(count_test_membership(district_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-'] * 3
+            else:
+                row += ['-'] * 3
+            if 'events_organizations' in fields:
+                row.append(count_events_organizations(district_headquarter) or 0)
+            else:
+                row.append('-')
+            if 'event_participants' in fields:
+                row.append(count_events_participants(district_headquarter) or 0)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    return rows
+
+
+def get_regional_hq_data(fields):
+    if not fields:
+        fields = [
+            'district_headquarters','local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+                ]
+    
+    regional_headquarters = RegionalHeadquarter.objects.all()
+    rows = []
+
+    try:
+        for regional_headquarter in regional_headquarters:
+            row = [regional_headquarter.name]
+            if 'district_headquarters' in fields:
+                district_headquarter = regional_headquarter.district_headquarter
+                if district_headquarter:
+                    row.append(district_headquarter.name)
+                else:
+                    row.append('-')
+            else:
+                row.append('-')
+            if 'local_headquarters' in fields:
+                row.append(LocalHeadquarter.objects.filter(
+                    regional_headquarter=regional_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'educational_headquarters' in fields:
+                row.append(EducationalHeadquarter.objects.filter(
+                    regional_headquarter=regional_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'detachments' in fields:
+                row.append(Detachment.objects.filter(
+                    regional_headquarter=regional_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(regional_headquarter) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        row.append(count_verified_users(regional_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        row.append(count_membership_fee(regional_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        row.append(count_test_membership(regional_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-'] * 3
+            else:
+                row += ['-'] * 3
+            if 'events_organizations' in fields:
+                row.append(count_events_organizations(regional_headquarter) or 0)
+            else:
+                row.append('-')
+            if 'event_participants' in fields:
+                row.append(count_events_participants(regional_headquarter) or 0)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    return rows
+
+
+def get_local_hq_data(fields):
+    if not fields:
+        fields = [ 
+            'district_headquarters', 'regional_headquarters',
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+                ]
+    
+    local_headquarters = LocalHeadquarter.objects.all()
+    rows = []
+
+    try:
+        for local_headquarter in local_headquarters:
+            row = [local_headquarter.name]
+            if 'district_headquarters' in fields:
+                district_headquarter = local_headquarter.regional_headquarter.district_headquarter
+                row.append(district_headquarter.name if district_headquarter else '-')
+            else:
+                row.append('-')
+            if 'regional_headquarters' in fields:
+                regional_headquarter = local_headquarter.regional_headquarter
+                row.append(regional_headquarter.name if regional_headquarter else '-')
+            else:
+                row.append('-')
+            if 'educational_headquarters' in fields:
+                row.append(EducationalHeadquarter.objects.filter(
+                    local_headquarter=local_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'detachments' in fields:
+                row.append(Detachment.objects.filter(
+                    local_headquarter=local_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(local_headquarter) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        row.append(count_verified_users(local_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        row.append(count_membership_fee(local_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        row.append(count_test_membership(local_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-'] * 3
+            else:
+                row += ['-'] * 3
+            if 'events_organizations' in fields:
+                row.append(count_events_organizations(local_headquarter) or 0)
+            else:
+                row.append('-')
+            if 'event_participants' in fields:
+                row.append(count_events_participants(local_headquarter) or 0)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    return rows
+
+
+
+def get_educational_hq_data(fields):
+    if not fields:
+        fields = [
+            'district_headquarters', 'regional_headquarters',
+            'local_headquarters','detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+                ]
+    
+    educational_headquarters = EducationalHeadquarter.objects.all()
+    rows = []
+
+    try:
+        for educational_headquarter in educational_headquarters:
+            row = [educational_headquarter.name]
+            if 'district_headquarters' in fields:
+                district_headquarter = educational_headquarter.regional_headquarter.district_headquarter
+                row.append(district_headquarter.name if district_headquarter else '-')
+            else:
+                row.append('-')
+            if 'regional_headquarters' in fields:
+                regional_headquarter = educational_headquarter.regional_headquarter
+                row.append(regional_headquarter.name if regional_headquarter else '-')
+            else:
+                row.append('-')
+            if 'local_headquarters' in fields:
+                local_headquarter = educational_headquarter.local_headquarter
+                row.append(local_headquarter.name if local_headquarter else '-')
+            else:
+                row.append('-')
+            if 'detachments' in fields:
+                row.append(Detachment.objects.filter(
+                    educational_headquarter=educational_headquarter
+                ).count() or 0)
+            else:
+                row.append('-')
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(educational_headquarter) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        row.append(count_verified_users(educational_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        row.append(count_membership_fee(educational_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        row.append(count_test_membership(educational_headquarter) / participants_count * 100)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-'] * 3
+            else:
+                row += ['-'] * 3
+            if 'events_organizations' in fields:
+                row.append(count_events_organizations(educational_headquarter) or 0)
+            else:
+                row.append('-')
+            if 'event_participants' in fields:
+                row.append(count_events_participants(educational_headquarter) or 0)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    return rows
+
+
+def get_detachment_data(fields):
+    if not fields:
+        fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+                ]
+    
+    detachments = Detachment.objects.all()
+    rows = []
+
+    try:
+        for detachment in detachments:
+            row = [detachment.name]
+            # if 'district_headquarter' in fields:
+            #     if detachment.regional_headquarter:
+            #         district_headquarter = detachment.regional_headquarter.district_headquarter
+            #         row.append(district_headquarter.name if district_headquarter else '-')
+            #     else:
+            #         row.append('-')
+            # else:
+            #     row.append('-')
+            # if 'regional_headquarter' in fields:
+            #     regional_headquarter = detachment.regional_headquarter
+            #     row.append(regional_headquarter.name if regional_headquarter else '-')
+            # else:
+            #     row.append('-')
+            # if 'local_headquarter' in fields:
+            #     local_headquarter = detachment.local_headquarter
+            #     row.append(local_headquarter.name if local_headquarter else '-')
+            # else:
+            #     row.append('-')
+            # if 'educational_headquarter' in fields:
+            #     educational_headquarter = detachment.educational_headquarter
+            #     row.append(educational_headquarter.name if educational_headquarter else '-')
+            # else:
+            #     row.append('-')
+            # if 'directions' in fields:
+            #     if detachment.area:
+            #         row.append(detachment.area.name)
+            #     else:
+            #         row.append('-')
+            # else:
+            #     row.append('-')
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(detachment) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                participants_count = row[1]
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        verification_percent = (count_verified_users(detachment) / participants_count * 100) or 0
+                        row.append(verification_percent)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        membership_fee_percent = (count_membership_fee(detachment) / participants_count * 100) or 0
+                        row.append(membership_fee_percent)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        test_done_percent = (count_test_membership(detachment) / participants_count * 100) or 0
+                        row.append(test_done_percent)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-' if f in fields else 0 for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']]
+            else:
+                row += ['-'] * 3
+            if 'events_organizations' in fields:
+                events_organizations = count_events_organizations(detachment) or 0
+                row.append(events_organizations)
+            else:
+                row.append('-')
+            if 'event_participants' in fields:
+                event_participants = count_events_participants(detachment) or 0
+                row.append(event_participants)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+    return rows
+
+
+def get_direction_data(fields):
+    if not fields:
+        fields = [
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+    
+    directions = Area.objects.all()
+    rows = []
+    
+    try:
+        for direction in directions:
+            row = [direction.name]
+            
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+
+def get_users_registry_data(fields=None):
+    if fields is None:
+        fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions', 'verification', 
+            'membership_fee', 'test_done', 
+            'events_organizations', 'event_participants',
+            'area', 'position', 'detachment'
+        ]
+    
+    users = RSOUser.objects.all()
+    rows = []
+    
+    try:
+        for user in users:
+            row = [user.get_full_name()]
+            
+            row.append(user.email if user.email else '-')
+            row.append(user.phone_number if user.phone_number else '-')
+            if 'district_headquarter' in fields:
+                district_hq = UserDistrictHeadquarterPosition.objects.filter(user=user).first()
+                row.append(district_hq.headquarter.name if district_hq else '-')
+            if 'regional_headquarter' in fields:
+                regional_hq = UserRegionalHeadquarterPosition.objects.filter(user=user).first()
+                row.append(regional_hq.headquarter.name if regional_hq else '-')
+            if 'local_headquarter' in fields:
+                local_hq = UserLocalHeadquarterPosition.objects.filter(user=user).first()
+                row.append(local_hq.headquarter.name if local_hq else '-')
+            if 'educational_headquarter' in fields:
+                edu_hq = UserEducationalHeadquarterPosition.objects.filter(user=user).first()
+                row.append(edu_hq.headquarter.name if edu_hq else '-')
+            if 'detachment' in fields:
+                detachment = UserDetachmentPosition.objects.filter(user=user).first()
+                row.append(detachment.headquarter.name if detachment else '-')
+            if 'position' in fields:
+                if Detachment.objects.filter(commander=user).exists():
+                    row.append("Командир")
+                else:
+                    user_detachment_position = getattr(user, 'userdetachmentposition', None)
+                    if user_detachment_position and hasattr(user_detachment_position, 'position'):
+                        row.append(user_detachment_position.position.name)
+                    else:
+                        row.append('-')
+            else:
+                row.append('-')
+            if 'area' in fields:
+                if Detachment.objects.filter(commander=user).exists():
+                    area = Detachment.objects.filter(commander=user).first().area
+            else:
+                user_detachment_position = getattr(user, 'userdetachmentposition', None)
+                if user_detachment_position:
+                    area = getattr(user_detachment_position, 'detachment', None).area if hasattr(user_detachment_position, 'detachment') else None
+            row.append(area.name if area else '-')
+            if 'verification' in fields:
+                row.append('Да' if user.is_verified else '-')
+            if 'membership_fee' in fields:
+                row.append('Да' if user.membership_fee else '-')
+            if 'test_done' in fields:
+                test_passed = Attempt.objects.filter(
+                    user=user,
+                    category=Attempt.Category.SAFETY,
+                    score__gt=60
+                ).exists()
+                row.append('Да' if test_passed else '-')
+            if 'events_organizations' in fields:
+                is_organizer = Event.objects.filter(author=user).exists()
+                row.append('Да' if is_organizer else '-')
+            if 'event_participants' in fields:
+                is_participant = EventParticipants.objects.filter(user=user).exists()
+                row.append('Да' if is_participant else '-')
+            
+            rows.append(row)
+    
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    
+    return rows
+
 
 def get_debut_results(competition_id: int, is_sample=False) -> List[Detachment]:
     competition_members_data = []
@@ -1925,3 +2517,4 @@ def get_overall_ranking(detachment, competition_id, is_tandem=False, junior_deta
 
 def get_participants_count(detachment):
     return get_hq_participants_15_september(detachment)
+

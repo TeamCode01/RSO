@@ -16,7 +16,9 @@ from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, Det
                            CompetitionParticipantView,
                            ExportAttributesOfUniformView,
                            ExportQ13DataView, ExportQ14DataView,
-                           ExportQ19DataView)
+                           ExportQ19DataView, ExportCentralDataView, ExportDistrictDataView,
+                           ExportRegionalDataView, ExportLocalDataView, ExportEducationDataView,
+                           ExportDetachmentDataView, ExportDirectionDataView, ExportUsersDataView,)
 
 
 urlpatterns = [
@@ -91,7 +93,7 @@ urlpatterns = [
         ExportQ6DataView.as_view(),
         name='export_q6_data'
     ),
-     path(
+    path(
         'get_q7_data/export/',
         ExportQ7DataView.as_view(),
         name='export_q7_data'
@@ -167,11 +169,35 @@ urlpatterns = [
         name='membership_fee'
     ),
     path('attributes_of_uniform/export/',
-         ExportAttributesOfUniformView.as_view(),
-         name='attributes_of_uniform_export'),
+        ExportAttributesOfUniformView.as_view(),
+        name='attributes_of_uniform_export'),
     path(
         'attributes_of_uniform/',
         AttributesOfUniformDataView.as_view(),
         name='attributes_of_uniform'
     ),
+    path('get_central_hq_data/export/',
+        ExportCentralDataView.as_view(),
+        name='export_central_hq_data'),
+    path('get_district_hq_data/export/',
+        ExportDistrictDataView.as_view(), 
+        name='export_district_hq_data'),
+    path('get_regional_hq_data/export/',
+        ExportRegionalDataView.as_view(),
+        name='export_regional_hq_data'),
+    path('get_local_hq_data/export/',
+        ExportLocalDataView.as_view(),
+        name='export_local_hq_data'),
+    path('get_education_hq_data/export/',
+        ExportEducationDataView.as_view(),
+        name='export_education_hq_data'),
+    path('get_detachment_data/export/',
+        ExportDetachmentDataView.as_view(),
+        name='export_detachment_data'),
+    path('get_direction_data/export/',
+        ExportDirectionDataView.as_view(),
+        name='export_direction_data'),
+    path('get_users_registry_data/export/',
+        ExportUsersDataView.as_view(),
+        name='export_users_data')
 ]
