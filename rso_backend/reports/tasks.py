@@ -107,7 +107,7 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
         logger.warning(
             'Вызов функции не соответствующей кейсу для вызова функции с data')
         return
-
+    # logger.info('Формируем файл с данными')
     for index, row in enumerate(data, start=1):
         processed_row = default_process_row(index, row)
         worksheet.append(processed_row)
@@ -119,7 +119,7 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
 
     content = ContentFile(file_content.read())
     file_path = default_storage.save(f'to_delete_content/{decoded_filename}', content)
-
+    # logger.info('Возврат эксель файла')
     return file_path
 
 

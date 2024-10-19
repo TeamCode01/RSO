@@ -351,6 +351,58 @@ if DEBUG:
             'task': 'regional_competitions.tasks.calculate_r14_report_task',
             'schedule': timedelta(hours=12)  # TODO: пока только дев
         },
+        'calc_places_r1': {
+            'task': 'regional_competitions.tasks.calc_places_r1',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r2': {
+            'task': 'regional_competitions.tasks.calc_places_r2',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r3': {
+            'task': 'regional_competitions.tasks.calc_places_r3',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r4': {
+            'task': 'regional_competitions.tasks.calc_places_r4',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r5': {
+            'task': 'regional_competitions.tasks.calc_places_r5',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r6': {
+            'task': 'regional_competitions.tasks.calc_places_r6',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        # 'calc_places_r7': {
+        #     'task': 'regional_competitions.tasks.calc_places_r7',
+        #     'schedule': timedelta(hours=12)  # TODO: пока только дев
+        # },
+        'calc_places_r9': {
+            'task': 'regional_competitions.tasks.calc_places_r9',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r10': {
+            'task': 'regional_competitions.tasks.calc_places_r10',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r11': {
+            'task': 'regional_competitions.tasks.calc_places_r11',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r12': {
+            'task': 'regional_competitions.tasks.calc_places_r12',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r13': {
+            'task': 'regional_competitions.tasks.calc_places_r13',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
+        'calc_places_r14': {
+            'task': 'regional_competitions.tasks.calc_places_r14',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',
             'schedule': timedelta(hours=12)

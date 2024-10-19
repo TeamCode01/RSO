@@ -30,8 +30,8 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
-    get_competition_users, get_detachment_q_results,
-    adapt_attempts, get_membership_fee_data
+    get_competition_users, get_debut_results, get_detachment_q_results,
+    adapt_attempts, get_membership_fee_data, get_tandem_results
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
@@ -130,6 +130,7 @@ class SafetyTestResultsView(View):
 
 class ExportSafetyTestResultsView(BaseExcelExportView):
     def get_data_func(self):
+        print('экспорт ТБ')
         return 'safety_test_results'
 
     def get_headers(self):
@@ -176,6 +177,28 @@ class DetachmentQResultsView(View):
 
     def get(self, request):
         detachment_q_results = get_detachment_q_results(settings.COMPETITION_ID, is_sample=True)
+        context = {'sample_results': detachment_q_results}
+        return render(request, self.template_name, context)
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
+class DetachmentQTandemResultsView(View):
+    template_name = 'reports/detachment_q_results.html'
+
+    def get(self, request):
+        detachment_q_results = get_tandem_results(settings.COMPETITION_ID, is_sample=True)
+        context = {'sample_results': detachment_q_results}
+        return render(request, self.template_name, context)
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(has_reports_access, login_url='/', redirect_field_name=None), name='dispatch')
+class DetachmentQDebutResultsView(View):
+    template_name = 'reports/detachment_q_results.html'
+
+    def get(self, request):
+        detachment_q_results = get_debut_results(settings.COMPETITION_ID, is_sample=True)
         context = {'sample_results': detachment_q_results}
         return render(request, self.template_name, context)
 

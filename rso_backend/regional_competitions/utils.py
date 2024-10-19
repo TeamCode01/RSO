@@ -141,24 +141,34 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     return f'regional_comp/regulations/{instance.__class__.__name__}/{regional_hq_id}/{base_filename}.{file_extension}'
 
 
-
 def get_emails(report_instance) -> list:
     if settings.DEBUG:
         return settings.TEST_EMAIL_ADDRESSES
     addresses = []
+
+    if isinstance(report_instance, RegionalHeadquarter):
+        regional_headquarter = report_instance
+    elif isinstance(report_instance, int):
+        regional_headquarter = RegionalHeadquarter.objects.get(pk=report_instance)
+    else:
+        regional_headquarter = report_instance.regional_headquarter
+
     try:
-        addresses.append(
-            RegionalHeadquarterEmail.objects.get(regional_headquarter=report_instance.regional_headquarter).email
-        )
-        if report_instance.regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
+        rhq_emails = RegionalHeadquarterEmail.objects.filter(regional_headquarter=regional_headquarter)
+        for rhq_email in rhq_emails:
+            addresses.append(
+                rhq_email.email
+            )
+        if regional_headquarter.id == 74 and settings.PRODUCTION and not settings.DEBUG:
             addresses.append("rso.71@yandex.ru")
     except RegionalHeadquarterEmail.DoesNotExist:
         logger.warning(
             f'Не найден почтовый адрес в RegionalHeadquarterEmail '
-            f'для РШ ID {report_instance.regional_headquarter.id}'
+            f'для РШ {regional_headquarter} ID {regional_headquarter.id}'
         )
-    if settings.PRODUCTION:
-        addresses.append('rso.login@yandex.ru')
+    addresses.append('rso.login@yandex.ru')
+    addresses.append('delightxxls@gmail.com')
+    addresses.append('olegfreon@yandex.ru')
     return addresses
 
 
@@ -314,7 +324,7 @@ def generate_pdf_report_part_1(report_id) -> str:
     return pdf_file_path
 
 
-def get_verbose_names_and_values(serializer) -> dict:
+def get_verbose_names_and_values(serializer, full_path: bool = False) -> dict:
     """Возвращает словарь с названиями полей и значениями полей из сериализатора."""
 
     custom_verbose_names_dict = {
@@ -324,10 +334,7 @@ def get_verbose_names_and_values(serializer) -> dict:
     custom_values_dict = {
         'True': 'Да',
         'False': 'Нет',
-        'None': 'Неизвестно',
-        'True': 'Да',
-        'False': 'Нет',
-        'None': 'Неизвестно',
+        'None': '-',
     }
     verbose_names_and_values = {}
     model_meta = serializer.Meta.model._meta
@@ -347,7 +354,7 @@ def get_verbose_names_and_values(serializer) -> dict:
                 nested_verbose_names_and_values = []
                 for nested_instance in field_value.all():
                     nested_serializer = field.child.__class__(nested_instance)
-                    nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer))
+                    nested_verbose_names_and_values.append(get_verbose_names_and_values(nested_serializer, full_path))
                 verbose_names_and_values[field_name] = nested_verbose_names_and_values
             else:
                 verbose_names_and_values[field_name] = field_value
@@ -355,7 +362,7 @@ def get_verbose_names_and_values(serializer) -> dict:
         elif isinstance(field, serializers.ModelSerializer):
             if field_value is not None and hasattr(field_value, '_meta'):
                 nested_serializer = field.__class__(field_value)
-                nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer)
+                nested_verbose_names_and_values = get_verbose_names_and_values(nested_serializer, full_path)
                 for nested_field_name, nested_verbose_name_and_value in nested_verbose_names_and_values.items():
                     verbose_names_and_values[f"{field_name}.{nested_field_name}"] = nested_verbose_name_and_value
             else:
@@ -366,9 +373,7 @@ def get_verbose_names_and_values(serializer) -> dict:
                 verbose_name = model_meta.get_field(field_name).verbose_name
                 if hasattr(field_value, '__str__'):
                     field_value = str(field_value)
-                    if not field_value[:4] == 'http':
-                        field_value = os.path.basename(field_value)
-                    if not field_value[:4] == 'http':
+                    if full_path is False and not field_value[:4] == 'http':
                         field_value = os.path.basename(field_value)
                 verbose_names_and_values[field_name] = (verbose_name, field_value)
             except FieldDoesNotExist:
@@ -426,7 +431,9 @@ def get_all_reports_from_competition(report_number: int) -> HttpResponse:
 
             for report in reports:
                 serializer = serializer_class(report)
-                flat_data_dict = get_headers_values(fields_dict=get_verbose_names_and_values(serializer))
+                flat_data_dict = get_headers_values(fields_dict=get_verbose_names_and_values(
+                    serializer, full_path=True
+                ))
 
                 if not headers_written:
                     worksheet.append(list(flat_data_dict.keys()))
@@ -455,7 +462,7 @@ def get_all_reports_from_competition(report_number: int) -> HttpResponse:
 
 def get_all_models(module_name: str):
     """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
-    all_models = ['StatisticalRegionalReport',]
+    all_models = ['DumpStatisticalRegionalReport', 'StatisticalRegionalReport',]
     pattern = re.compile(r'^RegionalR\d+$')
 
     for model in apps.get_models():
@@ -472,11 +479,16 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     models_list = get_all_models('regional_competitions.models')
     first_ws_is_filled = False
     workbook = Workbook()
+    STATISTICAL_REPORT_POSITION = 1
 
     for model_name in models_list:
         report_number = model_name.split('RegionalR')[1]
         model = apps.get_model('regional_competitions', model_name)
-
+        if model_name == 'DumpStatisticalRegionalReport':
+            if not model.objects.filter(regional_headquarter_id=regional_headquarter_id).exists():
+                continue
+            else:
+                models_list.pop(STATISTICAL_REPORT_POSITION)
         if report_number == '14':
             instance = model.objects.filter(report_12__regional_headquarter_id=regional_headquarter_id).first()
             if instance is None:
@@ -499,10 +511,11 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
         serializer_data = serializer_class(instance)
         report_data = get_headers_values(
             get_verbose_names_and_values(
-                serializer_data
+                serializer_data,
+                full_path=True
             )
         )
-        if model_name == 'StatisticalRegionalReport':
+        if model_name == 'DumpStatisticalRegionalReport' or model_name == 'StatisticalRegionalReport':
             sheet_name = 'Статистический отчет'
         elif report_number == '101' or report_number == '102':
             sheet_name = '10'
@@ -563,14 +576,14 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     doc_style = getSampleStyleSheet()
 
     doc_style['Normal'].fontName = 'Times_New_Roman'
-    doc_style['Normal'].fontSize = 12
-    doc_style['Normal'].leading = 14
+    doc_style['Normal'].fontSize = 10
+    doc_style['Normal'].leading = 10
 
     doc_style.add(
         ParagraphStyle(
             name='CustomTitle',
             parent=doc_style['Normal'],
-            fontSize=18,
+            fontSize=14,
             spaceAfter=20,
             alignment=TA_CENTER,
             leading=24,
@@ -589,7 +602,7 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
         ParagraphStyle(
             name='SectionHeader',
             parent=doc_style['Normal'],
-            fontSize=16,
+            fontSize=12,
             spaceBefore=20,
             spaceAfter=10,
             textColor=colors.HexColor('#003366')
@@ -698,7 +711,6 @@ def add_verbose_names_and_values_to_pdf(
     header_background_color = colors.HexColor('#F0F0F0')
     cell_background_color = colors.white
 
-    data = []
     nested_structures = []
 
     for field_name, field_value in verbose_names_and_values.items():
@@ -715,24 +727,9 @@ def add_verbose_names_and_values_to_pdf(
             continue
 
         if not isinstance(field_value_content, dict):
-            data.append([
-                Paragraph(f"<b>{verbose_name}:</b>", styles['Normal']),
-                Paragraph(str(field_value_content), styles['Normal'])
-            ])
-
-    if data:
-        table = Table(data, colWidths=[6 * cm, 10 * cm])
-        table.setStyle(TableStyle([
-            ('TEXTCOLOR', (0, 0), (-1, 0), primary_color),
-            ('FONTNAME', (0, 0), (-1, -1), 'Times_New_Roman'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND', (0, 0), (-1, -1), cell_background_color),
-        ]))
-        elements.append(table)
-        elements.append(Spacer(1, 10))
+            # Directly add the content as Paragraphs
+            elements.append(Paragraph(f"<b>{verbose_name}:</b> {str(field_value_content)}", styles['Normal']))
+            elements.append(Spacer(1, 5))
 
     for nested_name, nested_items in nested_structures:
         singular_names = {

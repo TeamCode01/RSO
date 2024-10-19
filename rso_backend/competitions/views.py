@@ -38,7 +38,7 @@ from api.permissions import (
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, \
+from competitions.constants import CRIMEA_RO_ID, SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, \
     DETACHMENT_REPORTS_MODELS, get_deadline_response
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
@@ -66,7 +66,7 @@ from competitions.models import (Q8, Q9, Q10, Q11, Q12,
                                  Q18TandemRanking, Q19Ranking, Q19Report,
                                  Q19TandemRanking, Q20Report,
                                  QVerificationLog, DemonstrationBlock, PatrioticActionBlock, RankingCopy, SafetyWorkWeekBlock,
-                                 CommanderCommissionerSchoolBlock, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
+                                 CommanderCommissionerSchoolBlock, September15Participant, TandemRankingCopy, WorkingSemesterOpeningBlock, CreativeFestivalBlock,
                                  ProfessionalCompetitionBlock, SpartakiadBlock, Q1Report)
 from competitions.permissions import \
     IsRegionalCommanderOrCommissionerOfDetachment
@@ -74,7 +74,8 @@ from competitions.q_calculations import (calculate_q13_place,
                                          calculate_q19_place)
 from competitions.serializers import (CompetitionApplicationsObjectSerializer,
                                       CompetitionApplicationsSerializer,
-                                      CompetitionParticipantsObjectSerializer, CompetitionParticipantsRegObjectSerializer,
+                                      CompetitionParticipantsObjectSerializer,
+                                      CompetitionParticipantsRegObjectSerializer,
                                       CompetitionParticipantsSerializer,
                                       CompetitionSerializer,
                                       CreateQ7Serializer, CreateQ8Serializer,
@@ -120,7 +121,7 @@ from competitions.swagger_schemas import (q7schema_request,
                                           response_competitions_participants,
                                           response_create_application,
                                           response_junior_detachments)
-from competitions.utils import get_place_q2, tandem_or_start, round_math
+from competitions.utils import get_place_q2, ignore_deadline, tandem_or_start, round_math
 from headquarters.models import (Detachment, RegionalHeadquarter,
                                  UserDetachmentPosition,
                                  UserRegionalHeadquarterPosition)
@@ -552,7 +553,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
             'detachment__name',
             'created_at',
             'junior_detachment__overallranking__place' (старт рейтинг),
-            'detachment__overalltandemranking_main_detachment__place' (тандем).
+            'detachment__overalltandemranking_main_detachment__place' (тандем),
+            'detachment__copy_ranking_main_detachment__place' (тандем замороженный рейтинг),
+            'junior_detachment__copy_ranking_detachment__place' (старт замороженный рейтинг)'.
           Можно сортировать в обратном порядке добавив признак '-'
           перед названием поля, например -created_at.
         - порядок сортировки по дефолту: junior_detachment__name,
@@ -574,7 +577,9 @@ class CompetitionParticipantsViewSet(ListRetrieveDestroyViewSet):
                        'junior_detachment__name',
                        'created_at',
                        'junior_detachment__overallranking__place',
-                       'detachment__overalltandemranking_main_detachment__place')
+                       'detachment__overalltandemranking_main_detachment__place',
+                       'detachment__copy_ranking_main_detachment__place',
+                       'junior_detachment__copy_ranking_detachment__place')
     ordering = ('junior_detachment__name',
                 'detachment__name',
                 'created_at')
@@ -800,7 +805,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(2024, 5, 30)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -963,7 +968,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         При удалении отчета удаляются записи из таблиц Rankin и TandemRankin.
         """
-
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         competition = detachment_report.competition
         detachment = detachment_report.detachment
@@ -1195,7 +1200,7 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1244,10 +1249,8 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1450,7 +1453,7 @@ class Q8ViewSet(Q7ViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1491,10 +1494,8 @@ class Q8ViewSet(Q7ViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1576,7 +1577,7 @@ class Q9ViewSet(Q7ViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1623,10 +1624,8 @@ class Q9ViewSet(Q7ViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1710,7 +1709,7 @@ class Q10ViewSet(
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1754,10 +1753,8 @@ class Q10ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1841,7 +1838,7 @@ class Q11ViewSet(
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1888,10 +1885,8 @@ class Q11ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -1975,7 +1970,7 @@ class Q12ViewSet(
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -2022,10 +2017,8 @@ class Q12ViewSet(
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         event = self.get_object()
         if event.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -2121,7 +2114,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=9, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(
@@ -2252,6 +2245,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
         report = self.get_object()
         raw = get_object_or_404(
             Q5EducatedParticipant,
@@ -2336,7 +2330,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=10, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
@@ -2382,7 +2376,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         for block_name, block_model in block_models.items():
             if block_name in request.data:
-                if today > block_deadlines[block_name]:
+                if today > block_deadlines[block_name] and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
                     return Response(
                         {
                             'error': f'Прием ответов по блоку окончен {block_deadlines[block_name].strftime("%d.%m.%Y")}'},
@@ -2422,6 +2416,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-demonstration-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_demonstration_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2450,6 +2445,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-patriotic-action-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_patriotic_action_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2478,6 +2474,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-safety-work-week-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_safety_work_week_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2506,6 +2503,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-commander-commissioner-school-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_commander_commissioner_school_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2534,6 +2532,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-working-semester-opening-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_working_semester_opening_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2562,6 +2562,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-creative-festival-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_creative_festival_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2590,6 +2592,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-professional-competition-block',
             permission_classes=[permissions.IsAuthenticated])
     def verify_professional_competition_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2618,6 +2622,8 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='verify-spartakiad-block',
             permission_classes=[permissions.IsAuthenticated, ])
     def verify_spartakiad_block(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         reg_hq = detachment.regional_headquarter
@@ -2843,7 +2849,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=10, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(
@@ -2993,6 +2999,8 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         detachment = report.detachment
         if detachment.regional_headquarter.commander != request.user:
@@ -3201,7 +3209,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=10, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3354,6 +3362,8 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
         """
         Верифицирует конкретное мероприятие по его ID.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         competition_id = self.kwargs.get('competition_pk')
         event = get_object_or_404(
@@ -3630,7 +3640,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(2024, 10, 1)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3763,6 +3773,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         При удалении отчета удаляются записи из таблиц Ranking и TandemRanking.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
         detachment_report = self.get_object()
         q14_labor_project = get_object_or_404(
@@ -3950,7 +3961,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -4103,6 +4114,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         При удалении отчета удаляются записи из таблиц Rankin и TandemRankin.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
         detachment_report = self.get_object()
         source_data = get_object_or_404(
@@ -4249,7 +4261,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=9, day=30)
-        if today >= cutoff_date + timedelta(days=1):
+        if today >= cutoff_date + timedelta(days=1) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID, ]):
             return get_deadline_response(deadline=cutoff_date)
         context = super().get_serializer_context()
         competition_id = self.kwargs.get('competition_pk')
@@ -4296,6 +4308,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
         Если отчет уже верифицирован, возвращается 400 Bad Request с описанием
         ошибки `{"detail": "Данный отчет уже верифицирован"}`.
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
         detachment_report = self.get_object()
         detachment = detachment_report.detachment
         if detachment.regional_headquarter.commander != request.user:
@@ -4473,6 +4486,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
 
         Доступ: рег. командиры или админ
         """
+        return Response(status=status.HTTP_403_FORBIDDEN)
         today = date.today()
         report = self.get_object()
         if report.is_verified:
@@ -4634,7 +4648,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 9, 30)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
@@ -4740,10 +4754,8 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -4884,7 +4896,7 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
@@ -4980,6 +4992,40 @@ def get_q1_info(request, competition_pk):
         'number_of_payments': detachment.members.filter(
             user__membership_fee=True
         ).count() + (1 if detachment.commander.membership_fee else 0)
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_q1_info_static(request, competition_pk):
+    """
+    Замороженая информация для показателя q1.
+
+    Возвращает следующую информацию на 15-30 сентября 2023 года:
+    'number_of_members': int - число участников отряда
+    'number_of_payments': int - количество участников отряда
+    оплативших членские взносы
+
+    Доступ: все авторизованные пользователи.
+    Если пользователь не командир, либо не участвует в мероприятии -
+    выводится ошибка 404.
+    """
+    competition = get_object_or_404(Competitions, pk=competition_pk)
+    detachment = get_object_or_404(Detachment, commander=request.user)
+    if not competition.competition_participants.filter(
+            Q(detachment=detachment) | Q(junior_detachment=detachment)
+    ).exists():
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    try:
+        sep_15_participant = detachment.sep_15_participants.get()
+        number_of_members = sep_15_participant.participants_number
+        number_of_payments = sep_15_participant.members_number
+    except September15Participant.DoesNotExist:
+        number_of_members = 0
+        number_of_payments = 0
+    return Response({
+        'number_of_members': number_of_members,
+        'number_of_payments': number_of_payments
     })
 
 
@@ -5173,10 +5219,8 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         Принимает пустой POST запрос.
         Доступ: комиссары региональных штабов.
         """
-        today = date.today()
-        cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
-            return get_deadline_response(deadline=cutoff_date)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
         report = self.get_object()
         if report.is_verified:
             return Response({'error': 'Отчет уже подтвержден.'},
@@ -5307,7 +5351,7 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk

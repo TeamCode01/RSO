@@ -13,6 +13,72 @@ from regional_competitions.factories import RModelFactory
 from regional_competitions.utils import regional_comp_regulations_files_path
 
 
+class DumpStatisticalRegionalReport(models.Model):
+    """
+    Дамп статистического отчета РШ, 1-я часть отчёта РО.
+
+    Сохраненная версия до редактирования во второй части отчёта.
+    """
+
+    regional_headquarter = models.OneToOneField(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб'
+    )
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество членов регионального отделения'
+    )
+    employed_sso = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССО'
+    )
+    employed_spo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СПО'
+    )
+    employed_sop = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СОП'
+    )
+    employed_smo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СМО'
+    )
+    employed_sservo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССервО'
+    )
+    employed_ssho = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССхО'
+    )
+    employed_specialized_detachments = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, профильные отряды'
+    )
+    employed_production_detachments = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, производственные отряды'
+    )
+    employed_top = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, ТОП'
+    )
+    employed_so_poo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ПОО',
+        blank=True,
+        null=True
+    )
+    employed_so_oovo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ООВО',
+        blank=True,
+        null=True
+    )
+    employed_ro_rso = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов РО РСО',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name_plural = 'Дампы статистических отчетов РШ'
+        verbose_name = 'Дамп статистического отчета РШ'
+
+    def __str__(self):
+        return f'Дамп статистического отчет отряда {self.regional_headquarter.name}'
+
+
 class StatisticalRegionalReport(models.Model):
     """Статистический отчет РШ, 1-я часть отчёта РО."""
 
@@ -121,9 +187,9 @@ class BaseRegionalR(models.Model):
                     return
                 else:
                     raise ValidationError(REPORT_EXISTS_MESSAGE)
-        else:  # редактирование существующего объекта
-            if not isinstance(report, RegionalR13) and report.is_sent is True:
-                raise ValidationError(REPORT_SENT_MESSAGE)
+        # else:  # редактирование существующего объекта
+        #     if not isinstance(report, RegionalR13) and report.is_sent is True:
+        #         raise ValidationError(REPORT_SENT_MESSAGE)
 
     class Meta:
         abstract = True
@@ -184,6 +250,11 @@ class BaseEventProjectR(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
 
 
 class BaseEventOrProject(models.Model):
+    name = models.TextField(
+        verbose_name='Наименование мероприятия',
+        blank=True,
+        null=True
+    )
     start_date = models.DateField(
         verbose_name='Дата начала проведения мероприятия',
         blank=True,
@@ -311,16 +382,32 @@ class RegionalR1(BaseEventProjectR):
         verbose_name = 'Отчет по 1 показателю'
         verbose_name_plural = 'Отчеты по 1 показателю'
 
+    def __str__(self):
+        return f'Отчет по 1 показателю РШ {self.regional_headquarter}'
 
-class RegionalR2(BaseRegionalR, BaseScore):
+
+class RegionalR2(BaseScore, models.Model):
     """
     Отношение численности членов РО РСО к численности студентов очной формы обучения субъекта Российской Федерации,
     обучающихся в профессиональных образовательных организациях и образовательных организациях высшего образования
     в государственных, муниципальных и частных образовательных организациях, включая филиалы
     (исключения – учебные заведения специальных ведомств, проводящих обучение на казарменном положении).
     """
-
-    full_time_students = models.PositiveIntegerField(
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+    full_time_students = models.SmallIntegerField(
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
@@ -330,6 +417,9 @@ class RegionalR2(BaseRegionalR, BaseScore):
     class Meta:
         verbose_name = 'Отчет по 2 показателю'
         verbose_name_plural = 'Отчеты по 2 показателю'
+
+    def __str__(self):
+        return f'Отчет по 2 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR3(BaseScore):
@@ -352,6 +442,9 @@ class RegionalR4(BaseEventProjectR):
     class Meta:
         verbose_name = 'Отчет по 4 показателю'
         verbose_name_plural = 'Отчеты по 4 показателю'
+
+    def __str__(self):
+        return f'Отчет по 4 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR4Event(BaseEventOrProject):
@@ -400,6 +493,9 @@ class RegionalR5(BaseEventProjectR):
         verbose_name = 'Отчет по 5 показателю'
         verbose_name_plural = 'Отчеты по 5 показателю'
 
+    def __str__(self):
+        return f'Отчет по 5 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR5Event(BaseEventOrProject):
     regional_r5 = models.ForeignKey(
@@ -446,11 +542,18 @@ class BaseRegionalR6(BaseEventProjectR):
     Участие бойцов студенческих отрядов РО РСО во всероссийских
     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
     """
+    is_project = models.BooleanField(
+        verbose_name='Наличие',
+        default=False
+    )
     number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество человек принявших участие'
     )
+
+    def __str__(self):
+        return f'Отчет по 6 показателю РШ {self.regional_headquarter}'
 
 
 r6_models_factory = RModelFactory(
@@ -487,14 +590,14 @@ class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
         abstract = True
 
 
-r7_models_factory = RModelFactory(
-    r_number=7,
-    base_r_model=BaseRegionalR7,
-    base_link_model=BaseLink,
-    event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
-    labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
-)
-r7_models_factory.create_models()
+# r7_models_factory = RModelFactory(
+#     r_number=7,
+#     base_r_model=BaseRegionalR7,
+#     base_link_model=BaseLink,
+#     event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
+#     labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
+# )
+# r7_models_factory.create_models()
 
 
 class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
@@ -511,6 +614,9 @@ class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return f'Отчет по 9 показателю РШ {self.regional_headquarter}'
 
 
 r9_models_factory = RModelFactory(
@@ -542,6 +648,9 @@ class RegionalR101(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, Base
         verbose_name = 'Отчет по 10 показателю - "Снежный Десант"'
         verbose_name_plural = 'Отчеты по 10 показателю - "Снежный Десант'
 
+    def __str__(self):
+        return f'Отчет по 10 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR101Link(models.Model):
     regional_r101 = models.ForeignKey(
@@ -566,8 +675,11 @@ class RegionalR101Link(models.Model):
 
 class RegionalR102(BaseRegionalR10, BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
-        verbose_name = 'Отчет по 10 показателю - "Поклонимся Великим годам"'
-        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся Великим годам"'
+        verbose_name = 'Отчет по 10 показателю - "Поклонимся великим тем годам"'
+        verbose_name_plural = 'Отчеты по 10 показателю - "Поклонимся великим тем годам"'
+
+    def __str__(self):
+        return f'Отчет по 10 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR102Link(models.Model):
@@ -584,8 +696,8 @@ class RegionalR102Link(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ссылка по 10 показателю - "Поклонимся Великим годам"'
-        verbose_name_plural = 'Ссылки по 10 показателю - "Поклонимся Великим годам'
+        verbose_name = 'Ссылка по 10 показателю - "Поклонимся великим тем годам"'
+        verbose_name_plural = 'Ссылки по 10 показателю - "Поклонимся великим тем годам'
 
     def __str__(self):
         return f'ID {self.id}'
@@ -613,6 +725,9 @@ class RegionalR11(BaseEventProjectR):
         verbose_name = 'Отчет по 11 показателю'
         verbose_name_plural = 'Отчеты по 11 показателю'
 
+    def __str__(self):
+        return f'Отчет по 11 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR12(BaseEventProjectR):
     """
@@ -635,7 +750,7 @@ class RegionalR12(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 12 показателю'
 
     def __str__(self):
-        return f'Отчет по 12 показателю ID {self.id}'
+        return f'Отчет по 12 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR13(BaseEventProjectR):
@@ -659,7 +774,7 @@ class RegionalR13(BaseEventProjectR):
         verbose_name_plural = 'Отчеты по 13 показателю'
 
     def __str__(self):
-        return f'Отчет по 13 показателю ID {self.id}'
+        return f'Отчет по 13 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR14(BaseScore):
@@ -670,6 +785,14 @@ class RegionalR14(BaseScore):
     Заполняется один раз, без периодического пересчета,
     т.к. нет редактирования верифицированных отчетов.
     """
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s',
+        blank=True,
+        null=True
+    )
     report_12 = models.ForeignKey(
         'RegionalR12',
         on_delete=models.CASCADE,
@@ -687,6 +810,9 @@ class RegionalR14(BaseScore):
         verbose_name = 'Отчет по 14 показателю'
         verbose_name_plural = 'Отчеты по 14 показателю'
 
+    def __str__(self):
+        return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
@@ -697,6 +823,9 @@ class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     class Meta:
         verbose_name = 'Отчет по 16 показателю'
         verbose_name_plural = 'Отчеты по 16 показателю'
+
+    def __str__(self):
+        return f'Отчет по 16 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR16Project(models.Model):
@@ -734,9 +863,6 @@ class RegionalR16Project(models.Model):
     class Meta:
         verbose_name = 'Проект по 16 показателю'
         verbose_name_plural = 'Проекты по 16 показателю'
-
-    def __str__(self):
-        return f'ID {self.id}'
 
 
 class RegionalR16Link(models.Model):
@@ -788,6 +914,9 @@ class RegionalR17(BaseComment, models.Model):
         verbose_name = 'Отчет по 17 показателю'
         verbose_name_plural = 'Отчеты по 17 показателю'
 
+    def __str__(self):
+        return f'Отчет по 17 показателю РШ {self.regional_headquarter}'
+
 
 class RegionalR18(models.Model):
     """Количество научных работ и публикаций по теме СО, выпущенных в текущем году."""
@@ -814,6 +943,9 @@ class RegionalR18(models.Model):
     class Meta:
         verbose_name = 'Отчет по 18 показателю'
         verbose_name_plural = 'Отчеты по 18 показателю'
+
+    def __str__(self):
+        return f'Отчет по 18 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR18Project(models.Model):
@@ -898,6 +1030,9 @@ class RegionalR19(BaseComment, models.Model):
         verbose_name = 'Отчет по 19 показателю'
         verbose_name_plural = 'Отчеты по 19 показателю'
 
+    def __str__(self):
+        return f'Отчет по 19 показателю РШ {self.regional_headquarter}'
+
 
 REPORTS_IS_SENT_MODELS = [
     RegionalR1,
@@ -910,10 +1045,12 @@ REPORTS_IS_SENT_MODELS = [
     RegionalR13,
     RegionalR16,
 ]
-# REPORTS_IS_SENT_MODELS.extend(r6_models_factory.models)
 REPORTS_IS_SENT_MODELS.extend(
-    [model_class for model_name, model_class in r7_models_factory.models.items() if not model_name.endswith('Link')]
+    [model_class for model_name, model_class in r6_models_factory.models.items() if not model_name.endswith('Link')]
 )
+# REPORTS_IS_SENT_MODELS.extend(
+#     [model_class for model_name, model_class in r7_models_factory.models.items() if not model_name.endswith('Link')]
+# )
 REPORTS_IS_SENT_MODELS.extend(
     [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
 )
@@ -965,3 +1102,31 @@ class ExpertRole(models.Model):
                 name='not_both_headquarters'
             )
         ]
+
+
+class Ranking(models.Model):
+    """Места участников по показателям."""
+
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='regional_competitions_rankings'
+    )
+
+    @classmethod
+    def add_fields(cls):
+        for i in range(1, 16):
+            field = models.PositiveSmallIntegerField(
+                verbose_name=f'Место участника по {i} показателю',
+                blank=True,
+                null=True
+            )
+            cls.add_to_class(f'r{i}_place', field)
+
+    class Meta:
+        verbose_name = 'Место участника по показателю'
+        verbose_name_plural = 'Места участников по показателям'
+
+
+Ranking.add_fields()

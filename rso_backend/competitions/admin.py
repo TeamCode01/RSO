@@ -133,12 +133,13 @@ class CompetitionApplicationsAdmin(admin.ModelAdmin):
 @admin.register(CompetitionParticipants)
 class CompetitionParticipantsAdmin(admin.ModelAdmin):
     form = CompetitionParticipantsForm
-    list_filter = ('competition__name',)
+    list_filter = ('competition__name', 'confirmed')
     search_fields = ('detachment__name',
                      'junior_detachment__name',
                      'competition__name',
                      'detachment__region__name',
-                     'junior_detachment__region__name')
+                     'junior_detachment__region__name',
+                     )
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_display = ('id',
@@ -146,6 +147,7 @@ class CompetitionParticipantsAdmin(admin.ModelAdmin):
                     'is_tandem',
                     'detachment',
                     'junior_detachment',
+                    'confirmed',
                     'created_at')
     ordering = ('detachment', 'junior_detachment', 'created_at')
 
@@ -481,15 +483,20 @@ class Q7LinksInline(admin.TabularInline):
 @admin.register(Q7)
 class Q7Admin(admin.ModelAdmin):
     list_display = (
-        'id', 'event_name', 'detachment_report', 'is_verified',
-        'number_of_participants', 'links'
+        'id', 'event_name', 'detachment_name', 'detachment_report', 'is_verified',
+        'number_of_participants', 'links',
     )
 
     inlines = [Q7LinksInline]
+    readonly_fields = ('detachment_name',)
 
     @admin.display(description='Ссылки')
     def links(self, obj):
         return LinksQ7.objects.filter(event=obj).count()
+
+    @admin.display(description='Название отряда')
+    def detachment_name(self, obj):
+        return obj.detachment_report.detachment.name
 
 
 class Q7Inline(admin.TabularInline):
@@ -501,7 +508,6 @@ class Q7Inline(admin.TabularInline):
 class Q7ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'detachment', 'score')
     search_fields = ('detachment__name',)
-
     inlines = [Q7Inline]
 
 
@@ -523,15 +529,19 @@ class Q8LinksInline(admin.TabularInline):
 @admin.register(Q8)
 class Q8Admin(admin.ModelAdmin):
     list_display = (
-        'id', 'event_name', 'detachment_report', 'is_verified',
-        'number_of_participants', 'links'
+        'id', 'event_name', 'detachment_name', 'detachment_report', 'is_verified',
+        'number_of_participants', 'links',
     )
-
     inlines = [Q8LinksInline]
+    readonly_fields = ('detachment_name',)
 
     @admin.display(description='Ссылки')
     def links(self, obj):
         return LinksQ8.objects.filter(event=obj).count()
+
+    @admin.display(description='Название отряда')
+    def detachment_name(self, obj):
+        return obj.detachment_report.detachment.name
 
 
 class Q8Inline(admin.TabularInline):

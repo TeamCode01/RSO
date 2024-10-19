@@ -4,7 +4,7 @@ from datetime import datetime
 from headquarters.models import RegionalHeadquarter
 
 from regional_competitions.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk
-from regional_competitions.models import (RegionalR1, RegionalR11, RegionalR4, RegionalR12, RegionalR13,
+from regional_competitions.models import (Ranking, RegionalR1, RegionalR11, RegionalR4, RegionalR12, RegionalR13,
                                           RegionalR14, RegionalR16)
 from regional_competitions.utils import get_fees, log_exception
 
@@ -86,7 +86,7 @@ def calculate_r4_score(report: RegionalR4):
     events = report.events
     logger.info(f'Для отчета {report.id} {report.regional_headquarter} найдено {events.count()} мероприятий')
     for event in events:
-        days_count = (event.end_date - event.start_date).days
+        days_count = (event.end_date - event.start_date).days + 1
         report.score += (days_count * event.participants_number) * (0.8 if event.is_interregional else 1)
         logger.info(
             f'Мероприятие {event} длилось {days_count} дней с кол-вом участников в {event.participant_number} человек. '
@@ -194,12 +194,22 @@ def calculate_r11_score():
 
     """
     r1_ro_ids = set(RegionalR1.objects.filter(
-        verified_by_chq=True, score__gt=0).values_list('regional_headquarter_id', flat=True)
+        verified_by_chq=True,
+        score__gt=0
+    ).values_list('regional_headquarter_id', flat=True)
     )
     r11_ro_ids = set(RegionalR11.objects.filter(score=0).values_list('regional_headquarter_id', flat=True))
     ro_ids = r1_ro_ids.intersection(r11_ro_ids)
-    r1_reports = RegionalR1.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score__gt=0)
-    r11_reports = RegionalR11.objects.filter(regional_headquarter_id__in=ro_ids, verified_by_chq=True, score=0)
+    r1_reports = RegionalR1.objects.filter(
+        regional_headquarter_id__in=ro_ids,
+        verified_by_chq=True,
+        score__gt=0
+    )
+    r11_reports = RegionalR11.objects.filter(
+        regional_headquarter_id__in=ro_ids,
+        verified_by_chq=True,
+        score=0
+    )
     r1_scores = {report.regional_headquarter_id: report.score for report in r1_reports}
 
     updated_r11_reports = []
@@ -214,10 +224,9 @@ def calculate_r11_score():
             ro_score = (rso_vk_members / (members_with_fees))
         else:
             ro_score = (rso_vk_members / (members_with_fees)) + (rso_vk_members / (2 * report.participants_number))
-        report.score = ro_score
+        report.score = round(ro_score, 2)
         logger.info(f'Подсчитали очки 11-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
         updated_r11_reports.append(report)
-        print(updated_r11_reports)
     try:
         # TODO: исправить эксепшн
         updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
@@ -305,6 +314,7 @@ def calculate_r14():
         reports_to_create = []
         for ro in ro_reports:
             reports_to_create.append(RegionalR14(
+                regional_headquarter_id=ro['id'],
                 report_12_id=ro['regionalr12__id'],
                 report_13_id=ro['regionalr13__id'],
                 score=round(ro['regionalr13__number_of_members'] / ro['regionalr12__amount_of_money'], 2),
@@ -341,3 +351,82 @@ def calculate_r16_score(report: RegionalR16):
            f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
         )
     report.save()
+
+
+def calc_r_ranking(report_models: list, ranking_field_name: str, reverse=True, no_verification=False):
+    """
+    Расчет места для региональных отчетов.
+
+    :param report_models: Список с моделями отчетов, по которым суммируются score
+    :param ranking_field_name: Имя поля в модели Ranking, куда записываем место
+    :param reverse: Если True, то чем больше очков, тем выше место, по дефолту True
+    :param no_verification: Если True, то берутся все записи из модели, без фильтрации по verified_by_chq=True
+    """
+    entries = {}
+    try:
+        # вытащим все записи из моделей
+        for report_model in report_models:
+            if no_verification is False:
+                model_entries = report_model.objects.filter(
+                    verified_by_chq=True,
+                ).values(
+                    'regional_headquarter_id',
+                    'score',
+                )
+            else:
+                model_entries = report_model.objects.values(
+                    'regional_headquarter_id',
+                    'score',
+                )
+            # пройдемся по каждой записи всех моделей, просуммируем score
+            # наполним entries словарем с ключом - id штаба, значениями - суммы очков
+            for model_entry in model_entries:
+                entry = entries.get(model_entry['regional_headquarter_id'])
+                if entry is None:
+                    entries[model_entry['regional_headquarter_id']] = model_entry['score']
+                else:
+                    entries[model_entry['regional_headquarter_id']] += model_entry['score']
+
+        # отсортируем словарь по возрастанию или убыванию в зависимости от reverse (по дефолту по возрастанию)
+        sorted_entries = sorted(entries.items(), key=lambda x: x[1], reverse=reverse)
+
+        # присвоим места, тащим все записи модели учета рейтинга Ranking
+        # присвоим места согласно порядку сортировки, если score одинаковые - присвоим одинаковое место
+        # если записи нет - создаем ее
+        ranking_entries = Ranking.objects.filter(
+            regional_headquarter_id__in=[entry[0] for entry in sorted_entries],
+        )
+
+        temp_place = 0
+        temp_score = float('-inf') if reverse else float('inf')
+        to_create_entries = []
+        to_update_entries = []
+        for entry in sorted_entries:
+            ranking_entry = ranking_entries.filter(regional_headquarter_id=entry[0]).first()
+            # считаем место, если очки одинаковые с прежней записью - присвоим одинаковое место
+            if temp_score == entry[1]:
+                place = temp_place
+            else:
+                temp_score = entry[1]
+                temp_place += 1
+                place = temp_place
+
+            # если у рег штаба еще нет записи в таблице - создаем ее
+            if not ranking_entry:
+                ranking_entry = Ranking(regional_headquarter_id=entry[0])
+                setattr(ranking_entry, ranking_field_name, place)
+                to_create_entries.append(ranking_entry)
+            else:
+                setattr(ranking_entry, ranking_field_name, place)
+                to_update_entries.append(ranking_entry)
+
+        new_entries = Ranking.objects.bulk_create(to_create_entries)
+        count_updated = Ranking.objects.bulk_update(to_update_entries, [ranking_field_name])
+
+        logger.info(f'{ranking_field_name} - обновлено {count_updated} записей')
+        logger.info(f'{ranking_field_name} - создано {len(new_entries)} записей')
+
+        return new_entries
+
+    except Exception as e:
+        logger.critical(f'UNEXPECTED ERROR calc_r_ranking: {e}')

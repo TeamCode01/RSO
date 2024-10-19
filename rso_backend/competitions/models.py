@@ -108,6 +108,10 @@ class CompetitionParticipants(models.Model):
         verbose_name='Дата и время создания заявки',
         auto_now_add=True
     )
+    confirmed = models.BooleanField(
+        verbose_name='Подтвержденный участник конкурса',
+        default=True
+    )
 
     def __str__(self):
         return f'Участник(и) id {self.id} в конкурсе id {self.competition.id}'
@@ -1756,8 +1760,8 @@ class September15Participant(models.Model):
     )
 
     class Meta:
-        verbose_name_plural = 'Кол-во участников в отрядах на 15 сентября'
-        verbose_name = 'Кол-во участников в отряде на 15 сентября'
+        verbose_name_plural = 'Кол-во участников в отрядах на 30 сентября'
+        verbose_name = 'Кол-во участников в отряде на 30 сентября'
 
 
 class TandemRankingCopy(models.Model):

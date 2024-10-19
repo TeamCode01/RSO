@@ -34,7 +34,7 @@ SOLO_RANKING_MODELS = [
     Q10Ranking,
     Q11Ranking,
     Q12Ranking,
-    Q13Ranking,
+    Q13TandemRanking,
     Q14Ranking,
     Q15Rank,
     Q16Ranking,
@@ -96,3 +96,6 @@ def get_deadline_response(deadline):
         {'error': DEADLINE_RESPONSE_TEMPLATE.format(deadline=deadline)},
         status=status.HTTP_400_BAD_REQUEST
     )
+
+
+CRIMEA_RO_ID = 80
