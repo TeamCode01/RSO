@@ -800,7 +800,7 @@ class ExportDirectionDataView(ExportDirectionDataMixin, BaseExcelExportView):
 
 
 class ExportDirectionDataAPIView(CommanerPermissionMixin, ExportDirectionDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsDetachmentCommanderRegistry]
+    pass
 
 
 class ExportUsersDataMixin:
@@ -833,4 +833,4 @@ class ExportUsersDataView(ExportUsersDataMixin, BaseExcelExportView):
 
 
 class ExportUsersDataAPIView(CommanerPermissionMixin, ExportUsersDataMixin, BaseExcelExportAPIView):
-    permission_classes = [IsDetachmentCommanderRegistry]
+    pass

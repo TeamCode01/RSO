@@ -255,8 +255,8 @@ class BaseLeadershipMixin:
 
 class DetachmentLeadershipMixin(BaseLeadershipMixin):
     class Meta:
-        model = Detachment
-        fields = ('leadership',)
+         model = Detachment
+         fields = ('leadership',)
 
     def get_leadership(self, instance):
         """
@@ -399,7 +399,7 @@ class DistrictSubCommanderMixin(BaseSubCommanderMixin):
         self.append_detachment_hqs(detachments, user_id, commanders)
         local_headquarters = LocalHeadquarter.objects.filter(
             regional_headquarter__district_headquarter=district_headquarter
-            )
+                                                             )
         self.append_local_hqs(local_headquarters, user_id, commanders)
         educational_headquarters = EducationalHeadquarter.objects.filter(
             regional_headquarter__district_headquarter=district_headquarter
@@ -425,7 +425,7 @@ class DistrictSubCommanderIdMixin(BaseSubCommanderMixin):
         self.append_detachment_hqs(detachments, user_id, commanders)
         local_headquarters = LocalHeadquarter.objects.filter(
             regional_headquarter__district_headquarter=district_headquarter
-            )
+                                                             )
         self.append_local_hqs(local_headquarters, user_id, commanders)
         educational_headquarters = EducationalHeadquarter.objects.filter(
             regional_headquarter__district_headquarter=district_headquarter
@@ -448,7 +448,7 @@ class RegionalSubCommanderMixin(BaseSubCommanderMixin):
         local_headquarters = LocalHeadquarter.objects.filter(
             regional_headquarter=regional_headquarter)
         self.append_local_hqs(local_headquarters, user_id, commanders
-            )
+                              )
         educational_headquarters = EducationalHeadquarter.objects.filter(
             regional_headquarter=regional_headquarter
             )
@@ -469,7 +469,7 @@ class RegionalSubCommanderIdMixin(BaseSubCommanderMixin):
         local_headquarters = LocalHeadquarter.objects.filter(
             regional_headquarter=regional_headquarter)
         self.append_local_hqs(local_headquarters, user_id, commanders
-            )
+                              )
         educational_headquarters = EducationalHeadquarter.objects.filter(
             regional_headquarter=regional_headquarter
             )
