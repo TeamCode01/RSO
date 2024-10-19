@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
@@ -151,13 +152,13 @@ class AttemptAdmin(admin.ModelAdmin):
     )
 
     def has_add_permission(self, request, obj=None):
-        return False
+        return settings.DEBUG
 
     def has_change_permission(self, request, obj=None):
-        return False
+        return settings.DEBUG
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return settings.DEBUG
 
 
 @admin.register(UserAnswer)

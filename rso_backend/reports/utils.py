@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urljoin
 
 from django.db import connection, models
@@ -11,7 +12,7 @@ from api.utils import get_user_detachment, get_user_detachment_position
 from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS
 from competitions.models import (CompetitionParticipants, OverallRanking,
                                  OverallTandemRanking, Q5DetachmentReport, Q5EducatedParticipant, Q5TandemRanking, Q5Ranking,
-                                 Q6DetachmentReport, Q6TandemRanking, Q6Ranking,
+                                 Q6DetachmentReport, Q6TandemRanking, Q6Ranking, September15Participant,
                                  SpartakiadBlock, DemonstrationBlock, PatrioticActionBlock,
                                  SafetyWorkWeekBlock, CommanderCommissionerSchoolBlock,
                                  WorkingSemesterOpeningBlock, CreativeFestivalBlock,
@@ -211,6 +212,8 @@ def get_safety_results():
         category=Attempt.Category.SAFETY, is_valid=True, score__gt=0
     ).order_by('-timestamp', 'user')
 
+    sep_15_data = {item[0]: item[1] for item in September15Participant.objects.all().values_list('detachment__name', 'members_number')}
+
     if not results:
         return []
 
@@ -235,7 +238,7 @@ def get_safety_results():
                     row.score,
                     None,
                     row.user.membership_fee,
-                    row.detachment.sep_15_participants.first().members_number if row.detachment else '-',
+                    sep_15_data[row.detachment] if row.detachment else '-',
                 ))
             except Exception:
                 pass
@@ -261,7 +264,7 @@ def get_safety_results():
                 row.score,
                 timestamp,
                 row.user.membership_fee,
-                row.detachment.sep_15_participants.first().members_number if row.detachment else '-',
+                sep_15_data[row.detachment.name] if row.detachment else '-',
             ))
         except Exception:
             pass
