@@ -1,7 +1,7 @@
 from urllib.parse import urljoin
 
 from django.db import connection, models
-from django.db.models import Count, Q, Case, When, Value
+from django.db.models import Count, Q, Case, When, Value, Max
 from django.conf import settings
 
 from collections import defaultdict
@@ -201,29 +201,66 @@ def adapt_attempts(results: List[Attempt]) -> list:
 
 
 def get_safety_results():
+
     results = Attempt.objects.filter(
         category=Attempt.Category.SAFETY, is_valid=True, score__gt=0
     ).order_by('-timestamp', 'user')
+
+    if not results:
+        return []
+
     results = adapt_attempts(results)
+
     prepared_data = []
     for row in results:
         timestamp = row.timestamp
-        if timestamp.tzinfo is not None:
-            timestamp = timestamp.replace(tzinfo=None)
-        prepared_data.append((
-            row.user.region.name if row.user.region else '-',
-            row.user.last_name,
-            row.user.first_name,
-            row.user.patronymic_name,
-            row.detachment if row.detachment else '-',
-            row.detachment.area.name if row.detachment.area else '-',
-            row.detachment_position if row.detachment_position else '-',
-            row.attempt_number,
-            row.is_valid,
-            row.score,
-            timestamp
-        ))
+
+        if timestamp is None:
+            try:
+                prepared_data.append((
+                    row.user.region.name if row.user.region else '-',
+                    row.user.last_name,
+                    row.user.first_name,
+                    row.patronymic_name if hasattr(row, 'patronymic_name') and row.patronymic_name else '-',
+                    row.detachment if row.detachment else '-',
+                    row.detachment.area.name if hasattr(row.detachment, 'area') and row.detachment.area else '-',
+                    row.detachment_position if row.detachment_position else '-',
+                    row.attempt_number,
+                    row.is_valid,
+                    row.score,
+                    None  # Или другое значение по умолчанию
+                ))
+            except Exception:
+                pass
+            continue  # Пропустить оставшуюся часть цикла для этой строки
+
+        try:
+            if timestamp.tzinfo is not None:
+                timestamp = timestamp.replace(tzinfo=None)
+        except Exception:
+            pass
+
+        try:
+            prepared_data.append((
+                row.user.region.name if row.user.region else '-',
+                row.user.last_name,
+                row.user.first_name,
+                row.patronymic_name if hasattr(row, 'patronymic_name') and row.patronymic_name else '-',
+                row.detachment if row.detachment else '-',
+                row.detachment.area.name if hasattr(row.detachment, 'area') and row.detachment.area else '-',
+                row.detachment_position if row.detachment_position else '-',
+                row.attempt_number,
+                row.is_valid,
+                row.score,
+                timestamp
+            ))
+        except Exception:
+            pass
+
     return prepared_data
+
+
+
 
 
 def get_competition_participants_data():
@@ -1742,3 +1779,147 @@ def get_attributes_of_uniform_data(competition_id):
     ])
 
     return rows
+
+
+
+def get_debut_results(competition_id: int, is_sample=False) -> List[Detachment]:
+    competition_members_data = []
+    if is_sample:
+        junior_detachments_queryset = CompetitionParticipants.objects.filter(
+            junior_detachment__isnull=False,
+            detachment__isnull=True,
+            competition_id=competition_id
+        )[:10]
+    else:
+        junior_detachments_queryset = CompetitionParticipants.objects.filter(
+            junior_detachment__isnull=False,
+            detachment__isnull=True,
+            competition_id=competition_id
+        )
+
+    for participant_entry in junior_detachments_queryset:
+        detachment = participant_entry.junior_detachment
+        detachment.participants_count = get_participants_count(detachment)
+        detachment.status = 'Младший отряд'
+        detachment.nomination = 'Дебют'
+        detachment.area_name = detachment.area.name
+        
+        # Получаем общий рейтинг
+        detachment.overall_ranking, detachment.places_sum = get_overall_ranking(detachment, competition_id)
+        
+        # Получаем места по q_ranking
+        detachment.places = get_detachment_places(detachment, competition_id)
+        
+        competition_members_data.append(detachment)
+    
+    return competition_members_data
+
+def get_tandem_results(competition_id: int, is_sample=False) -> List[Detachment]:
+    competition_members_data = []
+    if is_sample:
+        tandem_queryset = CompetitionParticipants.objects.filter(
+            junior_detachment__isnull=False,
+            detachment__isnull=False,
+            competition_id=competition_id
+        )[:10]
+    else:
+        tandem_queryset = CompetitionParticipants.objects.filter(
+            junior_detachment__isnull=False,
+            detachment__isnull=False,
+            competition_id=competition_id
+        )
+
+    for participant_entry in tandem_queryset:
+        junior_detachment = participant_entry.junior_detachment
+        detachment = participant_entry.detachment
+        
+        junior_detachment.participants_count = get_participants_count(junior_detachment)
+        junior_detachment.status = 'Младший отряд'
+        junior_detachment.nomination = 'Тандем'
+        junior_detachment.area_name = junior_detachment.area.name
+        
+        detachment.participants_count = get_participants_count(detachment)
+        detachment.status = 'Наставник'
+        detachment.nomination = 'Тандем'
+        detachment.area_name = detachment.area.name
+
+        # Получаем общий рейтинг
+        detachment.overall_ranking, detachment.places_sum = get_overall_ranking(detachment, competition_id, is_tandem=True, junior_detachment=junior_detachment)
+        junior_detachment.overall_ranking = detachment.overall_ranking
+        junior_detachment.places_sum = detachment.places_sum
+
+        # Получаем места по q_ranking
+        detachment.places = get_detachment_places(detachment, competition_id, is_tandem=True, junior_detachment=junior_detachment)
+        junior_detachment.places = get_detachment_places(junior_detachment, competition_id, is_tandem=True, junior_detachment=detachment)
+
+        competition_members_data.append(detachment)
+        competition_members_data.append(junior_detachment)
+
+    return competition_members_data
+
+def get_detachment_places(detachment, competition_id, is_tandem=False, junior_detachment=None):
+    places = []
+    if is_tandem:
+        ranking_models = TANDEM_RANKING_MODELS
+    else:
+        ranking_models = SOLO_RANKING_MODELS
+    
+    for q_ranking in ranking_models:
+        try:
+            if is_tandem:
+                place = q_ranking.objects.get(
+                    junior_detachment=junior_detachment,
+                    detachment=detachment,
+                    competition_id=competition_id
+                ).place
+            else:
+                place = q_ranking.objects.get(
+                    detachment=detachment, competition_id=competition_id
+                ).place
+        except q_ranking.DoesNotExist:
+            place = 'Последнее место'
+        
+        places.append(place)
+    
+    return places
+
+
+def get_overall_ranking(detachment, competition_id, is_tandem=False, junior_detachment=None):
+    try:
+        if is_tandem and junior_detachment:
+            overall_ranking = OverallTandemRanking.objects.get(
+                detachment=detachment,
+                junior_detachment=junior_detachment,
+                competition_id=competition_id
+            ).place
+            places_sum = OverallTandemRanking.objects.get(
+                detachment=detachment,
+                junior_detachment=junior_detachment,
+                competition_id=competition_id
+            ).places_sum
+        else:
+            overall_ranking = OverallRanking.objects.get(
+                detachment=detachment, competition_id=competition_id
+            ).place
+            places_sum = OverallRanking.objects.get(
+                detachment=detachment, competition_id=competition_id
+            ).places_sum
+    except (OverallRanking.DoesNotExist, OverallTandemRanking.DoesNotExist):
+        # Если запись отсутствует, ищем последнее место
+        if is_tandem:
+            last_place = OverallTandemRanking.objects.filter(
+                competition_id=competition_id
+            ).aggregate(Max('place'))['place__max']
+        else:
+            last_place = OverallRanking.objects.filter(
+                competition_id=competition_id
+            ).aggregate(Max('place'))['place__max']
+        
+        overall_ranking = last_place if last_place is not None else 'Последнее место'
+        places_sum = last_place if last_place is not None else 'Последнее место'
+    
+    return overall_ranking, places_sum
+
+
+def get_participants_count(detachment):
+    return get_hq_participants_15_september(detachment)

@@ -1,7 +1,7 @@
 from django.urls import path
 
-from reports.views import (AttributesOfUniformDataView, CommanderSchoolView,
-                           DetachmentQResultsView,
+from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, DetachmentQDebutResultsView,
+                           DetachmentQResultsView, DetachmentQTandemResultsView,
                            ExportCommanderSchoolDataView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
@@ -50,6 +50,16 @@ urlpatterns = [
         'detachment_q_results/',
         DetachmentQResultsView.as_view(),
         name='detachment_q_results'
+    ),
+    path(
+        'detachment_q_debut_results/',
+        DetachmentQDebutResultsView.as_view(),
+        name='detachment_q_debut_results'
+    ),
+    path(
+        'detachment_q_tandem_results/',
+        DetachmentQTandemResultsView.as_view(),
+        name='detachment_q_tandem_results'
     ),
     path(
         'detachment_q_results/export/',
