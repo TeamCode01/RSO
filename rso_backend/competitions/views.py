@@ -38,7 +38,7 @@ from api.permissions import (
     IsRegionalCommissionerOrCommanderDetachmentWithVerif)
 from api.utils import (get_detachment_start, get_detachment_tandem,
                        get_events_data)
-from competitions.constants import SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, \
+from competitions.constants import CRIMEA_RO_ID, SOLO_RANKING_MODELS, TANDEM_RANKING_MODELS, COUNT_PLACES_DEADLINE, \
     DETACHMENT_REPORTS_MODELS, get_deadline_response
 from competitions.filters import (CompetitionParticipantsFilter,
                                   QVerificationLogFilter)
@@ -121,7 +121,7 @@ from competitions.swagger_schemas import (q7schema_request,
                                           response_competitions_participants,
                                           response_create_application,
                                           response_junior_detachments)
-from competitions.utils import get_place_q2, tandem_or_start, round_math
+from competitions.utils import get_place_q2, ignore_deadline, tandem_or_start, round_math
 from headquarters.models import (Detachment, RegionalHeadquarter,
                                  UserDetachmentPosition,
                                  UserRegionalHeadquarterPosition)
@@ -805,7 +805,7 @@ class Q2DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(2024, 5, 30)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -1200,7 +1200,7 @@ class Q7ViewSet(ListRetrieveCreateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1453,7 +1453,7 @@ class Q8ViewSet(Q7ViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1577,7 +1577,7 @@ class Q9ViewSet(Q7ViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1709,7 +1709,7 @@ class Q10ViewSet(
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1838,7 +1838,7 @@ class Q11ViewSet(
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -1970,7 +1970,7 @@ class Q12ViewSet(
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = self.get_competitions()
         detachment = get_object_or_404(
@@ -2114,7 +2114,7 @@ class Q5DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=9, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(
@@ -2330,7 +2330,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=10, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(Competitions, id=self.kwargs.get('competition_pk'))
@@ -2376,7 +2376,7 @@ class Q6DetachmentReportViewSet(ListRetrieveCreateViewSet):
 
         for block_name, block_model in block_models.items():
             if block_name in request.data:
-                if today > block_deadlines[block_name]:
+                if today > block_deadlines[block_name] and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
                     return Response(
                         {
                             'error': f'Прием ответов по блоку окончен {block_deadlines[block_name].strftime("%d.%m.%Y")}'},
@@ -2849,7 +2849,7 @@ class Q15DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=10, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
 
         competition = get_object_or_404(
@@ -3209,7 +3209,7 @@ class Q13DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=10, day=15)
-        if today >= (cutoff_date + timedelta(days=1)):
+        if today >= (cutoff_date + timedelta(days=1)) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3640,7 +3640,7 @@ class Q14DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(2024, 10, 1)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -3961,7 +3961,7 @@ class Q17DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=self.kwargs.get('competition_pk')
@@ -4261,7 +4261,7 @@ class Q18DetachmentReportViewSet(ListRetrieveCreateViewSet):
     def create(self, request, *args, **kwargs):
         today = date.today()
         cutoff_date = date(year=2024, month=9, day=30)
-        if today >= cutoff_date + timedelta(days=1):
+        if today >= cutoff_date + timedelta(days=1) and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID, ]):
             return get_deadline_response(deadline=cutoff_date)
         context = super().get_serializer_context()
         competition_id = self.kwargs.get('competition_pk')
@@ -4648,7 +4648,7 @@ class Q19DetachmentReportViewset(CreateListRetrieveUpdateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 9, 30)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
@@ -4896,7 +4896,7 @@ class Q20ViewSet(CreateListRetrieveUpdateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk
@@ -5351,7 +5351,7 @@ class Q16ViewSet(CreateListRetrieveUpdateViewSet):
         """
         today = date.today()
         cutoff_date = date(2024, 10, 15)
-        if today > cutoff_date:
+        if today > cutoff_date and not ignore_deadline(request, ro_ids=[CRIMEA_RO_ID,]):
             return get_deadline_response(deadline=cutoff_date)
         competition = get_object_or_404(
             Competitions, id=competition_pk

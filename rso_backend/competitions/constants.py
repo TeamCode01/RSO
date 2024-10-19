@@ -96,3 +96,6 @@ def get_deadline_response(deadline):
         {'error': DEADLINE_RESPONSE_TEMPLATE.format(deadline=deadline)},
         status=status.HTTP_400_BAD_REQUEST
     )
+
+
+CRIMEA_RO_ID = 80

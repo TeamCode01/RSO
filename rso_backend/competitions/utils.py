@@ -1,9 +1,11 @@
 import os
-from datetime import datetime as dt
+from datetime import date, datetime as dt
 
 from django.db.models import Q
 from django.utils import timezone
 
+from rest_framework.response import Response
+from rest_framework import status
 
 def format_filename(filename):
     """Функция для форматирования имени файла."""
@@ -163,3 +165,15 @@ def find_second_element_by_first(tuple_list, first_element) -> int | None:
         if item[0] == first_element:
             return item[1]
     return None
+
+
+def ignore_deadline(request, ro_ids: list) -> bool:
+    """Функция для игнорирования дедлайнов для опеределённых РО."""
+    try:
+        user_ro = request.user.userdetachmentposition.headquarter.regional_headquarter.id
+    except Exception:
+        user_ro = request.user.detachment_commander.regional_headquarter.id
+
+    if user_ro in ro_ids:
+        return True
+    return False
