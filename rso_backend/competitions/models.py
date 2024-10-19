@@ -1760,8 +1760,8 @@ class September15Participant(models.Model):
     )
 
     class Meta:
-        verbose_name_plural = 'Кол-во участников в отрядах на 15 сентября'
-        verbose_name = 'Кол-во участников в отряде на 15 сентября'
+        verbose_name_plural = 'Кол-во участников в отрядах на 30 сентября'
+        verbose_name = 'Кол-во участников в отряде на 30 сентября'
 
 
 class TandemRankingCopy(models.Model):
