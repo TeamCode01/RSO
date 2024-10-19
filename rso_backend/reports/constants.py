@@ -102,7 +102,8 @@ SAFETY_TEST_RESULTS_HEADERS = [
     'Попытка',
     'Валидность попытки',
     'Очки',
-    'Дата'
+    'Дата',
+    'Оплата членского взноса'
 ]
 DETACHMENT_Q_RESULTS_HEADERS = [
     '№',

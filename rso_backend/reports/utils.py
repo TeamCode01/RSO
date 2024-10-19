@@ -221,14 +221,15 @@ def get_safety_results():
                     row.user.region.name if row.user.region else '-',
                     row.user.last_name,
                     row.user.first_name,
-                    row.patronymic_name if hasattr(row, 'patronymic_name') and row.patronymic_name else '-',
+                    row.user.patronymic_name if hasattr(row, 'patronymic_name') and row.patronymic_name else '-',
                     row.detachment if row.detachment else '-',
                     row.detachment.area.name if hasattr(row.detachment, 'area') and row.detachment.area else '-',
                     row.detachment_position if row.detachment_position else '-',
                     row.attempt_number,
                     row.is_valid,
                     row.score,
-                    None  # Или другое значение по умолчанию
+                    None,
+                    row.user.membership_fee
                 ))
             except Exception:
                 pass
@@ -245,14 +246,15 @@ def get_safety_results():
                 row.user.region.name if row.user.region else '-',
                 row.user.last_name,
                 row.user.first_name,
-                row.patronymic_name if hasattr(row, 'patronymic_name') and row.patronymic_name else '-',
+                row.user.patronymic_name if hasattr(row, 'patronymic_name') and row.patronymic_name else '-',
                 row.detachment if row.detachment else '-',
                 row.detachment.area.name if hasattr(row.detachment, 'area') and row.detachment.area else '-',
                 row.detachment_position if row.detachment_position else '-',
                 row.attempt_number,
                 row.is_valid,
                 row.score,
-                timestamp
+                timestamp,
+                row.user.membership_fee
             ))
         except Exception:
             pass
