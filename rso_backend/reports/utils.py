@@ -230,7 +230,8 @@ def get_safety_results():
                     row.is_valid,
                     row.score,
                     None,
-                    row.user.membership_fee
+                    row.user.membership_fee,
+                    row.detachment.sep_15_participants.members_number if row.detachment else '-',
                 ))
             except Exception:
                 pass
@@ -255,15 +256,13 @@ def get_safety_results():
                 row.is_valid,
                 row.score,
                 timestamp,
-                row.user.membership_fee
+                row.user.membership_fee,
+                row.detachment.sep_15_participants.members_number if row.detachment else '-',
             ))
         except Exception:
             pass
 
     return prepared_data
-
-
-
 
 
 def get_competition_participants_data():
