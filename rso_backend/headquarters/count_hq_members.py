@@ -180,7 +180,6 @@ def count_test_membership(headquarter, user_id=None):
             category=Attempt.Category.SAFETY,
             score__gt=60
         ).count()
-        sub_commanders = []
     else:
         raise ValueError('Будьте внимательны :)')
 
@@ -239,3 +238,7 @@ def get_hq_participants_15_september(detachment):
     inst = September15Participant.objects.filter(detachment=detachment).last()
     return 1 if not inst else inst.participants_number
 
+
+def get_hq_members_15_september(detachment):
+    detachment_members =  September15Participant.objects.filter(detachment=detachment).last()
+    return 0 if not detachment_members else detachment_members.members_number

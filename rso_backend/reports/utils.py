@@ -24,7 +24,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
                                  Q18TandemRanking, Q18Ranking, Q18DetachmentReport,
                                  Q13TandemRanking, Q13Ranking, Q13DetachmentReport,
                                  Q13EventOrganization, Q14DetachmentReport, Q14LaborProject, Q14Ranking, Q14TandemRanking, Q19Ranking, Q19Report, Q19TandemRanking, LinksQ8)
-from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september
+from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september, get_hq_members_15_september
 from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area, UserDistrictHeadquarterPosition, UserLocalHeadquarterPosition, UserEducationalHeadquarterPosition, UserRegionalHeadquarterPosition, UserUnitPosition
 from questions.models import Attempt
 from users.models import RSOUser, UserRegion
@@ -93,6 +93,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
     for participant_entry in junior_detachments_queryset:
         detachment = participant_entry.junior_detachment
         detachment.participants_count = get_hq_participants_15_september(detachment)
+        detachment.members_count = get_hq_members_15_september(detachment)
         detachment.status = 'Младший отряд'
         detachment.nomination = 'Дебют'
         detachment.area_name = detachment.area.name
@@ -130,12 +131,14 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
     for participant_entry in tandem_queryset:
         junior_detachment = participant_entry.junior_detachment
         junior_detachment.participants_count = get_hq_participants_15_september(junior_detachment)
+        junior_detachment.members_count = get_hq_members_15_september(junior_detachment)
         junior_detachment.status = 'Младший отряд'
         junior_detachment.nomination = 'Тандем'
         junior_detachment.area_name = junior_detachment.area.name
         junior_detachment.places = []
         detachment = participant_entry.detachment
         detachment.participants_count = get_hq_participants_15_september(detachment)
+        detachment.members_count = get_hq_members_15_september(detachment)
         detachment.status = 'Наставник'
         detachment.nomination = 'Тандем'
         detachment.area_name = detachment.area.name
@@ -180,6 +183,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
             row.nomination,
             row.area_name,
             row.participants_count,
+            row.members_count,
             row.overall_ranking,
             row.places_sum,
             *row.places,
@@ -2394,6 +2398,7 @@ def get_debut_results(competition_id: int, is_sample=False) -> List[Detachment]:
     for participant_entry in junior_detachments_queryset:
         detachment = participant_entry.junior_detachment
         detachment.participants_count = get_participants_count(detachment)
+        detachment.members_count = get_members_count(detachment)
         detachment.status = 'Младший отряд'
         detachment.nomination = 'Дебют'
         detachment.area_name = detachment.area.name
@@ -2428,11 +2433,13 @@ def get_tandem_results(competition_id: int, is_sample=False) -> List[Detachment]
         detachment = participant_entry.detachment
         
         junior_detachment.participants_count = get_participants_count(junior_detachment)
+        junior_detachment.members_count = get_members_count(junior_detachment)
         junior_detachment.status = 'Младший отряд'
         junior_detachment.nomination = 'Тандем'
         junior_detachment.area_name = junior_detachment.area.name
         
         detachment.participants_count = get_participants_count(detachment)
+        detachment.members_count = get_members_count(detachment)
         detachment.status = 'Наставник'
         detachment.nomination = 'Тандем'
         detachment.area_name = detachment.area.name
@@ -2518,3 +2525,6 @@ def get_overall_ranking(detachment, competition_id, is_tandem=False, junior_deta
 def get_participants_count(detachment):
     return get_hq_participants_15_september(detachment)
 
+
+def get_members_count(detachment):
+    return get_hq_members_15_september(detachment)
