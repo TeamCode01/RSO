@@ -231,7 +231,7 @@ def get_safety_results():
                     row.score,
                     None,
                     row.user.membership_fee,
-                    row.detachment.sep_15_participants.members_number if row.detachment else '-',
+                    row.detachment.sep_15_participants.first().members_number if row.detachment else '-',
                 ))
             except Exception:
                 pass
