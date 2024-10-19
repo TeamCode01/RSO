@@ -107,15 +107,15 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
                 detachment=detachment, competition_id=competition_id
             ).places_sum
         except OverallRanking.DoesNotExist:
-            detachment.overall_ranking = 'Рейтинг ещё не сформирован'
-            detachment.places_sum = 'Рейтинг ещё не сформирован'
+            detachment.overall_ranking = 'Последнее место'
+            detachment.places_sum = 'Последнее место'
         for q_ranking in SOLO_RANKING_MODELS:
             try:
                 detachment.places.append(q_ranking.objects.get(
                     detachment=detachment, competition_id=competition_id
                 ).place)
             except q_ranking.DoesNotExist:
-                detachment.places.append('Рейтинг еще не сформирован')
+                detachment.places.append('Последнее место')
         competition_members_data.append(detachment)
     if is_sample:
         tandem_queryset = CompetitionParticipants.objects.filter(
@@ -156,8 +156,8 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
                 competition_id=competition_id
             ).places_sum
         except OverallTandemRanking.DoesNotExist:
-            overall_ranking = 'Рейтинг ещё не сформирован'
-            places_sum = 'Рейтинг ещё не сформирован'
+            overall_ranking = 'Последнее место'
+            places_sum = 'Последнее место'
         detachment.overall_ranking = overall_ranking
         detachment.places_sum = places_sum
         junior_detachment.overall_ranking = overall_ranking
@@ -170,7 +170,7 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
                     competition_id=competition_id
                 ).place
             except q_ranking.DoesNotExist:
-                place = 'Рейтинг еще не сформирован'
+                place = 'Последнее место'
             detachment.places.append(place)
             junior_detachment.places.append(place)
         competition_members_data.append(detachment)

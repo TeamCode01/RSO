@@ -172,7 +172,10 @@ def ignore_deadline(request, ro_ids: list) -> bool:
     try:
         user_ro = request.user.userdetachmentposition.headquarter.regional_headquarter.id
     except Exception:
-        user_ro = request.user.detachment_commander.regional_headquarter.id
+        try:
+            user_ro = request.user.detachment_commander.regional_headquarter.id
+        except Exception:
+            user_ro = None
 
     if user_ro in ro_ids:
         return True
