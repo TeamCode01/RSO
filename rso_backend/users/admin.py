@@ -164,9 +164,11 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 'usereducationalheadquarterposition__headquarter__name',
                 'usereducationalheadquarterposition__position__name',
                 'educationalheadquarter_commander',
-                'userdetachmentposition__position__name',
+                'userdetachmentposition__headquarter__id',
+                'userdetachmentposition__headquarter__name',
                 'userdetachmentposition__headquarter__area__name',
                 'detachment_commander',
+                'detachment_commander__id',
                 'detachment_commander__area__name',
             ).distinct()
         )
