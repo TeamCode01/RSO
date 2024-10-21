@@ -58,13 +58,16 @@ def send_email_report_part_2(regional_headquarter_id: int):
         reports_to_sent.extend(REPORTS_IS_SENT_MODELS)
         reports_to_sent.extend([RegionalR17, RegionalR18, RegionalR19])
         for model in reports_to_sent:
-            if not hasattr(model, 'is_sent'):
-                continue
+            if hasattr(model, 'is_sent'):
+                instance = model.objects.filter(
+                    regional_headquarter_id=regional_headquarter_id,
+                    is_sent=True
+                ).last()
+            else:
+                instance = model.objects.filter(
+                    regional_headquarter_id=regional_headquarter_id,
+                ).last()
 
-            instance = model.objects.filter(
-                regional_headquarter_id=regional_headquarter_id,
-                is_sent=True
-            ).last()
             if not instance:
                 # not_sent_exists = True
                 # logger.warning(
@@ -73,7 +76,7 @@ def send_email_report_part_2(regional_headquarter_id: int):
                 # )
                 continue
 
-            if not instance.is_sent:
+            if hasattr(model, 'is_sent') and not instance.is_sent:
                 not_sent_exists = True
                 logger.warning(
                     f'Региональный штаб {regional_headquarter} НЕ! отправил '
