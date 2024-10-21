@@ -2017,7 +2017,6 @@ def get_q3_q4_place(detachment: Detachment, category: str):
         participants = UserDetachmentPosition.objects.filter(
             headquarter=detachment
         )
-        members_number = September15Participant.objects.get(detachment=detachment).members_number
         logger.info(f'{participants.count()} участников для отряда {detachment}')
         for participant in participants:
             participant_max_score = Attempt.objects.filter(
@@ -2031,7 +2030,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
                 score += participant_max_score
 
         # Рассчитываем средний балл
-        average_score = (commander_score + score) / members_number
+        average_score = (commander_score + score) / len(participants)+1
         logger.info(
             f'Средний балл отряда - {average_score}. '
             f'Рассчитано по формуле {commander_score + score} / {len(participants)+1}'
