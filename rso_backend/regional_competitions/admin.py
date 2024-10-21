@@ -73,7 +73,6 @@ class DumpStatisticalRegionalReportAdmin(admin.ModelAdmin):
         'regional_headquarter__name',
         'regional_headquarter__id',
     )
-    inlines = [AdditionalStatisticInline]
 
 
 @admin.register(RVerificationLog)
