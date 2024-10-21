@@ -83,13 +83,15 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         junior_detachments_queryset = CompetitionParticipants.objects.filter(
                 junior_detachment__isnull=False,
                 detachment__isnull=True,
-                competition_id=competition_id
+                competition_id=competition_id,
+                confirmed=True
         )[:10]
     else:
         junior_detachments_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=True,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )
     for participant_entry in junior_detachments_queryset:
         detachment = participant_entry.junior_detachment
@@ -121,13 +123,15 @@ def get_detachment_q_results(competition_id: int, is_sample=False) -> List[Detac
         tandem_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=False,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )[:10]
     else:
         tandem_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=False,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )
     for participant_entry in tandem_queryset:
         junior_detachment = participant_entry.junior_detachment
@@ -2388,13 +2392,15 @@ def get_debut_results(competition_id: int, is_sample=False) -> List[Detachment]:
         junior_detachments_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=True,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )[:10]
     else:
         junior_detachments_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=True,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )
 
     for participant_entry in junior_detachments_queryset:
@@ -2415,19 +2421,22 @@ def get_debut_results(competition_id: int, is_sample=False) -> List[Detachment]:
     
     return competition_members_data
 
+
 def get_tandem_results(competition_id: int, is_sample=False) -> List[Detachment]:
     competition_members_data = []
     if is_sample:
         tandem_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=False,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )[:10]
     else:
         tandem_queryset = CompetitionParticipants.objects.filter(
             junior_detachment__isnull=False,
             detachment__isnull=False,
-            competition_id=competition_id
+            competition_id=competition_id,
+            confirmed=True
         )
 
     for participant_entry in tandem_queryset:
@@ -2459,6 +2468,7 @@ def get_tandem_results(competition_id: int, is_sample=False) -> List[Detachment]
         competition_members_data.append(junior_detachment)
 
     return competition_members_data
+
 
 def get_detachment_places(detachment, competition_id, is_tandem=False, junior_detachment=None):
     places = []

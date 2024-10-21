@@ -149,7 +149,7 @@ class CompetitionParticipantView(View):
     template_name = 'reports/competition_participants.html'
 
     def get(self, request):
-        results = CompetitionParticipants.objects.filter()[:1]
+        results = CompetitionParticipants.objects.filter(confirmed=True)[:1]
         results = get_competition_users(results)
         context = {'sample_results': results}
         return render(request, self.template_name, context)
