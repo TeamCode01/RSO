@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
 from regional_competitions.forms import ExpertUserForm
-from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, Ranking, RegionalR1, RegionalR18,
+from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, Ranking, RegionalR1,
+                                          RegionalR18,
                                           RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
@@ -15,7 +16,8 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           RegionalR101Link, RegionalR102,
                                           RegionalR102Link, RVerificationLog,
                                           StatisticalRegionalReport,
-                                          r6_models_factory, r9_models_factory, RegionalR3)
+                                          r6_models_factory, r9_models_factory, RegionalR3,
+                                          DumpStatisticalRegionalReport)
 from regional_competitions.r_calculations import calculate_r13_score, calculate_r2_score, calculate_r3_score
 
 
@@ -26,6 +28,31 @@ class AdditionalStatisticInline(admin.StackedInline):
 
 @admin.register(StatisticalRegionalReport)
 class StatisticalRegionalReportAdmin(admin.ModelAdmin):
+    list_display = (
+        'regional_headquarter',
+        'participants_number',
+        'employed_sso',
+        'employed_spo',
+        'employed_sop',
+        'employed_smo',
+        'employed_sservo',
+        'employed_ssho',
+        'employed_specialized_detachments',
+        'employed_production_detachments',
+        'employed_top',
+        'employed_so_poo',
+        'employed_so_oovo',
+        'employed_ro_rso'
+    )
+    search_fields = (
+        'regional_headquarter__name',
+        'regional_headquarter__id',
+    )
+    inlines = [AdditionalStatisticInline]
+
+
+@admin.register(DumpStatisticalRegionalReport)
+class DumpStatisticalRegionalReportAdmin(admin.ModelAdmin):
     list_display = (
         'regional_headquarter',
         'participants_number',

@@ -72,8 +72,8 @@ class DumpStatisticalRegionalReport(models.Model):
     )
 
     class Meta:
-        verbose_name_plural = 'Дампы статистических отчетов РШ'
-        verbose_name = 'Дамп статистического отчета РШ'
+        verbose_name_plural = 'Дампы статистических отчетов РШ (1 сентября)'
+        verbose_name = 'Дамп статистического отчета РШ (1 сентября)'
 
     def __str__(self):
         return f'Дамп статистического отчет отряда {self.regional_headquarter.name}'
