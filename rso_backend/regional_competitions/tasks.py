@@ -10,10 +10,9 @@ from headquarters.models import RegionalHeadquarter
 from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
 from regional_competitions.models import (
-    RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR13, RegionalR14, RegionalR2, RegionalR3,
-    RegionalR4, RegionalR5,
+    RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR13, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
     StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
-    r9_models_factory, RegionalR17, RegionalR18, RegionalR19
+    r9_models_factory
 )
 from regional_competitions.r_calculations import calc_r_ranking, calculate_r11_score, calculate_r13_score, calculate_r14
 from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
@@ -54,20 +53,14 @@ def send_email_report_part_2(regional_headquarter_id: int):
             f'показателей по 2-й части отчета на верификацию... Проверяем отправку'
         )
         not_sent_exists = False
-        reports_to_sent = []
-        reports_to_sent.extend(REPORTS_IS_SENT_MODELS)
-        reports_to_sent.extend([RegionalR17, RegionalR18, RegionalR19])
-        for model in reports_to_sent:
-            if hasattr(model, 'is_sent'):
-                instance = model.objects.filter(
-                    regional_headquarter_id=regional_headquarter_id,
-                    is_sent=True
-                ).last()
-            else:
-                instance = model.objects.filter(
-                    regional_headquarter_id=regional_headquarter_id,
-                ).last()
+        for model in REPORTS_IS_SENT_MODELS:
+            if not hasattr(model, 'is_sent'):
+                continue
 
+            instance = model.objects.filter(
+                regional_headquarter_id=regional_headquarter_id,
+                is_sent=True
+            ).last()
             if not instance:
                 # not_sent_exists = True
                 # logger.warning(
@@ -76,7 +69,7 @@ def send_email_report_part_2(regional_headquarter_id: int):
                 # )
                 continue
 
-            if hasattr(model, 'is_sent') and not instance.is_sent:
+            if not instance.is_sent:
                 not_sent_exists = True
                 logger.warning(
                     f'Региональный штаб {regional_headquarter} НЕ! отправил '

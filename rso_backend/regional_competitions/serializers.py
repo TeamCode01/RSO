@@ -955,5 +955,8 @@ REPORTS_SERIALIZERS.extend(
         RegionalR12Serializer,
         RegionalR13Serializer,
         RegionalR16Serializer,
+        RegionalR17Serializer,
+        RegionalR18Serializer,
+        RegionalR19Serializer
     ]
 )
