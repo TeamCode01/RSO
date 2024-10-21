@@ -2030,7 +2030,7 @@ def get_q3_q4_place(detachment: Detachment, category: str):
                 score += participant_max_score
 
         # Рассчитываем средний балл
-        average_score = (commander_score + score) / len(participants)+1
+        average_score = (commander_score + score) / (len(participants)+1)
         logger.info(
             f'Средний балл отряда - {average_score}. '
             f'Рассчитано по формуле {commander_score + score} / {len(participants)+1}'
