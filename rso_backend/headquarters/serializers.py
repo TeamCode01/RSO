@@ -29,6 +29,8 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserUnitPosition)
 from users.models import RSOUser
 from users.short_serializers import ShortUserSerializer, ShortestUserSerializer
+from questions.models import Attempt
+from events.models import Event, EventParticipants
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -1127,3 +1129,217 @@ class DetachmentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Detachment
         fields = ('id', 'name', 'local_headquarter', 'educational_headquarter', 'regional_headquarter')
+
+
+class UsersRegistrySerializer(serializers.Serializer):
+    name = serializers.CharField()
+    email = serializers.CharField()
+    phone_number = serializers.CharField()
+    district_headquarter = serializers.CharField()
+    regional_headquarter = serializers.CharField()
+    local_headquarter = serializers.CharField()
+    educational_headquarter = serializers.CharField()
+    detachment = serializers.CharField()
+    position = serializers.CharField()
+    area = serializers.CharField()
+    verification = serializers.CharField()
+    membership_fee = serializers.CharField()
+    test_done = serializers.CharField()
+    events_organizations = serializers.CharField()
+    event_participants = serializers.CharField()
+
+    def to_representation(self, instance):
+        representation = {}
+
+        fields = [
+            'name', 'email', 'phone_number', 
+            'district_headquarter', 'regional_headquarter', 'local_headquarter',
+            'educational_headquarter', 'detachment', 'position', 'area', 
+            'verification', 'membership_fee', 'test_done', 
+            'events_organizations', 'event_participants'
+        ]
+        
+        for i, field in enumerate(fields):
+            representation[field] = instance[i] if len(instance) > i else '-'
+            
+        selected_fields = self.context.get('fields', [])
+        if selected_fields:
+            representation = {field: representation.get(field, '-') for field in selected_fields}
+
+        return representation
+    
+
+class EducationalHQRegistrySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    district_headquarter = serializers.CharField()
+    regional_headquarter = serializers.CharField()
+    local_headquarter = serializers.CharField()
+    detachments = serializers.IntegerField()
+    participants_count = serializers.IntegerField()
+    verification_percent = serializers.FloatField()
+    membership_fee_percent = serializers.FloatField()
+    test_done_percent = serializers.FloatField()
+    events_organizations = serializers.IntegerField()
+    event_participants = serializers.IntegerField()
+    
+    def to_representation(self, instance):
+        representation = {}
+        
+        fields = [
+            'name',
+            'district_headquarters','local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+        
+        for i, field in enumerate(fields):
+            representation[field] = instance[i] if len(instance) > i else '-'
+            
+        selected_fields = self.context.get('fields', [])
+        if selected_fields:
+            representation = {field: representation.get(field, '-') for field in selected_fields}
+
+        return representation
+        
+
+class LocalHQRegistrySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    district_headquarter = serializers.CharField()
+    regional_headquarter = serializers.CharField()
+    local_headquarter = serializers.CharField()
+    detachments = serializers.IntegerField()
+    participants_count = serializers.IntegerField()
+    verification_percent = serializers.FloatField()
+    membership_fee_percent = serializers.FloatField()
+    test_done_percent = serializers.FloatField()
+    events_organizations = serializers.IntegerField()
+    event_participants = serializers.IntegerField()
+    
+    def to_representation(self, instance):
+        representation = {}
+        
+        fields = [
+            'name',
+            'district_headquarters','local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+        
+        for i, field in enumerate(fields):
+            representation[field] = instance[i] if len(instance) > i else '-'
+            
+        selected_fields = self.context.get('fields', [])
+        if selected_fields:
+            representation = {field: representation.get(field, '-') for field in selected_fields}
+
+        return representation
+    
+    
+class RegionalHQRegistrySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    district_headquarter = serializers.CharField()
+    regional_headquarter = serializers.CharField()
+    local_headquarter = serializers.CharField()
+    detachments = serializers.IntegerField()
+    participants_count = serializers.IntegerField()
+    verification_percent = serializers.FloatField()
+    membership_fee_percent = serializers.FloatField()
+    test_done_percent = serializers.FloatField()
+    events_organizations = serializers.IntegerField()
+    event_participants = serializers.IntegerField()
+    
+    def to_representation(self, instance):
+        representation = {}
+        
+        fields = [
+            'name',
+            'district_headquarters','local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+        
+        for i, field in enumerate(fields):
+            representation[field] = instance[i] if len(instance) > i else '-'
+            
+        selected_fields = self.context.get('fields', [])
+        if selected_fields:
+            representation = {field: representation.get(field, '-') for field in selected_fields}
+
+        return representation
+    
+    
+class DistrictHQRegistrySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    regional_headquarter = serializers.CharField()
+    local_headquarter = serializers.CharField()
+    educational_headquarter = serializers.CharField()
+    detachments = serializers.IntegerField()
+    participants_count = serializers.IntegerField()
+    verification_percent = serializers.FloatField()
+    membership_fee_percent = serializers.FloatField()
+    test_done_percent = serializers.FloatField()
+    events_organizations = serializers.IntegerField()
+    event_participants = serializers.IntegerField()
+    
+    def to_representation(self, instance):
+        representation = {}
+        
+        fields = [
+            'name',
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+        
+        for i, field in enumerate(fields):
+            representation[field] = instance[i] if len(instance) > i else '-'
+            
+        selected_fields = self.context.get('fields', [])
+        if selected_fields:
+            representation = {field: representation.get(field, '-') for field in selected_fields}
+
+        return representation
+    
+
+class CentralHQRegistrySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    regional_headquarter = serializers.CharField()
+    local_headquarter = serializers.CharField()
+    educational_headquarter = serializers.CharField()
+    detachments = serializers.IntegerField()
+    participants_count = serializers.IntegerField()
+    verification_percent = serializers.FloatField()
+    membership_fee_percent = serializers.FloatField()
+    test_done_percent = serializers.FloatField()
+    events_organizations = serializers.IntegerField()
+    event_participants = serializers.IntegerField()
+    
+    def to_representation(self, instance):
+        representation = {}
+        
+        fields = [
+            'name',
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+        ]
+        
+        for i, field in enumerate(fields):
+            representation[field] = instance[i] if len(instance) > i else '-'
+            
+        selected_fields = self.context.get('fields', [])
+        if selected_fields:
+            representation = {field: representation.get(field, '-') for field in selected_fields}
+
+        return representation
+    

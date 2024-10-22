@@ -31,7 +31,7 @@ from headquarters.models import RegionalHeadquarterEmail, RegionalHeadquarter
 
 from rest_framework import serializers
 
-from regional_competitions.constants import MASS_REPORT_NUMBERS
+from regional_competitions.constants import MASS_REPORT_NUMBERS, MEDIA_PATH
 
 logger = logging.getLogger('regional_tasks')
 
@@ -373,8 +373,11 @@ def get_verbose_names_and_values(serializer, full_path: bool = False) -> dict:
                 verbose_name = model_meta.get_field(field_name).verbose_name
                 if hasattr(field_value, '__str__'):
                     field_value = str(field_value)
-                    if full_path is False and not field_value[:4] == 'http':
+                    if not field_value.startswith('http') and full_path is False:
                         field_value = os.path.basename(field_value)
+                    if field_value.startswith('regional_comp') and full_path is True:
+                        field_value = MEDIA_PATH + field_value
+
                 verbose_names_and_values[field_name] = (verbose_name, field_value)
             except FieldDoesNotExist:
                 pass
