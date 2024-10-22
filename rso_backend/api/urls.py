@@ -80,7 +80,8 @@ from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          apply_for_verification)
 from reports.views import (ExportCentralDataAPIView, ExportDetachmentDataAPIView,
                            ExportDistrictDataAPIView, ExportEducationDataAPIView,
-                           ExportRegionalDataAPIView, ExportLocalDataAPIView)
+                           ExportRegionalDataAPIView, ExportLocalDataAPIView, ExportUsersDataAPIView,
+                           ExportDirectionDataAPIView)
 app_name = 'api'
 
 router = DefaultRouter()
@@ -365,12 +366,14 @@ EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
 EventAdditionalIssueListVS = EventAdditionalIssueViewSet.as_view(LIST_CREATE)
 EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
 FrontReportsVS = FrontReportsViewSet.as_view(LIST_CREATE)
-ExportCentralDataAPIVS = ExportCentralDataAPIView.as_view()
-ExportLocalDataAPIVS = ExportLocalDataAPIView.as_view()
-ExportDistrictDataAPIVS = ExportDistrictDataAPIView.as_view()
-ExportEducationDataAPIVS = ExportEducationDataAPIView.as_view()
-ExportRegionalDataAPIVS = ExportRegionalDataAPIView.as_view()
-ExportDetachmentDataAPIVS = ExportDetachmentDataAPIView.as_view()
+ExportCentralDataAPIVS = ExportCentralDataAPIView.as_view(LIST)
+ExportLocalDataAPIVS = ExportLocalDataAPIView.as_view(LIST)
+ExportDistrictDataAPIVS = ExportDistrictDataAPIView.as_view(LIST)
+ExportEducationDataAPIVS = ExportEducationDataAPIView.as_view(LIST)
+ExportRegionalDataAPIVS = ExportRegionalDataAPIView.as_view(LIST)
+# ExportDetachmentDataAPIVS = ExportDetachmentDataAPIView.as_view(LIST)
+# ExportDirectionDataAPIVS = ExportDirectionDataAPIView.as_view(LIST)
+ExportUsersDataAPIVS = ExportUsersDataAPIView.as_view(LIST)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
@@ -448,6 +451,46 @@ user_nested_urls = [
         name='user-membership-fee'
     ),
     path(
+        'registry/users/',
+        ExportUsersDataAPIVS,
+        name='export-users-data'
+    ),
+    # path(
+    #     'registry/directions/',
+    #     ExportDirectionDataAPIVS,
+    #     name='export-directions-data'
+    # ),
+    # path(
+    #     'registry/detachments/',
+    #     ExportDetachmentDataAPIVS,
+    #     name='export-detachment-data'
+    # ),
+    path(
+        'registry/educationals/',
+        ExportEducationDataAPIVS,
+        name='export-educational-data',
+    ),
+    path(
+        'registry/locals/',
+        ExportLocalDataAPIVS,
+        name='export-local-data',    
+    ),
+    path(
+        'registry/regionals/',
+        ExportRegionalDataAPIVS,
+        name='export-regional-data',
+    ),
+    path(
+        'registry/districts/',
+        ExportDistrictDataAPIVS,
+        name='export-district-data',
+    ),
+    path(
+        'registry/centrals/',
+        ExportCentralDataAPIVS,
+        name='export-central-data',
+    ),
+    path(
         'detachments/<int:pk>/apply/',
         DetachmentApplicationVS,
         name='detachment-application'
@@ -478,11 +521,6 @@ user_nested_urls = [
         name='detachment-competition-place'
     ),
     path(
-        'detachments/register_of_participants/',
-        ExportDetachmentDataAPIVS,
-        name='detachments-registry-of-participants'
-    ),
-    path(
         'educationals/<int:pk>/apply/',
         EducationalApplicationVS,
         name='educational-application'
@@ -503,11 +541,6 @@ user_nested_urls = [
         name='educational-members-update'
     ),
     path(
-        'educationals/register_of_participants/',
-        ExportEducationDataAPIVS,
-        name='educationals-registry-of-participants',
-    ),
-    path(
         'locals/<int:pk>/members/',
         LocalPositionListVS,
         name='local-members-list'
@@ -526,11 +559,6 @@ user_nested_urls = [
         'locals/<int:pk>/applications/<int:application_pk>/accept/',
         LocalAcceptVS,
         name='user-local-apply'
-    ),
-    path(
-        'locals/register_of_participants/',
-        ExportLocalDataAPIVS,
-        name='locals-registry-of-participants',    
     ),
     path(
         'regionals/<int:pk>/members/',
@@ -558,11 +586,6 @@ user_nested_urls = [
         name='download-reg-comp-report'
     ),
     path(
-        'regionals/register_of_participants/',
-        ExportRegionalDataAPIVS,
-        name='regionals-registry-of-participants',
-    ),
-    path(
         'districts/<int:pk>/members/',
         DistrictPositionListVS,
         name='district-members-list'
@@ -583,11 +606,6 @@ user_nested_urls = [
         name='user-district-apply'
     ),
     path(
-        'district/register_of_participants/',
-        ExportDistrictDataAPIVS,
-        name='districts-registry-of-participants',
-    ),
-    path(
         'centrals/<int:pk>/members/',
         CentralPositionListVS,
         name='central-members-list'
@@ -606,11 +624,6 @@ user_nested_urls = [
         'centrals/<int:pk>/applications/<int:application_pk>/accept/',
         CentralAcceptVS,
         name='user-central-apply'
-    ),
-    path(
-        'centrals/register_of_participants/',
-        ExportCentralDataAPIVS,
-        name='centrals-registry-of-participants',
     ),
     path(
         'rsousers/me/professional_education/',

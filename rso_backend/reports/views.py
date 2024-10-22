@@ -3,7 +3,7 @@ import datetime
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files.storage import default_storage
-from rest_framework import views, permissions, status
+from rest_framework import views, permissions, status, viewsets
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -31,12 +31,16 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
     get_competition_users, get_debut_results, get_detachment_q_results,
-    adapt_attempts, get_membership_fee_data, get_tandem_results
+    adapt_attempts, get_membership_fee_data, get_tandem_results, get_users_registry_data,
+    get_central_hq_data, get_detachment_data, get_local_hq_data, get_regional_hq_data,
+    get_educational_hq_data, get_district_hq_data
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 from api.permissions import (IsCentralCommanderRegistry, IsDistrictCommanderRegistry, IsDetachmentCommanderRegistry,
                              IsEducationalCommanderRegistry, IsLocalCommanderRegistry, IsRegionalCommanderRegistry)
+from users.models import RSOUser
+from headquarters.serializers import UsersRegistrySerializer, EducationalHQRegistrySerializer, LocalHQRegistrySerializer, RegionalHQRegistrySerializer, DistrictHQRegistrySerializer, CentralHQRegistrySerializer
 
 
 def has_reports_access(user):
@@ -607,8 +611,22 @@ class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportCentralDataAPIView(CommanerPermissionMixin, ExportCentralHqDataMixin, BaseExcelExportAPIView):
+class ExportCentralDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsCentralCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        if not fields:
+            fields = [
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_central_hq_data(fields)
+        serializer = CentralHQRegistrySerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ExportDistrictHqDataMixin:
@@ -639,8 +657,22 @@ class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportDistrictDataAPIView(CommanerPermissionMixin, ExportDistrictHqDataMixin, BaseExcelExportAPIView):
+class ExportDistrictDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDistrictCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        if not fields:
+            fields = [
+            'regional_headquarters', 'local_headquarters', 
+            'educational_headquarters', 'detachments', 
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_district_hq_data(fields)
+        serializer = DistrictHQRegistrySerializer(data, many=True)
+        return Response(serializer.data)
     
 
 class ExportRegionalHqDataMixin:
@@ -671,8 +703,22 @@ class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportRegionalDataAPIView(CommanerPermissionMixin, ExportRegionalHqDataMixin, BaseExcelExportAPIView):
+class ExportRegionalDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsRegionalCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        if not fields:
+            fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_regional_hq_data(fields)
+        serializer = RegionalHQRegistrySerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ExportLocalHqDataMixin:
@@ -703,8 +749,22 @@ class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportLocalDataAPIView(CommanerPermissionMixin, ExportLocalHqDataMixin, BaseExcelExportAPIView):
+class ExportLocalDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsLocalCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        if not fields:
+            fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_local_hq_data(fields)
+        serializer = LocalHQRegistrySerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ExportEducationHqDataMixin:
@@ -735,8 +795,22 @@ class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportEducationDataAPIView(CommanerPermissionMixin, ExportEducationHqDataMixin, BaseExcelExportAPIView):
+class ExportEducationDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsEducationalCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        if not fields:
+            fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_educational_hq_data(fields)
+        serializer = EducationalHQRegistrySerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ExportDetachmentDataMixin:
@@ -768,8 +842,23 @@ class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportDetachmentDataAPIView(CommanerPermissionMixin, ExportDetachmentDataMixin, BaseExcelExportAPIView):
+class ExportDetachmentDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
+    
+    # def list(self, request):
+    #     fields = request.query_params.getlist('fields')
+    #     if not fields:
+    #         fields = [
+    #         'district_headquarter', 'regional_headquarter',
+    #         'local_headquarter', 'educational_headquarter',
+    #         'directions',
+    #         'participants_count', 'verification_percent', 
+    #         'membership_fee_percent', 'test_done_percent', 
+    #         'events_organizations', 'event_participants'
+    #         ]
+    #     data = get_detachment_data(fields)
+    #     serializer = DetachmentRegistrySerializer(data, many=True)
+    #     return Response(serializer.data)
 
 
 class ExportDirectionDataMixin:
@@ -832,5 +921,21 @@ class ExportUsersDataView(ExportUsersDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportUsersDataAPIView(CommanerPermissionMixin, ExportUsersDataMixin, BaseExcelExportAPIView):
+class ExportUsersDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        
+        if not fields:
+            fields = [
+                'district_headquarter', 'regional_headquarter',
+                'local_headquarter', 'educational_headquarter',
+                'directions', 'verification', 
+                'membership_fee', 'test_done', 
+                'events_organizations', 'event_participants',
+                'area', 'position', 'detachment'
+            ]
+        data = get_users_registry_data(fields)
+        serializer = UsersRegistrySerializer(data, many=True)
+        return Response(serializer.data)
