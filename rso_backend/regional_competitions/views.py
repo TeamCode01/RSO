@@ -234,10 +234,6 @@ class BaseRegionalRViewSet(RegionalRMixin):
             district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
         except UserDistrictHeadquarterPosition.DoesNotExist:
             district_headquarter = DistrictHeadquarter.objects.get(commander=user)
-        else:
-            return Response({
-                'non_field_errors': 'Изменение отчетов доступно только командирам окружных штабов.'
-            }, status=status.HTTP_400_BAD_REQUEST)
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)
