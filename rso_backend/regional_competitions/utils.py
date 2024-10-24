@@ -121,7 +121,7 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     :param filename: Имя файла. Добавляем к имени текущую дату и время.
     :return: Путь к изображению.
     """
-    filename_parts = filename.split('.')
+    filename_parts = filename.rsplit('.', 1)
     base_filename = filename_parts[0][:25]
     file_extension = filename_parts[1] if len(filename_parts) > 1 else ''
 
@@ -136,7 +136,9 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
         if regional_r_attr:
             regional_hq_id = regional_r_attr.regional_headquarter.id
         else:
-            raise AttributeError("Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'.")
+            raise AttributeError(
+                "Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'."
+            )
 
     return f'regional_comp/regulations/{instance.__class__.__name__}/{regional_hq_id}/{base_filename}.{file_extension}'
 
