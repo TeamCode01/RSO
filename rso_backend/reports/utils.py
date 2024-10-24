@@ -2211,36 +2211,36 @@ def get_detachment_data(fields):
     try:
         for detachment in detachments:
             row = [detachment.name]
-            # if 'district_headquarter' in fields:
-            #     if detachment.regional_headquarter:
-            #         district_headquarter = detachment.regional_headquarter.district_headquarter
-            #         row.append(district_headquarter.name if district_headquarter else '-')
-            #     else:
-            #         row.append('-')
-            # else:
-            #     row.append('-')
-            # if 'regional_headquarter' in fields:
-            #     regional_headquarter = detachment.regional_headquarter
-            #     row.append(regional_headquarter.name if regional_headquarter else '-')
-            # else:
-            #     row.append('-')
-            # if 'local_headquarter' in fields:
-            #     local_headquarter = detachment.local_headquarter
-            #     row.append(local_headquarter.name if local_headquarter else '-')
-            # else:
-            #     row.append('-')
-            # if 'educational_headquarter' in fields:
-            #     educational_headquarter = detachment.educational_headquarter
-            #     row.append(educational_headquarter.name if educational_headquarter else '-')
-            # else:
-            #     row.append('-')
-            # if 'directions' in fields:
-            #     if detachment.area:
-            #         row.append(detachment.area.name)
-            #     else:
-            #         row.append('-')
-            # else:
-            #     row.append('-')
+            if 'district_headquarter' in fields:
+                if detachment.regional_headquarter:
+                    district_headquarter = detachment.regional_headquarter.district_headquarter
+                    row.append(district_headquarter.name if district_headquarter else '-')
+                else:
+                    row.append('-')
+            else:
+                row.append('-')
+            if 'regional_headquarter' in fields:
+                regional_headquarter = detachment.regional_headquarter
+                row.append(regional_headquarter.name if regional_headquarter else '-')
+            else:
+                row.append('-')
+            if 'local_headquarter' in fields:
+                local_headquarter = detachment.local_headquarter
+                row.append(local_headquarter.name if local_headquarter else '-')
+            else:
+                row.append('-')
+            if 'educational_headquarter' in fields:
+                educational_headquarter = detachment.educational_headquarter
+                row.append(educational_headquarter.name if educational_headquarter else '-')
+            else:
+                row.append('-')
+            if 'directions' in fields:
+                if detachment.area:
+                    row.append(detachment.area.name)
+                else:
+                    row.append('-')
+            else:
+                row.append('-')
             if 'participants_count' in fields:
                 participants_count = count_headquarter_participants(detachment) or 0
                 row.append(participants_count)
@@ -2290,20 +2290,67 @@ def get_detachment_data(fields):
 def get_direction_data(fields):
     if not fields:
         fields = [
-            'participants_count', 'verification_percent', 
+            'participants_count', 'lso_count', 
+            'verification_percent', 
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
         ]
     
     directions = Area.objects.all()
     rows = []
-    
+
     try:
         for direction in directions:
             row = [direction.name]
-            
+            if 'participants_count' in fields:
+                participants_count = count_headquarter_participants(Detachment.objects.filter(area=direction)) or 0
+                row.append(participants_count)
+            else:
+                row.append('-')
+            if 'lso_count' in fields:
+                lso_count = Detachment.objects.filter(area=direction).count()
+                row.append(lso_count)
+            else:
+                row.append('-')
+            if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
+                participants_count = row[1]
+                if participants_count > 0:
+                    if 'verification_percent' in fields:
+                        verification_percent = (count_verified_users(Detachment.objects.filter(area=direction)) / participants_count * 100) or 0
+                        row.append(verification_percent)
+                    else:
+                        row.append('-')
+                    if 'membership_fee_percent' in fields:
+                        membership_fee_percent = (count_membership_fee(Detachment.objects.filter(area=direction)) / participants_count * 100) or 0
+                        row.append(membership_fee_percent)
+                    else:
+                        row.append('-')
+                    if 'test_done_percent' in fields:
+                        test_done_percent = (count_test_membership(Detachment.objects.filter(area=direction)) / participants_count * 100) or 0
+                        row.append(test_done_percent)
+                    else:
+                        row.append('-')
+                else:
+                    row += ['-'] * 3
+            else:
+                row += ['-'] * 3
+            if 'events_organizations' in fields:
+                events_organizations = count_events_organizations(Detachment.objects.filter(area=direction)) or 0
+                row.append(events_organizations)
+            else:
+                row.append('-')
+            if 'event_participants' in fields:
+                event_participants = count_events_participants(Detachment.objects.filter(area=direction)) or 0
+                row.append(event_participants)
+            else:
+                row.append('-')
+
+            rows.append(row)
+
     except Exception as e:
         print(f"Ошибка: {e}")
+
+    return rows
 
 
 def get_users_registry_data(fields=None):

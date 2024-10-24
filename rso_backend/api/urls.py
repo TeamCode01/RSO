@@ -371,8 +371,8 @@ ExportLocalDataAPIVS = ExportLocalDataAPIView.as_view(LIST)
 ExportDistrictDataAPIVS = ExportDistrictDataAPIView.as_view(LIST)
 ExportEducationDataAPIVS = ExportEducationDataAPIView.as_view(LIST)
 ExportRegionalDataAPIVS = ExportRegionalDataAPIView.as_view(LIST)
-# ExportDetachmentDataAPIVS = ExportDetachmentDataAPIView.as_view(LIST)
-# ExportDirectionDataAPIVS = ExportDirectionDataAPIView.as_view(LIST)
+ExportDetachmentDataAPIVS = ExportDetachmentDataAPIView.as_view(LIST)
+ExportDirectionDataAPIVS = ExportDirectionDataAPIView.as_view(LIST)
 ExportUsersDataAPIVS = ExportUsersDataAPIView.as_view(LIST)
 
 user_nested_urls = [
@@ -455,16 +455,16 @@ user_nested_urls = [
         ExportUsersDataAPIVS,
         name='export-users-data'
     ),
-    # path(
-    #     'registry/directions/',
-    #     ExportDirectionDataAPIVS,
-    #     name='export-directions-data'
-    # ),
-    # path(
-    #     'registry/detachments/',
-    #     ExportDetachmentDataAPIVS,
-    #     name='export-detachment-data'
-    # ),
+    path(
+        'registry/directions/',
+        ExportDirectionDataAPIVS,
+        name='export-directions-data'
+    ),
+    path(
+        'registry/detachments/',
+        ExportDetachmentDataAPIVS,
+        name='export-detachment-data'
+    ),
     path(
         'registry/educationals/',
         ExportEducationDataAPIVS,

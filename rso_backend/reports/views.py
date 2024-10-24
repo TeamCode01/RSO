@@ -33,14 +33,14 @@ from reports.utils import (
     get_competition_users, get_debut_results, get_detachment_q_results,
     adapt_attempts, get_membership_fee_data, get_tandem_results, get_users_registry_data,
     get_central_hq_data, get_detachment_data, get_local_hq_data, get_regional_hq_data,
-    get_educational_hq_data, get_district_hq_data
+    get_educational_hq_data, get_district_hq_data, get_direction_data
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
 from api.permissions import (IsCentralCommanderRegistry, IsDistrictCommanderRegistry, IsDetachmentCommanderRegistry,
                              IsEducationalCommanderRegistry, IsLocalCommanderRegistry, IsRegionalCommanderRegistry)
 from users.models import RSOUser
-from headquarters.serializers import UsersRegistrySerializer, EducationalHQRegistrySerializer, LocalHQRegistrySerializer, RegionalHQRegistrySerializer, DistrictHQRegistrySerializer, CentralHQRegistrySerializer
+from headquarters.serializers import UsersRegistrySerializer, EducationalHQRegistrySerializer, LocalHQRegistrySerializer, RegionalHQRegistrySerializer, DistrictHQRegistrySerializer, CentralHQRegistrySerializer, DetachmentRegistrySerializer, DirectionRegistrySerializer
 
 
 def has_reports_access(user):
@@ -845,20 +845,20 @@ class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
 class ExportDetachmentDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
     
-    # def list(self, request):
-    #     fields = request.query_params.getlist('fields')
-    #     if not fields:
-    #         fields = [
-    #         'district_headquarter', 'regional_headquarter',
-    #         'local_headquarter', 'educational_headquarter',
-    #         'directions',
-    #         'participants_count', 'verification_percent', 
-    #         'membership_fee_percent', 'test_done_percent', 
-    #         'events_organizations', 'event_participants'
-    #         ]
-    #     data = get_detachment_data(fields)
-    #     serializer = DetachmentRegistrySerializer(data, many=True)
-    #     return Response(serializer.data)
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        if not fields:
+            fields = [
+            'district_headquarter', 'regional_headquarter',
+            'local_headquarter', 'educational_headquarter',
+            'directions',
+            'participants_count', 'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_detachment_data(fields)
+        serializer = DetachmentRegistrySerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ExportDirectionDataMixin:
@@ -888,8 +888,22 @@ class ExportDirectionDataView(ExportDirectionDataMixin, BaseExcelExportView):
     pass
 
 
-class ExportDirectionDataAPIView(CommanerPermissionMixin, ExportDirectionDataMixin, BaseExcelExportAPIView):
+class ExportDirectionDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
+    
+    def list(self, request):
+        fields = request.query_params.getlist('fields')
+        
+        if not fields:
+            fields = [
+            'participants_count', 'lso_count', 
+            'verification_percent', 
+            'membership_fee_percent', 'test_done_percent', 
+            'events_organizations', 'event_participants'
+            ]
+        data = get_direction_data(fields)
+        serializer = DirectionRegistrySerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ExportUsersDataMixin:
