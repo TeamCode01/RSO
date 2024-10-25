@@ -417,15 +417,13 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
             return
 
     def get_district_version(self, obj):
-        try:
-            return RVerificationLog.objects.get(
-                regional_headquarter=obj.regional_headquarter,
-                is_district_data=True,
-                report_number=self.get_report_number(),
-                report_id=obj.id
-            ).data
-        except RVerificationLog.DoesNotExist:
-            return
+        log_obj = RVerificationLog.objects.filter(
+            regional_headquarter=obj.regional_headquarter,
+            is_district_data=True,
+            report_number=self.get_report_number(),
+            report_id=obj.id
+        ).last()
+        return log_obj.data if log_obj else None
 
     def get_central_version(self, obj):
         log_obj = RVerificationLog.objects.filter(
