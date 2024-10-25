@@ -17,6 +17,7 @@ from regional_competitions.views import (MassSendViewSet,
                                          RegionalR12ViewSet,
                                          RegionalR13MeViewSet,
                                          RegionalR13ViewSet,
+                                         RegionalR15ViewSet,
                                          RegionalR16MeViewSet,
                                          RegionalR16ViewSet,
                                          RegionalR17MeViewSet,
@@ -90,6 +91,7 @@ router.register(r'reports/10/2', RegionalR102ViewSet, basename='r10-2')
 router.register(r'reports/11', RegionalR11ViewSet, basename='r11')
 router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')
+router.register(r'reports/15', RegionalR15ViewSet, basename='r15')
 router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
 router.register(r'reports/17', RegionalR17ViewSet, basename='r17')
 router.register(r'reports/18', RegionalR18ViewSet, basename='r18')

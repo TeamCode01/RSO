@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from regional_competitions.factories import RAdminFactory
 from regional_competitions.forms import ExpertUserForm
-from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, Ranking, RegionalR1,
+from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, Ranking, RegionalR1, RegionalR15,
                                           RegionalR18,
                                           RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
@@ -574,6 +574,25 @@ class RegionalR14Admin(admin.ModelAdmin):
         'score'
     )
     search_fields = ('id', 'report_12__regional_headquarter__name')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
+
+@admin.register(RegionalR15)
+class RegionalR15Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'xp',
+        'yp',
+        'x3',
+        'y3',
+        'p15'
+    )
+    search_fields = ('id', 'regional_headquarter__name')
 
     def get_id_regional_headquarter(self, obj):
         return obj.regional_headquarter.id
