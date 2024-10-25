@@ -52,12 +52,14 @@ def calculate_overall_rankings(solo_ranking_models, tandem_ranking_models, compe
     solo_entries = CompetitionParticipants.objects.filter(
         competition_id=competition_id,
         junior_detachment__isnull=False,
-        detachment__isnull=True
+        detachment__isnull=True,
+        confirmed=True
     )
     tandem_entries = CompetitionParticipants.objects.filter(
         competition_id=competition_id,
         junior_detachment__isnull=False,
-        detachment__isnull=False
+        detachment__isnull=False,
+        confirmed=True
     )
 
     print(f'Found {solo_entries.count()} solo entries and {tandem_entries.count()} tandem entries')
