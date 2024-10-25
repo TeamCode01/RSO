@@ -10,7 +10,7 @@ from headquarters.models import RegionalHeadquarter
 from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
 from regional_competitions.models import (
-    RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR13, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
+    RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR13, RegionalR14, RegionalR16, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
     StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
     r9_models_factory
 )
@@ -262,3 +262,9 @@ def calc_places_r14():
     # считается на основании верифицированных 12 и 13 показателей, без верификации
     logger.info('Выполняется подсчет rank14 показателя')
     calc_r_ranking([RegionalR14], 'r14_place', no_verification=True)
+
+
+@shared_task
+def calc_places_r16():
+    logger.info('Выполняется подсчет rank16 показателя')
+    calc_r_ranking([RegionalR16], 'r16_place')
