@@ -814,6 +814,39 @@ class RegionalR14(BaseScore):
         return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
 
 
+class RegionalR15(models.Model):
+    """Показатель с данными, предоставленными ЦШ"""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s',
+    )
+    xp = models.PositiveSmallIntegerField(
+        verbose_name='Xп'
+    )
+    yp = models.PositiveSmallIntegerField(
+        verbose_name='Yп'
+    )
+    x3 = models.PositiveSmallIntegerField(
+        verbose_name='X3'
+    )
+    y3 = models.PositiveSmallIntegerField(
+        verbose_name='Y3'
+    )
+    p15 = models.PositiveSmallIntegerField(
+        verbose_name='P15'
+    )
+
+
+    class Meta:
+        verbose_name = 'Отчет по 15 показателю'
+        verbose_name_plural = 'Отчеты по 15 показателю'
+
+    def __str__(self):
+        return f'Отчет по 15 показателю РШ {self.regional_headquarter}'
+
+
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     is_project = models.BooleanField(
         verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу',
