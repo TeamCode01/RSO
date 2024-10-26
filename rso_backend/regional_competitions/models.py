@@ -834,7 +834,7 @@ class RegionalR15(models.Model):
     y3 = models.PositiveSmallIntegerField(
         verbose_name='Y3'
     )
-    p15 = models.PositiveSmallIntegerField(
+    p15 = models.FloatField(
         verbose_name='P15'
     )
 
