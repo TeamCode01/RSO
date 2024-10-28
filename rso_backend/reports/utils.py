@@ -2247,7 +2247,7 @@ def get_detachment_data(fields):
             else:
                 row.append('-')
             if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
-                participants_count = row[1]
+                participants_count = count_headquarter_participants(detachment)
                 if participants_count > 0:
                     if 'verification_percent' in fields:
                         verification_percent = (count_verified_users(detachment) / participants_count * 100) or 0
@@ -2301,9 +2301,10 @@ def get_direction_data(fields):
 
     try:
         for direction in directions:
+            print("Получаем directions")
             row = [direction.name]
             if 'participants_count' in fields:
-                participants_count = count_headquarter_participants(Detachment.objects.filter(area=direction)) or 0
+                participants_count = Detachment.objects.filter(area=direction).count() or 0
                 row.append(participants_count)
             else:
                 row.append('-')
@@ -2313,20 +2314,31 @@ def get_direction_data(fields):
             else:
                 row.append('-')
             if any(f in fields for f in ['verification_percent', 'membership_fee_percent', 'test_done_percent']):
-                participants_count = row[1]
+                print("Получаем district_headquarter")
+                participants_count = int(row[1]) if row[1] != '-' else 0
                 if participants_count > 0:
                     if 'verification_percent' in fields:
-                        verification_percent = (count_verified_users(Detachment.objects.filter(area=direction)) / participants_count * 100) or 0
+                        print("Получаем verification_percent")
+                        verification_percent = (UserDetachmentPosition.objects.filter(
+                        headquarter__area=direction, user__is_verified=True).count() / participants_count * 100) or 0
                         row.append(verification_percent)
                     else:
                         row.append('-')
                     if 'membership_fee_percent' in fields:
-                        membership_fee_percent = (count_membership_fee(Detachment.objects.filter(area=direction)) / participants_count * 100) or 0
+                        membership_fee_percent = (UserDetachmentPosition.objects.filter(
+                            headquarter__area=direction,
+                            user__membership_fee=True,
+                        ).count() / participants_count * 100) or 0
                         row.append(membership_fee_percent)
                     else:
                         row.append('-')
                     if 'test_done_percent' in fields:
-                        test_done_percent = (count_test_membership(Detachment.objects.filter(area=direction)) / participants_count * 100) or 0
+                        members = UserDetachmentPosition.objects.filter(headquarter__area=direction)
+                        test_done_percent = (Attempt.objects.filter(
+                            user__in=members.values_list('user', flat=True),
+                            category=Attempt.Category.SAFETY,
+                            score__gt=60
+                        ).count() / participants_count * 100) or 0
                         row.append(test_done_percent)
                     else:
                         row.append('-')
@@ -2335,12 +2347,13 @@ def get_direction_data(fields):
             else:
                 row += ['-'] * 3
             if 'events_organizations' in fields:
-                events_organizations = count_events_organizations(Detachment.objects.filter(area=direction)) or 0
+                events_organizations = Event.objects.filter(org_detachment__area=direction).count() or 0
                 row.append(events_organizations)
             else:
                 row.append('-')
             if 'event_participants' in fields:
-                event_participants = count_events_participants(Detachment.objects.filter(area=direction)) or 0
+                events = Event.objects.filter(org_detachment__area=direction)
+                event_participants = EventParticipants.objects.filter(event__in=events).count() or 0
                 row.append(event_participants)
             else:
                 row.append('-')
