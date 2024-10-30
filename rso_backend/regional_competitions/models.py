@@ -407,8 +407,7 @@ class RegionalR2(BaseScore, models.Model):
         auto_now=True,
         verbose_name='Дата последнего обновления'
     )
-    full_time_students = models.SmallIntegerField(
-        validators=[MinValueValidator(0)],
+    full_time_students = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество студентов очной формы обучения'
