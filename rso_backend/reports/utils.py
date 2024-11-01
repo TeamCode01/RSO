@@ -2371,7 +2371,7 @@ def get_users_registry_data(fields=None):
         fields = [
             'district_headquarter', 'regional_headquarter',
             'local_headquarter', 'educational_headquarter',
-            'directions', 'verification', 
+            'verification', 
             'membership_fee', 'test_done', 
             'events_organizations', 'event_participants',
             'area', 'position', 'detachment'
@@ -2413,13 +2413,15 @@ def get_users_registry_data(fields=None):
             else:
                 row.append('-')
             if 'area' in fields:
+                area = None
                 if Detachment.objects.filter(commander=user).exists():
                     area = Detachment.objects.filter(commander=user).first().area
-            else:
-                user_detachment_position = getattr(user, 'userdetachmentposition', None)
-                if user_detachment_position:
-                    area = getattr(user_detachment_position, 'detachment', None).area if hasattr(user_detachment_position, 'detachment') else None
-            row.append(area.name if area else '-')
+                else:
+                    user_detachment_position = getattr(user, 'userdetachmentposition', None)
+                    if user_detachment_position:
+                        detachment = getattr(user_detachment_position, 'detachment', None)
+                        area = detachment.area if detachment else None
+                row.append(area.name if area else '-')
             if 'verification' in fields:
                 row.append('Да' if user.is_verified else '-')
             if 'membership_fee' in fields:
