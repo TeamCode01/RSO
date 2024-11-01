@@ -1132,7 +1132,6 @@ class DetachmentListSerializer(serializers.ModelSerializer):
 
 
 class BaseHQRegistrySerializer(serializers.ModelSerializer):
-    name = serializers.CharField()
 
     def get_default_fields(self):
         return [
