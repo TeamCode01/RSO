@@ -173,7 +173,6 @@ class FileScanSizeSerializerMixin(serializers.ModelSerializer):
         return None
 
 
-
 class EmptyAsNoneMixin:
     """
     Миксин для сериализаторов с полями типа FileField, где при отправке 
@@ -406,39 +405,34 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         return super().validate(attrs)
 
     def get_regional_version(self, obj):
-        try:
-            return RVerificationLog.objects.get(
+        ver_log = RVerificationLog.objects.filter(
                 regional_headquarter=obj.regional_headquarter,
                 is_regional_data=True,
                 report_number=self.get_report_number(),
-                report_id=obj.id
-            ).data
-        except RVerificationLog.DoesNotExist:
-            return
+            ).order_by('report_id').last()
+        return ver_log.data if ver_log else None
 
     def get_district_version(self, obj):
-        log_obj = RVerificationLog.objects.filter(
-            regional_headquarter=obj.regional_headquarter,
-            is_district_data=True,
-            report_number=self.get_report_number(),
-            report_id=obj.id
-        ).last()
-        return log_obj.data if log_obj else None
+        ver_log = RVerificationLog.objects.get(
+                regional_headquarter=obj.regional_headquarter,
+                is_district_data=True,
+                report_number=self.get_report_number(),
+            ).order_by('report_id').last()
+        return ver_log.data if ver_log else None
 
     def get_central_version(self, obj):
-        log_obj = RVerificationLog.objects.filter(
+        ver_log = RVerificationLog.objects.filter(
             regional_headquarter=obj.regional_headquarter,
             is_central_data=True,
             report_number=self.get_report_number(),
-            report_id=obj.id
-        ).last()
-        return log_obj.data if log_obj else None
+        ).order_by('report_id').last()
+        return ver_log.data if ver_log else None
 
     def get_rejecting_reasons(self, obj):
         chq_rejecting_log = CHqRejectingLog.objects.filter(
             report_number=self.get_report_number(),
-            report_id=obj.id,
-        ).last()
+            regional_headquarter=obj.regional_headquarter,
+        ).order_by('report_id').last()
         return chq_rejecting_log.reasons if chq_rejecting_log else chq_rejecting_log
 
 
