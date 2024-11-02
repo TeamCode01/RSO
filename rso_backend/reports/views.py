@@ -945,7 +945,7 @@ class ExportUsersDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
             fields = [
                 'district_headquarter', 'regional_headquarter',
                 'local_headquarter', 'educational_headquarter',
-                'directions', 'verification', 
+                'verification', 
                 'membership_fee', 'test_done', 
                 'events_organizations', 'event_participants',
                 'area', 'position', 'detachment'

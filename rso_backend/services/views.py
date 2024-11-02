@@ -118,7 +118,7 @@ class VKLoginAPIView(APIView):
     """Вход через VK.
 
     Принимает silent_token и uuid полученные от ВК.
-    В ответе access_token и  refresh_token бекенда RSO.
+    В ответе access_token и  refresh_token бэкенда DRF.
     Время жизни access_token - 5 часов.
     Время жизни refresh_token - 7 дней.
     """
@@ -135,6 +135,9 @@ class VKLoginAPIView(APIView):
         )
     )
     def post(self, request):
+        "Реализация POST-метода для авторизации через VK."
+
+        # Получаем silent_token и uuid из запроса
         silent_token = request.data.get('silent_token')
         uuid = request.data.get('uuid')
 
@@ -145,6 +148,10 @@ class VKLoginAPIView(APIView):
             )
 
         try:
+            # Пытаемся получить access_token.
+            #  VK_API_VERSION - версия API VK
+            #  VITE_SERVICE_TOKEN - токен из приложения VK.
+
             response = requests.post(
                 'https://api.vk.com/method/auth.exchangeSilentAuthToken',
                 params={
@@ -154,7 +161,8 @@ class VKLoginAPIView(APIView):
                     'uuid': uuid
                 })
             response_data = response.json()
-
+            
+            # Извлекаем access_token из ответа api.vk.com. Также в переменные записываем email и phone
             if 'response' in response_data:
                 access_token = response_data['response']['access_token']
                 email = response_data['response'].get('email')
@@ -169,7 +177,7 @@ class VKLoginAPIView(APIView):
             return Response(
                 {'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
+        # Запрашиваем данные пользователя
         response = requests.get(
             'https://api.vk.com/method/account.getProfileInfo',
             params={
@@ -187,7 +195,8 @@ class VKLoginAPIView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        # Полученные данные извлекаем из ответа и записываем в переменные
+        #  для дальнейшего использования в своем проекте
         vk_id = vk_user_data.get('id')
         first_name = vk_user_data.get('first_name')
         last_name = vk_user_data.get('last_name')
@@ -203,6 +212,8 @@ class VKLoginAPIView(APIView):
         # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
         sex = vk_user_data.get('sex', None)
 
+        # Код ниже уже относится к проекту. Его можно не приводить в качестве примера.
+        # Там мы ищем пользователя в БД с такими же данными, если нет - создаем его.
         if bdate:
             parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
             formatted_date = parsed_date.strftime('%Y-%m-%d')

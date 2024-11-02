@@ -403,6 +403,10 @@ if DEBUG:
             'task': 'regional_competitions.tasks.calc_places_r14',
             'schedule': timedelta(hours=12)  # TODO: пока только дев
         },
+        'calc_places_r16': {
+            'task': 'regional_competitions.tasks.calc_places_r14',
+            'schedule': timedelta(hours=12)  # TODO: пока только дев
+        },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',
             'schedule': timedelta(hours=12)

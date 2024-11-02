@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 
@@ -23,7 +24,7 @@ from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                           RegionalRMixin, ListRetrieveCreateMixin)
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RegionalR1, RegionalR18,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RegionalR1, RegionalR15, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -35,7 +36,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
 from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
-    DumpStatisticalRegionalReportSerializer, EventNameSerializer, MassSendSerializer, RegionalR18Serializer,
+    DumpStatisticalRegionalReportSerializer, EventNameSerializer, MassSendSerializer, RegionalR15Serializer, RegionalR18Serializer,
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
@@ -779,6 +780,21 @@ class RegionalR13MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, Sen
     queryset = RegionalR13.objects.all()
     serializer_class = RegionalR13Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR15ViewSet(RetrieveModelMixin, GenericViewSet):
+    queryset = RegionalR15.objects.all()
+    serializer_class = RegionalR15Serializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        objects = queryset.filter(regional_headquarter_id=pk)
+        if objects.exists():
+            latest_object = objects.order_by('-id')[0]
+            return latest_object
+        raise Http404("Страница не найдена")
 
 
 class RegionalR16ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):

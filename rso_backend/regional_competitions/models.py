@@ -415,8 +415,7 @@ class RegionalR2(BaseScore, models.Model):
         auto_now=True,
         verbose_name='Дата последнего обновления'
     )
-    full_time_students = models.SmallIntegerField(
-        validators=[MinValueValidator(0)],
+    full_time_students = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Количество студентов очной формы обучения'
@@ -820,6 +819,39 @@ class RegionalR14(BaseScore):
 
     def __str__(self):
         return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
+
+
+class RegionalR15(models.Model):
+    """Показатель с данными, предоставленными ЦШ"""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s',
+    )
+    xp = models.PositiveSmallIntegerField(
+        verbose_name='Xп'
+    )
+    yp = models.PositiveSmallIntegerField(
+        verbose_name='Yп'
+    )
+    x3 = models.PositiveSmallIntegerField(
+        verbose_name='X3'
+    )
+    y3 = models.PositiveSmallIntegerField(
+        verbose_name='Y3'
+    )
+    p15 = models.FloatField(
+        verbose_name='P15'
+    )
+
+
+    class Meta:
+        verbose_name = 'Отчет по 15 показателю'
+        verbose_name_plural = 'Отчеты по 15 показателю'
+
+    def __str__(self):
+        return f'Отчет по 15 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR16(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
