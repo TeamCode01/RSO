@@ -347,6 +347,14 @@ class CHqRejectingLog(models.Model):
         blank=True,
         verbose_name='Отклонившее лицо'
     )
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        verbose_name='Региональный штаб',
+        related_name='r_rejecting_reasons'
+    )
     report_number = PositiveSmallIntegerField(verbose_name='Номер показателя')
     report_id = PositiveSmallIntegerField(verbose_name='Айди показателя')
     reasons = models.JSONField(verbose_name='Причины отклонения')

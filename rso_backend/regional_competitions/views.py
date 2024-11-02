@@ -392,6 +392,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
             )
             CHqRejectingLog.objects.create(
                 user=user,
+                regional_headquarter=report.regional_headquarter,
                 report_number=self.get_report_number(),
                 report_id=report.id,
                 reasons=json.dumps(reasons, ensure_ascii=False)

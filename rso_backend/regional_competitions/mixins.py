@@ -29,7 +29,14 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
         return get_report_number_by_class_name(self)
 
     def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+        regional_hq = RegionalHeadquarter.objects.get(commander=self.request.user)
+        existing_reports = self.get_queryset().filter(regional_headquarter=regional_hq)
+        verified_by_dhq = existing_reports.exists()
+
+        serializer.save(
+            regional_headquarter=regional_hq,
+            verified_by_dhq=verified_by_dhq
+        )
 
     def perform_update(self, request, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
