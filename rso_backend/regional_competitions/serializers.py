@@ -437,19 +437,15 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         return serializer_class(central_version, context=self.context).data
 
     def _get_simplified_serializer_class(self):
-        class SimplifiedMeta(self.__class__.Meta):
-            exclude = [
-                'regional_version',
-                'district_version',
-                'central_version',
-                'rejecting_reasons'
-            ]
+        class SimplifiedSerializer(self.__class__):
+            def get_fields(self):
+                fields = list(super().get_fields())
+                excluded_fields = ['regional_version', 'district_version', 'central_version', 'rejecting_reasons']
+                for field in excluded_fields:
+                    fields.pop(field, None)
+                return fields
 
-        return type(
-            f"Simplified{self.__class__.__name__}",
-            (self.__class__,),
-            {"Meta": SimplifiedMeta}
-        )
+        return SimplifiedSerializer
 
     def get_rejecting_reasons(self, obj):
         chq_rejecting_log = CHqRejectingLog.objects.filter(
