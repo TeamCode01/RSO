@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from django.db import models
+from django.forms import model_to_dict
 from django.http import QueryDict
 from rest_framework import serializers
 
@@ -428,7 +429,7 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         central_version = self.Meta.model.objects.filter(
             regional_headquarter=obj.regional_headquarter,
         ).exclude(id=obj.id).last()
-        return central_version.data if central_version else None
+        return model_to_dict(central_version) if central_version else None
 
     def get_rejecting_reasons(self, obj):
         chq_rejecting_log = CHqRejectingLog.objects.filter(
