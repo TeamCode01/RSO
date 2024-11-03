@@ -427,9 +427,13 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
 
     def get_central_version(self, obj):
         central_version = self.Meta.model.objects.filter(
-            regional_headquarter=obj.regional_headquarter,
+            regional_headquarter=obj.regional_headquarter
         ).exclude(id=obj.id).last()
-        return model_to_dict(central_version) if central_version else None
+
+        if central_version:
+            serializer_class = self.__class__
+            return serializer_class(central_version, context=self.context).data
+        return None
 
     def get_rejecting_reasons(self, obj):
         chq_rejecting_log = CHqRejectingLog.objects.filter(
