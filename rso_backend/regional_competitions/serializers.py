@@ -442,7 +442,7 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
                 fields = list(super().get_fields())
                 excluded_fields = ['regional_version', 'district_version', 'central_version', 'rejecting_reasons']
                 for field in excluded_fields:
-                    fields.pop(field, None)
+                    fields.remove(field)
                 return fields
 
         return SimplifiedSerializer
