@@ -405,12 +405,15 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         return super().validate(attrs)
 
     def get_regional_version(self, obj):
-        ver_log = RVerificationLog.objects.filter(
+        try:
+            return RVerificationLog.objects.get(
                 regional_headquarter=obj.regional_headquarter,
                 is_regional_data=True,
                 report_number=self.get_report_number(),
-            ).order_by('report_id').last()
-        return ver_log.data if ver_log else None
+                report_id=obj.id
+            ).data
+        except RVerificationLog.DoesNotExist:
+            return
 
     def get_district_version(self, obj):
         ver_log = RVerificationLog.objects.filter(
@@ -421,12 +424,12 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         return ver_log.data if ver_log else None
 
     def get_central_version(self, obj):
-        ver_log = RVerificationLog.objects.filter(
+        central_version = self.Meta.model.objects.filter(
             regional_headquarter=obj.regional_headquarter,
-            is_central_data=True,
-            report_number=self.get_report_number(),
-        ).order_by('report_id').last()
-        return ver_log.data if ver_log else None
+            is_sent=True,
+            verified_by_cqh__isnull=False
+        ).last()
+        return central_version.data if central_version else None
 
     def get_rejecting_reasons(self, obj):
         chq_rejecting_log = CHqRejectingLog.objects.filter(
