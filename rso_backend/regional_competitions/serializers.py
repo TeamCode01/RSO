@@ -10,7 +10,8 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR15, RegionalR18,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR15,
+                                          RegionalR18,
                                           RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
@@ -417,18 +418,16 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
 
     def get_district_version(self, obj):
         ver_log = RVerificationLog.objects.filter(
-                regional_headquarter=obj.regional_headquarter,
-                is_district_data=True,
-                report_number=self.get_report_number(),
-            ).order_by('report_id').last()
+            regional_headquarter=obj.regional_headquarter,
+            is_district_data=True,
+            report_number=self.get_report_number(),
+        ).order_by('report_id').last()
         return ver_log.data if ver_log else None
 
     def get_central_version(self, obj):
         central_version = self.Meta.model.objects.filter(
             regional_headquarter=obj.regional_headquarter,
-            is_sent=True,
-            verified_by_cqh__isnull=False
-        ).last()
+        ).exclude(id=obj.id).last()
         return central_version.data if central_version else None
 
     def get_rejecting_reasons(self, obj):
