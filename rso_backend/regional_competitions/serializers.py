@@ -438,12 +438,11 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
 
     def _get_simplified_serializer_class(self):
         class SimplifiedSerializer(self.__class__):
-            def get_fields(self):
-                fields = list(super().get_fields())
-                excluded_fields = ['regional_version', 'district_version', 'central_version', 'rejecting_reasons']
-                for field in excluded_fields:
-                    fields.remove(field)
-                return fields
+            class Meta:
+                model = self.Meta.model
+                orig_fields = list(self.Meta.fields)
+                fields_to_exclude = ['regional_version', 'district_version', 'central_version', 'rejecting_reasons']
+                fields = [field for field in orig_fields if field not in fields_to_exclude]
 
         return SimplifiedSerializer
 
