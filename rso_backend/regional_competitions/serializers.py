@@ -430,10 +430,26 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
             regional_headquarter=obj.regional_headquarter
         ).exclude(id=obj.id).last()
 
-        if central_version:
-            serializer_class = self.__class__
-            return serializer_class(central_version, context=self.context).data
-        return None
+        if not central_version:
+            return None
+
+        serializer_class = self._get_simplified_serializer_class()
+        return serializer_class(central_version, context=self.context).data
+
+    def _get_simplified_serializer_class(self):
+        class SimplifiedMeta(self.__class__.Meta):
+            exclude = [
+                'regional_version',
+                'district_version',
+                'central_version',
+                'rejecting_reasons'
+            ]
+
+        return type(
+            f"Simplified{self.__class__.__name__}",
+            (self.__class__,),
+            {"Meta": SimplifiedMeta}
+        )
 
     def get_rejecting_reasons(self, obj):
         chq_rejecting_log = CHqRejectingLog.objects.filter(
