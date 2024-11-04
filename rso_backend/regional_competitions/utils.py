@@ -103,6 +103,8 @@ def get_report_number_by_class_name(link):
     Получает номер отчета для классов с названием,
     соответствующего шаблону `RegionalR<номер_отчета>`.
     """
+    if link.__class__.__name__[12].isdigit():
+        return link.__class__.__name__[9:13]
     if link.__class__.__name__[11].isdigit():
         return link.__class__.__name__[9:12]
     if link.__class__.__name__[10].isdigit():
