@@ -1,3 +1,4 @@
+import json
 import logging
 import traceback
 from functools import wraps
@@ -766,3 +767,43 @@ def get_fees(report, model):
     except AttributeError:
         return
     return amount_of_money
+
+
+def return_comp_from_logs(regional_headquarter_id, r_number, r_max_subnumber, log_model):
+    """
+
+    Функция записывает ссылки в связанные таблицы ссылок к показателям РО.
+    Данные берем из логов RVerificationLog.
+    """
+
+
+    for index in range(1, r_max_subnumber+1):
+        report_number = int(r_number + str(index))
+        try:
+            report_data = log_model.objects.filter(
+                regional_headquarter=regional_headquarter_id,
+                is_regional_data=True,
+                report_number=report_number,
+            ).last().data
+            if isinstance(report_data, str):
+                report_data = json.loads(report_data)
+            links = report_data.get('links', None)
+            if links:
+                model_name = 'RegionalR' + str(report_number)
+                model = apps.get_model('regional_competitions', model_name)
+                instance = model.objects.filter(
+                    regional_headquarter=regional_headquarter_id,
+                    verified_by_dhq=True
+                ).first()
+                for item in links:
+                    link = item.get('link', None)
+                    if link:
+                        instance.links.create(
+                            link=link,
+                        )
+        except log_model.DoesNotExist:
+            continue
+        except AttributeError:
+            continue
+        except Exception as e:
+            logger.exception(f'Исключение при получении ссылок из логов RVerificationLog: {e}')
