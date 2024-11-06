@@ -88,10 +88,10 @@ class RegionalHeadquarterAdmin(ImportExportModelAdmin):
     form = RegionalForm
     list_filter = ('district_headquarter',)
 
-    actions = [
-        'return_r6_from_logs',
-        'return_r9_from_logs'
-    ]
+    # actions = [
+    #     'return_r6_from_logs',
+    #     'return_r9_from_logs'
+    # ]
 
     def return_r6_from_logs(self, request, queryset):
         """
