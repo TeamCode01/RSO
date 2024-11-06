@@ -226,17 +226,19 @@ def calc_places_r6():
 
 @shared_task
 def calc_places_r9():
-    # чем меньше score - тем выше в рейтинге
+    # ~~чем меньше score - тем выше в рейтинге~~
+    # логика изменилась, чем выше score - тем выше в рейтинге
     logger.info('Выполняется подсчет rank9 показателя')
     models = [model for model_name, model in r9_models_factory.models.items() if not model_name.endswith('Link')]
-    calc_r_ranking(models, 'r9_place', reverse=False)
+    calc_r_ranking(models, 'r9_place')
 
 
 @shared_task
 def calc_places_r10():
-    # чем меньше score - тем выше в рейтинге + две модели по одному показателю
+    # ~~чем меньше score - тем выше в рейтинге~~ + две модели по одному показателю
+    # логика изменилась, чем выше score - тем выше в рейтинге
     logger.info('Выполняется подсчет rank10 показателя')
-    calc_r_ranking([RegionalR101, RegionalR102], 'r10_place', reverse=False)
+    calc_r_ranking([RegionalR101, RegionalR102], 'r10_place')
 
 
 @shared_task
