@@ -317,16 +317,12 @@ class BaseRegionalRViewSet(RegionalRMixin):
         # Определяем последний тип лога для этого отчёта
         last_log = RVerificationLog.objects.filter(report_id=report.id).last()
         if not last_log:
-            return Response({
-                'non_field_errors': 'Не найдено исходное состояние отчета'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        if last_log.is_regional_data:
-            is_district_data, is_central_data, is_regional_data = True, False, False
-        elif last_log.is_district_data or last_log.is_central_data:
-            is_central_data, is_district_data, is_regional_data = True, False, False
-        else:
             is_central_data, is_district_data, is_regional_data = False, False, True
+        else:
+            if last_log.is_regional_data:
+                is_district_data, is_central_data, is_regional_data = True, False, False
+            elif last_log.is_district_data or last_log.is_central_data:
+                is_central_data, is_district_data, is_regional_data = True, False, False
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)
