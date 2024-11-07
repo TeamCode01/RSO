@@ -1794,7 +1794,7 @@ def get_attributes_of_uniform_data(competition_id):
     return rows
 
 
-def get_central_hq_data(fields):
+def get_central_hq_data(queryset, fields):
     if not fields:
         fields = [
             'regional_headquarters', 'local_headquarters', 
@@ -1803,12 +1803,11 @@ def get_central_hq_data(fields):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
                 ]
-    
-    central_headquarters = CentralHeadquarter.objects.all()
+
     rows = []
 
     try:
-        for central_headquarter in central_headquarters:
+        for central_headquarter in queryset:
             row = [central_headquarter.name]
     
             if 'regional_headquarters' in fields:
@@ -1876,7 +1875,7 @@ def get_central_hq_data(fields):
 
 
 
-def get_district_hq_data(fields):
+def get_district_hq_data(queryset, fields):
     if not fields:
         fields = [
             'regional_headquarters', 'local_headquarters', 
@@ -1885,12 +1884,11 @@ def get_district_hq_data(fields):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
                 ]
-    
-    district_headquarters = DistrictHeadquarter.objects.all()
+
     rows = []
 
     try:
-        for district_headquarter in district_headquarters:
+        for district_headquarter in queryset:
             row = [district_headquarter.name]
             if 'regional_headquarters' in fields:
                 row.append(RegionalHeadquarter.objects.filter(
@@ -1956,7 +1954,7 @@ def get_district_hq_data(fields):
     return rows
 
 
-def get_regional_hq_data(fields):
+def get_regional_hq_data(queryset, fields):
     if not fields:
         fields = [
             'district_headquarters','local_headquarters', 
@@ -1965,12 +1963,11 @@ def get_regional_hq_data(fields):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
                 ]
-    
-    regional_headquarters = RegionalHeadquarter.objects.all()
+        
     rows = []
 
     try:
-        for regional_headquarter in regional_headquarters:
+        for regional_headquarter in queryset:
             row = [regional_headquarter.name]
             if 'district_headquarters' in fields:
                 district_headquarter = regional_headquarter.district_headquarter
@@ -2038,7 +2035,7 @@ def get_regional_hq_data(fields):
     return rows
 
 
-def get_local_hq_data(fields):
+def get_local_hq_data(queryset, fields):
     if not fields:
         fields = [ 
             'district_headquarters', 'regional_headquarters',
@@ -2047,12 +2044,11 @@ def get_local_hq_data(fields):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
                 ]
-    
-    local_headquarters = LocalHeadquarter.objects.all()
+
     rows = []
 
     try:
-        for local_headquarter in local_headquarters:
+        for local_headquarter in queryset:
             row = [local_headquarter.name]
             if 'district_headquarters' in fields:
                 district_headquarter = local_headquarter.regional_headquarter.district_headquarter
@@ -2117,7 +2113,7 @@ def get_local_hq_data(fields):
 
 
 
-def get_educational_hq_data(fields):
+def get_educational_hq_data(queryset, fields):
     if not fields:
         fields = [
             'district_headquarters', 'regional_headquarters',
@@ -2127,11 +2123,10 @@ def get_educational_hq_data(fields):
             'events_organizations', 'event_participants'
                 ]
     
-    educational_headquarters = EducationalHeadquarter.objects.all()
     rows = []
 
     try:
-        for educational_headquarter in educational_headquarters:
+        for educational_headquarter in queryset:
             row = [educational_headquarter.name]
             if 'district_headquarters' in fields:
                 district_headquarter = educational_headquarter.regional_headquarter.district_headquarter
@@ -2194,7 +2189,7 @@ def get_educational_hq_data(fields):
     return rows
 
 
-def get_detachment_data(fields):
+def get_detachment_data(queryset, fields):
     if not fields:
         fields = [
             'district_headquarter', 'regional_headquarter',
@@ -2205,11 +2200,10 @@ def get_detachment_data(fields):
             'events_organizations', 'event_participants'
                 ]
     
-    detachments = Detachment.objects.all()
     rows = []
 
     try:
-        for detachment in detachments:
+        for detachment in queryset:
             row = [detachment.name]
             if 'district_headquarter' in fields:
                 if detachment.regional_headquarter:
@@ -2287,7 +2281,7 @@ def get_detachment_data(fields):
     return rows
 
 
-def get_direction_data(fields):
+def get_direction_data(queryset, fields):
     if not fields:
         fields = [
             'participants_count', 'lso_count', 
@@ -2366,7 +2360,7 @@ def get_direction_data(fields):
     return rows
 
 
-def get_users_registry_data(fields=None):
+def get_users_registry_data(queryset, fields):
     if fields is None:
         fields = [
             'district_headquarter', 'regional_headquarter',
@@ -2376,12 +2370,11 @@ def get_users_registry_data(fields=None):
             'events_organizations', 'event_participants',
             'area', 'position', 'detachment'
         ]
-    
-    users = RSOUser.objects.all()
+        
     rows = []
     
     try:
-        for user in users:
+        for user in queryset:
             row = [user.get_full_name()]
             
             row.append(user.email if user.email else '-')
