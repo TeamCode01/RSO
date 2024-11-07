@@ -1153,6 +1153,14 @@ class Ranking(models.Model):
         verbose_name='Региональный штаб',
         related_name='regional_competitions_rankings'
     )
+    overall_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Лучшее региональное отделение по итогам года'
+    )
+    k_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Лучшее региональное отделение по комиссарской деятельности'
+    )
 
     @classmethod
     def add_fields(cls):
