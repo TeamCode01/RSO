@@ -322,13 +322,11 @@ class BaseRegionalRViewSet(RegionalRMixin):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if last_log.is_regional_data:
-            is_district_data, is_central_data = True, False
+            is_district_data, is_central_data, is_regional_data = True, False, False
         elif last_log.is_district_data or last_log.is_central_data:
-            is_central_data, is_district_data = True, False
+            is_central_data, is_district_data, is_regional_data = True, False, False
         else:
-            return Response({
-                'non_field_errors': 'Некорректное исходное состояние отчета'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            is_central_data, is_district_data, is_regional_data = False, False, True
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)
@@ -348,6 +346,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
                 user=user,
                 central_headquarter=CentralHeadquarter.objects.first(),
                 regional_headquarter=report.regional_headquarter,
+                is_regional_data=is_regional_data,
                 is_district_data=is_district_data,
                 is_central_data=is_central_data,
                 report_id=report.id,
@@ -385,6 +384,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
                 user=user,
                 central_headquarter=CentralHeadquarter.objects.first(),
                 regional_headquarter=report.regional_headquarter,
+                is_regional_data=is_regional_data,
                 is_district_data=is_district_data,
                 is_central_data=is_central_data,
                 report_id=report.id,
