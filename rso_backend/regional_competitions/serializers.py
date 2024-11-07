@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+
+from django.core.exceptions import MultipleObjectsReturned
 from django.db import models
 from django.forms import model_to_dict
 from django.http import QueryDict
@@ -416,6 +418,13 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
             ).data
         except RVerificationLog.DoesNotExist:
             return
+        except RVerificationLog.MultipleObjectsReturned:
+            return RVerificationLog.objects.filter(
+                regional_headquarter=obj.regional_headquarter,
+                is_regional_data=True,
+                report_number=self.get_report_number(),
+                report_id=obj.id
+            ).last().data
 
     def get_district_version(self, obj):
         ver_log = RVerificationLog.objects.filter(

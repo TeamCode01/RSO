@@ -845,7 +845,6 @@ class RegionalR15(models.Model):
         verbose_name='P15'
     )
 
-
     class Meta:
         verbose_name = 'Отчет по 15 показателю'
         verbose_name_plural = 'Отчеты по 15 показателю'
