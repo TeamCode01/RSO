@@ -845,7 +845,6 @@ class RegionalR15(models.Model):
         verbose_name='P15'
     )
 
-
     class Meta:
         verbose_name = 'Отчет по 15 показателю'
         verbose_name_plural = 'Отчеты по 15 показателю'
@@ -1152,6 +1151,14 @@ class Ranking(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
         related_name='regional_competitions_rankings'
+    )
+    overall_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Лучшее региональное отделение по итогам года'
+    )
+    k_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Лучшее региональное отделение по комиссарской деятельности'
     )
 
     @classmethod
