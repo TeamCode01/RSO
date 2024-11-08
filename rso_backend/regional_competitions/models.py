@@ -1169,7 +1169,13 @@ class Ranking(models.Model):
                 blank=True,
                 null=True
             )
+            field_score = models.FloatField(
+                verbose_name=f'Очки участника по {i} показателю',
+                blank=True,
+                null=True
+            )
             cls.add_to_class(f'r{i}_place', field)
+            cls.add_to_class(f'r{i}_score', field_score)
 
     class Meta:
         verbose_name = 'Место участника по показателю'
