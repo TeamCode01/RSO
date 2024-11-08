@@ -583,14 +583,7 @@ class CommanerPermissionMixin:
         return self.filter_fields_by_role(fields, user_role)
     
     def filter_queryset(self, queryset):
-        role, headquarter = self.get_user_role()
-        
-        if role == 'central':
-            return queryset
-        elif role == 'district':
-            return queryset.filter(id=headquarter.id)
-        else:
-            raise PermissionDenied("У вас недостаточно прав")
+        pass
 
 
 class ExportCentralHqDataMixin:
@@ -627,7 +620,13 @@ class ExportCentralDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     
     def get_queryset(self):
         queryset = CentralHeadquarter.objects.all()
-        return super().get_queryset(queryset)
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
     
     def list(self, request):
         fields = request.query_params.getlist('fields')
@@ -679,6 +678,16 @@ class ExportDistrictDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = DistrictHeadquarter.objects.all()
         return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
     
     def list(self, request):
         fields = request.query_params.getlist('fields')
