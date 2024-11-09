@@ -181,47 +181,47 @@ def calculate_r14_report_task():
 @shared_task
 def calc_places_r1():
     logger.info('Выполняется подсчет rank1 показателя')
-    calc_r_ranking([RegionalR1], 'r1_place')
+    calc_r_ranking([RegionalR1], 'r1_place', 'r1_score')
 
 
 @shared_task
 def calc_places_r2():
     # показатель считается на основе верифицированного первого, без верификации
     logger.info('Выполняется подсчет rank2 показателя')
-    calc_r_ranking([RegionalR2], 'r2_place', no_verification=True)
+    calc_r_ranking([RegionalR2], 'r2_place', 'r2_score', no_verification=True)
 
 
 @shared_task
 def calc_places_r3():
     # показатель считается на основе верифицированного первого, без верификации
     logger.info('Выполняется подсчет rank3 показателя')
-    calc_r_ranking([RegionalR3], 'r3_place', no_verification=True)
+    calc_r_ranking([RegionalR3], 'r3_place', 'r3_score', no_verification=True)
 
 
 @shared_task
 def calc_places_r4():
     logger.info('Выполняется подсчет rank4 показателя')
-    calc_r_ranking([RegionalR4], 'r4_place')
+    calc_r_ranking([RegionalR4], 'r4_place', 'r4_score')
 
 
 @shared_task
 def calc_places_r5():
     logger.info('Выполняется подсчет rank5 показателя')
-    calc_r_ranking([RegionalR5], 'r5_place')
+    calc_r_ranking([RegionalR5], 'r5_place', 'r5_score')
 
 
 @shared_task
 def calc_places_r6():
     logger.info('Выполняется подсчет rank6 показателя')
     models = [model for model_name, model in r6_models_factory.models.items() if not model_name.endswith('Link')]
-    calc_r_ranking(models, 'r6_place')
+    calc_r_ranking(models, 'r6_place', 'r6_score')
 
 
 # @shared_task
 # def calc_places_r7():
 #     logger.info('Выполняется подсчет rank7 показателя')
 #     models = [model for model_name, model in r7_models_factory.models.items() if not model_name.endswith('Link')]
-#     calc_r_ranking(models, 'r7_place')
+#     calc_r_ranking(models, 'r7_place', 'r7_score')
 
 
 @shared_task
@@ -230,7 +230,7 @@ def calc_places_r9():
     # логика изменилась, чем выше score - тем выше в рейтинге
     logger.info('Выполняется подсчет rank9 показателя')
     models = [model for model_name, model in r9_models_factory.models.items() if not model_name.endswith('Link')]
-    calc_r_ranking(models, 'r9_place')
+    calc_r_ranking(models, 'r9_place', 'r9_score')
 
 
 @shared_task
@@ -238,35 +238,35 @@ def calc_places_r10():
     # ~~чем меньше score - тем выше в рейтинге~~ + две модели по одному показателю
     # логика изменилась, чем выше score - тем выше в рейтинге
     logger.info('Выполняется подсчет rank10 показателя')
-    calc_r_ranking([RegionalR101, RegionalR102], 'r10_place')
+    calc_r_ranking([RegionalR101, RegionalR102], 'r10_place', 'r10_score')
 
 
 @shared_task
 def calc_places_r11():
     logger.info('Выполняется подсчет rank11 показателя')
-    calc_r_ranking([RegionalR11], 'r11_place')
+    calc_r_ranking([RegionalR11], 'r11_place', 'r11_score')
 
 
 @shared_task
 def calc_places_r12():
     logger.info('Выполняется подсчет rank12 показателя')
-    calc_r_ranking([RegionalR12], 'r12_place')
+    calc_r_ranking([RegionalR12], 'r12_place', 'r12_score')
 
 
 @shared_task
 def calc_places_r13():
     logger.info('Выполняется подсчет rank13 показателя')
-    calc_r_ranking([RegionalR13], 'r13_place')
+    calc_r_ranking([RegionalR13], 'r13_place', 'r13_score')
 
 
 @shared_task
 def calc_places_r14():
     # считается на основании верифицированных 12 и 13 показателей, без верификации
     logger.info('Выполняется подсчет rank14 показателя')
-    calc_r_ranking([RegionalR14], 'r14_place', no_verification=True)
+    calc_r_ranking([RegionalR14], 'r14_place', 'r14_score', no_verification=True)
 
 
 @shared_task
 def calc_places_r16():
     logger.info('Выполняется подсчет rank16 показателя')
-    calc_r_ranking([RegionalR16], 'r16_place')
+    calc_r_ranking([RegionalR16], 'r16_place', 'r16_score')
