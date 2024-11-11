@@ -30,13 +30,16 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
 
     def perform_create(self, serializer):
         regional_hq = RegionalHeadquarter.objects.get(commander=self.request.user)
-        existing_reports = self.get_queryset().filter(regional_headquarter=regional_hq)
-        verified_by_dhq = existing_reports.exists()
 
-        serializer.save(
-            regional_headquarter=regional_hq,
-            verified_by_dhq=verified_by_dhq
-        )
+        if serializer.Meta.model.__dict__.get('verified_by_dhq'):
+            existing_reports = self.get_queryset().filter(regional_headquarter=regional_hq)
+            verified_by_dhq = existing_reports.exists()
+            serializer.save(
+                regional_headquarter=regional_hq,
+                verified_by_dhq=verified_by_dhq
+            )
+        else:
+            serializer.save(regional_headquarter=regional_hq)
 
     def perform_update(self, request, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
