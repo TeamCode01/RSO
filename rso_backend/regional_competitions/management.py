@@ -35,7 +35,6 @@ def fix_links_r6_r9():
                 continue
             instance = model.objects.filter(
                 regional_headquarter=regional_headquarter,
-                verified_by_chq=False
             ).last()
             if not instance:
                 continue
@@ -61,7 +60,6 @@ def fix_links_r6_r9():
             print(f'создаем ссылки: {links_to_create}')
             link_model.objects.bulk_create(links_to_create)
             print(f'создали ссылки')
-            pprint(r6_serializers_factory.serializers)
             last_log = RVerificationLog.objects.filter(
                 regional_headquarter=instance.regional_headquarter,
                 is_regional_data=True,
@@ -105,7 +103,6 @@ def fix_links_r6_r9():
             print(f'Обнаружили для мероприятия R9 {event_id} модели {model_name} и {link_model_name}')
             instance = model.objects.filter(
                 regional_headquarter=regional_headquarter,
-                verified_by_chq=False,
             ).last()
             if not instance:
                 continue
