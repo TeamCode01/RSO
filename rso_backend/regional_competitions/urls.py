@@ -33,7 +33,7 @@ from regional_competitions.views import (MassSendViewSet,
                                          StatisticalRegionalViewSet,
                                          r6_view_sets_factory,
                                          r9_view_sets_factory,
-                                         get_sent_reports, user_info,)
+                                         get_sent_reports, upload_r8_data, user_info,)
 
 
 class MeRouter(SimpleRouter):
@@ -127,5 +127,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('me/', include(me_router.urls)),
     path('get_sent_reports/', get_sent_reports, name='get_sent_reports'),
+    path('upload_r8_data/', upload_r8_data, name='upload_r8_data'),
     path('user_info/', user_info, name='user_info'),
 ]

@@ -2,16 +2,18 @@ import json
 
 from django.conf import settings
 from django.db import transaction
-from django.forms import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
+import pandas as pd
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, parser_classes, permission_classes
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
+from rest_framework.parsers import FormParser, MultiPartParser
 
 from api.mixins import SendMixin
 from api.utils import get_calculation
@@ -29,14 +31,14 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
                                           RegionalR19, RegionalR101,
-                                          RegionalR102, RVerificationLog,
+                                          RegionalR102, RVerificationLog, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory,
                                           r9_models_factory)
 from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
-    DumpStatisticalRegionalReportSerializer, EventNameSerializer, MassSendSerializer, RegionalR15Serializer, RegionalR18Serializer,
+    DumpStatisticalRegionalReportSerializer, EventNameSerializer, FileUploadSerializer, MassSendSerializer, RegionalR15Serializer, RegionalR18Serializer,
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
@@ -711,6 +713,59 @@ r9_view_sets_factory = RViewSetFactory(
     additional_parental_class=FormDataNestedFileParser
 )
 r9_view_sets_factory.create_view_sets()
+
+
+@swagger_auto_schema(method='POST', request_body=FileUploadSerializer)
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+@parser_classes([MultiPartParser, FormParser])
+def upload_r8_data(request):
+    """
+    Метод для загрузки данных по 8 показателю.
+
+    Требуется, чтобы в файле были три колонки:
+        - 'Id' - ID рег штаба
+        - 'место' - место в рейтинге
+
+    Доступ: только администратор.
+
+    Удаляет все предыдущие записи в модели и загружает новые из файла.
+    """
+    serializer = FileUploadSerializer(data=request.data)
+    if serializer.is_valid():
+        file = serializer.validated_data['file']
+        hq_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
+        try:
+            df = pd.read_excel(file)
+            reports_to_create = []
+            for index, row in df.iterrows():
+                if row['Id'] not in hq_ids:
+                    continue
+                reports_to_create.append(
+                    RegionalR8(
+                        regional_headquarter_id=row['Id'],
+                        score=row['место']
+                    )
+                )
+            try:
+                with transaction.atomic():
+                    RegionalR8.objects.all().delete()
+                    # не булком, т.к. в методе сейв модели создаются записи рейтинга.
+                    for report in reports_to_create:
+                        report.save()
+            except Exception as e:
+                return Response(
+                    {'error': f'Ошибка при обработке файлов. {str(e)}'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при чтении файла. {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RegionalR101ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):

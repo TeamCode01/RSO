@@ -353,12 +353,13 @@ def calculate_r16_score(report: RegionalR16):
     report.save()
 
 
-def calc_r_ranking(report_models: list, ranking_field_name: str, reverse=True, no_verification=False):
+def calc_r_ranking(report_models: list, ranking_field_name: str, score_field_name: str, reverse=True, no_verification=False):
     """
     Расчет места для региональных отчетов.
 
     :param report_models: Список с моделями отчетов, по которым суммируются score
     :param ranking_field_name: Имя поля в модели Ranking, куда записываем место
+    :param score_field_name: Имя поля в модели Ranking, куда записываем общие очки
     :param reverse: Если True, то чем больше очков, тем выше место, по дефолту True
     :param no_verification: Если True, то берутся все записи из модели, без фильтрации по verified_by_chq=True
     """
@@ -388,7 +389,7 @@ def calc_r_ranking(report_models: list, ranking_field_name: str, reverse=True, n
                     entries[model_entry['regional_headquarter_id']] += model_entry['score']
 
         # отсортируем словарь по возрастанию или убыванию в зависимости от reverse (по дефолту по возрастанию)
-        sorted_entries = sorted(entries.items(), key=lambda x: x[1], reverse=reverse)
+        sorted_entries = sorted(entries.items(), key=lambda x: x[1], reverse=reverse)  # отсортированный список кортежей (id штаба, общий score)
 
         # присвоим места, тащим все записи модели учета рейтинга Ranking
         # присвоим места согласно порядку сортировки, если score одинаковые - присвоим одинаковое место
@@ -415,13 +416,15 @@ def calc_r_ranking(report_models: list, ranking_field_name: str, reverse=True, n
             if not ranking_entry:
                 ranking_entry = Ranking(regional_headquarter_id=entry[0])
                 setattr(ranking_entry, ranking_field_name, place)
+                setattr(ranking_entry, score_field_name, entry[1])
                 to_create_entries.append(ranking_entry)
             else:
                 setattr(ranking_entry, ranking_field_name, place)
+                setattr(ranking_entry, score_field_name, entry[1])
                 to_update_entries.append(ranking_entry)
 
         new_entries = Ranking.objects.bulk_create(to_create_entries)
-        count_updated = Ranking.objects.bulk_update(to_update_entries, [ranking_field_name])
+        count_updated = Ranking.objects.bulk_update(to_update_entries, [ranking_field_name, score_field_name])
 
         logger.info(f'{ranking_field_name} - обновлено {count_updated} записей')
         logger.info(f'{ranking_field_name} - создано {len(new_entries)} записей')

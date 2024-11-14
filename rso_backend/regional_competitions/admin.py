@@ -14,7 +14,7 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           RegionalR16Project, RegionalR17,
                                           RegionalR19, RegionalR101,
                                           RegionalR101Link, RegionalR102,
-                                          RegionalR102Link, RVerificationLog,
+                                          RegionalR102Link, RVerificationLog, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, RegionalR3,
                                           DumpStatisticalRegionalReport)
@@ -398,6 +398,18 @@ r6_admin_factory.create_admin_classes()
 #     readonly_fields=r7_readonly_fields
 # )
 # r7_admin_factory.create_admin_classes()
+
+
+@admin.register(RegionalR8)
+class RegionalR8Admin(admin.ModelAdmin):
+    list_display = (
+        'regional_headquarter',
+        'score',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('regional_headquarter__name',)
+    readonly_fields = ('regional_headquarter',)
 
 
 r9_list_display = (

@@ -998,3 +998,7 @@ REPORTS_SERIALIZERS.extend(
         RegionalR19Serializer
     ]
 )
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()

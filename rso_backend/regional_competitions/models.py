@@ -607,6 +607,43 @@ class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
 # r7_models_factory.create_models()
 
 
+class RegionalR8(BaseScore):
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 8 показателю'
+        verbose_name_plural = 'Отчеты по 8 показателю'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['regional_headquarter'],
+                name='unique_regional_headquarter')
+        ]
+
+    def save(self, *args, **kwargs):
+        ranking_entry, _ = self.regional_headquarter.regional_competitions_rankings.get_or_create(regional_headquarter=self.regional_headquarter)
+        ranking_entry.r8_score = self.score
+        ranking_entry.r8_place = self.score
+        ranking_entry.save()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'Отчет по 8 показателю РШ {self.regional_headquarter}'
+
+
 class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
     event_happened = models.BooleanField(
         verbose_name='Проведение акции',
@@ -1169,7 +1206,13 @@ class Ranking(models.Model):
                 blank=True,
                 null=True
             )
+            field_score = models.FloatField(
+                verbose_name=f'Очки участника по {i} показателю',
+                blank=True,
+                null=True
+            )
             cls.add_to_class(f'r{i}_place', field)
+            cls.add_to_class(f'r{i}_score', field_score)
 
     class Meta:
         verbose_name = 'Место участника по показателю'

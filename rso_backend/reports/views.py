@@ -41,6 +41,7 @@ from api.permissions import (IsCentralCommanderRegistry, IsDistrictCommanderRegi
                              IsEducationalCommanderRegistry, IsLocalCommanderRegistry, IsRegionalCommanderRegistry)
 from users.models import RSOUser
 from headquarters.serializers import UsersRegistrySerializer, EducationalHQRegistrySerializer, LocalHQRegistrySerializer, RegionalHQRegistrySerializer, DistrictHQRegistrySerializer, CentralHQRegistrySerializer, DetachmentRegistrySerializer, DirectionRegistrySerializer
+from headquarters.models import CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Detachment, Area
 
 
 def has_reports_access(user):
@@ -551,17 +552,17 @@ class CommanerPermissionMixin:
         user = self.request.user
         
         if hasattr(user, 'centralheadquarter_commander'):
-            return 'central'
+            return 'central', user.centralheadquarter_commander
         elif hasattr(user, 'districtheadquarter_commander'):
-            return 'district'
+            return 'district', user.districtheadquarter_commander
         elif hasattr(user, 'regionalheadquarter_commander'):
-            return 'regional'
+            return 'regional', user.regionalheadquarter_commander
         elif hasattr(user, 'localheadquarter_commander'):
-            return 'local'
+            return 'local', user.localheadquarter_commander
         elif hasattr(user, 'educationalheadquarter_commander'):
-            return 'educational'
+            return 'educational', user.educationalheadquarter_commander
         elif hasattr(user, 'detachment_commander'):
-            return 'detachment'
+            return 'detachment', user.detachment_commander
         else:
             raise PermissionDenied("У вас недостаточно прав")
 
@@ -580,6 +581,9 @@ class CommanerPermissionMixin:
         fields = super().get_fields()
         user_role = self.get_user_role()
         return self.filter_fields_by_role(fields, user_role)
+    
+    def filter_queryset(self, queryset):
+        pass
 
 
 class ExportCentralHqDataMixin:
@@ -614,6 +618,16 @@ class ExportCentralDataView(ExportCentralHqDataMixin, BaseExcelExportView):
 class ExportCentralDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsCentralCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = CentralHeadquarter.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         if not fields:
@@ -624,7 +638,8 @@ class ExportCentralDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_central_hq_data(fields)
+        queryset = self.get_queryset()
+        data = get_central_hq_data(queryset, fields)
         serializer = CentralHQRegistrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -660,6 +675,20 @@ class ExportDistrictDataView(ExportDistrictHqDataMixin, BaseExcelExportView):
 class ExportDistrictDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDistrictCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = DistrictHeadquarter.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         if not fields:
@@ -670,7 +699,8 @@ class ExportDistrictDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_district_hq_data(fields)
+        queryset = self.get_queryset()
+        data = get_district_hq_data(queryset, fields)
         serializer = DistrictHQRegistrySerializer(data, many=True)
         return Response(serializer.data)
     
@@ -706,6 +736,22 @@ class ExportRegionalDataView(ExportRegionalHqDataMixin, BaseExcelExportView):
 class ExportRegionalDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsRegionalCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = RegionalHeadquarter.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(district_headquarter=headquarter)
+        elif role =='regional':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         if not fields:
@@ -716,7 +762,8 @@ class ExportRegionalDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_regional_hq_data(fields)
+        queryset = self.get_queryset()
+        data = get_regional_hq_data(queryset, fields)
         serializer = RegionalHQRegistrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -752,6 +799,24 @@ class ExportLocalDataView(ExportLocalHqDataMixin, BaseExcelExportView):
 class ExportLocalDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsLocalCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = LocalHeadquarter.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(regional_headquarter__district_headquarter=headquarter)
+        elif role =='regional':
+            return queryset.filter(regional_headquarter=headquarter)
+        elif role == 'local':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         if not fields:
@@ -762,7 +827,8 @@ class ExportLocalDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_local_hq_data(fields)
+        queryset = self.get_queryset()
+        data = get_local_hq_data(queryset, fields)
         serializer = LocalHQRegistrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -798,6 +864,26 @@ class ExportEducationDataView(ExportEducationHqDataMixin, BaseExcelExportView):
 class ExportEducationDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsEducationalCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = EducationalHeadquarter.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(regional_headquarter__district_headquarter=headquarter)
+        elif role =='regional':
+            return queryset.filter(regional_headquarter=headquarter)
+        elif role == 'local':
+            return queryset.filter(local_headquarter=headquarter)
+        elif role == 'educational':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         if not fields:
@@ -808,7 +894,8 @@ class ExportEducationDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet)
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_educational_hq_data(fields)
+        queryset = self.get_queryset()
+        data = get_educational_hq_data(queryset, fields)
         serializer = EducationalHQRegistrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -845,6 +932,28 @@ class ExportDetachmentDataView(ExportDetachmentDataMixin, BaseExcelExportView):
 class ExportDetachmentDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = Detachment.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(regional_headquarter__district_headquarter=headquarter)
+        elif role =='regional':
+            return queryset.filter(regional_headquarter=headquarter)
+        elif role == 'local':
+            return queryset.filter(local_headquarter=headquarter)
+        elif role == 'educational':
+            return queryset.filter(educational_headquarter=headquarter)
+        elif role == 'detachment':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         if not fields:
@@ -856,7 +965,8 @@ class ExportDetachmentDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_detachment_data(fields)
+        queryset = self.get_queryset()
+        data = get_detachment_data(queryset, fields)
         serializer = DetachmentRegistrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -891,6 +1001,28 @@ class ExportDirectionDataView(ExportDirectionDataMixin, BaseExcelExportView):
 class ExportDirectionDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = Area.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(detachment__regional_headquarter__district_headquarter=headquarter)
+        elif role =='regional':
+            return queryset.filter(detachment__regional_headquarter=headquarter)
+        elif role == 'local':
+            return queryset.filter(detachment__local_headquarter=headquarter)
+        elif role == 'educational':
+            return queryset.filter(detachment__educational_headquarter=headquarter)
+        elif role == 'detachment':
+            return queryset.filter(id=headquarter.id)
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         
@@ -901,7 +1033,8 @@ class ExportDirectionDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet)
             'membership_fee_percent', 'test_done_percent', 
             'events_organizations', 'event_participants'
             ]
-        data = get_direction_data(fields)
+        queryset = self.get_queryset()
+        data = get_direction_data(queryset, fields)
         serializer = DirectionRegistrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -938,6 +1071,38 @@ class ExportUsersDataView(ExportUsersDataMixin, BaseExcelExportView):
 class ExportUsersDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
     permission_classes = [IsDetachmentCommanderRegistry]
     
+    def get_queryset(self):
+        queryset = RSOUser.objects.all()
+        return self.filter_queryset(queryset)
+    
+    def filter_queryset(self, queryset):
+        role, headquarter = self.get_user_role()
+        
+        if role == 'central':
+            return queryset
+        elif role == 'district':
+            return queryset.filter(
+                userdistrictheadquarterposition__headquarter=headquarter
+            )
+        elif role == 'regional':
+            return queryset.filter(
+                userregionalheadquarterposition__headquarter=headquarter
+            )
+        elif role == 'local':
+            return queryset.filter(
+                userlocalheadquarterposition__headquarter=headquarter
+            )
+        elif role == 'educational':
+            return queryset.filter(
+                usereducationalheadquarterposition__headquarter=headquarter
+            )
+        elif role == 'detachment':
+            return queryset.filter(
+                userdetachmentposition__headquarter=headquarter
+            )
+        else:
+            raise PermissionDenied("У вас недостаточно прав")
+    
     def list(self, request):
         fields = request.query_params.getlist('fields')
         
@@ -950,6 +1115,7 @@ class ExportUsersDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
                 'events_organizations', 'event_participants',
                 'area', 'position', 'detachment'
             ]
-        data = get_users_registry_data(fields)
+        queryset = self.get_queryset()
+        data = get_users_registry_data(queryset, fields)
         serializer = UsersRegistrySerializer(data, many=True)
         return Response(serializer.data)
