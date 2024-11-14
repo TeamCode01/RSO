@@ -1,5 +1,4 @@
 import json
-from pprint import pprint
 
 from headquarters.models import RegionalHeadquarter
 from regional_competitions.models import RVerificationLog, r9_models_factory, r6_models_factory
