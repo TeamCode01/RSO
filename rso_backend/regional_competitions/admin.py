@@ -78,6 +78,7 @@ class DumpStatisticalRegionalReportAdmin(admin.ModelAdmin):
 @admin.register(RVerificationLog)
 class RVerificationLogAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'user',
         'district_headquarter',
         'central_headquarter',
