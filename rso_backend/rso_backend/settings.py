@@ -212,8 +212,7 @@ AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 USE_S3 = int(os.getenv('USE_S3', '0'))
 AWS_QUERYSTRING_AUTH = False  # отключаем авторизацию через параметры url
 
-# if USE_S3 and DEBUG is False:
-if USE_S3:
+if USE_S3 and DEBUG is False:
     # создание бэкапа python manage.py dbbackup (вынесено в таску)
     # восстановление бд из последнего бэкапа python manage.py dbrestore
     DBBACKUP_STORAGE = 'rso_backend.s3_storage.DataBaseStorage'
@@ -372,7 +371,7 @@ if DEBUG:
         },
         # 'run-dbbackup_test': {
         #     'task': 'rso_backend.celery.run_dbbackup_task',
-        #     'schedule': timedelta(seconds=90),
+        #     'schedule': timedelta(hours=90),
         # },
         'calculate_r11_report_task': {
             'task': 'regional_competitions.tasks.calculate_r11_report_task',
