@@ -1198,7 +1198,6 @@ files = [
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -2059,5 +2058,5 @@ files = [
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "95ec33ba164f89d00d1594fb1d8ec7f4f9c64f36156e18d91ceb4b669585e3af"
+python-versions = ">=3.10,<3.12"
+content-hash = "787045d45225e1c17d95d9300f6199601f9683ff40f10c66244b351d4af03146"
