@@ -252,13 +252,15 @@ class CreateUpdateSerializerMixin(serializers.ModelSerializer):
     def create(self, validated_data):
         received_objects = validated_data.pop(self.objects_name, [])
         created_objects = self.Meta.model.objects.create(**validated_data)
-        self._create_or_update_objects(created_objects, received_objects)
+        if received_objects:
+            self._create_or_update_objects(created_objects, received_objects)
         return created_objects
 
     def update(self, instance, validated_data):
         received_objects = validated_data.pop(self.objects_name, [])
         instance = super().update(instance, validated_data)
-        self._create_or_update_objects(instance, received_objects)
+        if received_objects:
+            self._create_or_update_objects(instance, received_objects)
         return instance
 
     def create_objects(self, created_objects, validated_data):
