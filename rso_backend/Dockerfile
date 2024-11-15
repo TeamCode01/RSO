@@ -1,5 +1,8 @@
 FROM python:3.10-alpine
+
 WORKDIR /app
+
+RUN apk update && apk add postgresql-client
 
 COPY requirements.txt .
 
