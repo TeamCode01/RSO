@@ -677,7 +677,7 @@ else:
         },
         'run-dbbackup-every-24-hours': {
             'task': 'rso_backend.celery.run_dbbackup_task',
-            'schedule': crontab(hour=24, minute=0),
+            'schedule': crontab(hour=4, minute=25),
         }
     }
 
