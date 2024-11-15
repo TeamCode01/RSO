@@ -316,15 +316,20 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         user = request.user
 
-        # Определяем последний тип лога для этого отчёта
-        last_log = RVerificationLog.objects.filter(report_id=report.id).last()
-        if not last_log:
+        # Определяем наличие лога от РШ за этот отчет (что будет означать, что была проверка от ОШ)
+        last_regional_log = RVerificationLog.objects.filter(
+            regional_headquarter=report.regional_headquarter,
+            is_regional_data=True,
+            report_number=self.get_report_number(),
+            report_id=report.id
+        ).last()
+
+        if not last_regional_log:
+            # если проверки нет, значит это итерация после отклонения со стороны ЦШ
             is_central_data, is_district_data, is_regional_data = False, False, True
         else:
-            if last_log.is_regional_data:
-                is_district_data, is_central_data, is_regional_data = True, False, False
-            elif last_log.is_district_data or last_log.is_central_data:
-                is_central_data, is_district_data, is_regional_data = True, False, False
+            # если проверка есть, значит данные в отчете надо перенести в district_version
+            is_central_data, is_district_data, is_regional_data = False, True, False
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)
