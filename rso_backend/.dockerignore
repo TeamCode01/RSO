@@ -19,3 +19,4 @@ dist/
 tests/
 __pycache__/
 *.pyc
+backup/
