@@ -2,9 +2,12 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import boto3
+import pgdumplib
 from celery.schedules import crontab
 from dotenv import load_dotenv
 from pythonjsonlogger import jsonlogger
+
 
 load_dotenv()
 
@@ -108,7 +111,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'import_export',
     'rest_framework_simplejwt',
-    'log_viewer'
+    'log_viewer',
+    'dbbackup',
 ]
 
 INSTALLED_APPS += [
@@ -197,6 +201,32 @@ TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 
 USE_TZ = True
+
+# S3 settings
+DB_ACCESS_KEY_ID = os.getenv('DB_ACCESS_KEY_ID')
+DB_SECRET_ACCESS_KEY = os.getenv('DB_SECRET_ACCESS_KEY')
+DATABASE_BUCKET_NAME = os.getenv('DATABASE_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+AWS_DEFAULT_ACL = None  # права доступа тянуть с s3
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+USE_S3 = int(os.getenv('USE_S3', '0'))
+AWS_QUERYSTRING_AUTH = False  # отключаем авторизацию через параметры url
+
+if USE_S3 and DEBUG is False:
+    # создание бэкапа python manage.py dbbackup (вынесено в таску)
+    # восстановление бд из последнего бэкапа python manage.py dbrestore
+    DBBACKUP_STORAGE = 'rso_backend.s3_storage.DataBaseStorage'
+    DBBACKUP_STORAGE_OPTIONS = {
+        'access_key': DB_ACCESS_KEY_ID,
+        'secret_key': DB_SECRET_ACCESS_KEY,
+        'bucket_name': DATABASE_BUCKET_NAME,
+        'default_acl': 'private',
+    }
+else:
+    DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    DBBACKUP_STORAGE_OPTIONS = {
+        'location': Path(BASE_DIR).joinpath('backup').resolve()
+    }
 
 
 STATIC_URL = 'static/'
@@ -339,6 +369,10 @@ if DEBUG:
                 month_of_year=10,
             )
         },
+        # 'run-dbbackup_test': {
+        #     'task': 'rso_backend.celery.run_dbbackup_task',
+        #     'schedule': timedelta(hours=90),
+        # },
         'calculate_r11_report_task': {
             'task': 'regional_competitions.tasks.calculate_r11_report_task',
             'schedule': timedelta(hours=12)  # TODO: пока только дев
@@ -641,6 +675,10 @@ else:
                 minute=20
             )
         },
+        'run-dbbackup-every-24-hours': {
+            'task': 'rso_backend.celery.run_dbbackup_task',
+            'schedule': crontab(hour=4, minute=25),
+        }
     }
 
 if DEBUG:
