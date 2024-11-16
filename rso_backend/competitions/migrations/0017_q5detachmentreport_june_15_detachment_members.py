@@ -9,10 +9,10 @@ class Migration(migrations.Migration):
         ('competitions', '0016_merge_20240326_2001'),
     ]
 
-    operations = [
-        migrations.AddField(
-            model_name='q5detachmentreport',
-            name='june_15_detachment_members',
-            field=models.PositiveSmallIntegerField(default=1),
-        ),
-    ]
+    # operations = [
+    #     migrations.AddField(
+    #         model_name='q5detachmentreport',
+    #         name='june_15_detachment_members',
+    #         field=models.PositiveSmallIntegerField(default=1),
+    #     ),
+    # ]
