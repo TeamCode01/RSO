@@ -3,7 +3,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import boto3
-import pgdumplib
 from celery.schedules import crontab
 from dotenv import load_dotenv
 from pythonjsonlogger import jsonlogger
@@ -212,7 +211,7 @@ AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 USE_S3 = int(os.getenv('USE_S3', '0'))
 AWS_QUERYSTRING_AUTH = False  # отключаем авторизацию через параметры url
 
-if USE_S3 and DEBUG is False:
+if USE_S3:
     # создание бэкапа python manage.py dbbackup (вынесено в таску)
     # восстановление бд из последнего бэкапа python manage.py dbrestore
     DBBACKUP_STORAGE = 'rso_backend.s3_storage.DataBaseStorage'
@@ -369,10 +368,6 @@ if DEBUG:
                 month_of_year=10,
             )
         },
-        # 'run-dbbackup_test': {
-        #     'task': 'rso_backend.celery.run_dbbackup_task',
-        #     'schedule': timedelta(hours=90),
-        # },
         'calculate_r11_report_task': {
             'task': 'regional_competitions.tasks.calculate_r11_report_task',
             'schedule': timedelta(hours=12)  # TODO: пока только дев
