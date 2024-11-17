@@ -1183,7 +1183,7 @@ class ExpertRole(models.Model):
 class Ranking(models.Model):
     """Места участников по показателям."""
 
-    regional_headquarter = models.ForeignKey(
+    regional_headquarter = models.OneToOneField(
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
