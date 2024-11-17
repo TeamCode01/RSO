@@ -63,7 +63,7 @@ class AdditionalStatisticSerializer(serializers.ModelSerializer):
 
 
 class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
-    edites = serializers.SerializerMethodField()
+    edited = serializers.SerializerMethodField()
     additional_statistics = AdditionalStatisticSerializer(required=False, allow_null=True, many=True)
     regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
 
