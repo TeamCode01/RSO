@@ -521,3 +521,6 @@ USERS_HEADERS = [
     'Организация мероприятия',
     'Участие в мероприятии',
 ]
+REGIONAL_RANKING_HEADERS = [
+    
+]

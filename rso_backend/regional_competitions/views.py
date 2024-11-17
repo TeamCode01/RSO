@@ -10,8 +10,9 @@ import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, parser_classes, permission_classes
-from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser, MultiPartParser
 
@@ -26,7 +27,7 @@ from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                           RegionalRMixin, ListRetrieveCreateMixin)
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RegionalR1, RegionalR15, RegionalR18,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, Ranking, RegionalR1, RegionalR15, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -38,7 +39,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
 from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
-    DumpStatisticalRegionalReportSerializer, EventNameSerializer, FileUploadSerializer, MassSendSerializer, RegionalR15Serializer, RegionalR18Serializer,
+    DumpStatisticalRegionalReportSerializer, EventNameSerializer, FileUploadSerializer, MassSendSerializer, RankingSerializer, RegionalR15Serializer, RegionalR18Serializer,
     RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
@@ -946,6 +947,35 @@ class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalR19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RankingViewSet(ListModelMixin, GenericViewSet):
+    """
+    - Поддерживается сортировка по всем полям `overall_place`, `k_place`, 
+      а также `rX_place` и `rX_score` для X от 1 до 16.
+    - Алфавитная сортировка по названию регионального штаба (`regional_headquarter__name`).
+
+    - **Параметры сортировки:**
+      - `ordering`: определяет порядок сортировки.
+        Примеры:
+          - `?ordering=overall_place` - сортировка по итоговому месту (возрастание).
+          - `?ordering=-overall_place` - сортировка по итоговому месту (убывание).
+          - `?ordering=r1_place` - сортировка по месту по 1-му показателю.
+          - `?ordering=-r1_score` - сортировка по очкам по 1-му показателю (убывание).
+          - `?ordering=regional_headquarter__name` - алфавитная сортировка по названию штаба.
+
+    - **Вывод по умолчанию:**
+      - Сортировка по названию регионального штаба (`regional_headquarter__name`).
+    """
+    queryset = Ranking.objects.all()
+    serializer_class = RankingSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ['overall_place', 'k_place'] + [
+        f'r{i}_place' for i in range(1, 17)
+    ] + [
+        f'r{i}_score' for i in range(1, 17)
+    ]
+    ordering = ['regional_headquarter__name']
 
 
 @api_view(['GET'])
