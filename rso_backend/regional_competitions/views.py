@@ -977,6 +977,28 @@ class RankingViewSet(ListModelMixin, GenericViewSet):
     ]
     ordering = ['regional_headquarter__name']
 
+    def get_queryset(self):
+        """
+        Добавляет приоритетное значение для полей с `place`: 
+        1. Все значения > 0 идут первыми.
+        2. Затем 0.
+        3. Затем None.
+        """
+        qs = super().get_queryset()
+        ordering = self.request.query_params.get('ordering', None)
+
+        if ordering:
+            field = ordering.lstrip('-')
+            if field.endswith('_place') and field in self.ordering_fields:
+                reverse = ordering.startswith('-')
+                qs = qs.annotate(
+                    sort_priority=Coalesce(field, Value(-1, output_field=IntegerField()))
+                ).order_by(
+                    f"{'-' if reverse else ''}sort_priority",
+                    ordering
+                )
+        return qs
+
 
 @api_view(['GET'])
 @permission_classes((IsCentralOrDistrictHeadquarterExpert,))
