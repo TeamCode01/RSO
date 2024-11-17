@@ -1119,3 +1119,17 @@ class ExportUsersDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
         data = get_users_registry_data(queryset, fields)
         serializer = UsersRegistrySerializer(data, many=True)
         return Response(serializer.data)
+
+
+class ExportRegionalRanknigResults(BaseExcelExportMixin):
+    def get_worksheet_title(self):
+        return 'Рейтинг РО'
+
+    def get_headers(self):
+        return []
+
+    def get_filename(self):
+        return 'Рейтинг_РО'
+
+    def get_data_func(self):
+        return
