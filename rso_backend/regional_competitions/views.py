@@ -236,7 +236,10 @@ class BaseRegionalRViewSet(RegionalRMixin):
         try:
             district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
         except UserDistrictHeadquarterPosition.DoesNotExist:
-            district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+            try:
+                district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+            except:
+                district_headquarter = None
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)

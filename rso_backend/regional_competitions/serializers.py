@@ -63,6 +63,7 @@ class AdditionalStatisticSerializer(serializers.ModelSerializer):
 
 
 class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
+    edites = serializers.SerializerMethodField()
     additional_statistics = AdditionalStatisticSerializer(required=False, allow_null=True, many=True)
     regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
 
@@ -72,6 +73,7 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'id',
             'participants_number',
             'regional_headquarter',
+            'edited',
             'employed_sso',
             'employed_spo',
             'employed_sop',
@@ -126,6 +128,11 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
                 AdditionalStatistic.objects.create(statistical_report=instance, **statistic_data)
 
         return instance
+
+    def get_edited(self, obj):
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=obj.regional_headquarter).exists():
+            return True
+        return False
 
 
 class FileScanSizeSerializerMixin(serializers.ModelSerializer):
@@ -437,7 +444,7 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         return ver_log.data if ver_log else None
 
     def get_central_version(self, obj):
-        if obj.is_sent:
+        if not obj.is_sent:
             return None
 
         central_version = self.Meta.model.objects.filter(
