@@ -972,9 +972,29 @@ class MassSendSerializer(serializers.Serializer):
 
 
 class RankingSerializer(serializers.ModelSerializer):
+    regional_headquarter_id = serializers.IntegerField(source='regional_headquarter.id', read_only=True)
+
+    def to_representation(self, instance):
+        """
+        Переопределяем вывод для полей с местами, чтобы заменять None на '-'.
+        """
+        data = super().to_representation(instance)
+        for key in data.keys():
+            if key.endswith('_place') and data[key] is None:
+                data[key] = "-"
+        return data
+
     class Meta:
         model = Ranking
         fields = '__all__'
+        extra_fields = ['regional_headquarter_id']
+
+    def get_field_names(self, declared_fields, info):
+        """
+        Расширяем список полей, добавляя `extra_fields`.
+        """
+        fields = super().get_field_names(declared_fields, info)
+        return fields + getattr(self.Meta, 'extra_fields', [])
 
 
 # Список сериализаторов для генерации PDF-файла по 2-й части отчета
