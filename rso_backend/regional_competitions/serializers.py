@@ -444,6 +444,9 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         return ver_log.data if ver_log else None
 
     def get_central_version(self, obj):
+        if obj.is_sent is True and obj.verified_by_chq is False:
+            return None
+
         central_version = self.Meta.model.objects.filter(
             regional_headquarter=obj.regional_headquarter
         ).exclude(id=obj.id).last()
