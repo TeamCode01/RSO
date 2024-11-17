@@ -967,7 +967,7 @@ class RankingViewSet(ListModelMixin, GenericViewSet):
     - **Вывод по умолчанию:**
       - Сортировка по названию регионального штаба (`regional_headquarter__name`).
     """
-    queryset = Ranking.objects.all()
+    queryset = Ranking.objects.all().select_related('regional_headquarter')
     serializer_class = RankingSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     ordering_fields = ['overall_place', 'k_place'] + [
