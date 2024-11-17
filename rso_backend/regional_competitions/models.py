@@ -1200,7 +1200,7 @@ class Ranking(models.Model):
 
     @classmethod
     def add_fields(cls):
-        for i in range(1, 16):
+        for i in range(1, 17):
             field = models.PositiveSmallIntegerField(
                 verbose_name=f'Место участника по {i} показателю',
                 blank=True,

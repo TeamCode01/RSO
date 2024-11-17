@@ -755,6 +755,8 @@ class RankingAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
+        'overall_place',
+        'k_place',
         'r1_place',
         'r2_place',
         'r3_place',
@@ -770,6 +772,7 @@ class RankingAdmin(admin.ModelAdmin):
         'r13_place',
         'r14_place',
         'r15_place',
+        'r16_place',
     )
     search_fields = (
         'regional_headquarter__name',
