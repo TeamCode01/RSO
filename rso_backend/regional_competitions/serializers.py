@@ -973,6 +973,7 @@ class MassSendSerializer(serializers.Serializer):
 
 class RankingSerializer(serializers.ModelSerializer):
     regional_headquarter_id = serializers.IntegerField(source='regional_headquarter.id', read_only=True)
+    regional_headquarter_name = serializers.CharField(source='regional_headquarter.name', read_only=True)
 
     def to_representation(self, instance):
         """
@@ -986,8 +987,8 @@ class RankingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ranking
-        fields = '__all__'
-        extra_fields = ['regional_headquarter_id']
+        fields = '__all__'  # Все поля модели
+        extra_fields = ['regional_headquarter_id', 'regional_headquarter_name']
 
     def get_field_names(self, declared_fields, info):
         """
