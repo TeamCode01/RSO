@@ -1,6 +1,8 @@
 import logging
+import traceback
 from urllib.parse import urljoin
 
+from datetime import datetime
 from django.db import connection, models
 from django.db.models import Count, Q, Case, When, Value, Max
 from django.conf import settings
@@ -28,6 +30,7 @@ from competitions.models import (CompetitionParticipants, OverallRanking,
 from headquarters.count_hq_members import count_headquarter_participants, count_verified_users, count_membership_fee,count_test_membership, count_events_organizations, count_events_participants, get_hq_participants_15_september, get_hq_members_15_september
 from headquarters.models import UserDetachmentPosition, Detachment, CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter, LocalHeadquarter, EducationalHeadquarter, Area, UserDistrictHeadquarterPosition, UserLocalHeadquarterPosition, UserEducationalHeadquarterPosition, UserRegionalHeadquarterPosition, UserUnitPosition
 from questions.models import Attempt
+from regional_competitions.models import RVerificationLog, Ranking, RegionalR16
 from users.models import RSOUser, UserRegion
 from reports.constants import COMPETITION_PARTICIPANTS_CONTACT_DATA_QUERY
 from events.models import Event, EventParticipants
@@ -2595,3 +2598,69 @@ def get_participants_count(detachment):
 
 def get_members_count(detachment):
     return get_hq_members_15_september(detachment)
+
+
+def remove_tzinfo(dt):
+    """
+    Удаляет временную зону из объекта datetime, если она существует.
+    Возвращает None, если входной параметр не является datetime.
+    """
+    if isinstance(dt, datetime):
+        return dt.replace(tzinfo=None)
+    return dt
+
+
+def get_regional_ranking_results():
+    try:
+        results = []
+        print('получаем результаты')
+        for regional_headquarter in RegionalHeadquarter.objects.all():
+            # Получение первого отчета
+            first_report = RegionalR16.objects.filter(regional_headquarter=regional_headquarter).first()
+            first_report_date = remove_tzinfo(first_report.created_at) if first_report else "-"
+
+            # Получение первой проверки
+            first_review = RVerificationLog.objects.filter(
+                regional_headquarter=regional_headquarter,
+                district_headquarter__isnull=False
+            ).first()
+            first_review_date = remove_tzinfo(first_review.created_at) if first_review else "-"
+
+            # Попытка получить объект Ranking
+            try:
+                ranking = Ranking.objects.get(regional_headquarter=regional_headquarter)
+            except Ranking.DoesNotExist:
+                ranking = None
+
+            # Если Ranking нет, ставим "-"
+            overall_place = ranking.overall_place if ranking and ranking.overall_place not in [0, None] else "-"
+            k_place = ranking.k_place if ranking and ranking.k_place not in [0, None] else "-"
+
+            # Заполняем места и очки для всех показателей
+            places_and_scores = []
+            for i in range(1, 17):
+                place = getattr(ranking, f"r{i}_place", None)
+                score = getattr(ranking, f"r{i}_score", None)
+                places_and_scores.extend([
+                    place if place not in [0, None] else "-",
+                    score if score is not None else "-",
+                ])
+
+            # Добавляем данные в список результатов
+            results.append([
+                regional_headquarter.name,
+                first_report_date,
+                first_review_date,
+                overall_place,
+                k_place,
+                *places_and_scores,
+            ])
+
+        # Сортировка: сначала по overall_place
+        results = sorted(
+            results, key=lambda x: (x[3] if isinstance(x[3], int) else float('inf'), x[3] == 0 or x[3] == "-")
+        )
+
+        return results
+    except Exception as e:
+        print(f'traceback: {traceback.format_exc()}')

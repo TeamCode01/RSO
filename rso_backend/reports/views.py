@@ -17,7 +17,7 @@ from questions.models import Attempt
 from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                COMPETITION_PARTICIPANTS_DATA_HEADERS,
                                DETACHMENT_Q_RESULTS_HEADERS,
-                               MEMBERSHIP_FEE_DATA_HEADERS,
+                               MEMBERSHIP_FEE_DATA_HEADERS, REGIONAL_RANKING_HEADERS,
                                SAFETY_TEST_RESULTS_HEADERS,
                                COMPETITION_PARTICIPANTS_CONTACT_DATA_HEADERS, Q5_DATA_HEADERS, Q6_DATA_HEADERS, Q7_DATA_HEADERS, Q8_DATA_HEADERS, Q9_DATA_HEADERS, Q10_DATA_HEADERS, Q11_DATA_HEADERS, Q12_DATA_HEADERS,
                                Q15_DATA_HEADERS, Q16_DATA_HEADERS, Q17_DATA_HEADERS,
@@ -98,6 +98,7 @@ class BaseExcelExportMixin:
         if fields:
             task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func, fields)
         else:
+            print('мы заходим в таску')
             task = generate_excel_file.delay(headers, worksheet_title, safe_filename, data_func)
 
         return {'task_id': task.id}
@@ -1121,15 +1122,15 @@ class ExportUsersDataAPIView(CommanerPermissionMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ExportRegionalRanknigResults(BaseExcelExportMixin):
+class ExportRegionalRankingResults(BaseExcelExportView):
     def get_worksheet_title(self):
         return 'Рейтинг РО'
 
     def get_headers(self):
-        return []
+        return REGIONAL_RANKING_HEADERS
 
     def get_filename(self):
-        return 'Рейтинг_РО'
+        return f'Рейтинг_РО_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
 
     def get_data_func(self):
-        return
+        return 'get_regional_ranking'

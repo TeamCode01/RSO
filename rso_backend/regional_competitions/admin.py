@@ -133,6 +133,8 @@ class CHqRejectingLogAdmin(admin.ModelAdmin):
         'user',
         'report_number',
         'report_id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
         'created_at'
     )
     search_fields = (
@@ -143,7 +145,8 @@ class CHqRejectingLogAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'report_number',
-        'created_at'
+        'created_at',
+        'regional_headquarter',
     )
     readonly_fields = ('created_at',)
     fieldsets = (
@@ -164,6 +167,10 @@ class CHqRejectingLogAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         queryset = queryset.select_related('user')
         return queryset
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR1)

@@ -9,7 +9,7 @@ from django.core.files.storage import default_storage
 from urllib.parse import unquote
 
 from reports.utils import (
-    get_attributes_of_uniform_data, get_commander_school_data, get_detachment_q_results, get_membership_fee_data,
+    get_attributes_of_uniform_data, get_commander_school_data, get_detachment_q_results, get_membership_fee_data, get_regional_ranking_results,
     get_regions_users_data, get_safety_results,
     get_competition_participants_contact_data,
     get_competition_participants_data,
@@ -34,6 +34,7 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
         return [index] + list(row)
 
     data = None
+    print('зашли в таску')
     match data_func:
         case 'safety_test_results':
             data = get_safety_results()
@@ -100,6 +101,9 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
             data = get_direction_data(fields)
         case 'get_users_registry_data':
             data = get_users_registry_data(fields)
+        case 'get_regional_ranking':
+            print('смэтчились')
+            data = get_regional_ranking_results()
         case _:
             logger.error(f"Неизвестное значение data_func: {data_func}")
             return
