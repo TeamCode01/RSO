@@ -30,7 +30,7 @@ from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                           RegionalRMixin, ListRetrieveCreateMixin)
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, Ranking, 
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, Ranking,
                                           RegionalR1, RegionalR15, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
@@ -332,9 +332,15 @@ class BaseRegionalRViewSet(RegionalRMixin):
             report_id=report.id
         ).last()
 
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        objects = queryset.filter(regional_headquarter_id=pk)
+
         if not last_regional_log:
             # если проверки нет, значит это итерация после отклонения со стороны ЦШ
             is_central_data, is_district_data, is_regional_data = False, False, True
+            if objects.count() == 1:
+                is_district_data = True
         else:
             # если проверка есть, значит данные в отчете надо перенести в district_version
             is_central_data, is_district_data, is_regional_data = False, True, False
@@ -955,7 +961,7 @@ class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
 
 class RankingViewSet(ListModelMixin, GenericViewSet):
     """
-    - Поддерживается сортировка по всем полям `overall_place`, `k_place`, 
+    - Поддерживается сортировка по всем полям `overall_place`, `k_place`,
       а также `rX_place` и `rX_score` для X от 1 до 16.
     - Алфавитная сортировка по названию регионального штаба (`regional_headquarter__name`).
 
@@ -983,7 +989,7 @@ class RankingViewSet(ListModelMixin, GenericViewSet):
 
     def get_queryset(self):
         """
-        Добавляет приоритетное значение для полей с `place`: 
+        Добавляет приоритетное значение для полей с `place`:
         1. Все значения > 0 идут первыми.
         2. Затем 0.
         3. Затем None.
