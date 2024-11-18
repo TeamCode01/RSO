@@ -2635,7 +2635,8 @@ def get_regional_ranking_results():
             # Если Ranking нет, ставим "-"
             overall_place = ranking.overall_place if ranking and ranking.overall_place not in [0, None] else "-"
             k_place = ranking.k_place if ranking and ranking.k_place not in [0, None] else "-"
-
+            overall_sum = ranking.sum_overall_place if ranking and ranking.sum_overall_place not in [0, None] else "-"
+            k_sum = ranking.sum_k_place if ranking and ranking.sum_k_place not in [0, None] else "-"
             # Заполняем места и очки для всех показателей
             places_and_scores = []
             for i in range(1, 17):
@@ -2653,6 +2654,8 @@ def get_regional_ranking_results():
                 first_review_date,
                 overall_place,
                 k_place,
+                overall_sum,
+                k_sum,
                 *places_and_scores,
             ])
 

@@ -27,7 +27,8 @@ from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                           RegionalRMixin, ListRetrieveCreateMixin)
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, Ranking, RegionalR1, RegionalR15, RegionalR18,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, Ranking, 
+                                          RegionalR1, RegionalR15, RegionalR18,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,

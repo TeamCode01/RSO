@@ -18,7 +18,8 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, RegionalR3,
                                           DumpStatisticalRegionalReport)
-from regional_competitions.r_calculations import calculate_r13_score, calculate_r2_score, calculate_r3_score
+from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14, calculate_r2_score, calculate_r3_score, update_all_ranking_places
+from regional_competitions.tasks import calc_places_r1, calc_places_r10, calc_places_r11, calc_places_r12, calc_places_r13, calc_places_r14, calc_places_r16, calc_places_r2, calc_places_r3, calc_places_r4, calc_places_r5, calc_places_r6, calc_places_r9
 
 
 class AdditionalStatisticInline(admin.StackedInline):
@@ -764,6 +765,8 @@ class RankingAdmin(admin.ModelAdmin):
         'regional_headquarter',
         'overall_place',
         'k_place',
+        'sum_overall_place',
+        'sum_k_place',
         'r1_place',
         'r2_place',
         'r3_place',
@@ -785,3 +788,99 @@ class RankingAdmin(admin.ModelAdmin):
         'regional_headquarter__name',
     )
     list_filter = ('regional_headquarter',)
+
+    @admin.action(description='Вычислить места по 1 показателю')
+    def get_r1_places(self, request, queryset):
+        calc_places_r1()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 2 показателю')
+    def get_r2_places(self, request, queryset):
+        calc_places_r2()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 3 показателю')
+    def get_r3_places(self, request, queryset):
+        calc_places_r3()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 4 показателю')
+    def get_r4_places(self, request, queryset):
+        calc_places_r4()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 5 показателю')
+    def get_r5_places(self, request, queryset):
+        calc_places_r5()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 6 показателю')
+    def get_r6_places(self, request, queryset):
+        calc_places_r6()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 9 показателю')
+    def get_r9_places(self, request, queryset):
+        calc_places_r9()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 10 показателю')
+    def get_r10_places(self, request, queryset):
+        calc_places_r10()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 11 показателю')
+    def get_r11_places(self, request, queryset):
+        calculate_r11_score()
+        calc_places_r11()
+
+    @admin.action(description='Вычислить места по 12 показателю')
+    def get_r12_places(self, request, queryset):
+        calc_places_r12()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 13 показателю')
+    def get_r13_places(self, request, queryset):
+        calculate_r13_score()
+        calc_places_r13()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 14 показателю')
+    def get_r14_places(self, request, queryset):
+        calculate_r14()
+        calc_places_r14()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить места по 16 показателю')
+    def get_r16_places(self, request, queryset):
+        calc_places_r16()
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить итоговые места')
+    def get_overall_places(self, request, queryset):
+        update_all_ranking_places()
+        self.message_user(request, 'Расчитано.')
+
+
+    @admin.action(description='Вычислить места по всем показателям + итоговые')
+    def calculate_all_places(self, request, queryset):
+        """
+        Вычисляет места по всем показателям и обновляет итоговые места.
+        """
+        self.get_r1_places(request, queryset)
+        self.get_r2_places(request, queryset)
+        self.get_r3_places(request, queryset)
+        self.get_r4_places(request, queryset)
+        self.get_r5_places(request, queryset)
+        self.get_r6_places(request, queryset)
+        self.get_r9_places(request, queryset)
+        self.get_r10_places(request, queryset)
+        self.get_r11_places(request, queryset)
+        self.get_r12_places(request, queryset)
+        self.get_r13_places(request, queryset)
+        self.get_r14_places(request, queryset)
+        self.get_r16_places(request, queryset)
+
+        self.get_overall_places(request, queryset)
+
+        self.message_user(request, 'Все показатели и итоговые места успешно рассчитаны.')

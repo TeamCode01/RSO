@@ -83,7 +83,7 @@ def calculate_r4_score(report: RegionalR4):
     Количество дней проведения мероприятия рассчитываем сами, как разницу между датой окончания и датой начала.
     """
     logger.info('Выполняется Расчет очков для отчета 4 показателя')
-    events = report.events
+    events = report.events.all()
     logger.info(f'Для отчета {report.id} {report.regional_headquarter} найдено {events.count()} мероприятий')
     for event in events:
         days_count = (event.end_date - event.start_date).days + 1
@@ -342,9 +342,8 @@ def calculate_r16_score(report: RegionalR16):
     logger.info(
         f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
-        f'Мероприятие состоялось: {report.event_happened}'
     )
-    projects = report.projects
+    projects = report.projects.all()
     for project in projects:
         report.score += points[project.project_scale]
         logger.info(
@@ -433,3 +432,41 @@ def calc_r_ranking(report_models: list, ranking_field_name: str, score_field_nam
 
     except Exception as e:
         logger.critical(f'UNEXPECTED ERROR calc_r_ranking: {e}')
+
+
+def update_all_ranking_places():
+    """
+    Обновляет итоговые показатели (места и суммы мест) для всех записей модели Ranking.
+    """
+    from django.db.models import F
+    from regional_competitions.models import Ranking
+
+    queryset = Ranking.objects.all()
+
+    rankings = list(queryset)
+
+    rankings.sort(key=lambda x: sum(
+        getattr(x, f'r{i}_place') or 0 for i in range(1, 17)
+    ))
+    for rank, ranking in enumerate(rankings, start=1):
+        ranking.overall_place = rank
+
+    k_indexes = [6, 7, 8, 9, 10, 11, 13, 16]
+    rankings.sort(key=lambda x: sum(
+        getattr(x, f'r{i}_place') or 0 for i in k_indexes
+    ))
+    for rank, ranking in enumerate(rankings, start=1):
+        ranking.k_place = rank
+
+    for ranking in rankings:
+        ranking.sum_overall_place = sum(
+            getattr(ranking, f'r{i}_place') or 0 for i in range(1, 17)
+        )
+        ranking.sum_k_place = sum(
+            getattr(ranking, f'r{i}_place') or 0 for i in k_indexes
+        )
+
+    Ranking.objects.bulk_update(
+        rankings,
+        ['overall_place', 'k_place', 'sum_overall_place', 'sum_k_place']
+    )
