@@ -433,3 +433,41 @@ def calc_r_ranking(report_models: list, ranking_field_name: str, score_field_nam
 
     except Exception as e:
         logger.critical(f'UNEXPECTED ERROR calc_r_ranking: {e}')
+
+
+def update_all_ranking_places():
+    """
+    Обновляет итоговые показатели (места и суммы мест) для всех записей модели Ranking.
+    """
+    from django.db.models import F
+    from regional_competitions.models import Ranking
+
+    queryset = Ranking.objects.all()
+
+    rankings = list(queryset)
+
+    rankings.sort(key=lambda x: sum(
+        getattr(x, f'r{i}_place') or 0 for i in range(1, 17)
+    ))
+    for rank, ranking in enumerate(rankings, start=1):
+        ranking.overall_place = rank
+
+    k_indexes = [6, 7, 8, 9, 10, 11, 13, 16]
+    rankings.sort(key=lambda x: sum(
+        getattr(x, f'r{i}_place') or 0 for i in k_indexes
+    ))
+    for rank, ranking in enumerate(rankings, start=1):
+        ranking.k_place = rank
+
+    for ranking in rankings:
+        ranking.sum_overall_place = sum(
+            getattr(ranking, f'r{i}_place') or 0 for i in range(1, 17)
+        )
+        ranking.sum_k_place = sum(
+            getattr(ranking, f'r{i}_place') or 0 for i in k_indexes
+        )
+
+    Ranking.objects.bulk_update(
+        rankings,
+        ['overall_place', 'k_place', 'sum_overall_place', 'sum_k_place']
+    )

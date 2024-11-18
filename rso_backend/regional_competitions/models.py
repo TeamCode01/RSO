@@ -1197,6 +1197,14 @@ class Ranking(models.Model):
         default=0,
         verbose_name='Лучшее региональное отделение по комиссарской деятельности'
     )
+    sum_overall_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Сумма мест по итогам года'
+    )
+    sum_k_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Сумма мест по комиссарской деятельности'
+    )
 
     @classmethod
     def add_fields(cls):
