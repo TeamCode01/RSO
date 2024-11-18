@@ -83,7 +83,7 @@ def calculate_r4_score(report: RegionalR4):
     Количество дней проведения мероприятия рассчитываем сами, как разницу между датой окончания и датой начала.
     """
     logger.info('Выполняется Расчет очков для отчета 4 показателя')
-    events = report.events
+    events = report.events.all()
     logger.info(f'Для отчета {report.id} {report.regional_headquarter} найдено {events.count()} мероприятий')
     for event in events:
         days_count = (event.end_date - event.start_date).days + 1
@@ -343,7 +343,7 @@ def calculate_r16_score(report: RegionalR16):
         f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
     )
-    projects = report.projects
+    projects = report.projects.all()
     for project in projects:
         report.score += points[project.project_scale]
         logger.info(
