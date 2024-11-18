@@ -452,29 +452,25 @@ def update_all_ranking_places():
             getattr(ranking, f'r{i}_place') or 0 for i in k_indexes
         )
 
+    # Сортируем по sum_overall_place
     rankings.sort(key=lambda x: x.sum_overall_place)
 
+    # Присваиваем overall_place с учётом одинаковых сумм
     current_place = 1
     for idx, ranking in enumerate(rankings):
-        if idx > 0 and ranking.sum_overall_place == rankings[idx - 1].sum_overall_place:
-            # Если сумма равна предыдущей, присваиваем то же место
-            ranking.overall_place = current_place
-        else:
-            # Если сумма отличается, присваиваем новое место
-            ranking.overall_place = current_place
-        current_place += 1  # Увеличиваем место для следующего штаба
+        if idx > 0 and ranking.sum_overall_place != rankings[idx - 1].sum_overall_place:
+            current_place += 1
+        ranking.overall_place = current_place
 
+    # Сортируем по sum_k_place
     rankings.sort(key=lambda x: x.sum_k_place)
 
+    # Присваиваем k_place с учётом одинаковых сумм
     current_place = 1
     for idx, ranking in enumerate(rankings):
-        if idx > 0 and ranking.sum_k_place == rankings[idx - 1].sum_k_place:
-            # Если сумма равна предыдущей, присваиваем то же место
-            ranking.k_place = current_place
-        else:
-            # Если сумма отличается, присваиваем новое место
-            ranking.k_place = current_place
-        current_place += 1  # Увеличиваем место для следующего штаба
+        if idx > 0 and ranking.sum_k_place != rankings[idx - 1].sum_k_place:
+            current_place += 1
+        ranking.k_place = current_place
 
     Ranking.objects.bulk_update(
         rankings,
