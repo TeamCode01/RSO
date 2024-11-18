@@ -342,7 +342,6 @@ def calculate_r16_score(report: RegionalR16):
     logger.info(
         f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
-        f'Мероприятие состоялось: {report.event_happened}'
     )
     projects = report.projects
     for project in projects:
