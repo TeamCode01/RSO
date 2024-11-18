@@ -86,6 +86,8 @@ def calculate_r4_score(report: RegionalR4):
     events = report.events.all()
     logger.info(f'Для отчета {report.id} {report.regional_headquarter} найдено {events.count()} мероприятий')
     for event in events:
+        if not event.end_date or not event.start_date:
+            continue
         days_count = (event.end_date - event.start_date).days + 1
         report.score += (days_count * event.participants_number) * (0.8 if event.is_interregional else 1)
         logger.info(
