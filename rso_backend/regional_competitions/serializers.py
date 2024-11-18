@@ -443,8 +443,8 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         ).order_by('report_id').last()
         return ver_log.data if ver_log else None
 
-    def get_central_version(self, obj):
-        if obj.is_sent is True and obj.verified_by_chq is False:
+    def get_central_version(self, obj):      
+        if obj.is_sent is True and obj.verified_by_chq in (True, False):
             return None
 
         central_version = self.Meta.model.objects.filter(
