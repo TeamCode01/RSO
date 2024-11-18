@@ -83,9 +83,11 @@ def calculate_r4_score(report: RegionalR4):
     Количество дней проведения мероприятия рассчитываем сами, как разницу между датой окончания и датой начала.
     """
     logger.info('Выполняется Расчет очков для отчета 4 показателя')
-    events = report.events
+    events = report.events.all()
     logger.info(f'Для отчета {report.id} {report.regional_headquarter} найдено {events.count()} мероприятий')
     for event in events:
+        if not event.end_date or not event.start_date:
+            continue
         days_count = (event.end_date - event.start_date).days + 1
         report.score += (days_count * event.participants_number) * (0.8 if event.is_interregional else 1)
         logger.info(
@@ -342,9 +344,8 @@ def calculate_r16_score(report: RegionalR16):
     logger.info(
         f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
-        f'Мероприятие состоялось: {report.event_happened}'
     )
-    projects = report.projects
+    projects = report.projects.all()
     for project in projects:
         report.score += points[project.project_scale]
         logger.info(
@@ -433,3 +434,47 @@ def calc_r_ranking(report_models: list, ranking_field_name: str, score_field_nam
 
     except Exception as e:
         logger.critical(f'UNEXPECTED ERROR calc_r_ranking: {e}')
+
+
+def update_all_ranking_places():
+    """
+    Обновляет итоговые показатели (места и суммы мест) для всех записей модели Ranking.
+    """
+    from regional_competitions.models import Ranking
+
+    queryset = Ranking.objects.all()
+    rankings = list(queryset)
+
+    k_indexes = [6, 7, 8, 9, 10, 11, 13, 16]
+    for ranking in rankings:
+        ranking.sum_overall_place = sum(
+            getattr(ranking, f'r{i}_place') or 0 for i in range(1, 17)
+        )
+        ranking.sum_k_place = sum(
+            getattr(ranking, f'r{i}_place') or 0 for i in k_indexes
+        )
+
+    # Сортируем по sum_overall_place
+    rankings.sort(key=lambda x: x.sum_overall_place)
+
+    # Присваиваем overall_place с учётом одинаковых сумм
+    current_place = 1
+    for idx, ranking in enumerate(rankings):
+        if idx > 0 and ranking.sum_overall_place != rankings[idx - 1].sum_overall_place:
+            current_place += 1
+        ranking.overall_place = current_place
+
+    # Сортируем по sum_k_place
+    rankings.sort(key=lambda x: x.sum_k_place)
+
+    # Присваиваем k_place с учётом одинаковых сумм
+    current_place = 1
+    for idx, ranking in enumerate(rankings):
+        if idx > 0 and ranking.sum_k_place != rankings[idx - 1].sum_k_place:
+            current_place += 1
+        ranking.k_place = current_place
+
+    Ranking.objects.bulk_update(
+        rankings,
+        ['overall_place', 'k_place', 'sum_overall_place', 'sum_k_place']
+    )

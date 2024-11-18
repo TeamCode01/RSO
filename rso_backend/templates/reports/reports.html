@@ -38,6 +38,7 @@
                         <button class="button" id="downloadDetachmentButton">Реестр ЛСО (файл)</button>
                         <button class="button" id="downloadDirectionButton">Реестр Направление (файл)</button>
                         <button class="button" id="downloadUsersButton">Реестр Участники (файл)</button>
+                        <button class="button" id="downloadRegionalRankingsButton">Рейтинг РО</button>
 {#            <a href="/report2" class="button">Отчет 2</a>#}
 {#            <a href="/report3" class="button">Отчет 3</a>#}
 {#            <a href="/report1" class="button">Отчет 1</a>#}
@@ -110,6 +111,7 @@
         setupDownloadButton('downloadDetachmentButton', '{% url "export_detachment_data" %}', 'Реестр ЛСО (файл)');
         setupDownloadButton('downloadDirectionButton', '{% url "export_direction_data" %}', 'Реестр Направление (файл)')
         setupDownloadButton('downloadUsersButton', '{% url "export_users_data" %}', 'Реестр Участники (файл)')
+        setupDownloadButton('downloadRegionalRankingsButton', '{% url "export_regional_ranking_results" %}', 'Рейтинг РО')
 
         const searchInput = document.getElementById('reportSearch');
         const buttonContainer = document.getElementById('buttonContainer');

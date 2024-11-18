@@ -1183,7 +1183,7 @@ class ExpertRole(models.Model):
 class Ranking(models.Model):
     """Места участников по показателям."""
 
-    regional_headquarter = models.ForeignKey(
+    regional_headquarter = models.OneToOneField(
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
@@ -1197,10 +1197,18 @@ class Ranking(models.Model):
         default=0,
         verbose_name='Лучшее региональное отделение по комиссарской деятельности'
     )
+    sum_overall_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Сумма мест по итогам года'
+    )
+    sum_k_place = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Сумма мест по комиссарской деятельности'
+    )
 
     @classmethod
     def add_fields(cls):
-        for i in range(1, 16):
+        for i in range(1, 17):
             field = models.PositiveSmallIntegerField(
                 verbose_name=f'Место участника по {i} показателю',
                 blank=True,

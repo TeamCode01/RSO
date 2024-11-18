@@ -13,7 +13,7 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, RegionalR1, RegionalR15,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, Ranking, RegionalR1, RegionalR15,
                                           RegionalR18,
                                           RegionalR18Link, RegionalR18Project, RegionalR2,
                                           RegionalR4, RegionalR4Event,
@@ -63,6 +63,7 @@ class AdditionalStatisticSerializer(serializers.ModelSerializer):
 
 
 class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
+    edited = serializers.SerializerMethodField()
     additional_statistics = AdditionalStatisticSerializer(required=False, allow_null=True, many=True)
     regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
 
@@ -72,6 +73,7 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'id',
             'participants_number',
             'regional_headquarter',
+            'edited',
             'employed_sso',
             'employed_spo',
             'employed_sop',
@@ -126,6 +128,11 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
                 AdditionalStatistic.objects.create(statistical_report=instance, **statistic_data)
 
         return instance
+
+    def get_edited(self, obj):
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=obj.regional_headquarter).exists():
+            return True
+        return False
 
 
 class FileScanSizeSerializerMixin(serializers.ModelSerializer):
@@ -436,8 +443,8 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
         ).order_by('report_id').last()
         return ver_log.data if ver_log else None
 
-    def get_central_version(self, obj):
-        if obj.is_sent:
+    def get_central_version(self, obj):      
+        if obj.is_sent is True and obj.verified_by_chq in (True, False):
             return None
 
         central_version = self.Meta.model.objects.filter(
@@ -962,6 +969,33 @@ class EventNameSerializer(serializers.Serializer):
 
 class MassSendSerializer(serializers.Serializer):
     detail = serializers.CharField(read_only=True)
+
+
+class RankingSerializer(serializers.ModelSerializer):
+    regional_headquarter_id = serializers.IntegerField(source='regional_headquarter.id', read_only=True)
+    regional_headquarter_name = serializers.CharField(source='regional_headquarter.name', read_only=True)
+
+    def to_representation(self, instance):
+        """
+        Переопределяем вывод для полей с местами, чтобы заменять None на '-'.
+        """
+        data = super().to_representation(instance)
+        for key in data.keys():
+            if key.endswith('_place') and data[key] is None:
+                data[key] = "-"
+        return data
+
+    class Meta:
+        model = Ranking
+        fields = '__all__'  # Все поля модели
+        extra_fields = ['regional_headquarter_id', 'regional_headquarter_name']
+
+    def get_field_names(self, declared_fields, info):
+        """
+        Расширяем список полей, добавляя `extra_fields`.
+        """
+        fields = super().get_field_names(declared_fields, info)
+        return fields + getattr(self.Meta, 'extra_fields', [])
 
 
 # Список сериализаторов для генерации PDF-файла по 2-й части отчета

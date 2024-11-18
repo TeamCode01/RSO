@@ -3,7 +3,7 @@ from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
 from regional_competitions.factories import register_factory_view_sets
-from regional_competitions.views import (MassSendViewSet,
+from regional_competitions.views import (MassSendViewSet, RankingViewSet,
                                          RegionalEventNamesRViewSet,
                                          RegionalR1MeViewSet,
                                          RegionalR1ViewSet,
@@ -72,6 +72,7 @@ class MeRouter(SimpleRouter):
 me_router = MeRouter()
 router = DefaultRouter()
 
+router.register(r'ranking', RankingViewSet, basename='ranking')
 router.register(r'statistical_report', StatisticalRegionalViewSet, basename='statistical_report')
 
 router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
