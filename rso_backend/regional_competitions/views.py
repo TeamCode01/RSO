@@ -236,7 +236,10 @@ class BaseRegionalRViewSet(RegionalRMixin):
         try:
             district_headquarter = UserDistrictHeadquarterPosition.objects.get(user=request.user).headquarter
         except UserDistrictHeadquarterPosition.DoesNotExist:
-            district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+            try:
+                district_headquarter = DistrictHeadquarter.objects.get(commander=user)
+            except Exception:
+                district_headquarter = None
 
         if not verification_action:
             update_serializer = self.get_serializer(report, data=data)
@@ -324,9 +327,15 @@ class BaseRegionalRViewSet(RegionalRMixin):
             report_id=report.id
         ).last()
 
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        objects = queryset.filter(regional_headquarter_id=pk)
+
         if not last_regional_log:
             # если проверки нет, значит это итерация после отклонения со стороны ЦШ
             is_central_data, is_district_data, is_regional_data = False, False, True
+            if objects.count() == 1:
+                is_district_data = True
         else:
             # если проверка есть, значит данные в отчете надо перенести в district_version
             is_central_data, is_district_data, is_regional_data = False, True, False
