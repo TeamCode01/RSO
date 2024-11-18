@@ -438,26 +438,12 @@ def update_all_ranking_places():
     """
     Обновляет итоговые показатели (места и суммы мест) для всех записей модели Ranking.
     """
-    from django.db.models import F
     from regional_competitions.models import Ranking
 
     queryset = Ranking.objects.all()
-
     rankings = list(queryset)
 
-    rankings.sort(key=lambda x: sum(
-        getattr(x, f'r{i}_place') or 0 for i in range(1, 17)
-    ))
-    for rank, ranking in enumerate(rankings, start=1):
-        ranking.overall_place = rank
-
     k_indexes = [6, 7, 8, 9, 10, 11, 13, 16]
-    rankings.sort(key=lambda x: sum(
-        getattr(x, f'r{i}_place') or 0 for i in k_indexes
-    ))
-    for rank, ranking in enumerate(rankings, start=1):
-        ranking.k_place = rank
-
     for ranking in rankings:
         ranking.sum_overall_place = sum(
             getattr(ranking, f'r{i}_place') or 0 for i in range(1, 17)
@@ -465,6 +451,30 @@ def update_all_ranking_places():
         ranking.sum_k_place = sum(
             getattr(ranking, f'r{i}_place') or 0 for i in k_indexes
         )
+
+    rankings.sort(key=lambda x: x.sum_overall_place)
+
+    current_place = 1
+    for idx, ranking in enumerate(rankings):
+        if idx > 0 and ranking.sum_overall_place == rankings[idx - 1].sum_overall_place:
+            # Если сумма равна предыдущей, присваиваем то же место
+            ranking.overall_place = current_place
+        else:
+            # Если сумма отличается, присваиваем новое место
+            ranking.overall_place = current_place
+        current_place += 1  # Увеличиваем место для следующего штаба
+
+    rankings.sort(key=lambda x: x.sum_k_place)
+
+    current_place = 1
+    for idx, ranking in enumerate(rankings):
+        if idx > 0 and ranking.sum_k_place == rankings[idx - 1].sum_k_place:
+            # Если сумма равна предыдущей, присваиваем то же место
+            ranking.k_place = current_place
+        else:
+            # Если сумма отличается, присваиваем новое место
+            ranking.k_place = current_place
+        current_place += 1  # Увеличиваем место для следующего штаба
 
     Ranking.objects.bulk_update(
         rankings,
