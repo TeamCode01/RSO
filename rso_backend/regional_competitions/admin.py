@@ -789,6 +789,24 @@ class RankingAdmin(admin.ModelAdmin):
     )
     list_filter = ('regional_headquarter',)
 
+    actions = [
+        'get_r1_places',
+        'get_r2_places',
+        'get_r3_places',
+        'get_r4_places',
+        'get_r5_places',
+        'get_r6_places',
+        'get_r9_places',
+        'get_r10_places',
+        'get_r11_places',
+        'get_r12_places',
+        'get_r13_places',
+        'get_r14_places',
+        'get_r16_places',
+        'get_overall_places',
+        'calculate_all_places',
+    ]
+
     @admin.action(description='Вычислить места по 1 показателю')
     def get_r1_places(self, request, queryset):
         calc_places_r1()
