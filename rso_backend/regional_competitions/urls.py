@@ -30,7 +30,7 @@ from regional_competitions.views import (MassSendViewSet, RankingViewSet,
                                          RegionalR101ViewSet,
                                          RegionalR102MeViewSet,
                                          RegionalR102ViewSet,
-                                         StatisticalRegionalViewSet,
+                                         StatisticalRegionalViewSet, download_mass_reports_xlsx,
                                          r6_view_sets_factory,
                                          r9_view_sets_factory,
                                          get_sent_reports, upload_r8_data, user_info,)
@@ -130,4 +130,5 @@ urlpatterns = [
     path('get_sent_reports/', get_sent_reports, name='get_sent_reports'),
     path('upload_r8_data/', upload_r8_data, name='upload_r8_data'),
     path('user_info/', user_info, name='user_info'),
+    path('<int:pk>/download_mass_reports_xlsx/', download_mass_reports_xlsx, name='download_mass_reports_xlsx'),
 ]

@@ -412,59 +412,118 @@ def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
 
     return flat_dict
 
+def get_model_and_serializer(report_number: str):
+    """Возвращает модель и класс сериализатора для заданного номера отчета."""
+    model_name = 'RegionalR' + report_number
+    try:
+        model = apps.get_model('regional_competitions', model_name)
+    except LookupError:
+        model = None
 
-def get_all_reports_from_competition(report_number: int) -> HttpResponse:
-    """Возвращает xlsx со всеми верифицированными или не рассмотренными отчетами показателя."""
-
-    model_name = 'RegionalR' + str(report_number)
-    model = apps.get_model('regional_competitions', model_name)
-
-    if model:
-        serializer_name = 'RegionalR' + str(report_number) + 'Serializer'
-        serializers_module = import_module('regional_competitions.serializers')
-        serializer_class = getattr(serializers_module, serializer_name, None)
-
-        if serializer_class:
-            reports = model.objects.filter(
-                Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
-            )
-
-            title = f'Reports_{report_number}'
-            workbook = Workbook()
-            worksheet = workbook.active
-            worksheet.title = title
-
-            headers_written = False
-
-            for report in reports:
-                serializer = serializer_class(report)
-                flat_data_dict = get_headers_values(fields_dict=get_verbose_names_and_values(
-                    serializer, full_path=True
-                ))
-
-                if not headers_written:
-                    worksheet.append(list(flat_data_dict.keys()))
-                    headers_written = True
-
-                worksheet.append(list(flat_data_dict.values()))
-
-            file_content = BytesIO()
-            workbook.save(file_content)
-            file_content.seek(0)
-            response = HttpResponse(
-                file_content.read(),
-                content_type=(
-                    'application/vnd.openxmlformats-officedocument'
-                    '.spreadsheetml.sheet'
-                )
-            )
-            response['Content-Disposition'] = f'attachment; filename={title}.xlsx'
-            return response
-
-        else:
-            raise ValueError(f'Сериализатор {serializer_name} не найден.')
-    else:
+    if not model:
         raise ValueError(f'Модель {model_name} не найдена.')
+
+    serializer_name = model_name + 'Serializer'
+    serializers_module = import_module('regional_competitions.serializers')
+    serializer_class = getattr(serializers_module, serializer_name, None)
+
+    if not serializer_class:
+        raise ValueError(f'Сериализатор {serializer_name} не найден.')
+
+    return model, serializer_class
+
+
+def create_excel_file(title: str, headers: list, rows: list) -> BytesIO:
+    """Создает Excel-файл с указанными заголовками и строками."""
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = title
+
+    if headers:
+        worksheet.append(headers)
+
+    for row in rows:
+        worksheet.append(row)
+
+    file_content = BytesIO()
+    workbook.save(file_content)
+    file_content.seek(0)
+    return file_content
+
+
+def get_report_data(model, serializer_class):
+    """Получает данные из модели и сериализует их."""
+    reports = model.objects.filter(
+        Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
+    )
+    rows = []
+    headers_written = False
+
+    for report in reports:
+        serializer = serializer_class(report)
+        flat_data_dict = get_headers_values(
+            fields_dict=get_verbose_names_and_values(serializer, full_path=True)
+        )
+
+        if not headers_written:
+            headers = list(flat_data_dict.keys())
+            headers_written = True
+
+        rows.append(list(flat_data_dict.values()))
+
+    return headers if headers_written else [], rows
+
+
+def generate_report_response(title: str, file_content: BytesIO) -> HttpResponse:
+    """Создает HTTP-ответ с Excel-файлом."""
+    response = HttpResponse(
+        file_content.read(),
+        content_type=(
+            'application/vnd.openxmlformats-officedocument'
+            '.spreadsheetml.sheet'
+        )
+    )
+    response['Content-Disposition'] = f'attachment; filename={title}.xlsx'
+    return response
+
+
+def get_all_reports_from_competition(report_number: int):
+    """Возвращает xlsx со всеми отчетами для заданного показателя."""
+    model, serializer_class = get_model_and_serializer(str(report_number))
+    headers, rows = get_report_data(model, serializer_class)
+    file_content = create_excel_file(f'Reports_{report_number}', headers, rows)
+    return generate_report_response(f'Reports_{report_number}', file_content)
+
+
+def get_reports_from_mass_competitions(main_report_number: int):
+    """Возвращает xlsx с массовыми показателями на одном листе."""
+    all_headers = None
+    all_rows = []
+    entries_dict = {
+        6: 115,
+        9: 11,
+        10: 2
+    }
+    entries_number = entries_dict.get(main_report_number, 0)
+    for sub_number in range(1, entries_number + 1):
+        report_number = f"{main_report_number}{sub_number}"
+        try:
+            model, serializer_class = get_model_and_serializer(report_number)
+            headers, rows = get_report_data(model, serializer_class)
+
+            if not all_headers:
+                all_headers = headers
+            all_rows.extend(rows)
+        except ValueError as e:
+            logger.error(f'Возник Exception!!!: {e}\n{traceback.format_exc()}', exc_info=True)
+            continue
+
+    if not all_headers:
+        raise ValueError(f'Не удалось найти данные для показателя {main_report_number}.')
+
+    file_content = create_excel_file(f'Reports_{main_report_number}', all_headers, all_rows)
+    return generate_report_response(f'Reports_{main_report_number}', file_content)
+
 
 
 def get_all_models(module_name: str):
@@ -554,7 +613,6 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
     )
     response['Content-Disposition'] = 'attachment; filename=RO_report.xlsx'
     return response
-
 
 
 def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:

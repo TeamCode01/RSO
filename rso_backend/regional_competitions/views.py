@@ -52,7 +52,7 @@ from regional_competitions.serializers import (
     r9_serializers_factory)
 from regional_competitions.tasks import send_email_report_part_1, send_mail
 from regional_competitions.utils import (
-    get_all_reports_from_competition, get_report_number_by_class_name, swagger_schema_for_central_review,
+    get_all_reports_from_competition, get_report_number_by_class_name, get_reports_from_mass_competitions, swagger_schema_for_central_review,
     swagger_schema_for_create_and_update_methods,
     swagger_schema_for_district_review, swagger_schema_for_retrieve_method, get_emails)
 
@@ -437,6 +437,16 @@ class BaseRegionalRViewSet(RegionalRMixin):
     def download_all_reports_data(self, request, pk=None):
         """Скачивание данных отчета в формате XLSX."""
         return get_all_reports_from_competition(self.get_report_number())
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated,])
+def download_mass_reports_xlsx(_, pk):
+    """Скачивание заполненных массовых отчетов конкурса РО (6, 9, 10) в одном xlsx файле.
+
+    Доступно только авторизованному пользователю.
+    pk - первая цифра номера показателя(указываем только 6, 9 или 10).
+    """
+    return get_reports_from_mass_competitions(main_report_number=pk)
 
 
 class RegionalRNoVerifViewSet(RegionalRMixin):
