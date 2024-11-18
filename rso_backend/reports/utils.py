@@ -2643,8 +2643,8 @@ def get_regional_ranking_results():
                 place = getattr(ranking, f"r{i}_place", None)
                 score = getattr(ranking, f"r{i}_score", None)
                 places_and_scores.extend([
-                    place if place not in [0, None] else "-",
                     score if score is not None else "-",
+                    place if place not in [0, None] else "-",
                 ])
 
             # Добавляем данные в список результатов
