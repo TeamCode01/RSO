@@ -140,7 +140,7 @@ def calculate_r5_score(report):
 @log_exception
 def calculate_r6_score(report):
     """Расчет очков по 6 показателю."""
-    report.score = report.number_of_members
+    report.score = report.number_of_members if report.number_of_members else 0
     report.save()
 
 

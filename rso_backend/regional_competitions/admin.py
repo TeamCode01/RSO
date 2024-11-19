@@ -930,7 +930,7 @@ class RankingAdmin(admin.ModelAdmin):
     @admin.action(description='Вычислить очки по 10 показателю')
     def get_r10_scores(self, request, queryset):
         for model in [RegionalR101, RegionalR102]:
-            queryset = model.objects.all(verified_by_chq=True)
+            queryset = model.objects.filter(verified_by_chq=True)
             for report in queryset:
                 calculate_r9_r10_score(report)
         self.message_user(request, 'Расчитано.')
