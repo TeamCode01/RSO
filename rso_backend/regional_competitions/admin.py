@@ -170,7 +170,7 @@ class CHqRejectingLogAdmin(admin.ModelAdmin):
         return queryset
 
     def get_id_regional_headquarter(self, obj):
-        return obj.regional_headquarter.id
+        return obj.regional_headquarter.id if obj.regional_headquarter else '-'
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 

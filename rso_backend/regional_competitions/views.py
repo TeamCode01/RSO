@@ -1037,22 +1037,46 @@ def get_sent_reports(request):
     is_central_expert = ExpertRole.objects.filter(
         user=request.user, central_headquarter__isnull=False
     ).exists()
+
+    r6_model_names = [f'RegionalR6{suffix}' for suffix in [1, 19, 33, 109]]
+    r9_model_names = ['RegionalR91']
+
+    def get_model_by_name(name):
+        """Возвращает модель по имени из фабрики."""
+        if name.startswith('RegionalR6'):
+            return r6_models_factory.models.get(name)
+        elif name.startswith('RegionalR9'):
+            return r9_models_factory.models.get(name)
+        return None
+
+    def get_regional_ids_from_model(model, filter_params):
+        if model:
+            return set(
+                model.objects.filter(**filter_params).values_list(
+                    'regional_headquarter_id', flat=True
+                )
+            )
+        return set()
+
+    all_model_names = r6_model_names + r9_model_names
+
     if is_central_expert:
-        reg_ids = RegionalR16.objects.filter(
-            verified_by_dhq=True,
-            verified_by_chq=None,
-        ).values_list('regional_headquarter_id', flat=True).distinct()
-        qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
+        filter_params = {'verified_by_dhq': True, 'verified_by_chq': None}
     else:
         district_headquarter_id = ExpertRole.objects.get(user=request.user).district_headquarter_id
-        reg_ids = RegionalR16.objects.filter(
-            is_sent=True,
-            verified_by_dhq=False,
-        ).values_list('regional_headquarter', flat=True).distinct()
-        qs = RegionalHeadquarter.objects.filter(
-            id__in=reg_ids,
-            district_headquarter_id=district_headquarter_id
-        )
+        filter_params = {'is_sent': True, 'verified_by_dhq': False}
+
+    reg_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
+
+    for model_name in all_model_names:
+        model = get_model_by_name(model_name)
+        model_reg_ids = get_regional_ids_from_model(model, filter_params)
+        reg_ids.intersection_update(model_reg_ids)
+
+    qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
+    if not is_central_expert:
+        qs = qs.filter(district_headquarter_id=district_headquarter_id)
+
     return Response(ShortRegionalHeadquarterSerializer(qs, many=True).data)
 
 
