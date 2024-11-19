@@ -902,7 +902,7 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить очки по 4 показателю')
     def get_r4_scores(self, request, queryset):
-        queryset = RegionalR4.objects.all(verified_by_chq=True)
+        queryset = RegionalR4.objects.filter(verified_by_chq=True)
         for report in queryset:
             calculate_r4_score(report)
         self.message_user(request, 'Расчитано.')
@@ -912,7 +912,7 @@ class RankingAdmin(admin.ModelAdmin):
         for name, model in r6_models_factory.models.items():
             if name.endswith('Link'):
                 continue
-            queryset = model.objects.all(verified_by_chq=True)
+            queryset = model.objects.filter(verified_by_chq=True)
             for report in queryset:
                 calculate_r6_score(report)
         self.message_user(request, 'Расчитано.')
@@ -922,7 +922,7 @@ class RankingAdmin(admin.ModelAdmin):
         for name, model in r9_models_factory.models.items():
             if name.endswith('Link'):
                 continue
-            queryset = model.objects.all(verified_by_chq=True)
+            queryset = model.objects.filter(verified_by_chq=True)
             for report in queryset:
                 calculate_r9_r10_score(report)
         self.message_user(request, 'Расчитано.')
