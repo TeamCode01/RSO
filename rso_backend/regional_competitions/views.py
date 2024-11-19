@@ -2,7 +2,7 @@ import json
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Value, IntegerField
+from django.db.models import Value, IntegerField, Max, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -1038,7 +1038,7 @@ def get_sent_reports(request):
         user=request.user, central_headquarter__isnull=False
     ).exists()
 
-    r6_model_names = [f'RegionalR6{suffix}' for suffix in [1, 2, 5, 6, 10, 15, 19, 33, 109]]
+    r6_model_names = [f'RegionalR6{suffix}' for suffix in [1, 19, 33, 109]]
     r9_model_names = ['RegionalR91']
 
     def get_model_by_name(name):
@@ -1049,14 +1049,20 @@ def get_sent_reports(request):
             return r9_models_factory.models.get(name)
         return None
 
-    def get_regional_ids_from_model(model, filter_params):
-        if model:
-            return set(
-                model.objects.filter(**filter_params).values_list(
-                    'regional_headquarter_id', flat=True
-                )
-            )
-        return set()
+    def get_latest_regional_ids_from_model(model, filter_params):
+        if not model:
+            return set()
+
+        latest_entries = model.objects.filter(
+            regional_headquarter_id=OuterRef('regional_headquarter_id')
+        ).order_by('-updated_at')
+
+        return set(
+            model.objects.filter(
+                id=Subquery(latest_entries.values('id')[:1]),
+                **filter_params
+            ).values_list('regional_headquarter_id', flat=True)
+        )
 
     all_model_names = r6_model_names + r9_model_names
 
@@ -1066,7 +1072,7 @@ def get_sent_reports(request):
         reg_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
         for model_name in all_model_names:
             model = get_model_by_name(model_name)
-            model_reg_ids = get_regional_ids_from_model(model, filter_params)
+            model_reg_ids = get_latest_regional_ids_from_model(model, filter_params)
             reg_ids.intersection_update(model_reg_ids)
     else:
         # Для ОШ: если штаб удовлетворяет условиям хотя бы в одной модели
@@ -1075,7 +1081,7 @@ def get_sent_reports(request):
         reg_ids = set()
         for model_name in all_model_names:
             model = get_model_by_name(model_name)
-            model_reg_ids = get_regional_ids_from_model(model, filter_params)
+            model_reg_ids = get_latest_regional_ids_from_model(model, filter_params)
             reg_ids.update(model_reg_ids)
 
     qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
