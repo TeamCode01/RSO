@@ -1038,7 +1038,7 @@ def get_sent_reports(request):
         user=request.user, central_headquarter__isnull=False
     ).exists()
 
-    r6_model_names = [f'RegionalR6{suffix}' for suffix in [1, 19, 33, 109]]
+    r6_model_names = [f'RegionalR6{suffix}' for suffix in [1, 2, 5, 6, 10, 15, 19, 33, 109]]
     r9_model_names = ['RegionalR91']
 
     def get_model_by_name(name):
