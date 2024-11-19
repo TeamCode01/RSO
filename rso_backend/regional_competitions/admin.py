@@ -812,6 +812,7 @@ class RankingAdmin(admin.ModelAdmin):
     list_filter = ('regional_headquarter',)
 
     actions = [
+        'get_r4_scores',
         'get_r6_scores',
         'get_r9_scores',
         'get_r10_scores',
@@ -899,9 +900,18 @@ class RankingAdmin(admin.ModelAdmin):
         calc_places_r16()
         self.message_user(request, 'Расчитано.')
 
+    @admin.action(description='Вычислить очки по 4 показателю')
+    def get_r4_scores(self, request, queryset):
+        queryset = RegionalR4.objects.all(verified_by_chq=True)
+        for report in queryset:
+            calculate_r4_score(report)
+        self.message_user(request, 'Расчитано.')
+
     @admin.action(description='Вычислить очки по 6 показателю')
     def get_r6_scores(self, request, queryset):
-        for model in r6_models_factory.models.values():
+        for name, model in r6_models_factory.models:
+            if name.endswith('Link'):
+                continue
             queryset = model.objects.all(verified_by_chq=True)
             for report in queryset:
                 calculate_r6_score(report)
@@ -909,7 +919,9 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить очки по 9 показателю')
     def get_r9_scores(self, request, queryset):
-        for model in r9_models_factory.models.values():
+        for name, model in r9_models_factory.models:
+            if name.endswith('Link'):
+                continue
             queryset = model.objects.all(verified_by_chq=True)
             for report in queryset:
                 calculate_r9_r10_score(report)
@@ -934,6 +946,7 @@ class RankingAdmin(admin.ModelAdmin):
         """
         Вычисляет места по всем показателям и обновляет итоговые места.
         """
+        self.get_r4_scores(request, queryset)
         self.get_r6_scores(request, queryset)
         self.get_r9_scores(request, queryset)
         self.get_r10_scores(request, queryset)
