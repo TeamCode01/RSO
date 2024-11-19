@@ -909,7 +909,7 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить очки по 6 показателю')
     def get_r6_scores(self, request, queryset):
-        for name, model in r6_models_factory.models:
+        for name, model in r6_models_factory.models.items():
             if name.endswith('Link'):
                 continue
             queryset = model.objects.all(verified_by_chq=True)
@@ -919,7 +919,7 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить очки по 9 показателю')
     def get_r9_scores(self, request, queryset):
-        for name, model in r9_models_factory.models:
+        for name, model in r9_models_factory.models.items():
             if name.endswith('Link'):
                 continue
             queryset = model.objects.all(verified_by_chq=True)
