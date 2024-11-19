@@ -1061,17 +1061,22 @@ def get_sent_reports(request):
     all_model_names = r6_model_names + r9_model_names
 
     if is_central_expert:
+        # Для ЦШ: только если штаб удовлетворяет условиям во всех моделях
         filter_params = {'verified_by_dhq': True, 'verified_by_chq': None}
+        reg_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
+        for model_name in all_model_names:
+            model = get_model_by_name(model_name)
+            model_reg_ids = get_regional_ids_from_model(model, filter_params)
+            reg_ids.intersection_update(model_reg_ids)
     else:
+        # Для ОШ: если штаб удовлетворяет условиям хотя бы в одной модели
         district_headquarter_id = ExpertRole.objects.get(user=request.user).district_headquarter_id
         filter_params = {'is_sent': True, 'verified_by_dhq': False}
-
-    reg_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
-
-    for model_name in all_model_names:
-        model = get_model_by_name(model_name)
-        model_reg_ids = get_regional_ids_from_model(model, filter_params)
-        reg_ids.intersection_update(model_reg_ids)
+        reg_ids = set()
+        for model_name in all_model_names:
+            model = get_model_by_name(model_name)
+            model_reg_ids = get_regional_ids_from_model(model, filter_params)
+            reg_ids.update(model_reg_ids)
 
     qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
     if not is_central_expert:
