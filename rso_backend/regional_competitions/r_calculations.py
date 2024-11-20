@@ -355,7 +355,10 @@ def calculate_r16_score(report: RegionalR16):
     projects = report.projects.all()
     report.score = 0
     for project in projects:
-        report.score += points[project.project_scale]
+        try:
+            report.score += points[project.project_scale]
+        except KeyError:
+            continue
         logger.info(
            f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
         )
