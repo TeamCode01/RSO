@@ -85,6 +85,7 @@ def calculate_r4_score(report: RegionalR4):
     logger.info('Выполняется Расчет очков для отчета 4 показателя')
     events = report.events.all()
     logger.info(f'Для отчета {report.id} {report.regional_headquarter} найдено {events.count()} мероприятий')
+    report.score = 0
     for event in events:
         if not event.end_date or not event.start_date:
             continue
@@ -126,6 +127,8 @@ def calculate_r5_score(report):
             item[0] = item[1] = 0
         date_start = item[2]
         date_end = item[3]
+        if not date_end or not date_start:
+            continue
         days_diff = (date_end - date_start).days + 1
         ro_score += (item[0] - item[1]) * days_diff
 
