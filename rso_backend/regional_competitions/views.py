@@ -39,7 +39,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           RegionalR102, RVerificationLog, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory,
-                                          r9_models_factory)
+                                          r9_models_factory, REPORTS_IS_SENT_MODELS)
 from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert, IsDistrictHeadquarterExpert,
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
@@ -1038,17 +1038,6 @@ def get_sent_reports(request):
         user=request.user, central_headquarter__isnull=False
     ).exists()
 
-    r6_model_names = [f'RegionalR6{suffix}' for suffix in [1, 19, 33, 109]]
-    r9_model_names = ['RegionalR91']
-
-    def get_model_by_name(name):
-        """Возвращает модель по имени из фабрики."""
-        if name.startswith('RegionalR6'):
-            return r6_models_factory.models.get(name)
-        elif name.startswith('RegionalR9'):
-            return r9_models_factory.models.get(name)
-        return None
-
     def get_latest_regional_ids_from_model(model, filter_params):
         if not model:
             return set()
@@ -1064,14 +1053,11 @@ def get_sent_reports(request):
             ).values_list('regional_headquarter_id', flat=True)
         )
 
-    all_model_names = r6_model_names + r9_model_names
-
     if is_central_expert:
         # Для ЦШ: только если штаб удовлетворяет условиям во всех моделях
         filter_params = {'verified_by_dhq': True, 'verified_by_chq': None}
         reg_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
-        for model_name in all_model_names:
-            model = get_model_by_name(model_name)
+        for model in REPORTS_IS_SENT_MODELS:
             model_reg_ids = get_latest_regional_ids_from_model(model, filter_params)
             reg_ids.intersection_update(model_reg_ids)
     else:
@@ -1079,8 +1065,7 @@ def get_sent_reports(request):
         district_headquarter_id = ExpertRole.objects.get(user=request.user).district_headquarter_id
         filter_params = {'is_sent': True, 'verified_by_dhq': False}
         reg_ids = set()
-        for model_name in all_model_names:
-            model = get_model_by_name(model_name)
+        for model in REPORTS_IS_SENT_MODELS:
             model_reg_ids = get_latest_regional_ids_from_model(model, filter_params)
             reg_ids.update(model_reg_ids)
 
