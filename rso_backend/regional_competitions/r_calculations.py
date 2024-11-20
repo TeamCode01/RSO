@@ -319,23 +319,20 @@ def calculate_r14():
         ro_reports = RegionalHeadquarter.objects.filter(
             id__in=ro_ids_without_14_reports
         ).values(
-            'id', 'regionalr12id', 'regionalr13id', 'regionalr12__amount_of_money', 'regionalr13__number_of_members'
+            'id', 'regionalr12__id', 'regionalr13__id', 'regionalr12__amount_of_money', 'regionalr13__number_of_members'
         )
 
         for ro in ro_reports:
-            amount_of_money = ro['regionalr12__amount_of_money'] or 1  # Используем 1, если значение равно нулю
-            number_of_members = ro['regionalr13__number_of_members']
-
-            # Проверка на наличие членов
-            if number_of_members is None:
-                number_of_members = 0  # Если нет членов, устанавливаем в 0
-
-            score = round(number_of_members / amount_of_money, 2)  # Делим на amount_of_money (или 1)
-
+            amount_of_money = ro['regionalr12__amount_of_money'] or 1
+            number_of_members = ro['regionalr13__number_of_members'] or 0
+            if number_of_members and amount_of_money:
+                score = round(number_of_members / amount_of_money, 2)
+            else:
+                score = 0  # Если одно из значений None или 0, устанавливаем score 0
             reports_to_create.append(RegionalR14(
                 regional_headquarter_id=ro['id'],
-                report_12_id=ro['regionalr12id'],
-                report_13_id=ro['regionalr13id'],
+                report_12_id=ro['regionalr12__id'],
+                report_13_id=ro['regionalr13__id'],
                 score=score,
             ))
 
@@ -348,7 +345,7 @@ def calculate_r14():
     except Exception as e:
         logger.exception(f'Не удалось создать отчеты по r14 показателю: {e}')
 
-    logger.info(f'Завершено подсчет отчета по r14 показателю. Создано {len(new_reports)} отчетов')
+    logger.info(f'Завершен подсчет отчета по r14 показателю. Создано {len(new_reports)} отчетов')
 
 
 @log_exception
