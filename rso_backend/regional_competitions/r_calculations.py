@@ -352,6 +352,7 @@ def calculate_r16_score(report: RegionalR16):
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
     )
     projects = report.projects.all()
+    report.score = 0
     for project in projects:
         report.score += points[project.project_scale]
         logger.info(
