@@ -236,13 +236,7 @@ def calculate_r11_score():
 
         logger.info(f'Выполняется подсчет очков r11 для рег штаба {ro_id}')
 
-        members_with_fees = r1_scores.get(report.regional_headquarter_id, 0) / 50
-
-        # Обработка деления на ноль
-        if members_with_fees == 0:
-            members_with_fees = 1  # Заменяем ноль на один для избежания деления на ноль
-            logger.warning(
-                f'Количество членов с уплаченными взносами равно нулю для рег штаба {ro_id}. Установлено значение 1.')
+        members_with_fees = r1_scores.get(report.regional_headquarter_id, 1) / 50
 
         if members_with_fees >= 1500 and rso_vk_members > report.participants_number:
             ro_score = (rso_vk_members / members_with_fees)
@@ -267,7 +261,7 @@ def calculate_r11_score():
     except Exception as e:
         logger.error(f'Расчет r11 показателя завершен с ошибкой: {e}')
 
-    logger.info(f'Расчет r11 показателя завершен, обновлено {len(updated_r11_reports)} отчетов')
+    logger.info(f'Расчет r11 показателя завершен, обновлено {updated_r11_reports} отчетов')
 
 
 @log_exception
