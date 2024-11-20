@@ -181,6 +181,7 @@ def calculate_r9_r10_score(report):
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
         f'Мероприятие состоялось: {report.event_happened}'
     )
+    report.score = 0
     report.score += 1 if report.event_happened else 0
     report.save()
 
@@ -352,6 +353,7 @@ def calculate_r16_score(report: RegionalR16):
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
     )
     projects = report.projects.all()
+    report.score = 0
     for project in projects:
         report.score += points[project.project_scale]
         logger.info(
