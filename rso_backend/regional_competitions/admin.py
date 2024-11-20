@@ -840,7 +840,7 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить места по 2 показателю')
     def get_r2_places(self, request, queryset):
-        queryset = RegionalR2.objects.filter(verified_by_chq=True)
+        queryset = RegionalR2.objects.all()
         for report in queryset:
             calculate_r2_score(report)
         calc_places_r2()
@@ -848,7 +848,7 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить места по 3 показателю')
     def get_r3_places(self, request, queryset):
-        queryset = RegionalR3.objects.filter(verified_by_chq=True)
+        queryset = RegionalR3.objects.all()
         for report in queryset:
             calculate_r3_score(report)
         calc_places_r3()
