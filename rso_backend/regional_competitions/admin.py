@@ -18,7 +18,7 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, RegionalR3,
                                           DumpStatisticalRegionalReport)
-from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14, calculate_r2_score, calculate_r3_score, update_all_ranking_places
+from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14, calculate_r2_score, calculate_r3_score, calculate_r4_score, calculate_r5_score, calculate_r6_score, calculate_r9_r10_score, update_all_ranking_places
 from regional_competitions.tasks import calc_places_r1, calc_places_r10, calc_places_r11, calc_places_r12, calc_places_r13, calc_places_r14, calc_places_r16, calc_places_r2, calc_places_r3, calc_places_r4, calc_places_r5, calc_places_r6, calc_places_r9
 
 
@@ -242,6 +242,12 @@ class RegionalR3Admin(admin.ModelAdmin):
 
     get_ro_score.short_description = 'Вычислить очки по показателю'
 
+    @admin.action(description='Вычислить очки')
+    def calculate_scores(self, request, queryset):
+        for report in queryset:
+            calculate_r3_score(report)
+        self.message_user(request, 'Очки успешно вычислены.')
+
 
 class RegionalR4LinkInline(admin.TabularInline):
     model = RegionalR4Link
@@ -296,6 +302,14 @@ class RegionalR4Admin(admin.ModelAdmin):
         return obj.regional_headquarter.id
     get_id_regional_headquarter.short_description = 'ID РШ'
 
+    actions = ['calculate_scores']
+
+    @admin.action(description='Вычислить очки')
+    def calculate_scores(self, request, queryset):
+        for report in queryset:
+            calculate_r4_score(report)
+        self.message_user(request, 'Очки успешно вычислены.')
+
 
 class RegionalR5LinkInline(admin.TabularInline):
     model = RegionalR5Link
@@ -342,6 +356,14 @@ class RegionalR5Admin(admin.ModelAdmin):
     def get_id_regional_headquarter(self, obj):
         return obj.regional_headquarter.id
     get_id_regional_headquarter.short_description = 'ID РШ'
+
+    actions = ['calculate_scores']
+
+    @admin.action(description='Вычислить очки')
+    def calculate_scores(self, request, queryset):
+        for report in queryset:
+            calculate_r5_score(report)
+        self.message_user(request, 'Очки успешно вычислены.')
 
 
 r6_list_display = (
@@ -790,6 +812,10 @@ class RankingAdmin(admin.ModelAdmin):
     list_filter = ('regional_headquarter',)
 
     actions = [
+        'get_r4_scores',
+        'get_r6_scores',
+        'get_r9_scores',
+        'get_r10_scores',
         'get_r1_places',
         'get_r2_places',
         'get_r3_places',
@@ -874,6 +900,41 @@ class RankingAdmin(admin.ModelAdmin):
         calc_places_r16()
         self.message_user(request, 'Расчитано.')
 
+    @admin.action(description='Вычислить очки по 4 показателю')
+    def get_r4_scores(self, request, queryset):
+        queryset = RegionalR4.objects.filter(verified_by_chq=True)
+        for report in queryset:
+            calculate_r4_score(report)
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить очки по 6 показателю')
+    def get_r6_scores(self, request, queryset):
+        for name, model in r6_models_factory.models.items():
+            if name.endswith('Link'):
+                continue
+            queryset = model.objects.filter(verified_by_chq=True)
+            for report in queryset:
+                calculate_r6_score(report)
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить очки по 9 показателю')
+    def get_r9_scores(self, request, queryset):
+        for name, model in r9_models_factory.models.items():
+            if name.endswith('Link'):
+                continue
+            queryset = model.objects.filter(verified_by_chq=True)
+            for report in queryset:
+                calculate_r9_r10_score(report)
+        self.message_user(request, 'Расчитано.')
+
+    @admin.action(description='Вычислить очки по 10 показателю')
+    def get_r10_scores(self, request, queryset):
+        for model in [RegionalR101, RegionalR102]:
+            queryset = model.objects.filter(verified_by_chq=True)
+            for report in queryset:
+                calculate_r9_r10_score(report)
+        self.message_user(request, 'Расчитано.')
+
     @admin.action(description='Вычислить итоговые места')
     def get_overall_places(self, request, queryset):
         update_all_ranking_places()
@@ -885,6 +946,10 @@ class RankingAdmin(admin.ModelAdmin):
         """
         Вычисляет места по всем показателям и обновляет итоговые места.
         """
+        self.get_r4_scores(request, queryset)
+        self.get_r6_scores(request, queryset)
+        self.get_r9_scores(request, queryset)
+        self.get_r10_scores(request, queryset)
         self.get_r1_places(request, queryset)
         self.get_r2_places(request, queryset)
         self.get_r3_places(request, queryset)
