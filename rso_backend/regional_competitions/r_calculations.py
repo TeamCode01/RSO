@@ -181,6 +181,7 @@ def calculate_r9_r10_score(report):
         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
         f'Мероприятие состоялось: {report.event_happened}'
     )
+    report.score = 0
     report.score += 1 if report.event_happened else 0
     report.save()
 
