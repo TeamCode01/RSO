@@ -868,29 +868,34 @@ class RegionalR7(models.Model):
     )
     first_place_events = models.PositiveIntegerField(
         verbose_name='Кол-во 1-ых мест (мероприятия)',
-        default=0
+        blank=True,
+        null=True
     )
     second_place_events = models.PositiveIntegerField(
         verbose_name='Кол-во 2-ых мест (мероприятия)',
-        default=0
+        blank=True,
+        null=True
     )
     third_place_events = models.PositiveIntegerField(
         verbose_name='Кол-во 3-их мест (мероприятия)',
-        default=0
+        blank=True,
+        null=True
     )
     first_place_projects = models.PositiveIntegerField(
         verbose_name='Кол-во 1-ых мест (трудовые проекты)',
-        default=0
+        blank=True,
+        null=True
     )
     second_place_projects = models.PositiveIntegerField(
         verbose_name='Кол-во 2-ых мест (трудовые проекты)',
-        default=0
+        blank=True,
+        null=True
     )
     third_place_projects = models.PositiveIntegerField(
         verbose_name='Кол-во 3-их мест (трудовые проекты)',
-        default=0
+        blank=True,
+        null=True
     )
-
 
     class Meta:
         verbose_name = 'Отчет по 7 показателю'
