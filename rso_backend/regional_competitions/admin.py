@@ -947,18 +947,19 @@ class RankingAdmin(admin.ModelAdmin):
         update_all_ranking_places()
         self.message_user(request, 'Итоговые места - Расчитано.')
 
-    @admin.action(description='Пересчитать очки по 3 показателю')
-    def recalculate_scores_for_r3_verified_by_chq(self, request, queryset):
-        verified_entries = queryset.filter(verified_by_chq=True)
-        for report in verified_entries:
+    @admin.action(description='Вычислить очки по 3 показателю')
+    def get_r3_scores(self, request, queryset):
+        queryset = RegionalR3.objects.filter(verified_by_chq=True)
+        for report in queryset:
             calculate_r3_score(report)
-        self.message_user(request, "Очки успешно пересчитаны.")
+        self.message_user(request, '3 - очки - Ресчитано.')
 
     @admin.action(description='Вычислить места по всем показателям + итоговые')
     def calculate_all_places(self, request, queryset):
         """
         Вычисляет места по всем показателям и обновляет итоговые места.
         """
+        self.get_r3_scores(request, queryset)
         self.get_r4_scores(request, queryset)
         self.get_r6_scores(request, queryset)
         self.get_r9_scores(request, queryset)
@@ -976,7 +977,6 @@ class RankingAdmin(admin.ModelAdmin):
         self.get_r13_places(request, queryset)
         self.get_r14_places(request, queryset)
         self.get_r16_places(request, queryset)
-        self.recalculate_scores_for_r3_verified_by_chq(request, queryset)
 
         self.get_overall_places(request, queryset)
 
