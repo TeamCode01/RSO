@@ -17,7 +17,7 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           RegionalR102Link, RVerificationLog, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, RegionalR3,
-                                          DumpStatisticalRegionalReport)
+                                          DumpStatisticalRegionalReport, RegionalR7)
 from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14, calculate_r2_score, calculate_r3_score, calculate_r4_score, calculate_r5_score, calculate_r6_score, calculate_r9_r10_score, update_all_ranking_places
 from regional_competitions.tasks import calc_places_r1, calc_places_r10, calc_places_r11, calc_places_r12, calc_places_r13, calc_places_r14, calc_places_r16, calc_places_r2, calc_places_r3, calc_places_r4, calc_places_r5, calc_places_r6, calc_places_r9
 
@@ -617,6 +617,27 @@ class RegionalR14Admin(admin.ModelAdmin):
         'score'
     )
     search_fields = ('id', 'report_12__regional_headquarter__name')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
+
+@admin.register(RegionalR7)
+class RegionalR7Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'regional_headquarter',
+        'first_place_events',
+        'second_place_events',
+        'third_place_events',
+        'first_place_projects',
+        'second_place_projects',
+        'third_place_projects',
+    )
+    search_fields = ('id', 'regional_headquarter__name')
 
     def get_id_regional_headquarter(self, obj):
         return obj.regional_headquarter.id
