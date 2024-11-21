@@ -170,7 +170,7 @@ def calculate_r14_report_task():
     Считает вплоть до 15 октября 2024 года включительно.
     """
     today = date.today()
-    cutoff_date = date(2024, 10, 15)
+    cutoff_date = date(2024, 11, 21)
 
     if today <= cutoff_date + timedelta(days=1):
         calculate_r14()
