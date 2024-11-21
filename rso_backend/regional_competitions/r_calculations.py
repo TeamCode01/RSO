@@ -61,9 +61,19 @@ def calculate_r3_score(report):
     """
     logger.info(f'Выполняется подсчет очков r3 для РШ {report.regional_headquarter}')
     amount_of_money = get_fees(report, RegionalR1)
+    if amount_of_money is None:
+        amount_of_money = 0
+        logger.warning(f'amount_of_money равен None. Значение переустановлено в 0')
+
+    x1 = amount_of_money / 50
+    x2 = report.amount_of_membership_fees_2023
+    if x2 is None:
+        x2 = 0
+        logger.warning(f'x2 равен None. Значение переустановлено в 0.')
+
     ro_score = (
-        (amount_of_money / 50) / 
-        (report.amount_of_membership_fees_2023 if report.amount_of_membership_fees_2023 > 0 else 1)
+        (x1 - x2) /
+        (x2 if x2 > 0 else 1) * 100
     )
     report.score = ro_score
     report.save()
