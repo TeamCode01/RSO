@@ -325,6 +325,7 @@ def calculate_r14():
     """Расчет очков по 14 показателю."""
     logger.info('Выполняется подсчет отчета по r14 показателю')
     reports_to_create = []  #Список для создания отчетов перенесла в начало функции
+    RegionalR14.objects.all().delete()
 
     try:
         # тащим id всех рег штабов, у которых уже есть отчет по 14 показателю
@@ -353,10 +354,10 @@ def calculate_r14():
         )
 
         for ro in ro_reports:
-            amount_of_money = ro['regionalr12__amount_of_money'] or 1
+            amount_of_money = ro['regionalr12__amount_of_money'] or 0
             number_of_members = ro['regionalr13__number_of_members'] or 0
             if number_of_members and amount_of_money:
-                score = round(number_of_members / amount_of_money, 2)
+                score = round(amount_of_money / number_of_members, 2)
             else:
                 score = 0  # Если одно из значений None или 0, устанавливаем score 0
             reports_to_create.append(RegionalR14(
