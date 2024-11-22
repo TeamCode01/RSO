@@ -833,6 +833,7 @@ class RankingAdmin(admin.ModelAdmin):
     list_filter = ('regional_headquarter',)
 
     actions = [
+        'get_r3_scores',
         'get_r4_scores',
         'get_r6_scores',
         'get_r9_scores',
@@ -970,7 +971,7 @@ class RankingAdmin(admin.ModelAdmin):
 
     @admin.action(description='Вычислить очки по 3 показателю')
     def get_r3_scores(self, request, queryset):
-        queryset = RegionalR3.objects.filter(verified_by_chq=True)
+        queryset = RegionalR3.objects.all()
         for report in queryset:
             calculate_r3_score(report)
         self.message_user(request, '3 - очки - Ресчитано.')
