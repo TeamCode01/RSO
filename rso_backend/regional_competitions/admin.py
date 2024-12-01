@@ -17,7 +17,7 @@ from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, 
                                           RegionalR102Link, RVerificationLog, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, RegionalR3,
-                                          DumpStatisticalRegionalReport)
+                                          DumpStatisticalRegionalReport, RegionalR7)
 from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14, calculate_r2_score, calculate_r3_score, calculate_r4_score, calculate_r5_score, calculate_r6_score, calculate_r9_r10_score, update_all_ranking_places
 from regional_competitions.tasks import calc_places_r1, calc_places_r10, calc_places_r11, calc_places_r12, calc_places_r13, calc_places_r14, calc_places_r16, calc_places_r2, calc_places_r3, calc_places_r4, calc_places_r5, calc_places_r6, calc_places_r9
 
@@ -623,6 +623,27 @@ class RegionalR14Admin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
+@admin.register(RegionalR7)
+class RegionalR7Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'regional_headquarter',
+        'first_place_events',
+        'second_place_events',
+        'third_place_events',
+        'first_place_projects',
+        'second_place_projects',
+        'third_place_projects',
+    )
+    search_fields = ('id', 'regional_headquarter__name')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
+
 @admin.register(RegionalR15)
 class RegionalR15Admin(admin.ModelAdmin):
     list_display = (
@@ -812,6 +833,7 @@ class RankingAdmin(admin.ModelAdmin):
     list_filter = ('regional_headquarter',)
 
     actions = [
+        'get_r3_scores',
         'get_r4_scores',
         'get_r6_scores',
         'get_r9_scores',
@@ -836,76 +858,83 @@ class RankingAdmin(admin.ModelAdmin):
     @admin.action(description='Вычислить места по 1 показателю')
     def get_r1_places(self, request, queryset):
         calc_places_r1()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '1 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 2 показателю')
     def get_r2_places(self, request, queryset):
+        queryset = RegionalR2.objects.all()
+        for report in queryset:
+            calculate_r2_score(report)
         calc_places_r2()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '2 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 3 показателю')
     def get_r3_places(self, request, queryset):
+        queryset = RegionalR3.objects.all()
+        for report in queryset:
+            calculate_r3_score(report)
         calc_places_r3()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '3 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 4 показателю')
     def get_r4_places(self, request, queryset):
         calc_places_r4()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '4 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 5 показателю')
     def get_r5_places(self, request, queryset):
         calc_places_r5()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '5 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 6 показателю')
     def get_r6_places(self, request, queryset):
         calc_places_r6()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '6 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 9 показателю')
     def get_r9_places(self, request, queryset):
         calc_places_r9()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '9 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 10 показателю')
     def get_r10_places(self, request, queryset):
         calc_places_r10()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '10 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 11 показателю')
     def get_r11_places(self, request, queryset):
         calculate_r11_score()
         calc_places_r11()
+        self.message_user(request, '11 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 12 показателю')
     def get_r12_places(self, request, queryset):
         calc_places_r12()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '12 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 13 показателю')
     def get_r13_places(self, request, queryset):
         calculate_r13_score()
         calc_places_r13()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '13 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 14 показателю')
     def get_r14_places(self, request, queryset):
         calculate_r14()
         calc_places_r14()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '14 - места - Расчитано.')
 
     @admin.action(description='Вычислить места по 16 показателю')
     def get_r16_places(self, request, queryset):
         calc_places_r16()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '16 - места - Расчитано.')
 
     @admin.action(description='Вычислить очки по 4 показателю')
     def get_r4_scores(self, request, queryset):
         queryset = RegionalR4.objects.filter(verified_by_chq=True)
         for report in queryset:
             calculate_r4_score(report)
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '4 - очки - Расчитано.')
 
     @admin.action(description='Вычислить очки по 6 показателю')
     def get_r6_scores(self, request, queryset):
@@ -915,7 +944,7 @@ class RankingAdmin(admin.ModelAdmin):
             queryset = model.objects.filter(verified_by_chq=True)
             for report in queryset:
                 calculate_r6_score(report)
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '6 - очки -Расчитано.')
 
     @admin.action(description='Вычислить очки по 9 показателю')
     def get_r9_scores(self, request, queryset):
@@ -925,7 +954,7 @@ class RankingAdmin(admin.ModelAdmin):
             queryset = model.objects.filter(verified_by_chq=True)
             for report in queryset:
                 calculate_r9_r10_score(report)
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '9 - очки - Расчитано.')
 
     @admin.action(description='Вычислить очки по 10 показателю')
     def get_r10_scores(self, request, queryset):
@@ -933,19 +962,26 @@ class RankingAdmin(admin.ModelAdmin):
             queryset = model.objects.filter(verified_by_chq=True)
             for report in queryset:
                 calculate_r9_r10_score(report)
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, '10 - очки -Расчитано.')
 
     @admin.action(description='Вычислить итоговые места')
     def get_overall_places(self, request, queryset):
         update_all_ranking_places()
-        self.message_user(request, 'Расчитано.')
+        self.message_user(request, 'Итоговые места - Расчитано.')
 
+    @admin.action(description='Вычислить очки по 3 показателю')
+    def get_r3_scores(self, request, queryset):
+        queryset = RegionalR3.objects.all()
+        for report in queryset:
+            calculate_r3_score(report)
+        self.message_user(request, '3 - очки - Ресчитано.')
 
     @admin.action(description='Вычислить места по всем показателям + итоговые')
     def calculate_all_places(self, request, queryset):
         """
         Вычисляет места по всем показателям и обновляет итоговые места.
         """
+        self.get_r3_scores(request, queryset)
         self.get_r4_scores(request, queryset)
         self.get_r6_scores(request, queryset)
         self.get_r9_scores(request, queryset)

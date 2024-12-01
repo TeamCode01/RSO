@@ -858,6 +858,54 @@ class RegionalR14(BaseScore):
         return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
 
 
+class RegionalR7(models.Model):
+    """Показатель 7 с данными, предоставленными Центральным штабом"""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='regional_r7'
+    )
+    first_place_events = models.PositiveIntegerField(
+        verbose_name='Кол-во 1-ых мест (мероприятия)',
+        blank=True,
+        null=True
+    )
+    second_place_events = models.PositiveIntegerField(
+        verbose_name='Кол-во 2-ых мест (мероприятия)',
+        blank=True,
+        null=True
+    )
+    third_place_events = models.PositiveIntegerField(
+        verbose_name='Кол-во 3-их мест (мероприятия)',
+        blank=True,
+        null=True
+    )
+    first_place_projects = models.PositiveIntegerField(
+        verbose_name='Кол-во 1-ых мест (трудовые проекты)',
+        blank=True,
+        null=True
+    )
+    second_place_projects = models.PositiveIntegerField(
+        verbose_name='Кол-во 2-ых мест (трудовые проекты)',
+        blank=True,
+        null=True
+    )
+    third_place_projects = models.PositiveIntegerField(
+        verbose_name='Кол-во 3-их мест (трудовые проекты)',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по 7 показателю'
+        verbose_name_plural = 'Отчеты по 7 показателю'
+        ordering = ['regional_headquarter']  # Сортировка по региональному штабу
+
+    def __str__(self):
+        return f'Отчет по 7 показателю РШ {self.regional_headquarter}'
+
+
 class RegionalR15(models.Model):
     """Показатель с данными, предоставленными ЦШ"""
     regional_headquarter = models.ForeignKey(
