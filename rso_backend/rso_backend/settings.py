@@ -10,7 +10,7 @@ from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
-SHOW_RESERVED_PLACE = True
+SHOW_RESERVED_PLACE = False
 
 DEFAULT_POSITION_ID = 1
 CENTRAL_HQ_ID = 1
