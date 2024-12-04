@@ -25,7 +25,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           RegionalR17, RegionalR19,
                                           RegionalR101, RegionalR101Link,
                                           RegionalR102, RegionalR102Link,
-                                          RVerificationLog,
+                                          RVerificationLog, RegionalR7, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, AdditionalStatistic)
 from regional_competitions.utils import get_report_number_by_class_name
@@ -691,6 +691,22 @@ r6_serializers_factory.create_serializer_classes()
 #     base_r_serializer=BaseRegionalR7Serializer
 # )
 # r7_serializers_factory.create_serializer_classes()
+
+
+class RegionalR7Serializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки данных по 7-му показателю в эксель отчёты."""
+
+    class Meta:
+        model = RegionalR7
+        fields = '__all__'
+
+
+class RegionalR8Serializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки данных по 8-му показателю в эксель отчёты."""
+
+    class Meta:
+        model = RegionalR8
+        fields = '__all__'
 
 
 class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
