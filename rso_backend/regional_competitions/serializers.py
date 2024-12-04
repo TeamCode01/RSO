@@ -15,7 +15,7 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
 from regional_competitions.factories import RSerializerFactory
 from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, Ranking, RegionalR1, RegionalR15,
                                           RegionalR18,
-                                          RegionalR18Link, RegionalR18Project, RegionalR2,
+                                          RegionalR18Link, RegionalR18Project, RegionalR2, RegionalR3,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -552,6 +552,13 @@ class RegionalR2Serializer(serializers.ModelSerializer):
             'updated_at',
             'score',
         )
+
+class RegionalR3Serializer(BaseRSerializer):
+    """Сериализатор используется в выгрузках отчетов."""
+
+    class Meta:
+        model = RegionalR3
+        fields = '__all__'
 
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
