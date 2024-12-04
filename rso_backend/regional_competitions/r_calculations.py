@@ -43,7 +43,7 @@ def calculate_r2_score(report):
         logger.info(f'Не удалось получить сумму взносов в r2 из r1 для рег штаба {ro_id}')
         return
     regional_coef = 2 if ro_region == MSK_ID else 1.5 if ro_region == SPB_ID else 1
-    ro_score = round((amount_of_money / 50) / (report.full_time_students / regional_coef), 3)
+    ro_score = (amount_of_money / 50) / (report.full_time_students / regional_coef)
     report.score = ro_score
     report.save()
     logger.info(f'Подсчитали очки 2-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
