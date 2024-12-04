@@ -525,7 +525,6 @@ def get_reports_from_mass_competitions(main_report_number: int):
     return generate_report_response(f'Reports_{main_report_number}', file_content)
 
 
-
 def get_all_models(module_name: str):
     """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
     all_models = ['DumpStatisticalRegionalReport', 'StatisticalRegionalReport',]
@@ -549,6 +548,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
 
     for model_name in models_list:
         report_number = model_name.split('RegionalR')[1]
+
         model = apps.get_model('regional_competitions', model_name)
         if model_name == 'DumpStatisticalRegionalReport':
             if not model.objects.filter(regional_headquarter_id=regional_headquarter_id).exists():

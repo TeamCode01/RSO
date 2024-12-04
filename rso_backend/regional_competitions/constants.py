@@ -223,7 +223,7 @@ EMAIL_REPORT_DECLINED_MESSAGE = '''Уважаемое региональное �
 команда сайта лк.трудкрут.рф
 '''
 
-MASS_REPORT_NUMBERS = ['6', '7', '9']
+MASS_REPORT_NUMBERS = ['6', '9']
 
 MSK_ID = 62
 SPB_ID = 32
