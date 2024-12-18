@@ -4,9 +4,9 @@ from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
 
 from regional_competitions.factories import register_factory_view_sets
 from regional_competitions.views import (MassSendViewSet, RankingViewSet,
-                                         RegionalEventNamesRViewSet,
+                                         RegionalEventNamesRViewSet, RegionalR14AutoViewSet,
                                          RegionalR1MeViewSet,
-                                         RegionalR1ViewSet,
+                                         RegionalR1ViewSet, RegionalR2AutoViewSet, RegionalR3AutoViewSet,
                                          RegionalR4MeViewSet,
                                          RegionalR4ViewSet,
                                          RegionalR5MeViewSet,
@@ -29,7 +29,7 @@ from regional_competitions.views import (MassSendViewSet, RankingViewSet,
                                          RegionalR101MeViewSet,
                                          RegionalR101ViewSet,
                                          RegionalR102MeViewSet,
-                                         RegionalR102ViewSet,
+                                         RegionalR102ViewSet, RegionalR7AutoViewSet, RegionalR8AutoViewSet,
                                          StatisticalRegionalViewSet, download_mass_reports_xlsx,
                                          r6_view_sets_factory,
                                          r9_view_sets_factory,
@@ -76,11 +76,15 @@ router.register(r'ranking', RankingViewSet, basename='ranking')
 router.register(r'statistical_report', StatisticalRegionalViewSet, basename='statistical_report')
 
 router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
+router.register(r'reports/2', RegionalR2AutoViewSet, basename='r2')
+router.register(r'reports/3', RegionalR3AutoViewSet, basename='r3')
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 register_factory_view_sets(
     router, 'reports/6', r6_view_sets_factory.view_set_names, r6_view_sets_factory.r_view_sets
 )
+router.register(r'reports/7', RegionalR7AutoViewSet, basename='r7')
+router.register(r'reports/8', RegionalR8AutoViewSet, basename='r8')
 # register_factory_view_sets(
 #     router, 'reports/7', r7_view_sets_factory.view_set_names, r7_view_sets_factory.r_view_sets
 # )
@@ -92,6 +96,7 @@ router.register(r'reports/10/2', RegionalR102ViewSet, basename='r10-2')
 router.register(r'reports/11', RegionalR11ViewSet, basename='r11')
 router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')
+router.register(r'reports/14', RegionalR14AutoViewSet, basename='r14')
 router.register(r'reports/15', RegionalR15ViewSet, basename='r15')
 router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
 router.register(r'reports/17', RegionalR17ViewSet, basename='r17')
