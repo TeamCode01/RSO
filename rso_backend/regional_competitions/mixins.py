@@ -3,6 +3,7 @@ import os
 from urllib.parse import urlparse, unquote
 
 from django.http import Http404
+from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin, UpdateModelMixin)
 from rest_framework.viewsets import GenericViewSet
@@ -11,7 +12,7 @@ from django.conf import settings
 from rest_framework.response import Response
 
 from headquarters.models import RegionalHeadquarter
-from regional_competitions.utils import get_report_number_by_class_name
+from regional_competitions.utils import get_all_reports_from_competition, get_report_number_by_class_name
 
 
 class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
@@ -227,3 +228,19 @@ class FormDataNestedFileParser:
         self.perform_create(serializer)
         self.delete_old_files()
         return Response(serializer.data)
+
+
+class DownloadReportXlsxMixin:
+    """Миксин для скачивания отчета в формате XLSX."""
+
+    def get_report_number(self):
+        return get_report_number_by_class_name(self)
+
+    @action(
+        detail=False,
+        methods=['GET',],
+        url_path='download_all_reports_data',
+    )
+    def download_all_reports_data(self, request, pk=None):
+        """Скачивание данных отчета в формате XLSX."""
+        return get_all_reports_from_competition(self.get_report_number())

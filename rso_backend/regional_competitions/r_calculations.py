@@ -255,7 +255,9 @@ def calculate_r11_score():
             if report.participants_number == 0:
                 second_term = 0
                 logger.warning(
-                    f'Количество участников равно нулю для рег штаба {ro_id}. Установлено значение второго слагаемого в 0.')
+                    f'Количество участников равно нулю для рег штаба {ro_id}. '
+                    'Установлено значение второго слагаемого в 0.'
+                )
             else:
                 second_term = (rso_vk_members / (2 * report.participants_number))
 

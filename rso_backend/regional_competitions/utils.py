@@ -453,9 +453,12 @@ def create_excel_file(title: str, headers: list, rows: list) -> BytesIO:
 
 def get_report_data(model, serializer_class):
     """Получает данные из модели и сериализует их."""
-    reports = model.objects.filter(
-        Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
-    )
+    if model.__name__ in ['RegionalR2', 'RegionalR3', 'RegionalR7', 'RegionalR8', 'RegionalR14', 'RegionalR15']:
+        reports = model.objects.all()
+    else:
+        reports = model.objects.filter(
+            Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
+        )
     rows = []
     headers_written = False
 
