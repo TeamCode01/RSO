@@ -306,13 +306,13 @@ def calculate_r13_score():
     # делаем словарь с ключ - id штаба, значение - сумма очков по 1 показателю
     r1_scores = {report.regional_headquarter_id: report.score for report in r1_reports}
     # считаем и массово присваем очки по 13 показателю.
-    # формула - number_of_members_r13/(score_r1/500)
+    # формула - number_of_members_r13/(score_r1/50)
     updated_r13_reports = []
     for report in r13_reports:
         if type(report.number_of_members) is not int:
             report.number_of_members = 0
         report.score = report.number_of_members / (
-            r1_scores[report.regional_headquarter_id] / 500
+            r1_scores[report.regional_headquarter_id] / 50
         ) if report.number_of_members > 0 else 0
         updated_r13_reports.append(report)
     try:
