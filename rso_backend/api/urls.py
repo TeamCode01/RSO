@@ -734,7 +734,7 @@ user_nested_urls = [
 ]
 
 urlpatterns = [
-                  path('register/', UserViewSet.as_view(CREATE_METHOD), name='user-create'),
+                  path('register/', CustomUserViewSet.as_view(CREATE_METHOD), name='user-create'),
                   path(
                       'reset_password/',
                       CustomUserViewSet.as_view(POST_RESET_PASSWORD),
