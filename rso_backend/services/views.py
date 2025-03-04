@@ -267,4 +267,5 @@ class VKLoginAPIView(APIView):
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
+            'vk_access_token': str(access_token)
         })
