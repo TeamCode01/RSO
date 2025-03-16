@@ -1,11 +1,9 @@
 import io
 import os
-import requests
 from datetime import datetime
 
 import pdfrw
 from django.conf import settings
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -21,8 +19,7 @@ from reportlab.pdfgen import canvas
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 from api.filters import EducationalInstitutionFilter
 from api.mixins import ListRetrieveViewSet
@@ -34,7 +31,7 @@ from api.serializers import (AreaSerializer, EducationalInstitutionSerializer,
                              MemberCertSerializer, RegionSerializer)
 from api.swagger_schemas import properties, properties_external
 from api.utils import (create_and_return_archive, get_user, get_user_by_id,
-                       text_to_lines)
+                       text_to_lines, RegionOffsetPagination)
 from headquarters.models import (Area, EducationalInstitution, Region,
                                  RegionalHeadquarter,
                                  UserRegionalHeadquarterPosition)
@@ -48,7 +45,7 @@ class EducationalInstitutionViewSet(ListRetrieveViewSet):
 
     Доступен фильтр по названию региона. Ключ region__name.
     """
-    queryset = EducationalInstitution.objects.all()
+    queryset = EducationalInstitution.objects.all().select_related('region')
     serializer_class = EducationalInstitutionSerializer
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)
     search_fields = ('name',)
@@ -65,6 +62,7 @@ class RegionViewSet(ListRetrieveViewSet):
 
     queryset = Region.objects.all()
     serializer_class = RegionSerializer
+    pagination_class = RegionOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name', 'code')
     permission_classes = [IsStuffOrCentralCommander,]
@@ -687,149 +685,3 @@ class MemberCertViewSet(viewsets.ReadOnlyModelViewSet):
                 )
             response = create_and_return_archive(internal_certs)
             return response
-
-
-class VKLoginAPIView(APIView):
-
-    """Вход через VK.
-
-    Принимает silent_token и uuid полученные от ВК.
-    В ответе access_token и  refresh_token бекенда RSO.
-    Время жизни access_token - 5 часов.
-    Время жизни refresh_token - 7 дней.
-    """
-
-    permission_classes = [permissions.AllowAny,]
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'silent_token': openapi.Schema(type=openapi.TYPE_STRING),
-                'uuid': openapi.Schema(type=openapi.TYPE_STRING),
-            }
-        )
-    )
-    def post(self, request):
-        silent_token = request.data.get('silent_token')
-        uuid = request.data.get('uuid')
-
-        if not silent_token or not uuid:
-            return Response(
-                {'error': 'Silent token и uuid не были переданы в запросе.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            response = requests.post(
-                'https://api.vk.com/method/auth.exchangeSilentAuthToken',
-                params={
-                    'v': settings.VK_API_VERSION,
-                    'token': silent_token,
-                    'access_token': settings.VITE_SERVICE_TOKEN,
-                    'uuid': uuid
-                })
-            response_data = response.json()
-
-            if 'response' in response_data:
-                access_token = response_data['response']['access_token']
-                email = response_data['response']['email']
-                phone = response_data['response']['phone']
-            else:
-                return Response(
-                    {'error': response_data.get('error', 'Unknown error')},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        except requests.RequestException as e:
-            return Response(
-                {'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        response = requests.get(
-            'https://api.vk.com/method/account.getProfileInfo',
-            params={
-                'access_token': access_token,
-                'v': settings.VK_API_VERSION,
-            }
-        )
-        vk_user_data = response.json().get('response')
-
-        if not vk_user_data:
-            return Response(
-                {
-                    'error': 'Неправильный access token '
-                    'или ошибка в полученном ответе от ВК.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        vk_id = vk_user_data.get('id')
-        first_name = vk_user_data.get('first_name')
-        last_name = vk_user_data.get('last_name')
-        screen_name = vk_user_data.get('screen_name', '')
-        bdate = vk_user_data.get('bdate', None)
-        city = (
-            vk_user_data.get(
-                'city'
-            ).get(
-                'title'
-            ) if vk_user_data.get('city') else None
-        )
-        # photo_url = vk_user_data.get('photo_200', None) до S3 не загружаю на сервер
-        sex = vk_user_data.get('sex', None)
-
-        if bdate:
-            parsed_date = datetime.strptime(bdate, '%d.%m.%Y')
-            formatted_date = parsed_date.strftime('%Y-%m-%d')
-
-        gender = None
-        if sex == 2:
-            gender = 'male'
-        elif sex == 1:
-            gender = 'female'
-
-        if screen_name != '':
-            user = RSOUser.objects.filter(
-                Q(email=email) | Q(social_vk='https://vk.com/id'+str(vk_id)) | Q(social_vk='https://vk.com/'+str(screen_name))
-            ).first()
-        else:
-            user = RSOUser.objects.filter(
-                Q(email=email) | Q(social_vk='https://vk.com/id'+str(vk_id))
-            ).first()
-
-        if user:
-            if not user.first_name:
-                user.first_name = first_name
-            if not user.last_name:
-                user.last_name = last_name
-            if not user.gender and gender:
-                user.gender = gender
-            if not user.username:
-                user.username = f'{vk_id}_{screen_name}'
-            if not user.date_of_birth and bdate:
-                user.date_of_birth = formatted_date
-            if not user.phone_number and phone:
-                user.phone_number = phone
-            if not user.address and city:
-                user.address = city
-
-        if not user:
-            user = RSOUser.objects.create(
-                social_vk='https://vk.com/id'+str(vk_id),
-                first_name=first_name,
-                last_name=last_name,
-                username=f'{vk_id}_{screen_name}',
-                gender=gender,
-                date_of_birth=formatted_date,
-                phone_number=phone,
-                address=city,
-                email=email
-            )
-        user.save()
-
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        })

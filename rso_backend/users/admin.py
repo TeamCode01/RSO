@@ -1,11 +1,17 @@
+from io import BytesIO
+from api.utils import count_sql_queries
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.db.models import Prefetch
+from django.http import HttpResponse
 from django_celery_beat.models import (ClockedSchedule, CrontabSchedule,
                                        IntervalSchedule, PeriodicTask,
                                        SolarSchedule)
 from headquarters.utils import create_central_hq_member
 from import_export.admin import ImportExportModelAdmin
+from openpyxl import Workbook
+from users.constants import REGION_USERS_DATA_HEADERS
 from rest_framework.authtoken.models import TokenProxy
 
 from headquarters.models import Detachment
@@ -66,7 +72,10 @@ class UserForeignParentDocsInline(admin.StackedInline):
 @admin.register(RSOUser)
 class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
-    actions = ['add_to_central_headquarter_position']
+    actions = [
+        'add_to_central_headquarter_position',
+        'get_users_data'
+    ]
 
     def add_to_central_headquarter_position(self, request, queryset):
         """
@@ -81,9 +90,122 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 user_id=user.id
             )
 
+    def prepared_users_data(self, request, queryset):
+        user_ids = queryset.values_list('id', flat=True)
+        all_users_data = (
+            RSOUser.objects.select_related(
+                'documents',
+                'education',
+                'user_region__reg_region',
+                'user_region__fact_region__fact_region',
+                'detachment_commander',
+                'detachment_commander__area',
+            ).prefetch_related(
+                'usercentralheadquarterposition__position',
+                'userdistrictheadquarterposition__headquarter',
+                'userdistrictheadquarterposition__position',
+                'userregionalheadquarterposition__position',
+                'userregionalheadquarterposition__headquarter',
+                'usereducationalheadquarterposition__position',
+                'usereducationalheadquarterposition__headquarter',
+                'userdetachmentposition__position',
+                'userdetachmentposition__headquarter',
+                'userdetachmentposition__headquarter__area',
+                'districtheadquarter_commander',
+                'regionalheadquarter_commander',
+                'localheadquarter_commander',
+                'educationalheadquarter_commander',
+            ).filter(
+                id__in=user_ids
+            ).values_list(
+                'user_region__reg_region__code',
+                'user_region__reg_region__name',
+                'id',
+                'first_name',
+                'last_name',
+                'patronymic_name',
+                'username',
+                'date_of_birth',
+                'documents__russian_passport',
+                'documents__pass_ser_num',
+                'documents__pass_whom',
+                'documents__pass_date',
+                'documents__pass_code',
+                'documents__inn',
+                'documents__snils',
+                'user_region__reg_town',
+                'user_region__reg_house',
+                'user_region__reg_fact_same_address',
+                'user_region__fact_region__code',
+                'user_region__fact_region__name',
+                'user_region__fact_town',
+                'user_region__fact_house',
+                'education__study_institution',
+                'education__study_faculty',
+                'education__study_specialty',
+                'education__study_year',
+                'phone_number',
+                'email',
+                'social_vk',
+                'social_tg',
+                'is_rso_member',
+                'is_verified',
+                'membership_fee',
+                'usercentralheadquarterposition__position__name',
+                'userdistrictheadquarterposition__headquarter__name',
+                'userdistrictheadquarterposition__position__name',
+                'districtheadquarter_commander',
+                'userregionalheadquarterposition__headquarter__name',
+                'userregionalheadquarterposition__position__name',
+                'regionalheadquarter_commander',
+                'userlocalheadquarterposition__headquarter__name',
+                'userlocalheadquarterposition__position__name',
+                'localheadquarter_commander',
+                'usereducationalheadquarterposition__headquarter__name',
+                'usereducationalheadquarterposition__position__name',
+                'educationalheadquarter_commander',
+                'userdetachmentposition__headquarter__id',
+                'userdetachmentposition__headquarter__name',
+                'userdetachmentposition__headquarter__area__name',
+                'detachment_commander',
+                'detachment_commander__id',
+                'detachment_commander__area__name',
+            ).distinct()
+        )
+        return all_users_data
+
+    @count_sql_queries
+    def get_users_data(self, request, queryset):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Пользователи'
+        worksheet.append(REGION_USERS_DATA_HEADERS[1:])
+
+        for _, row in enumerate(
+            self.prepared_users_data(request, queryset), start=1
+        ):
+            worksheet.append(row)
+
+        file_content = BytesIO()
+        workbook.save(file_content)
+        file_content.seek(0)
+
+        response = HttpResponse(
+            file_content.read(),
+            content_type=(
+                'application/vnd.openxmlformats-officedocument'
+                '.spreadsheetml.sheet'
+            )
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename=users_data.xlsx'
+        )
+        return response
+
     add_to_central_headquarter_position.short_description = (
         'Добавить юзера в ЦШ'
     )
+    get_users_data.short_description = 'Выгрузить данные пользователей'
 
     def detachment_name(self, obj):
         """
@@ -182,7 +304,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
 
 @admin.register(UserMembershipLogs)
 class UserMembershipLogsAdmin(admin.ModelAdmin):
-    list_display = ('user', 'status_changed_by', 'date', 'period', 'status',)
+    list_display = ('id', 'user', 'status_changed_by', 'date', 'period', 'status',)
     readonly_fields = (
         'user', 'status_changed_by', 'date', 'period', 'status', 'description'
     )
@@ -220,6 +342,10 @@ class UserVerificationLogsAdmin(admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
         return False
+
+
+admin.site.site_header = 'Российские Студенческие Отряды'
+admin.site.index_title = 'Администрирование ЛК РСО'
 
 
 admin.site.unregister(PeriodicTask)

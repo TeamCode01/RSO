@@ -108,6 +108,10 @@ class CompetitionParticipants(models.Model):
         verbose_name='Дата и время создания заявки',
         auto_now_add=True
     )
+    confirmed = models.BooleanField(
+        verbose_name='Подтвержденный участник конкурса',
+        default=True
+    )
 
     def __str__(self):
         return f'Участник(и) id {self.id} в конкурсе id {self.competition.id}'
@@ -654,8 +658,8 @@ class WorkingSemesterOpeningBlock(models.Model):
     is_verified = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = '6 показатель - отчет по блоку трудовой недели'
-        verbose_name_plural = '6 показатель - отчеты по блоку трудовой недели'
+        verbose_name = '6 показатель - отчет по блоку трудового семестра'
+        verbose_name_plural = '6 показатель - отчеты по блоку трудового семестра'
 
 
 class CreativeFestivalBlock(models.Model):
@@ -664,8 +668,8 @@ class CreativeFestivalBlock(models.Model):
     is_verified = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = '6 показатель - отчет по блоку трудовой недели'
-        verbose_name_plural = '6 показатель - отчеты по блоку трудовой недели'
+        verbose_name = '6 показатель - отчет по блоку участия в творческом фестивале'
+        verbose_name_plural = '6 показатель - отчеты по блоку участия в творческом фестивале'
 
 
 class ProfessionalCompetitionBlock(models.Model):
@@ -713,13 +717,15 @@ class Q7Report(CalcBase, QBaseReport):
     Очки - сумма участий sum(number_of_participants).
     Отчет имеет методы для подсчета очков (из абстрактной модели).
     """
+
+
     score = (
         models.PositiveSmallIntegerField(
             verbose_name='Общее количество участий',
             default=0  # чем больше, тем выше итоговое место в рейтинге
         )
     )
-
+    
     class Meta:
         verbose_name = 'Отчет по 7 показателю'
         verbose_name_plural = 'Отчеты по 7 показателю'
@@ -930,14 +936,12 @@ class Q9Report(CalcBase, QBaseReport):
     """
     Отчет призовых местах в окружных и межрегиональных мероприятиях.
     Поля: отряд, конкурс, очки + FK поле на мероприятия в которых участвовали.
-    Очки - среднее призовых мест avg(prize_place).
-    Отчет имеет методы для подсчета очков (из абстрактной модели).
+    Очки - сумма (4 минус призовое место), чем больше сумма, тем выше место в рейтинге.
     """
     score = (
         models.FloatField(
-            verbose_name='Среднее призовое место',
-            validators=[MinValueValidator(0), MaxValueValidator(4)],
-            default=4  # чем меньше, тем выше итоговое место в рейтинге
+            verbose_name='Очки',
+            default=0
         )
     )
 
@@ -1011,14 +1015,12 @@ class Q10Report(CalcBase, QBaseReport):
     Отчет призовых местах во всероссийских мероприятиях и
     конкурсах РСО.
     Поля: отряд, конкурс, очки + FK поле на мероприятия в которых участвовали.
-    Очки - cреднее призовых мест avg(prize_place).
-    Отчет имеет методы для подсчета очков (из абстрактной модели).
+    Очки - сумма (4 минус призовое место), чем больше сумма, тем выше место в рейтинге.
     """
     score = (
         models.FloatField(
-            verbose_name='Среднее призовое место',
-            validators=[MinValueValidator(0), MaxValueValidator(4)],
-            default=4  # чем меньше, тем выше итоговое место в рейтинге
+            verbose_name='Очки',
+            default=0
         )
     )
 
@@ -1096,14 +1098,12 @@ class Q11Report(CalcBase, QBaseReport):
     Отчет призовых местах отряда на окружных и межрегиональных
     трудовых проектах.
     Поля: отряд, конкурс, очки + FK поле на мероприятия в которых участвовали.
-    Очки - среднее призовых мест avg(prize_place).
-    Отчет имеет методы для подсчета очков (из абстрактной модели).
+    Очки - сумма (4 минус призовое место), чем больше сумма, тем выше место в рейтинге.
     """
     score = (
         models.FloatField(
-            verbose_name='Среднее призовое место',
-            validators=[MinValueValidator(0), MaxValueValidator(4)],
-            default=4  # чем меньше, тем выше итоговое место в рейтинге
+            verbose_name='Очки',
+            default=0
         )
     )
 
@@ -1177,14 +1177,12 @@ class Q12Report(CalcBase, QBaseReport):
     Отчет призовых местах отряда на всероссийских
     трудовых проектах.
     Поля: отряд, конкурс, очки + FK поле на мероприятия в которых участвовали.
-    Очки - cреднее призовых мест avg(prize_place).
-    Отчет имеет методы для подсчета очков (из абстрактной модели).
+    Очки - сумма (4 минус призовое место), чем больше сумма, тем выше место в рейтинге.
     """
     score = (
         models.FloatField(
-            verbose_name='Среднее призовое место',
-            validators=[MinValueValidator(0), MaxValueValidator(4)],
-            default=4  # чем меньше, тем выше итоговое место в рейтинге
+            verbose_name='Очки',
+            default=0
         )
     )
 
@@ -1283,7 +1281,10 @@ class Q13EventOrganization(models.Model):
 
 
 class Q14DetachmentReport(QBaseReport):
-    june_15_detachment_members = models.PositiveSmallIntegerField(default=1)
+    june_15_detachment_members = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name='Участники с оплаченным ЧВ на 15-ое сентября'
+    )
     score = models.FloatField(verbose_name='Очки', default=1000)
 
     class Meta:
@@ -1711,3 +1712,244 @@ class QVerificationLog(models.Model):
     class Meta:
         verbose_name = 'Лог верификации показателя'
         verbose_name_plural = 'Логи верификаций показателей'
+
+
+class July15Participant(models.Model):
+    detachment = models.ForeignKey(
+        to='headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='july_15_participants',
+        verbose_name='Отряд',
+        null=True,
+        blank=True
+    )
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество участников',
+        blank=True,
+        null=True
+    )
+    members_number = models.PositiveIntegerField(
+        verbose_name='Количество оплаченных чл. взносов',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name_plural = 'Кол-во участников в отрядах на 15 июля'
+        verbose_name = 'Кол-во участников в отряде на 15 июля'
+
+
+class September15Participant(models.Model):
+    detachment = models.ForeignKey(
+        to='headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='sep_15_participants',
+        verbose_name='Отряд',
+        null=True,
+        blank=True
+    )
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество участников',
+        blank=True,
+        null=True
+    )
+    members_number = models.PositiveIntegerField(
+        verbose_name='Количество оплаченных чл. взносов',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name_plural = 'Кол-во участников в отрядах на 30 сентября'
+        verbose_name = 'Кол-во участников в отряде на 30 сентября'
+
+
+class TandemRankingCopy(models.Model):
+    competition = models.ForeignKey(
+        'Competitions',
+        on_delete=models.CASCADE,
+        related_name='tandem_ranking_competitions_copy',
+        verbose_name='Конкурс'
+    )
+    detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='copy_ranking_main_detachment',
+        verbose_name='Отряд-наставник'
+    )
+    junior_detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='copy_ranking_junior_detachment',
+        verbose_name='Младший отряд'
+    )
+    places_sum = models.FloatField(
+        verbose_name='Сумма мест по всем показателям',
+        blank=True,
+        null=True
+    )
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Финальное место',
+        blank=True,
+        null=True
+    )
+    q6_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 6',
+        blank=True,
+        null=True
+    )
+    q7_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 7',
+        blank=True,
+        null=True
+    )
+    q8_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 8',
+        blank=True,
+        null=True
+    )
+    q9_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 9',
+        blank=True,
+        null=True
+    )
+    q10_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 10',
+        blank=True,
+        null=True
+    )
+    q11_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 11',
+        blank=True,
+        null=True
+    )
+    q12_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 12',
+        blank=True,
+        null=True
+    )
+    q13_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 13',
+        blank=True,
+        null=True
+    )
+    q15_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 15',
+        blank=True,
+        null=True
+    )
+    q16_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 16',
+        blank=True,
+        null=True
+    )
+    q17_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 17',
+        blank=True,
+        null=True
+    )
+    q20_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 20',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Резервный рейтинг. Тандем (1 октября)'
+        verbose_name_plural = 'Резервные рейтинги. Тандем (1 октября)'
+
+    def __str__(self):
+        return f"Тандем: {self.detachment.name} и {self.junior_detachment.name}"
+
+
+
+class RankingCopy(models.Model):
+    competition = models.ForeignKey(
+        'Competitions',
+        on_delete=models.CASCADE,
+        related_name='ranking_competitions_copy',
+        verbose_name='Конкурс'
+    )
+    detachment = models.ForeignKey(
+        'headquarters.Detachment',
+        on_delete=models.CASCADE,
+        related_name='copy_ranking_detachment',
+        verbose_name='Отряд'
+    )
+    places_sum = models.FloatField(
+        verbose_name='Сумма мест по всем показателям',
+        blank=True,
+        null=True
+    )
+    place = models.PositiveSmallIntegerField(
+        verbose_name='Финальное место',
+        blank=True,
+        null=True
+    )
+    q6_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 6',
+        blank=True,
+        null=True
+    )
+    q7_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 7',
+        blank=True,
+        null=True
+    )
+    q8_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 8',
+        blank=True,
+        null=True
+    )
+    q9_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 9',
+        blank=True,
+        null=True
+    )
+    q10_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 10',
+        blank=True,
+        null=True
+    )
+    q11_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 11',
+        blank=True,
+        null=True
+    )
+    q12_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 12',
+        blank=True,
+        null=True
+    )
+    q13_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 13',
+        blank=True,
+        null=True
+    )
+    q15_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 15',
+        blank=True,
+        null=True
+    )
+    q16_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 16',
+        blank=True,
+        null=True
+    )
+    q17_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 17',
+        blank=True,
+        null=True
+    )
+    q20_place = models.PositiveSmallIntegerField(
+        verbose_name='Итоговое место по показателю 20',
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = 'Резервный рейтинг. Дебют (1 октября)'
+        verbose_name_plural = 'Резервные рейтинги. Дебют (1 октября)'
+
+    def __str__(self):
+        return f"Отряд: {self.detachment.name}"

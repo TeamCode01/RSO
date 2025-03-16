@@ -3,14 +3,21 @@ import mimetypes
 import os
 import re
 import zipfile
+from functools import wraps
+
 from datetime import datetime
 
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db.models import Q
 from django.http import QueryDict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from regional_competitions.r_calculations import (calculate_r11_score, calculate_r12_score, calculate_r1_score, calculate_r2_score,
+                                                  calculate_r4_score, calculate_r5_score, calculate_r6_score,
+                                                  calculate_r7_score, calculate_r9_r10_score,
+                                                  calculate_r16_score)
 from rest_framework import serializers, status
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
@@ -24,6 +31,29 @@ from headquarters.models import (CentralHeadquarter, Detachment,
                                  UserLocalHeadquarterPosition,
                                  UserRegionalHeadquarterPosition)
 from users.models import RSOUser
+
+
+class Limit250OffsetPagination(LimitOffsetPagination):
+    default_limit = 100
+    max_limit = 250
+
+    def paginate_queryset(self, queryset, request, view=None):
+        if request.user.is_authenticated and request.query_params.get('limit') == '-1':
+            self.limit = len(queryset)
+            self.offset = 0
+            self.count = len(queryset)
+            return list(queryset)
+        return super().paginate_queryset(queryset, request, view)
+
+
+class RegionOffsetPagination(Limit250OffsetPagination):
+    def paginate_queryset(self, queryset, request, view=None):
+        if request.query_params.get('limit') == '-1':
+            self.limit = len(queryset)
+            self.offset = 0
+            self.count = len(queryset)
+            return list(queryset)
+        return super().paginate_queryset(queryset, request, view)
 
 
 def create_first_or_exception(self, validated_data, instance, error_msg: str):
@@ -98,10 +128,9 @@ def check_commander_or_not(request, headquarters):
     result = False
     for headquarter in headquarters:
         try:
-            # поменять на get когда добавим валидацию на 1 командира на уровень
-            if headquarter.objects.filter(
+            if headquarter.objects.get(
                     commander_id=request.user.id
-            ).first() is not None:
+            ) is not None:
                 result = True
                 break
         except (headquarter.DoesNotExist, AttributeError):
@@ -663,21 +692,6 @@ def get_central_hq_commander_num(user) -> int | None:
     return central_headquarter_commander_num
 
 
-def get_regional_hq_commander_num(user) -> int | None:
-    """Получение id регионального штаба, в котором юзер командир."""
-
-    try:
-        reghq_commander_num = RegionalHeadquarter.objects.get(
-            commander=user
-        ).id
-    except (
-            RegionalHeadquarter.DoesNotExist, AttributeError, ValueError,
-            RegionalHeadquarter.MultipleObjectsReturned
-    ):
-        return None
-    return reghq_commander_num
-
-
 def is_commander_this_detachment(user, detachment):
     """Проверяет, является ли пользователь командиром отряда."""
     return user.is_authenticated and detachment.commander == user
@@ -836,3 +850,63 @@ def get_user_detachment(user):
             detachment_position,
             'headquarter'
         ) else None
+
+
+def get_calculation(report, report_number):
+    """Функция вызова калькуляции очков при совпадении номера показателя."""
+
+    match report_number:
+        case '1':
+            return calculate_r1_score(report)
+        case '4':
+            return calculate_r4_score(report)
+        case '5':
+            return calculate_r5_score(report)
+        case '6':
+            return calculate_r6_score(report)
+        case '7':
+            return calculate_r7_score(report)
+        case '9' | '10':
+            return calculate_r9_r10_score(report)
+        case '12':
+            return calculate_r12_score(report)
+        case '16':
+            return calculate_r16_score(report)
+        case '':
+            return
+
+
+def calculate_sep_15():
+    from competitions.models import September15Participant
+    from headquarters.models import Detachment, UserDetachmentPosition
+
+    for detachment in Detachment.objects.all():
+        members_count = 0
+        participants_count = 1
+        members_count += 1 if detachment.commander.membership_fee else 0
+        for participant in UserDetachmentPosition.objects.filter(headquarter=detachment):
+            participants_count += 1
+            members_count += 1 if participant.user.membership_fee else 0
+        September15Participant.objects.create(detachment=detachment,participants_number=participants_count,members_number=members_count)
+
+
+def update_sep_15_participants_count():
+    from competitions.models import September15Participant
+    from headquarters.models import Detachment, UserDetachmentPosition
+
+    for detachment in Detachment.objects.all():
+        participants_count = 1
+        for participant in UserDetachmentPosition.objects.filter(headquarter=detachment):
+            participants_count += 1
+        September15Participant.objects.filter(detachment=detachment).update(participants_number=participants_count)
+
+
+def count_sql_queries(func):
+    """Декоратор для подсчета количества SQL-запросов."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        connection.queries_log.clear()
+        result = func(*args, **kwargs)
+        print(f'Количество SQL-запросов: {len(connection.queries)}')
+        return result
+    return wrapper

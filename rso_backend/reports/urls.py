@@ -1,21 +1,36 @@
 from django.urls import path
 
-from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, CompetitionParticipantView,
-                           DetachmentQResultsView, ExportAttributesOfUniformView,
+from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, DetachmentQDebutResultsView,
+                           DetachmentQResultsView, DetachmentQTandemResultsView,
                            ExportCommanderSchoolDataView,
                            ExportCompetitionParticipantsContactData,
                            ExportCompetitionParticipantsDataView,
                            ExportDetachmentQResultsView,
-                           ExportMembershipFeeDataView, 
-                           ExportRegionsUserDataView,
-                           ExportSafetyTestResultsView, ReportView,MembershipFeeDataView,
-                           SafetyTestResultsView, TaskStatusView, ExportQ5DataView, ExportQ15DataView,
-                           ExportQ16DataView, ExportQ17DataView, ExportQ20DataView, ExportQ18DataView)
+                           ExportMembershipFeeDataView,
+                           ExportSafetyTestResultsView,
+                           ReportView, MembershipFeeDataView,
+                           SafetyTestResultsView, TaskStatusView,
+                           ExportQ5DataView, ExportQ6DataView, ExportQ7DataView, ExportQ8DataView, 
+                           ExportQ9DataView, ExportQ10DataView, ExportQ11DataView, ExportQ12DataView, 
+                           ExportQ15DataView,
+                           ExportQ16DataView, ExportQ17DataView,
+                           ExportQ18DataView,
+                           CompetitionParticipantView,
+                           ExportAttributesOfUniformView,
+                           ExportQ13DataView, ExportQ14DataView,
+                           ExportQ19DataView, ExportCentralDataView, ExportDistrictDataView,
+                           ExportRegionalDataView, ExportLocalDataView, ExportEducationDataView,
+                           ExportDetachmentDataView, ExportDirectionDataView, ExportUsersDataView, 
+                           ExportRegionalRankingResults)
 
 
 urlpatterns = [
     path('', ReportView.as_view(), name='reports'),
-    path('task-status/<str:task_id>/', TaskStatusView.as_view(), name='task_status'),
+    path(
+        'task-status/<str:task_id>/',
+        TaskStatusView.as_view(),
+        name='task_status'
+    ),
     path(
         'safety_test_results/',
         SafetyTestResultsView.as_view(),
@@ -42,6 +57,16 @@ urlpatterns = [
         name='detachment_q_results'
     ),
     path(
+        'detachment_q_debut_results/',
+        DetachmentQDebutResultsView.as_view(),
+        name='detachment_q_debut_results'
+    ),
+    path(
+        'detachment_q_tandem_results/',
+        DetachmentQTandemResultsView.as_view(),
+        name='detachment_q_tandem_results'
+    ),
+    path(
         'detachment_q_results/export/',
         ExportDetachmentQResultsView.as_view(),
         name='export_detachment_q_results'
@@ -50,11 +75,6 @@ urlpatterns = [
         'competition_participants/contact_data/export/',
         ExportCompetitionParticipantsContactData.as_view(),
         name='competition_participants_contact_data'
-    ),
-    path(
-        'users_data_by_regions/',
-        ExportRegionsUserDataView.as_view(),
-        name='regions_users_data'
     ),
     path(
         'commander_shool/export/',
@@ -70,6 +90,51 @@ urlpatterns = [
         'get_q5_data/export/',
         ExportQ5DataView.as_view(),
         name='export_q5_data'
+    ),
+    path(
+        'get_q6_data/export/',
+        ExportQ6DataView.as_view(),
+        name='export_q6_data'
+    ),
+    path(
+        'get_q7_data/export/',
+        ExportQ7DataView.as_view(),
+        name='export_q7_data'
+    ),
+    path(
+        'get_q8_data/export/',
+        ExportQ8DataView.as_view(),
+        name='export_q8_data'
+    ),
+    path(
+        'get_q9_data/export/',
+        ExportQ9DataView.as_view(),
+        name='export_q9_data'
+    ),
+    path(
+        'get_q10_data/export/',
+        ExportQ10DataView.as_view(),
+        name='export_q10_data'
+    ),
+    path(
+        'get_q11_data/export/',
+        ExportQ11DataView.as_view(),
+        name='export_q11_data'
+    ),
+    path(
+        'get_q12_data/export/',
+        ExportQ12DataView.as_view(),
+        name='export_q12_data'
+    ),
+    path(
+        'get_q13_data/export/',
+        ExportQ13DataView.as_view(),
+        name='export_q13_data'
+    ),
+    path(
+        'get_q14_data/export/',
+        ExportQ14DataView.as_view(),
+        name='export_q14_data'
     ),
     path(
         'get_q15_data/export/',
@@ -92,9 +157,14 @@ urlpatterns = [
         name='export_q18_data'
     ),
     path(
-        'get_q20_data/export/',
-        ExportQ20DataView.as_view(),
-        name='export_q20_data'
+        'get_q19_data/export/',
+        ExportQ19DataView.as_view(),
+        name='export_q19_data'
+    ),
+    path(
+        'get_regional_ranking_results/export/',
+        ExportRegionalRankingResults.as_view(),
+        name='export_regional_ranking_results',
     ),
     path(
         'membership_fee/export/',
@@ -107,11 +177,35 @@ urlpatterns = [
         name='membership_fee'
     ),
     path('attributes_of_uniform/export/',
-         ExportAttributesOfUniformView.as_view(),
-         name='attributes_of_uniform_export'),
+        ExportAttributesOfUniformView.as_view(),
+        name='attributes_of_uniform_export'),
     path(
         'attributes_of_uniform/',
         AttributesOfUniformDataView.as_view(),
         name='attributes_of_uniform'
     ),
+    path('get_central_hq_data/export/',
+        ExportCentralDataView.as_view(),
+        name='export_central_hq_data'),
+    path('get_district_hq_data/export/',
+        ExportDistrictDataView.as_view(), 
+        name='export_district_hq_data'),
+    path('get_regional_hq_data/export/',
+        ExportRegionalDataView.as_view(),
+        name='export_regional_hq_data'),
+    path('get_local_hq_data/export/',
+        ExportLocalDataView.as_view(),
+        name='export_local_hq_data'),
+    path('get_education_hq_data/export/',
+        ExportEducationDataView.as_view(),
+        name='export_education_hq_data'),
+    path('get_detachment_data/export/',
+        ExportDetachmentDataView.as_view(),
+        name='export_detachment_data'),
+    path('get_direction_data/export/',
+        ExportDirectionDataView.as_view(),
+        name='export_direction_data'),
+    path('get_users_registry_data/export/',
+        ExportUsersDataView.as_view(),
+        name='export_users_data')
 ]

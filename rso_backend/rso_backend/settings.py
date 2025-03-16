@@ -2,17 +2,22 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import boto3
 from celery.schedules import crontab
 from dotenv import load_dotenv
 from pythonjsonlogger import jsonlogger
 
+
 load_dotenv()
+
+SHOW_RESERVED_PLACE = False
 
 DEFAULT_POSITION_ID = 1
 CENTRAL_HQ_ID = 1
 
 # Redis cache TTL
 DETANCHMENT_LIST_CACHE_TTL = 120
+SUB_COMMANDER_LIST_TTL = 120
 DETACHMENT_LIST_TTL = 120
 EDUCATIONALS_LIST_TTL = 120
 LOCALS_LIST_TTL = 240
@@ -30,6 +35,7 @@ DISTRCICTHQ_MEMBERS_CACHE_TTL = 40
 CENTRALHQ_MEMBERS_CACHE_TTL = 180
 EVENTS_CACHE_TTL = 45
 EDU_INST_CACHE_TTL = 180
+USER_ME_TTL = 20
 
 
 MIN_FOUNDING_DATE = 1000
@@ -48,6 +54,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='key')
 
 DEBUG = os.getenv('DEBUG', default=False) == 'True'
 PRODUCTION = os.getenv('DEBUG', default=False) == 'True'
+
+TEST_EMAIL_ADDRESSES = os.getenv('TEST_EMAIL_ADDRESSES', default='').split(',')
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
@@ -102,6 +110,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'import_export',
     'rest_framework_simplejwt',
+    'log_viewer',
+    'dbbackup',
 ]
 
 INSTALLED_APPS += [
@@ -110,7 +120,9 @@ INSTALLED_APPS += [
     'headquarters.apps.HeadquartersConfig',
     'events.apps.EventsConfig',
     'competitions.apps.CompetitionsConfig',
-    'questions.apps.QuestionsConfig'
+    'questions.apps.QuestionsConfig',
+    'regional_competitions.apps.RegionalCompetitionsConfig',
+    'services.apps.ServicesConfig',
 ]
 
 MIDDLEWARE = [
@@ -123,6 +135,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+if not DEBUG:
+    MIDDLEWARE += ['requestlogs.middleware.RequestLogsMiddleware',]
 
 ROOT_URLCONF = 'rso_backend.urls'
 
@@ -187,6 +201,32 @@ USE_I18N = True
 
 USE_TZ = True
 
+# S3 settings
+DB_ACCESS_KEY_ID = os.getenv('DB_ACCESS_KEY_ID')
+DB_SECRET_ACCESS_KEY = os.getenv('DB_SECRET_ACCESS_KEY')
+DATABASE_BUCKET_NAME = os.getenv('DATABASE_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+AWS_DEFAULT_ACL = None  # права доступа тянуть с s3
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+USE_S3 = int(os.getenv('USE_S3', '0'))
+AWS_QUERYSTRING_AUTH = False  # отключаем авторизацию через параметры url
+
+if USE_S3:
+    # создание бэкапа python manage.py dbbackup (вынесено в таску)
+    # восстановление бд из последнего бэкапа python manage.py dbrestore
+    DBBACKUP_STORAGE = 'rso_backend.s3_storage.DataBaseStorage'
+    DBBACKUP_STORAGE_OPTIONS = {
+        'access_key': DB_ACCESS_KEY_ID,
+        'secret_key': DB_SECRET_ACCESS_KEY,
+        'bucket_name': DATABASE_BUCKET_NAME,
+        'default_acl': 'private',
+    }
+else:
+    DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    DBBACKUP_STORAGE_OPTIONS = {
+        'location': Path(BASE_DIR).joinpath('backup').resolve()
+    }
+
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
@@ -197,67 +237,71 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGS_PATH = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_PATH, exist_ok=True)
+
+LOGS_FILENAME = os.path.join(LOGS_PATH, 'backend.log')
+LOG_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
+LOGS_BACKUP_COUNT = 10
+
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
-
     'formatters': {
-        'main_formatter': {
-            'format': '{asctime} - {name} - {levelname} - {module} - {pathname} - {message}',
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
-        'json_formatter': {
-            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
-            'format': '%(asctime)s %(name)s %(levelname)s %(message)s',
-            'json_ensure_ascii': False
-        },
     },
-
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'main_formatter',
+            'formatter': 'verbose',
+        },
+        'debug_console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
         },
         'tasks': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs/tasks_logs.log',
-            'maxBytes': 1024 * 1024 * 1024,
+            'maxBytes': 20 * 1024 * 1024,
             'backupCount': 15,
-            'formatter': 'json_formatter',
-        },
-        'request': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/requests_logs.log',
+            'formatter': 'verbose',
             'encoding': 'UTF-8',
         },
-        'server_handler': {
-            'level': 'INFO',
+        'regional_tasks': {
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/server_commands_logs.log',
-            'maxBytes': 1024 * 1024 * 1024,
+            'filename': 'logs/regional_tasks_logs.log',
+            'maxBytes': 20 * 1024 * 1024,
             'backupCount': 15,
-            'formatter': 'json_formatter',
-        },
-        'db': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/db_queries_logs.log',
+            'formatter': 'verbose',
             'encoding': 'UTF-8',
         },
-        'security': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/security_logs.log',
+        'django': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_FILENAME,
+            'maxBytes': LOG_MAX_BYTES,
+            'backupCount': LOGS_BACKUP_COUNT,
+            'level': 'INFO',
+            'formatter': 'verbose',
             'encoding': 'UTF-8',
         },
-        'security_csrf': {
-            'class': 'logging.FileHandler',
-            'formatter': 'json_formatter',
-            'filename': 'logs/security_csrf_logs.log',
+        'requestlogs_to_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': 'logs/request_logs.log',
+            'when': 'midnight',
+            'backupCount': 90,
             'encoding': 'UTF-8',
-        }
+        },
     },
 
     'loggers': {
@@ -265,29 +309,26 @@ LOGGING = {
             'handlers': ['console', 'tasks'],
             'level': 'DEBUG',
         },
-        'django.request': {
-            'level': 'INFO',
-            'handlers': ['console', 'request']
+        'regional_tasks': {
+            'handlers': ['console', 'regional_tasks'],
+            'level': 'DEBUG',
         },
-        'django.server': {
+        'django': {
+            'handlers': ['console', 'django'],
             'level': 'INFO',
-            'handlers': ['console', 'server_handler']
+            'propagate': True,
         },
-        'django.db.backends': {
-            'level': 'INFO',
-            'handlers': ['console', 'db']
+        'requestlogs': {
+            'handlers': ['requestlogs_to_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
-        'django.security.*': {
-            'level': 'INFO',
-            'handlers': ['console', 'security']
-        },
-        'django.security.csrf': {
-            'level': 'INFO',
-            'handlers': ['console', 'security_csrf']
-        }
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['debug_console'],
+        # }
     }
 }
-
 
 REDIS_HOST = '127.0.0.1' if RUN_TYPE != 'DOCKER' else 'redis'
 
@@ -331,82 +372,14 @@ if DEBUG:
             'task': 'reports.tasks.delete_temp_reports_task',
             'schedule': timedelta(hours=12)
         },
-        'calculate_q1_score': {
-            'task': 'competitions.tasks.calculate_q1_score_task',
-            'schedule': timedelta(minutes=15)
+        'delete_front_logs': {
+            'task': 'services.tasks.delete_front_logs',
+            'schedule': crontab(
+                hour=0,
+                minute=0,
+                day_of_week='sunday'
+            )
         },
-        'calculate_q1': {
-            'task': 'competitions.tasks.calculate_q1_places_task',
-            'schedule': timedelta(minutes=14, seconds=40)
-        },
-        'calculate_q3_q4': {
-            'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': timedelta(minutes=14, seconds=26)
-        },
-        'calculate_q5': {
-            'task': 'competitions.tasks.calculate_q5_places_task',
-            'schedule': timedelta(minutes=14, seconds=40)
-        },
-        'calculate_q6': {
-            'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': timedelta(minutes=11, seconds=33)
-        },
-        'calculate_q7': {
-            'task': 'competitions.tasks.calculate_q7_places_task',
-            'schedule': timedelta(minutes=14, seconds=30)
-        },
-        'calculate_q8': {
-            'task': 'competitions.tasks.calculate_q8_places_task',
-            'schedule': timedelta(minutes=15, seconds=1)
-        },
-        'calculate_q9': {
-            'task': 'competitions.tasks.calculate_q9_places_task',
-            'schedule': timedelta(minutes=15, seconds=33)
-        },
-        'calculate_q10': {
-            'task': 'competitions.tasks.calculate_q10_places_task',
-            'schedule': timedelta(minutes=14, seconds=44)
-        },
-        'calculate_q11': {
-            'task': 'competitions.tasks.calculate_q11_places_task',
-            'schedule': timedelta(minutes=9, seconds=11)
-        },
-        'calculate_q12': {
-            'task': 'competitions.tasks.calculate_q12_places_task',
-            'schedule': timedelta(minutes=17, seconds=16)
-        },
-        'calculate_q14': {
-            'task': 'competitions.tasks.calculate_q14_places_task',
-            'schedule': timedelta(minutes=16, seconds=33)
-        },
-        'calculate_q15': {
-            'task': 'competitions.tasks.calculate_q15_places_task',
-            'schedule': timedelta(minutes=14, seconds=55)
-        },
-        'calculate_q16_score': {
-            'task': 'competitions.tasks.calculate_q16_score_task',
-            'schedule': timedelta(minutes=14, seconds=55)
-        },
-        'calculate_q16': {
-            'task': 'competitions.tasks.calculate_q16_places_task',
-            'schedule': timedelta(minutes=13, seconds=55)
-        },
-        'calculate_q17': {
-            'task': 'competitions.tasks.calculate_q17_places_task',
-            'schedule': timedelta(minutes=14, seconds=3)
-        },
-        'calculate_q18': {
-            'task': 'competitions.tasks.calculate_q18_places_task',
-            'schedule': timedelta(minutes=11, seconds=33)
-        },
-        'calculate_q20': {
-            'task': 'competitions.tasks.calculate_q20_places_task',
-            'schedule': timedelta(minutes=13, seconds=33)
-        },
-        'calculate_overall_places': {
-            'task': 'competitions.tasks.calculate_overall_places_task',
-            'schedule': timedelta(minutes=15, seconds=33)
-        }
     }
 else:
     CELERY_BEAT_SCHEDULE = {
@@ -419,139 +392,21 @@ else:
                 month_of_year=10,
             )
         },
+        'delete_front_logs': {
+            'task': 'services.tasks.delete_front_logs',
+            'schedule': crontab(
+                hour=0,
+                minute=0,
+                day_of_week='sunday'
+            )
+        },
         'delete_temp_reports': {
             'task': 'reports.tasks.delete_temp_reports_task',
             'schedule': crontab(hour=3, minute=0)
         },
-        'calculate_q1_score': {
-            'task': 'competitions.tasks.calculate_q1_score_task',
-            'schedule': crontab(
-                hour=3,
-                minute=10,
-            )
-        },
-        'calculate_q1': {
-            'task': 'competitions.tasks.calculate_q1_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=15,
-            )
-        },
-        'calculate_q3_q4': {
-            'task': 'competitions.tasks.calculate_q3_q4_places_task',
-            'schedule': crontab(hour=6, minute=29)
-        },
-        'calculate_q5': {
-            'task': 'competitions.tasks.calculate_q5_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=28
-            )
-        },
-        'calculate_q6': {
-            'task': 'competitions.tasks.calculate_q6_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=20
-            )
-        },
-        'calculate_q7': {
-            'task': 'competitions.tasks.calculate_q7_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=33,
-            )
-        },
-        'calculate_q8': {
-            'task': 'competitions.tasks.calculate_q8_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=35,
-            )
-        },
-        'calculate_q9': {
-            'task': 'competitions.tasks.calculate_q9_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=38,
-            )
-        },
-        'calculate_q10': {
-            'task': 'competitions.tasks.calculate_q10_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=41,
-            )
-        },
-        'calculate_q11': {
-            'task': 'competitions.tasks.calculate_q11_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=44,
-            )
-        },
-        'calculate_q12': {
-            'task': 'competitions.tasks.calculate_q12_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=47,
-            )
-        },
-        'calculate_q14': {
-            'task': 'competitions.tasks.calculate_q14_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=49,
-            )
-        },
-        'calculate_q15': {
-            'task': 'competitions.tasks.calculate_q15_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=50,
-            )
-        },
-        'calculate_q16_score': {
-            'task': 'competitions.tasks.calculate_q16_score_task',
-            'schedule': crontab(
-                hour=3,
-                minute=52,
-            )
-        },
-        'calculate_q16': {
-            'task': 'competitions.tasks.calculate_q16_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=54,
-            )
-        },
-        'calculate_q17': {
-            'task': 'competitions.tasks.calculate_q17_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=56,
-            )
-        },
-        'calculate_q18': {
-            'task': 'competitions.tasks.calculate_q18_places_task',
-            'schedule': crontab(
-                hour=3,
-                minute=58,
-            )
-        },
-        'calculate_q20': {
-            'task': 'competitions.tasks.calculate_q20_places_task',
-            'schedule': crontab(
-                hour=4,
-                minute=2,
-            )
-        },
-        'calculate_overall_places': {
-            'task': 'competitions.tasks.calculate_overall_places_task',
-            'schedule': crontab(
-                hour=4,
-                minute=20
-            )
+        'run-dbbackup-every-24-hours': {
+            'task': 'rso_backend.celery.run_dbbackup_task',
+            'schedule': crontab(hour=4, minute=25),
         }
     }
 
@@ -560,6 +415,7 @@ if DEBUG:
         'task': 'users.tasks.debug_periodic_task',
         'schedule': timedelta(seconds=90),
     }
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
 # FOR LINUX:
 # celery -A rso_backend worker --loglevel=info
@@ -606,6 +462,14 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '65/min',
+        'user': '6000/min'
+    },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
@@ -613,9 +477,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'MAX_PAGE_SIZE': 1000,
-    'PAGE_SIZE': 100
+    'DEFAULT_PAGINATION_CLASS': 'api.utils.Limit250OffsetPagination',
+    'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
 }
 
 # For VK ID
@@ -652,7 +515,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
+    "UPDATE_LAST_LOGIN": True,
 
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
@@ -696,3 +559,26 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+REQUESTLOGS = {
+    'STORAGE_CLASS': 'requestlogs.storages.LoggingStorage',
+    'ENTRY_CLASS': 'api.log_entries.CustomRequestLogEntry',
+    'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
+    'SECRETS': ['password', 'token', 'HTTP_COOKIE', 'HTTP_X_CSRFTOKEN'],
+    'ATTRIBUTE_NAME': '_requestlog',
+    'METHODS': ('GET', 'PUT', 'PATCH', 'POST', 'DELETE'),
+    'JSON_ENSURE_ASCII': True,
+    'IGNORE_USER_FIELD': None,
+    'IGNORE_USERS': [],
+    'IGNORE_PATHS': None,
+}
+
+LOG_VIEWER_FILES_PATTERN = '*'
+LOG_VIEWER_FILES_DIR = LOGS_PATH
+LOG_VIEWER_PAGE_LENGTH = 75
+LOG_VIEWER_MAX_READ_LINES = 12000
+LOG_VIEWER_FILE_LIST_MAX_ITEMS_PER_PAGE = 25
+LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL', "{'action_name':"]
+LOG_VIEWER_EXCLUDE_TEXT_PATTERN = None
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None

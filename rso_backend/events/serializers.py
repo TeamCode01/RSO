@@ -100,9 +100,7 @@ class EventOrganizerDataSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        organizer_id = representation['organizer']
-        organizer = get_object_or_404(RSOUser, id=organizer_id)
-        representation['organizer'] = ShortUserSerializer(organizer).data
+        representation['organizer'] = ShortUserSerializer(instance.organizer).data
         return representation
 
     def get_position(self, instance):
@@ -210,20 +208,16 @@ class AnswerSerializer(serializers.ModelSerializer):
             'id',
             'issue',
             'answer',
-            'event',
             'user'
         )
         read_only_fields = (
             'id',
-            'event',
             'user'
         )
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        issue_id = representation['issue']
-        issue = get_object_or_404(EventAdditionalIssue, id=issue_id)
-        representation['issue'] = issue.issue
+        representation['issue'] = instance.issue.issue
         return representation
 
     def validate(self, attrs):
@@ -259,7 +253,6 @@ class EventApplicationsSerializer(serializers.ModelSerializer):
     answers = serializers.SerializerMethodField()
     documents = serializers.SerializerMethodField()
     user = ShortUserSerializer(read_only=True)
-    event = ShortEventSerializer(read_only=True)
 
     class Meta:
         model = EventApplications
@@ -267,14 +260,12 @@ class EventApplicationsSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'position',
-            'event',
             'answers',
             'documents',
             'created_at'
         )
         read_only_fields = (
             'created_at',
-            'event',
             'user'
         )
 
@@ -312,7 +303,6 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
     documents = serializers.SerializerMethodField()
     position = serializers.SerializerMethodField()
     user = ShortUserSerializer(read_only=True)
-    event = ShortEventSerializer(read_only=True)
 
     class Meta:
         model = EventParticipants
@@ -320,13 +310,11 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'position',
-            'event',
             'answers',
             'documents'
         )
         read_only_fields = (
             'id',
-            'event',
             'user'
         )
 
@@ -376,14 +364,12 @@ class EventParticipantsSerializer(serializers.ModelSerializer):
 
 class EventUserDocumentSerializer(serializers.ModelSerializer):
     user = ShortUserSerializer(read_only=True)
-    event = ShortEventSerializer(read_only=True)
 
     class Meta:
         model = EventUserDocument
-        fields = '__all__'
+        fields = ('id', 'user', 'document',)
         read_only_fields = (
             'id',
-            'event',
             'user'
         )
 

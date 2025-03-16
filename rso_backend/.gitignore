@@ -217,3 +217,8 @@ GitHub.sublime-settings
 /media
 media/
 .log
+
+.gigaide
+backup/
+loader.py
+Лист Microsoft Excel.xlsx

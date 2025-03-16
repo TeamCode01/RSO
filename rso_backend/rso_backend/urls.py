@@ -7,9 +7,7 @@ from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
-from rest_framework_simplejwt.views import (TokenObtainPairView,
-                                            TokenRefreshView,
-                                            TokenVerifyView)
+
 
 swagger_url = os.getenv('SWAGGER_URL')
 
@@ -64,6 +62,7 @@ urlpatterns = [
     ),
     path('accounts/', include('django.contrib.auth.urls')),
     path('reports/', include('reports.urls')),
+    path('logs/', include('log_viewer.urls')),
     path('', include('headquarters.urls')),
     path('', include('events.urls')),
     path('', include('users.urls')),

@@ -11,7 +11,6 @@ from api.constants import (CREATE_DELETE, CREATE_METHOD, DELETE,
                            UPDATE_DELETE_RETRIEVE, )
 from api.views import (AreaViewSet, EducationalInstitutionViewSet,
                        MemberCertViewSet, RegionViewSet,
-                       VKLoginAPIView,
                        change_membership_fee_status, verify_user)
 from competitions.views import (CompetitionApplicationsViewSet,
                                 CompetitionParticipantsViewSet,
@@ -41,7 +40,7 @@ from competitions.views import (CompetitionApplicationsViewSet,
                                 get_detachment_place, get_detachment_places,
                                 get_place_overall, get_place_q1, get_place_q3,
                                 get_place_q4, get_q1_info,
-                                DetachmentReportView)
+                                DetachmentReportView, get_q1_info_static)
 from events.views import (AnswerDetailViewSet, EventAdditionalIssueViewSet,
                           EventApplicationsViewSet,
                           EventOrganizationDataViewSet,
@@ -66,9 +65,11 @@ from headquarters.views import (CentralAcceptViewSet,
                                 RegionalPositionViewSet,
                                 LocalApplicationViewSet,
                                 EducationalAcceptViewSet,
-                                EducationalApplicationViewSet,
-                                get_structural_units, DetachmentListViewSet)
+                                EducationalApplicationViewSet, download_reg_comp_report,
+                                get_structural_units, DetachmentListViewSet,
+                                )
 from questions.views import QuestionsView, get_attempts_status, submit_answers
+from services.views import VKLoginAPIView, FrontReportsViewSet
 from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          ForeignUserDocumentsViewSet, RSOUserViewSet,
                          SafeUserViewSet, UserDocumentsViewSet,
@@ -77,7 +78,10 @@ from users.views import (AdditionalForeignDocsViewSet, CustomUserViewSet,
                          UserProfessionalEducationViewSet, UserRegionViewSet,
                          UsersParentViewSet, UserStatementDocumentsViewSet,
                          apply_for_verification)
-
+from reports.views import (ExportCentralDataAPIView, ExportDetachmentDataAPIView,
+                           ExportDistrictDataAPIView, ExportEducationDataAPIView,
+                           ExportRegionalDataAPIView, ExportLocalDataAPIView, ExportUsersDataAPIView,
+                           ExportDirectionDataAPIView)
 app_name = 'api'
 
 router = DefaultRouter()
@@ -285,7 +289,7 @@ router.register(
     Q6DetachmentReportViewSet,
     basename='q6'
 )
-router.register(r'detanchment_list', DetachmentListViewSet, basename='detachment_list')
+router.register(r'detachment_list', DetachmentListViewSet, basename='detachment_list')
 
 UserEduVS = UserEducationViewSet.as_view(UPDATE_RETRIEVE)
 UserProfEduRetrieveCreateVS = UserProfessionalEducationViewSet.as_view(
@@ -361,6 +365,15 @@ EventOrganizationDataObjVS = EventOrganizationDataViewSet.as_view(
 )
 EventAdditionalIssueListVS = EventAdditionalIssueViewSet.as_view(LIST_CREATE)
 EventAdditionalIssueObjVS = EventAdditionalIssueViewSet.as_view(UPDATE_DELETE)
+FrontReportsVS = FrontReportsViewSet.as_view(LIST_CREATE)
+ExportCentralDataAPIVS = ExportCentralDataAPIView.as_view(LIST)
+ExportLocalDataAPIVS = ExportLocalDataAPIView.as_view(LIST)
+ExportDistrictDataAPIVS = ExportDistrictDataAPIView.as_view(LIST)
+ExportEducationDataAPIVS = ExportEducationDataAPIView.as_view(LIST)
+ExportRegionalDataAPIVS = ExportRegionalDataAPIView.as_view(LIST)
+ExportDetachmentDataAPIVS = ExportDetachmentDataAPIView.as_view(LIST)
+ExportDirectionDataAPIVS = ExportDirectionDataAPIView.as_view(LIST)
+ExportUsersDataAPIVS = ExportUsersDataAPIView.as_view(LIST)
 
 user_nested_urls = [
     path('regions/users_list', UsersRegionsVS, name='user-regions'),
@@ -436,6 +449,46 @@ user_nested_urls = [
         'rsousers/<int:pk>/membership_fee_status/',
         change_membership_fee_status,
         name='user-membership-fee'
+    ),
+    path(
+        'registry/users/',
+        ExportUsersDataAPIVS,
+        name='export-users-data'
+    ),
+    path(
+        'registry/directions/',
+        ExportDirectionDataAPIVS,
+        name='export-directions-data'
+    ),
+    path(
+        'registry/detachments/',
+        ExportDetachmentDataAPIVS,
+        name='export-detachment-data'
+    ),
+    path(
+        'registry/educationals/',
+        ExportEducationDataAPIVS,
+        name='export-educational-data',
+    ),
+    path(
+        'registry/locals/',
+        ExportLocalDataAPIVS,
+        name='export-local-data',    
+    ),
+    path(
+        'registry/regionals/',
+        ExportRegionalDataAPIVS,
+        name='export-regional-data',
+    ),
+    path(
+        'registry/districts/',
+        ExportDistrictDataAPIVS,
+        name='export-district-data',
+    ),
+    path(
+        'registry/centrals/',
+        ExportCentralDataAPIVS,
+        name='export-central-data',
     ),
     path(
         'detachments/<int:pk>/apply/',
@@ -526,6 +579,11 @@ user_nested_urls = [
         'regionals/<int:pk>/applications/<int:application_pk>/accept/',
         RegionalAcceptVS,
         name='user-regional-apply'
+    ),
+    path(
+        'regionals/<int:pk>/download_regional_competition_report/',
+        download_reg_comp_report,
+        name='download-reg-comp-report'
     ),
     path(
         'districts/<int:pk>/members/',
@@ -633,6 +691,11 @@ user_nested_urls = [
         name='get-q1-info'
     ),
     path(
+        'competitions/<int:competition_pk>/reports/q1/info-static/',
+        get_q1_info_static,
+        name='get-q1-info-static'
+    ),
+    path(
         'competitions/<int:competition_pk>/reports/q3/get-place/',
         get_place_q3,
         name='get-place-q3'
@@ -662,7 +725,11 @@ user_nested_urls = [
         DetachmentReportView.as_view(),
         name='detachment_report_view'
     ),
-
+    path(
+        'services/front_errors/',
+        FrontReportsVS,
+        name='front-reports'
+    ),
     path('', include('djoser.urls')),
 ]
 
@@ -681,4 +748,5 @@ urlpatterns = [
                   path('get_attempts_status/', get_attempts_status, name='get-attempts-status'),
                   path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
                   path('', include(router.urls)),
+                  path('regional_competitions/', include('regional_competitions.urls')),
               ] + user_nested_urls

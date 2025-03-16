@@ -1,3 +1,6 @@
+import json
+
+from django.apps import apps
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from import_export.admin import ImportExportModelAdmin
@@ -23,11 +26,13 @@ from headquarters.models import (Area, CentralHeadquarter, Detachment,
                                  UserDistrictHeadquarterPosition,
                                  UserEducationalHeadquarterPosition,
                                  UserLocalHeadquarterPosition,
-                                 UserRegionalHeadquarterPosition)
+                                 UserRegionalHeadquarterPosition, RegionalHeadquarterEmail)
 from headquarters.resources import (DistrictHeadquarterResource,
                                     EducationalInstitutionResource,
                                     RegionalHeadquarterResource,
                                     RegionResource)
+from regional_competitions.models import RVerificationLog
+from regional_competitions.utils import return_comp_from_logs
 
 
 class BaseUnitAdmin(admin.ModelAdmin):
@@ -83,6 +88,41 @@ class RegionalHeadquarterAdmin(ImportExportModelAdmin):
     form = RegionalForm
     list_filter = ('district_headquarter',)
 
+    # actions = [
+    #     'return_r6_from_logs',
+    #     'return_r9_from_logs'
+    # ]
+
+    def return_r6_from_logs(self, request, queryset):
+        """
+
+        Запись в показатели Р6 конкурса РО данных из лога.
+        """
+
+        for hq in queryset:
+            return_comp_from_logs(
+                regional_headquarter_id=hq.id,
+                r_number='6',
+                r_max_subnumber=115,
+                log_model=RVerificationLog
+            )
+
+    def return_r9_from_logs(self, request, queryset):
+        """
+
+        Запись в показатели Р9 конкурса РО данных из лога.
+        """
+
+        for hq in queryset:
+            return_comp_from_logs(
+                regional_headquarter_id=hq.id,
+                r_number='9',
+                r_max_subnumber=11,
+                log_model=RVerificationLog
+            )
+
+    return_r6_from_logs.short_description = ('Бэкап ссылок в Р6 конкурса РО')
+    return_r9_from_logs.short_description = ('Бэкап ссылок в Р9 конкурса РО')
 
 @admin.register(LocalHeadquarter)
 class LocalHeadquarterAdmin(BaseUnitAdmin):
@@ -293,3 +333,9 @@ class AreaAdmin(admin.ModelAdmin):
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
     search_fields = ('name',)
+
+
+@admin.register(RegionalHeadquarterEmail)
+class RegionalHeadquarterEmailAdmin(admin.ModelAdmin):
+    list_display = ('regional_headquarter', 'email')
+    search_fields = ('regional_headquarter__name', 'email')

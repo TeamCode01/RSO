@@ -231,6 +231,8 @@ class RSOUserViewSet(RetrieveUpdateViewSet):
         Представляет должности юзера по pk на каждом структурном уровне.
         """
         if request.method == 'GET':
+            if not pk.isdigit():
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             user = get_object_or_404(RSOUser, id=pk)
             serializer = UserHeadquarterPositionSerializer(user)
             return Response(serializer.data)
@@ -247,6 +249,8 @@ class RSOUserViewSet(RetrieveUpdateViewSet):
         является командиром.
         """
         if request.method == 'GET':
+            if not pk.isdigit():
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             user = get_object_or_404(RSOUser, id=pk)
             serializer = UserCommanderSerializer(user)
             return Response(serializer.data)
@@ -257,7 +261,12 @@ class SafeUserViewSet(RetrieveViewSet):
 
     Доступно авторизованным пользователям.
     """
-    queryset = RSOUser.objects.all()
+    queryset = RSOUser.objects.all().select_related(
+        'media',
+        'region',
+        'education',
+        'privacy'
+    )
     serializer_class = SafeUserSerializer
     permission_classes = (permissions.IsAuthenticated,)
 

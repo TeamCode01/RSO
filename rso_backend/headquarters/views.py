@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api.mixins import (CreateDeleteViewSet, ListRetrieveUpdateViewSet,
@@ -26,7 +26,14 @@ from headquarters.filters import (DetachmentFilter,
                                   EducationalHeadquarterFilter,
                                   LocalHeadquarterFilter,
                                   RegionalHeadquarterFilter,
-                                  DetachmentListFilter)
+                                  DetachmentListFilter,
+                                  )
+
+from headquarters.mixins import (ApplicationsMixin, VerificationsMixin, SubRegionalHqsMixin,
+                                 SubDistrictHqsMixin, SubLocalHqsMixin, SubEducationalHqsMixin,
+                                 DetachmentLeadershipMixin, BaseLeadershipMixin, CentralSubCommanderMixin,
+                                 RegionalSubCommanderMixin, LocalSubCommanderMixin, EducationalSubCommanderMixin,
+                                 DistrictSubCommanderMixin)
 from headquarters.models import (CentralHeadquarter, Detachment,
                                  DistrictHeadquarter, EducationalHeadquarter,
                                  EducationalInstitution, LocalHeadquarter,
@@ -59,16 +66,27 @@ from headquarters.serializers import (
     ShortEducationalHeadquarterListSerializer,
     ShortEducationalHeadquarterSerializer, ShortLocalHeadquarterListSerializer,
     ShortLocalHeadquarterSerializer, ShortRegionalHeadquarterListSerializer,
-    ShortRegionalHeadquarterSerializer, UserCentralApplicationReadSerializer, UserCentralApplicationSerializer,
+    ShortRegionalHeadquarterSerializer, UserCentralApplicationReadSerializer,
     UserDetachmentApplicationReadSerializer,
-    UserDetachmentApplicationSerializer, UserDistrictApplicationReadSerializer, UserDistrictApplicationSerializer, UserEducationalApplicationReadSerializer,
-    UserEducationalApplicationSerializer, UserLocalApplicationReadSerializer,
-    UserLocalApplicationSerializer, UserRegionalApplicationReadSerializer,
-    UserRegionalApplicationSerializer, DetachmentListSerializer)
-from headquarters.swagger_schemas import applications_response
+    UserDetachmentApplicationSerializer,
+    UserEducationalApplicationSerializer,
+    UserLocalApplicationSerializer, UserLocalApplicationShortReadSerializer,
+    UserRegionalApplicationSerializer, DetachmentListSerializer,
+    UserCentralApplicationSerializer,
+    UserDetachmentApplicationShortReadSerializer,
+    UserDistrictApplicationReadSerializer, UserDistrictApplicationSerializer,
+    UserDistrictApplicationShortReadSerializer,
+    UserEducationalApplicationReadSerializer,
+    UserEducationalApplicationShortReadSerializer,
+    UserLocalApplicationReadSerializer,
+    UserRegionalApplicationReadSerializer,
+    UserRegionalApplicationShortReadSerializer,
+    UserCentralApplicationShortReadSerializer,)
+
 from headquarters.utils import (create_central_hq_member,
                                 get_regional_hq_members_to_verify,
                                 get_detachment_members_to_verify,)
+from regional_competitions.utils import generate_rhq_xlsx_report
 from users.serializers import UserVerificationReadSerializer
 
 
@@ -89,13 +107,17 @@ class PositionViewSet(ListRetrieveViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class CentralViewSet(ListRetrieveUpdateViewSet):
+class CentralViewSet(ApplicationsMixin, 
+                     BaseLeadershipMixin, 
+                     CentralSubCommanderMixin, 
+                     ListRetrieveUpdateViewSet):
     """Представляет центральные штабы.
 
     При операции чтения доступно число количества участников в структурной
     единице по ключу members_count, а также список всех участников по ключу
     members.
     Доступен поиск по name при передаче ?search=<value> query-параметра.
+    Доступна фильтрация по ключу user_id для applications.
     """
 
     queryset = CentralHeadquarter.objects.all()
@@ -114,21 +136,21 @@ class CentralViewSet(ListRetrieveUpdateViewSet):
             permission_classes = (IsStuffOrCentralCommanderOrTrusted,)
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserCentralApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserCentralApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserCentralApplication
+
+    def get_application_serializer(self):
+        return UserCentralApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserCentralApplicationShortReadSerializer
 
 
-class DistrictViewSet(viewsets.ModelViewSet):
+class DistrictViewSet(ApplicationsMixin, 
+                      SubDistrictHqsMixin, 
+                      BaseLeadershipMixin, 
+                      DistrictSubCommanderMixin, 
+                      viewsets.ModelViewSet):
     """Представляет окружные штабы.
 
     Привязывается к центральному штабу по ключу central_headquarter.
@@ -140,9 +162,12 @@ class DistrictViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = DistrictHeadquarter.objects.all()
+    queryset = DistrictHeadquarter.objects.all().select_related(
+        'central_headquarter'
+    ).prefetch_related('members', 'events')
     serializer_class = DistrictHeadquarterSerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter)
     search_fields = ('name', 'founding_date')
@@ -170,21 +195,22 @@ class DistrictViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserDistrictApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserDistrictApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserDistrictApplication
+
+    def get_application_serializer(self):
+        return UserDistrictApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserDistrictApplicationShortReadSerializer
 
 
-class RegionalViewSet(viewsets.ModelViewSet):
+class RegionalViewSet(ApplicationsMixin, 
+                      VerificationsMixin, 
+                      SubRegionalHqsMixin, 
+                      BaseLeadershipMixin,
+                      RegionalSubCommanderMixin, 
+                      viewsets.ModelViewSet):
     """Представляет региональные штабы.
 
     Привязывается к окружному штабу по ключу district_headquarter (id).
@@ -203,9 +229,13 @@ class RegionalViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
-    queryset = RegionalHeadquarter.objects.all()
+    queryset = RegionalHeadquarter.objects.all().select_related(
+        'region',
+        'district_headquarter',
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -238,35 +268,37 @@ class RegionalViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @action(detail=True, methods=['get', ], url_path='verifications')
-    def get_verifications(self, request, pk=None):
-        """
-        Получить список пользователей, подавших заявку на верификацию,
-        у которых совпадает регион с регионом текущего РШ.
-        """
-        headquarter = self.get_object()
-        members_to_verify = get_regional_hq_members_to_verify(headquarter)
-        serializer = UserVerificationReadSerializer(
-            instance=members_to_verify, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserRegionalApplication
+
+    def get_application_serializer(self):
+        return UserRegionalApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserRegionalApplicationShortReadSerializer
+
+    def get_verification_serializer(self):
+        return UserVerificationReadSerializer
+
+    def get_func_members_to_verify(self):
+        return get_regional_hq_members_to_verify
 
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserRegionalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserRegionalApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+@api_view(['GET'])
+def download_reg_comp_report(_, pk):
+    """Скачивание всех отчетов РО в одном xlsx файле.
+
+    pk - ID регионального штаба.
+    """
+    return generate_rhq_xlsx_report(pk)
 
 
-class LocalViewSet(viewsets.ModelViewSet):
+class LocalViewSet(ApplicationsMixin,
+                   VerificationsMixin,
+                   SubLocalHqsMixin,
+                   BaseLeadershipMixin,
+                   LocalSubCommanderMixin,
+                   viewsets.ModelViewSet):
     """Представляет местные штабы.
 
     Привязывается к региональному штабу по ключу regional_headquarter (id).
@@ -280,9 +312,12 @@ class LocalViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = LocalHeadquarter.objects.all()
+    queryset = LocalHeadquarter.objects.all().select_related(
+        'regional_headquarter',
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -311,21 +346,21 @@ class LocalViewSet(viewsets.ModelViewSet):
             permission_classes = (IsLocalCommander,)
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserLocalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserLocalApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserLocalApplication
+
+    def get_application_serializer(self):
+        return UserLocalApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserLocalApplicationShortReadSerializer
 
 
-class EducationalViewSet(viewsets.ModelViewSet):
+class EducationalViewSet(ApplicationsMixin, 
+                         SubEducationalHqsMixin, 
+                         BaseLeadershipMixin, 
+                         EducationalSubCommanderMixin, 
+                         viewsets.ModelViewSet):
     """Представляет образовательные штабы.
 
     Может привязываться к местному штабу по ключу local_headquarter (id).
@@ -344,9 +379,14 @@ class EducationalViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна фильтрация по ключу user_id для applications.
     """
 
-    queryset = EducationalHeadquarter.objects.all()
+    queryset = EducationalHeadquarter.objects.all().select_related(
+        'educational_institution',
+        'local_headquarter',
+        'regional_headquarter'
+    ).prefetch_related('members', 'events')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -375,21 +415,20 @@ class EducationalViewSet(viewsets.ModelViewSet):
             permission_classes = (IsEducationalCommander,)
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в штаб."""
-        headquarter = self.get_object()
-        applications = UserEducationalApplication.objects.filter(
-            headquarter=headquarter
-        )
-        serializer = UserEducationalApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserEducationalApplication
+
+    def get_application_serializer(self):
+        return UserEducationalApplicationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserEducationalApplicationShortReadSerializer
 
 
-class DetachmentViewSet(viewsets.ModelViewSet):
+class DetachmentViewSet(ApplicationsMixin, 
+                        VerificationsMixin, 
+                        DetachmentLeadershipMixin, 
+                        viewsets.ModelViewSet):
     """Представляет информацию об отряде.
 
     Может привязываться к местному штабу по ключу local_headquarter (id).
@@ -413,9 +452,17 @@ class DetachmentViewSet(viewsets.ModelViewSet):
     Доступна сортировка по ключу ordering по полям name и founding_date.
     При указании registry=True в качестве query_param, выводит список объектов,
     адаптированный под блок "Реестр участников".
+    Доступна фильтрация для applications и verifications по ключу user_id.
     """
 
-    queryset = Detachment.objects.all()
+    queryset = Detachment.objects.all().select_related(
+        'area', 
+        'region', 
+        'educational_institution',
+        'educational_headquarter',
+        'local_headquarter',
+        'regional_headquarter'
+    ).prefetch_related('events', 'members')
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
     )
@@ -446,28 +493,20 @@ class DetachmentViewSet(viewsets.ModelViewSet):
         permission_classes = (IsDetachmentCommander, )
         return [permission() for permission in permission_classes]
 
-    @action(detail=True, methods=['get', ], url_path='applications')
-    @swagger_auto_schema(responses=applications_response)
-    def get_applications(self, request, pk=None):
-        """Получить список заявок на вступление в отряд."""
-        detachment = self.get_object()
-        applications = UserDetachmentApplication.objects.filter(
-            detachment=detachment
-        )
-        serializer = UserDetachmentApplicationReadSerializer(
-            instance=applications, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_model(self):
+        return UserDetachmentApplication
 
-    @action(detail=True, methods=['get', ], url_path='verifications')
-    def get_verifications(self, request, pk=None):
-        """Получить список членов отряда, подавших заявку на верификацию."""
-        detachment = self.get_object()
-        members_to_verify = get_detachment_members_to_verify(detachment)
-        serializer = UserVerificationReadSerializer(
-            instance=members_to_verify, many=True
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_application_serializer(self):
+        return UserDetachmentApplicationReadSerializer
+
+    def get_verification_serializer(self):
+        return UserVerificationReadSerializer
+
+    def get_application_short_serializer(self):
+        return UserDetachmentApplicationShortReadSerializer
+
+    def get_func_members_to_verify(self):
+        return get_detachment_members_to_verify
 
 
 class BasePositionViewSet(viewsets.ModelViewSet):
@@ -490,6 +529,20 @@ class BasePositionViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(settings.HEADQUARTERS_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    def filter_by_user_id(self, queryset):
+        """Фильтрация участников структурной единицы по user_id."""
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    def filter_by_trusted_user_id(self, queryset):
+        """Фильтрация участников структурной единицы по user_id."""
+        user_id = self.request.query_params.get('trusted_user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id, is_trusted=True)
+        return queryset
 
     def filter_by_name(self, queryset):
         """Фильтрация участников структурной единицы по имени (first_name)."""
@@ -524,6 +577,8 @@ class CentralPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
+    Доступен фильтр по trusted_user_id: `?trusted_user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -533,11 +588,11 @@ class CentralPositionViewSet(BasePositionViewSet):
     ordering_fields = ('user__last_name', 'user__date_of_birth',)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(self.filter_by_trusted_user_id(get_headquarter_users_positions_queryset(
             self,
             CentralHeadquarter,
             UserCentralHeadquarterPosition
-        )
+        ))).select_related('headquarter', 'user__media', 'position')
 
     @method_decorator(cache_page(settings.CENTRALHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -550,6 +605,8 @@ class DistrictPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
+    Доступен фильтр по trusted_user_id: `?trusted_user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
 
@@ -558,11 +615,11 @@ class DistrictPositionViewSet(BasePositionViewSet):
     serializer_class = DistrictPositionSerializer
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(self.filter_by_trusted_user_id(get_headquarter_users_positions_queryset(
             self,
             DistrictHeadquarter,
             UserDistrictHeadquarterPosition
-        )
+        ))).select_related('headquarter', 'user__media', 'position')
 
     @method_decorator(cache_page(settings.DISTRCICTHQ_MEMBERS_CACHE_TTL))
     def list(self, request, *args, **kwargs):
@@ -575,6 +632,8 @@ class RegionalPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
+    Доступен фильтр по trusted_user_id: `?trusted_user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -586,11 +645,11 @@ class RegionalPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(self.filter_by_trusted_user_id(get_headquarter_users_positions_queryset(
             self,
             RegionalHeadquarter,
             UserRegionalHeadquarterPosition
-        )
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class LocalPositionViewSet(BasePositionViewSet):
@@ -599,6 +658,8 @@ class LocalPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
+    Доступен фильтр по trusted_user_id: `?trusted_user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -610,11 +671,11 @@ class LocalPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(self.filter_by_trusted_user_id(get_headquarter_users_positions_queryset(
             self,
             LocalHeadquarter,
             UserLocalHeadquarterPosition
-        )
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class EducationalPositionViewSet(BasePositionViewSet):
@@ -623,6 +684,8 @@ class EducationalPositionViewSet(BasePositionViewSet):
     Доступно только командиру.
 
     Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен фильтр по user_id: `?user_id=<int>`
+    Доступен фильтр по trusted_user_id: `?trusted_user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
     user__last_name, user__date_of_birth
     """
@@ -634,11 +697,11 @@ class EducationalPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(self.filter_by_trusted_user_id(get_headquarter_users_positions_queryset(
             self,
             EducationalHeadquarter,
             UserEducationalHeadquarterPosition
-        )
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class DetachmentPositionViewSet(BasePositionViewSet):
@@ -646,9 +709,11 @@ class DetachmentPositionViewSet(BasePositionViewSet):
 
     Доступно только командиру.
 
-    Доступен поиск по username, first_name, last_name, patronymic_name
+    Доступен поиск по username, first_name, last_name, patronymic_name.
+    Доступен фильтр по user_id: `?user_id=<int>`
+    Доступен фильтр по trusted_user_id: `?trusted_user_id=<int>`
     Доступна сортировка по ключу ordering по следующим полям:
-    user__last_name, user__date_of_birth
+    user__last_name, user__date_of_birth.
     """
 
     serializer_class = DetachmentPositionSerializer
@@ -658,11 +723,11 @@ class DetachmentPositionViewSet(BasePositionViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_headquarter_users_positions_queryset(
+        return self.filter_by_user_id(self.filter_by_trusted_user_id(get_headquarter_users_positions_queryset(
             self,
             Detachment,
             UserDetachmentPosition
-        )
+        ))).select_related('headquarter', 'user__media', 'position')
 
 
 class BaseAcceptRejectViewSet(CreateDeleteViewSet):
@@ -687,7 +752,6 @@ class BaseAcceptRejectViewSet(CreateDeleteViewSet):
         )
         application.delete()
         serializer.save(user=user, headquarter=headquarter)
-
 
     @swagger_auto_schema(
                 request_body=openapi.Schema(
@@ -1126,7 +1190,9 @@ class PositionAutoComplete(autocomplete.Select2QuerySetView):
 
 
 class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Detachment.objects.all()
+    queryset = Detachment.objects.all().select_related(
+        'local_headquarter', 'educational_headquarter', 'regional_headquarter'
+    )
     serializer_class = DetachmentListSerializer
     filter_backends = (
         filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter
@@ -1135,22 +1201,30 @@ class DetachmentListViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ('name',)
     ordering = ('name',)
 
-
     @method_decorator(cache_page(settings.DETANCHMENT_LIST_CACHE_TTL))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        regional_headquarter = self.request.query_params.get('regional_headquarter')
+        regional_headquarter = self.request.query_params.get(
+            'regional_headquarter'
+        )
         local_headquarter = self.request.query_params.get('local_headquarter')
-        educational_headquarter = self.request.query_params.get('educational_headquarter')
+        educational_headquarter = self.request.query_params.get(
+            'educational_headquarter'
+        )
 
         if regional_headquarter:
-            queryset = queryset.filter(regional_headquarter=regional_headquarter)
+            queryset = queryset.filter(
+                regional_headquarter=regional_headquarter
+            )
         if local_headquarter:
             queryset = queryset.filter(local_headquarter=local_headquarter)
         if educational_headquarter:
-            queryset = queryset.filter(educational_headquarter=educational_headquarter)
+            queryset = queryset.filter(
+                educational_headquarter=educational_headquarter
+            )
 
         return queryset
+    

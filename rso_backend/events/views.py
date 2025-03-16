@@ -5,6 +5,7 @@ from dal import autocomplete
 from django.conf import settings
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -20,12 +21,9 @@ from api.mixins import (CreateListRetrieveDestroyViewSet,
                         ListRetrieveDestroyViewSet,
                         RetrieveUpdateDestroyViewSet)
 from api.permissions import (IsApplicantOrOrganizer,
-                             IsAuthorMultiEventApplication, IsCommander,
-                             IsDetachmentCommander, IsDistrictCommander,
-                             IsEducationalCommander, IsEventAuthor,
+                             IsAuthorMultiEventApplication, IsCommander, IsEventAuthor,
                              IsEventOrganizer, IsEventOrganizerOrAuthor,
-                             IsLocalCommander, IsRegionalCommander,
-                             IsStuffOrCentralCommander, IsVerifiedPermission)
+                             IsVerifiedPermission)
 from events.constants import EVENT_APPLICATIONS_MODEL
 from events.filters import EventFilter
 from events.models import (Event, EventAdditionalIssue, EventApplications,
@@ -33,6 +31,8 @@ from events.models import (Event, EventAdditionalIssue, EventApplications,
                            EventOrganizationData, EventParticipants,
                            EventTimeData, EventUserDocument,
                            GroupEventApplicant, GroupEventApplication)
+from events.permissions import IsLocalCommanderOrLower, IsEducationalCommanderOrLower, IsRegionalCommanderOrLower, \
+    IsDistrictCommanderOrLower, IsCentralCommanderOrLower, IsDetachmentCommander
 from events.serializers import (AnswerSerializer,
                                 CreateMultiEventApplicationSerializer,
                                 EventAdditionalIssueSerializer,
@@ -88,18 +88,26 @@ class EventViewSet(viewsets.ModelViewSet):
     Фильтры и поиск можно комбинировать для создания сложных запросов.
     """
 
-    queryset = Event.objects.all()
+    queryset = Event.objects.all().select_related(
+        'time_data',
+        'document_data',
+        'author__media'
+    ).prefetch_related(
+        'additional_issues', 
+        'documents',
+        Prefetch('organization_data', EventOrganizationData.objects.all().select_related('organizer__media')),
+    )
     serializer_class = EventSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_class = EventFilter
     search_fields = ('name', 'address', 'description',)
 
     _PERMISSIONS_MAPPING = {
-        'Всероссийское': IsStuffOrCentralCommander,
-        'Окружное': IsDistrictCommander,
-        'Региональное': IsRegionalCommander,
-        'Городское': IsLocalCommander,
-        'Образовательное': IsEducationalCommander,
+        'Всероссийское': IsCentralCommanderOrLower,
+        'Окружное': IsDistrictCommanderOrLower,
+        'Региональное': IsRegionalCommanderOrLower,
+        'Городское': IsLocalCommanderOrLower,
+        'Образовательное': IsEducationalCommanderOrLower,
         'Отрядное': IsDetachmentCommander,
     }
 
@@ -192,7 +200,7 @@ class EventOrganizationDataViewSet(viewsets.ModelViewSet):
     Добавленные пользователь могу иметь доступ к редактированию информации о
     мероприятии, а также рассмотрение и принятие/отклонение заявок на участие.
     """
-    queryset = EventOrganizationData.objects.all()
+    queryset = EventOrganizationData.objects.all().select_related('organizer__media')
     serializer_class = EventOrganizerDataSerializer
     permission_classes = (IsEventAuthor,)
 
@@ -281,7 +289,9 @@ class EventApplicationsViewSet(CreateListRetrieveDestroyViewSet):
         - чтение и удаление - авторы заявок либо пользователи
           из модели организаторов;
     """
-    queryset = EventApplications.objects.all()
+    queryset = EventApplications.objects.all().select_related(
+        'user__media',
+    )
     serializer_class = EventApplicationsSerializer
     filter_backends = (filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter)
     search_fields = (
@@ -442,7 +452,9 @@ class EventParticipantsViewSet(ListRetrieveDestroyViewSet):
         - чтение: только для пользователей из модели
                   организаторов мероприятий.
     """
-    queryset = EventParticipants.objects.all()
+    queryset = EventParticipants.objects.all().select_related(
+        'user__media'
+    )
     serializer_class = EventParticipantsSerializer
     permission_classes = (permissions.IsAuthenticated, IsEventOrganizer)
 
@@ -526,7 +538,7 @@ class AnswerDetailViewSet(RetrieveUpdateDestroyViewSet):
           либо пользователи из модели организаторов.
         - чтение - автор заявки, либо пользователи из модели организаторов.
     """
-    queryset = EventIssueAnswer.objects.all()
+    queryset = EventIssueAnswer.objects.all().select_related('issue')
     serializer_class = AnswerSerializer
     permission_classes = (permissions.IsAuthenticated, IsApplicantOrOrganizer)
 
@@ -577,7 +589,7 @@ class EventUserDocumentViewSet(viewsets.ModelViewSet):
         - чтение(лист) - только пользователи
           из модели организаторов мероприятий.
     """
-    queryset = EventUserDocument.objects.all()
+    queryset = EventUserDocument.objects.all().select_related('user__media')
     serializer_class = EventUserDocumentSerializer
     permission_classes = (permissions.IsAuthenticated, IsEventOrganizer)
 

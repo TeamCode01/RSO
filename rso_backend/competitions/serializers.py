@@ -23,7 +23,7 @@ from competitions.models import (Q7, Q8, Q9, Q10, Q11, Q12,
                                  PatrioticActionBlock, DemonstrationBlock, SpartakiadBlock)
 from headquarters.models import Detachment
 from headquarters.serializers import (BaseShortUnitSerializer,
-                                      ShortDetachmentSerializer)
+                                      ShortDetachmentSerializer, ShortRegionalHeadquarterSerializer)
 from users.short_serializers import ShortUserSerializer
 
 
@@ -143,6 +143,33 @@ class ShortRegionalDetachmentCompetitionSerializer(
         model = Detachment
         fields = ShortDetachmentCompetitionSerializer.Meta.fields + (
             'regional_headquarter_name',
+        )
+
+
+class ShortRegionalObjectDetachmentCompetitionSerializer(
+    ShortDetachmentCompetitionSerializer
+):
+    regional_headquarter = ShortRegionalHeadquarterSerializer()
+
+    class Meta:
+        model = Detachment
+        fields = ShortDetachmentCompetitionSerializer.Meta.fields + (
+            'regional_headquarter',
+        )
+
+
+class CompetitionParticipantsRegObjectSerializer(serializers.ModelSerializer):
+    detachment = ShortRegionalObjectDetachmentCompetitionSerializer()
+    junior_detachment = ShortRegionalObjectDetachmentCompetitionSerializer()
+
+    class Meta:
+        model = CompetitionParticipants
+        fields = (
+            'id',
+            'competition',
+            'detachment',
+            'junior_detachment',
+            'created_at'
         )
 
 
@@ -959,6 +986,11 @@ class Q5EducatedParticipantSerializer(serializers.ModelSerializer):
             'is_verified'
         )
         read_only_fields = ('is_verified', 'detachment_report')
+
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        repr['document'] = 'https://' + settings.DEFAULT_SITE_URL + repr['document']
+        return repr
 
 
 class Q5DetachmentReportReadSerializer(serializers.ModelSerializer):
