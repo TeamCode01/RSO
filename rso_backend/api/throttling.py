@@ -40,6 +40,7 @@ class AnonRateThrottleCustom(AnonRateThrottle):
             return False
         self.history.insert(0, self.now)
         self.cache.set(self.key, self.history, self.duration)
+        print(f'anon ip: {ip}')
         return True
 
 

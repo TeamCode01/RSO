@@ -479,6 +479,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'api.utils.Limit250OffsetPagination',
     'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
+    'NUM_PROXIES': 1,
 }
 
 # For VK ID

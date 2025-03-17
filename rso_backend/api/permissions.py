@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from api.utils import (check_commander_or_not, check_roles_for_edit,
                        check_trusted_for_centralhead,
@@ -1298,6 +1299,18 @@ class BlocklistPermission(permissions.BasePermission):
     """Проверяет заблокирован ли ip-адрес-пользователя."""
 
     def has_permission(self, request, view):
-        ip_addr = request.META['REMOTE_ADDR']
+        xff = request.META.get('HTTP_X_FORWARDED_FOR')
+        remote_addr = request.META.get('REMOTE_ADDR')
+        # у нас пока один прокси - nginx, нужно поменять при изменении ситуации
+        num_proxies = api_settings.NUM_PROXIES
+
+        if num_proxies is not None:
+            if num_proxies == 0 or xff is None:
+                return remote_addr
+            addrs = xff.split(',')
+            client_addr = addrs[-min(num_proxies, len(addrs))]
+            return client_addr.strip()
+
+        ip_addr = ''.join(xff.split()) if xff else remote_addr
         blocked = Blocklist.objects.filter(ip_addr=ip_addr).exists()
         return not blocked
