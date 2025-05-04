@@ -453,9 +453,12 @@ def create_excel_file(title: str, headers: list, rows: list) -> BytesIO:
 
 def get_report_data(model, serializer_class):
     """Получает данные из модели и сериализует их."""
-    reports = model.objects.filter(
-        Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
-    )
+    if model.__name__ in ['RegionalR2', 'RegionalR3', 'RegionalR7', 'RegionalR8', 'RegionalR14', 'RegionalR15']:
+        reports = model.objects.all()
+    else:
+        reports = model.objects.filter(
+            Q(verified_by_chq=True) | Q(verified_by_chq__isnull=True),
+        )
     rows = []
     headers_written = False
 
@@ -525,7 +528,6 @@ def get_reports_from_mass_competitions(main_report_number: int):
     return generate_report_response(f'Reports_{main_report_number}', file_content)
 
 
-
 def get_all_models(module_name: str):
     """Возвращает список всех моделей RegionalR из заданного модуля и динамически созданных моделей."""
     all_models = ['DumpStatisticalRegionalReport', 'StatisticalRegionalReport',]
@@ -549,6 +551,7 @@ def generate_rhq_xlsx_report(regional_headquarter_id: int) -> HttpResponse:
 
     for model_name in models_list:
         report_number = model_name.split('RegionalR')[1]
+
         model = apps.get_model('regional_competitions', model_name)
         if model_name == 'DumpStatisticalRegionalReport':
             if not model.objects.filter(regional_headquarter_id=regional_headquarter_id).exists():

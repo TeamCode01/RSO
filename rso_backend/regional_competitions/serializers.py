@@ -13,9 +13,9 @@ from regional_competitions.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAG
                                              REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
                                              STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions.factories import RSerializerFactory
-from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, Ranking, RegionalR1, RegionalR15,
+from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, Ranking, RegionalR1, RegionalR14, RegionalR15,
                                           RegionalR18,
-                                          RegionalR18Link, RegionalR18Project, RegionalR2,
+                                          RegionalR18Link, RegionalR18Project, RegionalR2, RegionalR3,
                                           RegionalR4, RegionalR4Event,
                                           RegionalR4Link, RegionalR5,
                                           RegionalR5Event, RegionalR5Link,
@@ -25,7 +25,7 @@ from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegion
                                           RegionalR17, RegionalR19,
                                           RegionalR101, RegionalR101Link,
                                           RegionalR102, RegionalR102Link,
-                                          RVerificationLog,
+                                          RVerificationLog, RegionalR7, RegionalR8,
                                           StatisticalRegionalReport,
                                           r6_models_factory, r9_models_factory, AdditionalStatistic)
 from regional_competitions.utils import get_report_number_by_class_name
@@ -553,6 +553,13 @@ class RegionalR2Serializer(serializers.ModelSerializer):
             'score',
         )
 
+class RegionalR3Serializer(BaseRSerializer):
+    """Сериализатор используется в выгрузках отчетов."""
+
+    class Meta:
+        model = RegionalR3
+        fields = '__all__'
+
 
 class RegionalR4LinkSerializer(BaseLinkSerializer):
     class Meta:
@@ -693,6 +700,22 @@ r6_serializers_factory.create_serializer_classes()
 # r7_serializers_factory.create_serializer_classes()
 
 
+class RegionalR7Serializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки данных по 7-му показателю в эксель отчёты."""
+
+    class Meta:
+        model = RegionalR7
+        fields = '__all__'
+
+
+class RegionalR8Serializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки данных по 8-му показателю в эксель отчёты."""
+
+    class Meta:
+        model = RegionalR8
+        fields = '__all__'
+
+
 class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
     objects_name = 'links'
 
@@ -803,6 +826,23 @@ class RegionalR13Serializer(BaseRSerializer, FileScanSizeSerializerMixin):
                 + ('comment', 'number_of_members', 'scan_file')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+
+class RegionalR14Serializer(serializers.ModelSerializer):
+    """Сериализатор используется в выгрузках отчетов."""
+
+    class Meta:
+        model = RegionalR14
+        fields = (
+            'id',
+            'regional_headquarter',
+            'score',
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+            'score',
+        )
 
 
 class RegionalR15Serializer(serializers.ModelSerializer):

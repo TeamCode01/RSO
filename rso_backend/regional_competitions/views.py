@@ -29,9 +29,9 @@ from regional_competitions.constants import (R6_DATA, R7_DATA, R9_EVENTS_NAMES,
 from regional_competitions.factories import RViewSetFactory
 from regional_competitions.filters import StatisticalRegionalReportFilter
 from regional_competitions.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
-                                          RegionalRMixin, ListRetrieveCreateMixin)
+                                          RegionalRMixin, ListRetrieveCreateMixin, DownloadReportXlsxMixin)
 from regional_competitions.models import (CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, Ranking,
-                                          RegionalR1, RegionalR15, RegionalR18,
+                                          RegionalR1, RegionalR15, RegionalR18, RegionalR2,
                                           RegionalR4, RegionalR5, RegionalR11,
                                           RegionalR12, RegionalR13,
                                           RegionalR16, RegionalR17,
@@ -44,7 +44,7 @@ from regional_competitions.permissions import (IsCentralHeadquarterExpert, IsCen
                                                IsRegionalCommander, IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions.serializers import (
     DumpStatisticalRegionalReportSerializer, EventNameSerializer, FileUploadSerializer, MassSendSerializer, RankingSerializer, RegionalR15Serializer, RegionalR18Serializer,
-    RegionalR1Serializer, RegionalR4Serializer, RegionalR5Serializer,
+    RegionalR1Serializer, RegionalR2Serializer, RegionalR4Serializer, RegionalR5Serializer,
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
@@ -652,6 +652,10 @@ class RegionalEventNamesRViewSet(GenericViewSet):
         return Response(event_data)
 
 
+class BaseRegionalRAutoViewSet(DownloadReportXlsxMixin, GenericViewSet):
+    """Базовый вьюсет для выгрузки автоматических отчетов."""
+
+
 class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR1.objects.all()
     serializer_class = RegionalR1Serializer
@@ -664,6 +668,12 @@ class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, Send
     serializer_class = RegionalR1Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
+class RegionalR2AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 2 показателю."""
+
+
+class RegionalR3AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 3 показателю."""
 
 class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
@@ -725,6 +735,9 @@ r6_view_sets_factory = RViewSetFactory(
 r6_view_sets_factory.create_view_sets()
 
 
+class RegionalR7AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 7 показателю."""
+
 # r7_view_sets_factory = RViewSetFactory(
 #     models=r7_models_factory.models,
 #     serializers=r7_serializers_factory.serializers,
@@ -733,6 +746,11 @@ r6_view_sets_factory.create_view_sets()
 #     additional_parental_class=FormDataNestedFileParser
 # )
 # r7_view_sets_factory.create_view_sets()
+
+
+class RegionalR8AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 8 показателю."""
+
 
 r9_view_sets_factory = RViewSetFactory(
     models=r9_models_factory.models,
@@ -862,7 +880,11 @@ class RegionalR13MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, Sen
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR15ViewSet(RetrieveModelMixin, GenericViewSet):
+class RegionalR14AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 14 показателю."""
+
+
+class RegionalR15ViewSet(DownloadReportXlsxMixin, RetrieveModelMixin, GenericViewSet,):
     queryset = RegionalR15.objects.all()
     serializer_class = RegionalR15Serializer
     permission_classes = (permissions.IsAuthenticated,)
