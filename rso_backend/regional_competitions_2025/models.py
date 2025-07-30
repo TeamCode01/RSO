@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import PositiveSmallIntegerField, Q
+from django.db.models import Q
 from django.db.models.constraints import CheckConstraint
 from regional_competitions_2025.constants import R6_DATA, R9_EVENTS_NAMES, REPORT_EXISTS_MESSAGE
 from regional_competitions_2025.factories import RModelFactory
@@ -14,7 +14,7 @@ from regional_competitions_2025.utils import (current_year, get_last_rcompetitio
 
 class RCompetition(models.Model):
     """Список конкурсов региональных штабов"""
-    year = models.IntegerField(
+    year = models.PositiveSmallIntegerField(
         verbose_name='Год проведения',
         default=current_year
     )
@@ -31,15 +31,14 @@ class DumpStatisticalRegionalReport(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
-    regional_headquarter = models.OneToOneField(
+    regional_headquarter = models.ForeignKey(
         'headquarters.RegionalHeadquarter',
-        on_delete=models.CASCADE,
-        verbose_name='Региональный штаб'
+        on_delete=models.PROTECT,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s'
     )
     participants_number = models.PositiveIntegerField(
         verbose_name='Количество членов регионального отделения'
@@ -86,10 +85,21 @@ class DumpStatisticalRegionalReport(models.Model):
         blank=True,
         null=True
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
 
     class Meta:
         verbose_name_plural = 'Дампы статистических отчетов РШ (1 сентября)'
         verbose_name = 'Дамп статистического отчета РШ (1 сентября)'
+        constraints = [
+            models.UniqueConstraint(fields=['r_competition', 'regional_headquarter'], name='unique_rcompetition_rhq')
+        ]
 
     def __str__(self):
         return f'Дамп статистического отчет отряда {self.regional_headquarter.name}'
@@ -102,15 +112,14 @@ class StatisticalRegionalReport(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
-    regional_headquarter = models.OneToOneField(
+    regional_headquarter = models.ForeignKey(
         'headquarters.RegionalHeadquarter',
-        on_delete=models.CASCADE,
-        verbose_name='Региональный штаб'
+        on_delete=models.PROTECT,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s'
     )
     participants_number = models.PositiveIntegerField(
         verbose_name='Количество членов регионального отделения'
@@ -157,10 +166,21 @@ class StatisticalRegionalReport(models.Model):
         blank=True,
         null=True
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
 
     class Meta:
         verbose_name_plural = 'Статистические отчеты РШ'
         verbose_name = 'Статистический отчет РШ'
+        constraints = [
+            models.UniqueConstraint(fields=['r_competition', 'regional_headquarter'], name='unique_rcompetition_rhq')
+        ]
 
     def __str__(self):
         return f'Отчет отряда {self.regional_headquarter.name}'
@@ -170,11 +190,19 @@ class AdditionalStatistic(models.Model):
     statistical_report = models.ForeignKey(
         'StatisticalRegionalReport',
         on_delete=models.CASCADE,
-        related_name='additional_statistics_2025',
+        related_name='additional_statistics',
         verbose_name='Статистический отчет'
     )
     name = models.CharField(verbose_name='Наименование', max_length=255)
     value = models.PositiveIntegerField(verbose_name='Значение')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
 
     class Meta:
         verbose_name_plural = 'Свои варианты - статистические отчеты'
@@ -189,8 +217,6 @@ class BaseRegionalR(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -312,8 +338,6 @@ class RVerificationLog(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -323,7 +347,7 @@ class RVerificationLog(models.Model):
         null=True,
         blank=True,
         verbose_name='Верифицирующее лицо',
-        related_name='r_verification_logs_2025'
+        related_name='r_verification_logs'
     )
     district_headquarter = models.ForeignKey(
         'headquarters.DistrictHeadquarter',
@@ -331,7 +355,7 @@ class RVerificationLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Верифицирующий ОШ',
-        related_name='r_verification_logs_2025'
+        related_name='r_verification_logs'
     )
     central_headquarter = models.ForeignKey(
         'headquarters.CentralHeadquarter',
@@ -339,7 +363,7 @@ class RVerificationLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Верифицирующий ЦШ',
-        related_name='r_verification_logs_2025'
+        related_name='r_verification_logs'
     )
     regional_headquarter = models.ForeignKey(
         'headquarters.RegionalHeadquarter',
@@ -347,13 +371,13 @@ class RVerificationLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Региональный штаб',
-        related_name='r_verification_logs_2025'
+        related_name='r_verification_logs'
     )
     is_regional_data = models.BooleanField(default=False, verbose_name='Данные РШ')
     is_district_data = models.BooleanField(default=False, verbose_name='Данные ОШ')
     is_central_data = models.BooleanField(default=False, verbose_name='Данные ЦШ')
-    report_number = PositiveSmallIntegerField(verbose_name='Номер показателя')
-    report_id = PositiveSmallIntegerField(verbose_name='ID отчета')
+    report_number = models.BigIntegerField(verbose_name='Номер показателя')
+    report_id = models.BigIntegerField(verbose_name='ID отчета')
     data = models.JSONField(verbose_name='Изменения')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата изменений')
 
@@ -384,8 +408,6 @@ class CHqRejectingLog(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -402,10 +424,10 @@ class CHqRejectingLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Региональный штаб',
-        related_name='r_rejecting_reasons_2025'
+        related_name='r_rejecting_reasons'
     )
-    report_number = PositiveSmallIntegerField(verbose_name='Номер показателя')
-    report_id = PositiveSmallIntegerField(verbose_name='Айди показателя')
+    report_number = models.BigIntegerField(verbose_name='Номер показателя')
+    report_id = models.BigIntegerField(verbose_name='Айди показателя')
     reasons = models.JSONField(verbose_name='Причины отклонения')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата изменений')
 
@@ -454,8 +476,6 @@ class RegionalR2(BaseScore, models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -498,12 +518,10 @@ class RegionalR3(BaseScore):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
-    amount_of_membership_fees_2023 = models.PositiveIntegerField(
+    amount_of_membership_fees_last_year = models.PositiveIntegerField(
         validators=[MinValueValidator(0)]
     )
 
@@ -526,7 +544,7 @@ class RegionalR4Event(BaseEventOrProject):
         'RegionalR4',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
-        related_name='events_2025'
+        related_name='events'
     )
     is_interregional = models.BooleanField(
         verbose_name='Межрегиональное',
@@ -552,7 +570,7 @@ class RegionalR4Link(BaseLink):
         'RegionalR4Event',
         on_delete=models.CASCADE,
         verbose_name='Мероприятие',
-        related_name='links_2025',
+        related_name='links',
     )
 
 
@@ -576,7 +594,7 @@ class RegionalR5Event(BaseEventOrProject):
         'RegionalR5',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
-        related_name='events_2025'
+        related_name='events'
     )
     participants_number = models.PositiveIntegerField(
         verbose_name='Общее количество участников',
@@ -607,7 +625,7 @@ class RegionalR5Link(BaseLink):
         'RegionalR5Event',
         on_delete=models.CASCADE,
         verbose_name='Мероприятие',
-        related_name='links_2025',
+        related_name='links',
     )
 
 
@@ -680,14 +698,12 @@ class RegionalR7(models.Model):
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
-        related_name='regional_r7_2025'
+        related_name='regional_r7'
     )
     r_competition = models.ForeignKey(
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -745,8 +761,6 @@ class RegionalR8(BaseScore):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -837,7 +851,7 @@ class RegionalR101Link(models.Model):
         'RegionalR101',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
-        related_name='links_2025'
+        related_name='links'
     )
     link = models.URLField(
         verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции',
@@ -867,7 +881,7 @@ class RegionalR102Link(models.Model):
         'RegionalR102',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
-        related_name='links_2025'
+        related_name='links'
     )
     link = models.URLField(
         verbose_name='Ссылка на социальные сети/электронные СМИ, подтверждающие проведение акции',
@@ -977,8 +991,6 @@ class RegionalR14(BaseScore):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -986,13 +998,13 @@ class RegionalR14(BaseScore):
         'RegionalR12',
         on_delete=models.CASCADE,
         verbose_name='Отчет 12',
-        related_name='report_14_2025'
+        related_name='report_14'
     )
     report_13 = models.ForeignKey(
         'RegionalR13',
         on_delete=models.CASCADE,
         verbose_name='Отчет 13',
-        related_name='report_14_2025'
+        related_name='report_14'
     )
 
     class Meta:
@@ -1015,8 +1027,6 @@ class RegionalR15(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -1069,7 +1079,7 @@ class RegionalR16Project(models.Model):
         'RegionalR16',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
-        related_name='projects_2025'
+        related_name='projects'
     )
     name = models.TextField(
         verbose_name='Наименование проекта, в котором ЛСО РО одержал победу',
@@ -1100,7 +1110,7 @@ class RegionalR16Link(models.Model):
         'RegionalR16Project',
         on_delete=models.CASCADE,
         verbose_name='Проект',
-        related_name='links_2025',
+        related_name='links',
     )
     link = models.URLField(
         verbose_name='Ссылка на группу проекта в социальных сетях',
@@ -1129,8 +1139,6 @@ class RegionalR17(BaseComment, models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -1169,8 +1177,6 @@ class RegionalR18(models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -1201,7 +1207,7 @@ class RegionalR18Project(models.Model):
         'RegionalR18',
         on_delete=models.CASCADE,
         verbose_name='Отчет',
-        related_name='projects_2025'
+        related_name='projects'
     )
     file = models.FileField(
         upload_to=regional_comp_regulations_files_path,
@@ -1223,7 +1229,7 @@ class RegionalR18Link(models.Model):
         'RegionalR18Project',
         on_delete=models.CASCADE,
         verbose_name='Проект',
-        related_name='links_2025',
+        related_name='links',
     )
     link = models.URLField(
         verbose_name='Ссылка на публикацию',
@@ -1252,8 +1258,6 @@ class RegionalR19(BaseComment, models.Model):
         RCompetition,
         verbose_name='Рейтинг РО',
         on_delete=models.CASCADE,
-        null=True,  # Если в будущем не станем использовать этот pk
-        blank=True,
         default=get_last_rcompetition_id,
         related_name='%(app_label)s_%(class)s'
     )
@@ -1319,13 +1323,13 @@ class ExpertRole(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name='regional_expert_2025',
+        related_name='regional_expert',
     )
     central_headquarter = models.ForeignKey(
         'headquarters.CentralHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Центральный штаб',
-        related_name='regional_experts_2025',
+        related_name='regional_experts',
         blank=True,
         null=True
     )
@@ -1333,7 +1337,7 @@ class ExpertRole(models.Model):
         'headquarters.DistrictHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Окружной штаб',
-        related_name='regional_experts_2025',
+        related_name='regional_experts',
         blank=True,
         null=True
     )
@@ -1368,7 +1372,7 @@ class Ranking(models.Model):
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
-        related_name='regional_competitions_rankings_2025'
+        related_name='regional_competitions_rankings'
     )
     overall_place = models.PositiveSmallIntegerField(
         default=0,
