@@ -347,7 +347,7 @@ class RVerificationLog(models.Model):
         null=True,
         blank=True,
         verbose_name='Верифицирующее лицо',
-        related_name='r_verification_logs'
+        related_name='%(app_label)s_r_verification_logs'
     )
     district_headquarter = models.ForeignKey(
         'headquarters.DistrictHeadquarter',
@@ -355,7 +355,7 @@ class RVerificationLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Верифицирующий ОШ',
-        related_name='r_verification_logs'
+        related_name='%(app_label)s_r_verification_logs'
     )
     central_headquarter = models.ForeignKey(
         'headquarters.CentralHeadquarter',
@@ -363,7 +363,7 @@ class RVerificationLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Верифицирующий ЦШ',
-        related_name='r_verification_logs'
+        related_name='%(app_label)s_r_verification_logs'
     )
     regional_headquarter = models.ForeignKey(
         'headquarters.RegionalHeadquarter',
@@ -371,7 +371,7 @@ class RVerificationLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Региональный штаб',
-        related_name='r_verification_logs'
+        related_name='%(app_label)s_r_verification_logs'
     )
     is_regional_data = models.BooleanField(default=False, verbose_name='Данные РШ')
     is_district_data = models.BooleanField(default=False, verbose_name='Данные ОШ')
@@ -424,7 +424,7 @@ class CHqRejectingLog(models.Model):
         blank=True,
         null=True,
         verbose_name='Региональный штаб',
-        related_name='r_rejecting_reasons'
+        related_name='%(app_label)s_r_rejecting_reasons'
     )
     report_number = models.BigIntegerField(verbose_name='Номер показателя')
     report_id = models.BigIntegerField(verbose_name='Айди показателя')
@@ -698,7 +698,7 @@ class RegionalR7(models.Model):
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
-        related_name='regional_r7'
+        related_name='%(app_label)s_regional_r7'
     )
     r_competition = models.ForeignKey(
         RCompetition,
@@ -1323,13 +1323,13 @@ class ExpertRole(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name='regional_expert',
+        related_name='%(app_label)s_regional_expert',
     )
     central_headquarter = models.ForeignKey(
         'headquarters.CentralHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Центральный штаб',
-        related_name='regional_experts',
+        related_name='%(app_label)s_regional_experts',
         blank=True,
         null=True
     )
@@ -1337,7 +1337,7 @@ class ExpertRole(models.Model):
         'headquarters.DistrictHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Окружной штаб',
-        related_name='regional_experts',
+        related_name='%(app_label)s_regional_experts',
         blank=True,
         null=True
     )
@@ -1372,7 +1372,7 @@ class Ranking(models.Model):
         'headquarters.RegionalHeadquarter',
         on_delete=models.CASCADE,
         verbose_name='Региональный штаб',
-        related_name='regional_competitions_rankings'
+        related_name='%(app_label)s_regional_competitions_rankings'
     )
     overall_place = models.PositiveSmallIntegerField(
         default=0,
