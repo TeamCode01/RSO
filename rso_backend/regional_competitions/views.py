@@ -675,6 +675,7 @@ class RegionalR2AutoViewSet(BaseRegionalRAutoViewSet):
 class RegionalR3AutoViewSet(BaseRegionalRAutoViewSet):
     """Вьюсет для выгрузки автоматических отчетов по 3 показателю."""
 
+
 class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalR4Serializer
