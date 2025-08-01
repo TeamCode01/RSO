@@ -438,6 +438,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         """Скачивание данных отчета в формате XLSX."""
         return get_all_reports_from_competition(self.get_report_number())
 
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated,])
 def download_mass_reports_xlsx(_, pk):

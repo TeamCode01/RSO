@@ -12,10 +12,32 @@ from django.conf import settings
 from rest_framework.response import Response
 
 from headquarters.models import RegionalHeadquarter
-from regional_competitions.utils import get_all_reports_from_competition, get_report_number_by_class_name
+from regional_competitions_2025.utils import get_all_reports_from_competition, get_r_competition_by_year, get_report_number_by_class_name
+from regional_competitions_2025.models import RCompetition
 
 
 class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
+
+    @classmethod
+    def get_r_competition(cls, year, r_model):
+        return get_r_competition_by_year(year=year, r_model=RCompetition)
+
+    def get_queryset(self):
+        """Фильтрует queryset по году конкурса."""
+        queryset = super().get_queryset()
+        r_competition_year = self.request.query_params.get('year')
+
+        if r_competition_year:
+            try:
+                year = int(r_competition_year)
+                queryset = queryset.filter(r_competition__year=year)
+            except ValueError:
+                return queryset.none()
+        else:
+            from regional_competitions_2025.utils import current_year
+            queryset = queryset.filter(r_competition__year=current_year())
+
+        return queryset
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
@@ -24,7 +46,7 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
         if objects.exists():
             latest_object = objects.order_by('-id')[0]
             return latest_object
-        raise Http404("Страница не найдена")
+        raise Http404("Страница не найдена")
 
     def get_report_number(self):
         return get_report_number_by_class_name(self)
@@ -32,23 +54,33 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
     def perform_create(self, serializer):
         regional_hq = RegionalHeadquarter.objects.get(commander=self.request.user)
 
+        r_competition_year = self.request.query_params.get('year')
+        if r_competition_year:
+            r_competition = self.get_r_competition(r_competition_year, RCompetition)
+
         if 'verified_by_dhq' in serializer.Meta.fields:
             existing_reports = self.get_queryset().filter(regional_headquarter=regional_hq)
             verified_by_dhq = existing_reports.exists()
-            print(f'{verified_by_dhq=}')
             serializer.save(
                 regional_headquarter=regional_hq,
+                r_competition=r_competition,
                 verified_by_dhq=verified_by_dhq
             )
         else:
-            serializer.save(regional_headquarter=regional_hq)
+            serializer.save(
+                regional_headquarter=regional_hq,
+                r_competition=r_competition
+            )
 
     def perform_update(self, request, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
 
 class RegionalRMeMixin(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
-    pass
+
+    @classmethod
+    def get_r_competition(cls, year, r_model):
+        return get_r_competition_by_year(year=year, r_model=RCompetition)
 
 
 class ListRetrieveCreateMixin(RetrieveModelMixin, CreateModelMixin, ListModelMixin, GenericViewSet):

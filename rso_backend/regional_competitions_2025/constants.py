@@ -239,3 +239,5 @@ ro_members_in_rso_vk = {
 }
 
 MEDIA_PATH = 'https://лк.трудкрут.рф/media/'
+
+MEMBER_FEE = 50

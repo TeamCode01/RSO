@@ -1,11 +1,20 @@
 from django.contrib import admin
 
 from regional_competitions_2025.forms import ExpertUserForm
-from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Ranking, RegionalR2,
+from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, RCompetition, Ranking, RegionalR2,
                                                RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5,
                                                RegionalR5Event, RegionalR5Link, RegionalR11, RegionalR101,
                                                RegionalR101Link, RegionalR102, RegionalR102Link, RVerificationLog,
                                                RegionalR8, RegionalR7)
+
+
+@admin.register(RCompetition)
+class RCompetitionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'year')
+    ordering = ('-year',)
+    search_fields = ('year',)
+    list_filter = ('year',)
+
 
 
 # class AdditionalStatisticInline(admin.StackedInline):
@@ -269,6 +278,7 @@ class RegionalR4EventAdmin(admin.ModelAdmin):
 @admin.register(RegionalR4)
 class RegionalR4Admin(admin.ModelAdmin):
     list_display = (
+        'r_competition',
         'regional_headquarter',
         # 'get_id_regional_headquarter',
         'id',
@@ -280,8 +290,8 @@ class RegionalR4Admin(admin.ModelAdmin):
         'score',
     )
     readonly_fields = ('created_at', 'updated_at')
-    search_fields = ('regional_headquarter__name', 'comment')
-    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
+    search_fields = ('regional_headquarter__name', 'comment', 'r_competition__year')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq', 'r_competition__year')
     inlines = [RegionalR4EventAdminInline]
 
     # def get_id_regional_headquarter(self, obj):

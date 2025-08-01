@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, permissions, status
-from rest_framework.decorators import action, api_view, parser_classes, permission_classes
+from rest_framework.decorators import action, api_view, parser_classes
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.filters import OrderingFilter
@@ -26,13 +26,13 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions_2025.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                                RegionalRMixin, ListRetrieveCreateMixin, DownloadReportXlsxMixin)
-from regional_competitions_2025.models import (CHqRejectingLog, RVerificationLog, RegionalR4)
+from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RVerificationLog, RegionalR4)
 from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
                                                     IsDistrictHeadquarterExpert, IsRegionalCommander,
                                                     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions_2025.serializers import RegionalReport4Serializer
 from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
-from regional_competitions_2025.utils import (get_all_reports_from_competition, get_report_number_by_class_name,
+from regional_competitions_2025.utils import (current_year, get_all_reports_from_competition, get_report_number_by_class_name,
                                          swagger_schema_for_central_review,
                                          swagger_schema_for_create_and_update_methods,
                                          swagger_schema_for_district_review, swagger_schema_for_retrieve_method,
@@ -58,6 +58,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
             context.update(
                 {
                     'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                    'year': self.request.query_params.get('year')
                 }
             )
         return context
@@ -199,7 +200,8 @@ class BaseRegionalRViewSet(RegionalRMixin):
 
         queryset = self.filter_queryset(self.get_queryset())
         pk = self.kwargs.get('pk')
-        objects = queryset.filter(regional_headquarter_id=pk)
+        r_competition_year = self.request.query_params.get('year')
+        objects = queryset.filter(regional_headquarter_id=pk, r_competition__year=r_competition_year)
 
         if not last_regional_log:
             # если проверки нет, значит это итерация после отклонения со стороны ЦШ
@@ -321,7 +323,8 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         context.update(
             {
                 'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
-                'action': self.action
+                'action': self.action,
+                'year': self.request.query_params.get('year')
             }
         )
         return context
@@ -331,7 +334,18 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
             RegionalHeadquarter,
             commander=self.request.user
         )
-        report = self.model.objects.filter(regional_headquarter=regional_headquarter).last()
+
+        r_competition_year = self.request.query_params.get('year')
+        if r_competition_year:
+            r_competition = self.get_r_competition(r_competition_year)
+        else:
+            r_competition = self.get_r_competition(current_year(), self.model)
+
+        report = self.model.objects.filter(
+            regional_headquarter=regional_headquarter,
+            r_competition=r_competition
+        ).last()
+
         if report is None:
             raise Http404('Отчет по данному показателю не найден')
         return report
@@ -340,6 +354,9 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         """Редактирует актуальную версию отчета для командира регионального штаба.
 
         Метод идемпотентен. Поддерживается динамическое обновление
+
+        Query параметры:
+        - year: год конкурса (опционально, по умолчанию текущий год)
         """
         serializer = self.get_serializer(
             self.get_object(), data=self.request.data, partial=kwargs.get('partial', False)
@@ -358,6 +375,9 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         - `central_version`: Данные последней версии отчета, отправленные (измененные) центральным штабом.
         - `rejecting_reasons`: Причины отклонения отчета центральным штабом, если таковые имеются.
 
+        Query параметры:
+        - year: год конкурса (опционально, по умолчанию текущий год)
+
         Возвращает:
         - 200 OK и данные отчета в случае успеха.
         - 404 Not Found, если отчет не найден.
@@ -365,20 +385,63 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         return Response(self.get_serializer(self.get_object()).data)
 
     def perform_create(self, serializer):
-        serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
+        regional_hq = RegionalHeadquarter.objects.get(commander=self.request.user)
+
+        r_competition_year = self.request.query_params.get('year')
+        if r_competition_year:
+            r_competition = self.get_r_competition(r_competition_year)
+
+        serializer.save(
+            regional_headquarter=regional_hq,
+            r_competition=r_competition
+        )
 
     def get_report_number(self):
         return get_report_number_by_class_name(self)
 
 
+class BaseRegionalRAutoViewSet(DownloadReportXlsxMixin, GenericViewSet):
+    """Базовый вьюсет для выгрузки автоматических отчетов."""
+
+
+# class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+#     queryset = RegionalR1.objects.all()
+#     serializer_class = RegionalR1Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+# class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
+#     model = RegionalR1
+#     queryset = RegionalR1.objects.all()
+#     serializer_class = RegionalR1Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
 class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+    """
+    Вьюсет для работы с 4 показателем.
+    ID - ожидается id регионального штаба.
+
+    Query параметры:
+    - year: год конкурса (опционально, по умолчанию текущий год)
+    """
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalReport4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
 class RegionalR4MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
+    """
+    Вьюсет для работы с 4 показателем для командира регионального штаба.
+
+    Query параметры:
+    - year: год конкурса (опционально, по умолчанию текущий год)
+    """
     model = RegionalR4
     queryset = RegionalR4.objects.all()
     serializer_class = RegionalReport4Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR7AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 7 показателю."""

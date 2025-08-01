@@ -86,9 +86,7 @@ def swagger_schema_for_retrieve_method(serializer_cls):
         @wraps(func)
         def wrapped(self, *args, **kwargs):
             return func(self, *args, **kwargs)
-
         return wrapped
-
     return decorator
 
 
@@ -143,15 +141,24 @@ def log_exception(func):
 def get_report_number_by_class_name(link):
     """
     Получает номер отчета для классов с названием,
-    соответствующего шаблону `RegionalR<номер_отчета>`.
+    соответствующего шаблону `RegionalReport<номер_отчета>`.
     """
-    if link.__class__.__name__[12].isdigit():
-        return link.__class__.__name__[9:13]
-    if link.__class__.__name__[11].isdigit():
-        return link.__class__.__name__[9:12]
-    if link.__class__.__name__[10].isdigit():
-        return link.__class__.__name__[9:11]
-    return link.__class__.__name__[9]
+
+    class_name = link.__class__.__name__
+
+    if class_name[17].isdigit():
+        report_number = class_name[14:18]
+    if class_name[16].isdigit():
+        report_number = class_name[14:17]
+    if class_name[15].isdigit():
+        report_number = class_name[14:16]
+    if class_name[14].isdigit():
+        report_number = class_name[14]
+    if class_name[9].isdigit():
+        report_number = class_name[9]
+    print(f'{class_name=}')
+    print(f'{report_number=}')
+    return report_number
 
 
 def get_emails(report_instance) -> list:
@@ -421,19 +428,20 @@ def get_headers_values(fields_dict: dict, prefix: str = '') -> dict:
 
     return flat_dict
 
+
 def get_model_and_serializer(report_number: str):
     """Возвращает модель и класс сериализатора для заданного номера отчета."""
     model_name = 'RegionalR' + report_number
     try:
-        model = apps.get_model('regional_competitions', model_name)
+        model = apps.get_model('regional_competitions_2025', model_name)
     except LookupError:
         model = None
 
     if not model:
         raise ValueError(f'Модель {model_name} не найдена.')
 
-    serializer_name = model_name + 'Serializer'
-    serializers_module = import_module('regional_competitions.serializers')
+    serializer_name = 'RegionalReport' + report_number + 'Serializer'
+    serializers_module = import_module('regional_competitions_2025.serializers')
     serializer_class = getattr(serializers_module, serializer_name, None)
 
     if not serializer_class:
@@ -876,3 +884,16 @@ def return_comp_from_logs(regional_headquarter_id, r_number, r_max_subnumber, lo
             continue
         except Exception as e:
             logger.exception(f'Исключение при получении ссылок из логов RVerificationLog: {e}')
+
+
+def get_r_competition_by_year(year, r_model):
+    try:
+        year = int(year)
+        r_competition = r_model.objects.get(year=year)
+    except (ValueError, r_model.DoesNotExist):
+        from regional_competitions_2025.utils import current_year
+        r_competition = r_model.objects.get(year=current_year())
+    else:
+        from regional_competitions_2025.utils import current_year
+        r_competition = r_model.objects.get(year=current_year())
+    return r_competition

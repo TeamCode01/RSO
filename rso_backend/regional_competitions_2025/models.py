@@ -453,7 +453,7 @@ class CHqRejectingLog(models.Model):
 
 # class RegionalR1(BaseEventProjectR):
 #     """
-#     Численность членов РО РСО в соответствии с объемом уплаченных членских взносов.
+#     Численность членов РО РСО.
 #     """
 #     amount_of_money = models.FloatField(
 #         validators=[MinValueValidator(0)],

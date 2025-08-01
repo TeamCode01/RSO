@@ -1,5 +1,5 @@
 from django.urls import include, path
-from regional_competitions_2025.views import RegionalR4MeViewSet, RegionalR4ViewSet
+from regional_competitions_2025.views import RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR7AutoViewSet
 from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
@@ -42,6 +42,8 @@ router = DefaultRouter()
 
 router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
+router.register(r'reports/7', RegionalR7AutoViewSet, basename='r7')
+
 
 urlpatterns = [
     path('', include(router.urls)),
