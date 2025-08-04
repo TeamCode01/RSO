@@ -26,11 +26,11 @@ from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions_2025.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
                                                RegionalRMixin, ListRetrieveCreateMixin, DownloadReportXlsxMixin)
-from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RVerificationLog, RegionalR4)
+from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RVerificationLog, RegionalR4, RegionalR13, RegionalR14, RegionalR16, RegionalR17, RegionalR18)
 from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
                                                     IsDistrictHeadquarterExpert, IsRegionalCommander,
                                                     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
-from regional_competitions_2025.serializers import RegionalReport4Serializer
+from regional_competitions_2025.serializers import RegionalReport4Serializer, RegionalReport13Serializer, RegionalReport14Serializer, RegionalReport16Serializer, RegionalReport17Serializer, RegionalReport18Serializer
 from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
 from regional_competitions_2025.utils import (current_year, get_all_reports_from_competition, get_report_number_by_class_name,
                                          swagger_schema_for_central_review,
@@ -400,6 +400,27 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         return get_report_number_by_class_name(self)
 
 
+class RegionalRNoVerifViewSet(RegionalRMixin):
+    """
+    Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet,
+    которые не требуют верификации.
+    """
+    model = None
+    serializer_class = None
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.action == 'create':
+            context.update(
+                {
+                    'regional_hq': RegionalHeadquarter.objects.get(commander=self.request.user),
+                    'action': self.action
+                }
+            )
+        return context
+
+
 class BaseRegionalRAutoViewSet(DownloadReportXlsxMixin, GenericViewSet):
     """Базовый вьюсет для выгрузки автоматических отчетов."""
 
@@ -445,3 +466,110 @@ class RegionalR4MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeVi
 
 class RegionalR7AutoViewSet(BaseRegionalRAutoViewSet):
     """Вьюсет для выгрузки автоматических отчетов по 7 показателю."""
+
+
+class RegionalR13ViewSet(DownloadReportXlsxMixin, RetrieveModelMixin, GenericViewSet,):
+    queryset = RegionalR13.objects.all()
+    serializer_class = RegionalReport13Serializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        pk = self.kwargs.get('pk')
+        objects = queryset.filter(regional_headquarter_id=pk)
+        if objects.exists():
+            latest_object = objects.order_by('-id')[0]
+            return latest_object
+        raise Http404("Страница не найдена")
+
+
+class RegionalR14ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+    queryset = RegionalR14.objects.all()
+    serializer_class = RegionalReport14Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR14MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
+    model = RegionalR14
+    queryset = RegionalR16.objects.all()
+    serializer_class = RegionalReport14Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR16ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
+    """Дислокация студенческих отрядов РО РСО.
+
+    file_size выводится в мегабайтах.
+
+    ```json
+    {
+    "scan_file": документ,
+    "comment": строка
+    }
+    ```
+    """
+
+    queryset = RegionalR16.objects.all()
+    serializer_class = RegionalReport16Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR16MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
+    model = RegionalR17
+    queryset = RegionalR17.objects.all()
+    serializer_class = RegionalReport16Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR17ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
+    queryset = RegionalR17.objects.all()
+    serializer_class = RegionalReport17Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
+    """Вьюсет для просмотра и редактирования отчета по 17 показателю.
+
+    Показатель не требует верификации.
+    Доступ - только региональным командирам.
+    """
+    model = RegionalR17
+    queryset = RegionalR17.objects.all()
+    serializer_class = RegionalReport17Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Просмотр отчета по 17 показателю.
+
+        Доступ - только региональным командирам.
+        """
+        return super().retrieve(request, *args, **kwargs)
+
+
+class RegionalR18ViewSet(RegionalRNoVerifViewSet):
+    """Трудоустройство.
+
+    employed_student_start - Фактическое количество трудоустроенных студентов в третий
+    трудовой семестр
+    employed_student_end - Фактическое количество трудоустроенных в штат принимающей
+    организации по итогам третьего трудового семестра.
+
+    ```json
+    {
+      "employed_student_start": 0,
+      "employed_student_end": 0,
+      "comment": "string"
+    }
+    ```
+    """
+
+    queryset = RegionalR18.objects.all()
+    serializer_class = RegionalReport18Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR18
+    queryset = RegionalR18.objects.all()
+    serializer_class = RegionalReport18Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
