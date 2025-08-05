@@ -1,42 +1,41 @@
 import json
 
+import pandas as pd
+from api.mixins import SendMixin
+from api.utils import get_calculation
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Value, IntegerField, Max, OuterRef, Subquery
+from django.db.models import IntegerField, Max, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-
-import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, permissions, status
-from rest_framework.decorators import action, api_view, parser_classes
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.filters import OrderingFilter
-from rest_framework.response import Response
-from rest_framework.parsers import FormParser, MultiPartParser
-
-
-from api.mixins import SendMixin
-from api.utils import get_calculation
-from headquarters.models import (CentralHeadquarter, RegionalHeadquarter,
-                                 UserDistrictHeadquarterPosition, DistrictHeadquarter)
+from headquarters.models import (CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter,
+                                 UserDistrictHeadquarterPosition)
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
-from regional_competitions_2025.mixins import (FormDataNestedFileParser, RegionalRMeMixin, 
-                                               RegionalRMixin, ListRetrieveCreateMixin, DownloadReportXlsxMixin)
-from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RVerificationLog, RegionalR4, RegionalR13, RegionalR14, RegionalR16, RegionalR17, RegionalR18)
+from regional_competitions_2025.mixins import (DownloadReportXlsxMixin, FormDataNestedFileParser,
+                                               ListRetrieveCreateMixin, RegionalRMeMixin, RegionalRMixin)
+from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RegionalR4, RegionalR13, RegionalR17,
+                                               RegionalR18, RVerificationLog)
 from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
                                                     IsDistrictHeadquarterExpert, IsRegionalCommander,
                                                     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
-from regional_competitions_2025.serializers import RegionalReport4Serializer, RegionalReport13Serializer, RegionalReport14Serializer, RegionalReport16Serializer, RegionalReport17Serializer, RegionalReport18Serializer
+from regional_competitions_2025.serializers import (RegionalReport4Serializer, RegionalReport13Serializer,
+                                                    # RegionalReport14Serializer, RegionalReport16Serializer,
+                                                    RegionalReport17Serializer, RegionalReport18Serializer)
 from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
-from regional_competitions_2025.utils import (current_year, get_all_reports_from_competition, get_report_number_by_class_name,
-                                         swagger_schema_for_central_review,
-                                         swagger_schema_for_create_and_update_methods,
-                                         swagger_schema_for_district_review, swagger_schema_for_retrieve_method,
-                                         get_emails)
+from regional_competitions_2025.utils import (current_year, get_all_reports_from_competition, get_emails,
+                                              get_report_number_by_class_name, swagger_schema_for_central_review,
+                                              swagger_schema_for_create_and_update_methods,
+                                              swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+from rest_framework import filters, permissions, status
+from rest_framework.decorators import action, api_view, parser_classes
+from rest_framework.filters import OrderingFilter
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
@@ -483,42 +482,42 @@ class RegionalR13ViewSet(DownloadReportXlsxMixin, RetrieveModelMixin, GenericVie
         raise Http404("Страница не найдена")
 
 
-class RegionalR14ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
-    queryset = RegionalR14.objects.all()
-    serializer_class = RegionalReport14Serializer
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+# class RegionalR14ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+#     queryset = RegionalR14.objects.all()
+#     serializer_class = RegionalReport14Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR14MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
-    model = RegionalR14
-    queryset = RegionalR16.objects.all()
-    serializer_class = RegionalReport14Serializer
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+# class RegionalR14MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
+#     model = RegionalR14
+#     queryset = RegionalR16.objects.all()
+#     serializer_class = RegionalReport14Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
-    """Дислокация студенческих отрядов РО РСО.
+# class RegionalR16ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):
+#     """Дислокация студенческих отрядов РО РСО.
 
-    file_size выводится в мегабайтах.
+#     file_size выводится в мегабайтах.
 
-    ```json
-    {
-    "scan_file": документ,
-    "comment": строка
-    }
-    ```
-    """
+#     ```json
+#     {
+#     "scan_file": документ,
+#     "comment": строка
+#     }
+#     ```
+#     """
 
-    queryset = RegionalR16.objects.all()
-    serializer_class = RegionalReport16Serializer
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+#     queryset = RegionalR16.objects.all()
+#     serializer_class = RegionalReport16Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR16MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
-    model = RegionalR17
-    queryset = RegionalR17.objects.all()
-    serializer_class = RegionalReport16Serializer
-    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+# class RegionalR16MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
+#     model = RegionalR17
+#     queryset = RegionalR17.objects.all()
+#     serializer_class = RegionalReport16Serializer
+#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
 class RegionalR17ViewSet(FormDataNestedFileParser, RegionalRNoVerifViewSet):

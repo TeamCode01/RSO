@@ -1,11 +1,11 @@
 from django.contrib import admin
-
+from regional_competitions_2025.factories import RAdminFactory
 from regional_competitions_2025.forms import ExpertUserForm
-from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, RCompetition, Ranking, RegionalR2,
-                                               RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5,
-                                               RegionalR5Event, RegionalR5Link, RegionalR11, RegionalR101,
+from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Ranking, RCompetition, RegionalR1, RegionalR12, RegionalR13, RegionalR19, RegionalR2, RegionalR20,
+                                               RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
+                                               RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR101,
                                                RegionalR101Link, RegionalR102, RegionalR102Link, RVerificationLog,
-                                               RegionalR8, RegionalR7)
+                                               r9_models_factory)
 
 
 @admin.register(RCompetition)
@@ -169,27 +169,31 @@ class CHqRejectingLogAdmin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR1)
-# class RegionalR1Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'is_sent',
-#         'score',
-#         'amount_of_money',
-#         'verified_by_chq',
-#         'verified_by_dhq',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment', 'regional_headquarter__name')
-#     list_filter = ('verified_by_chq', 'verified_by_dhq')
-#     readonly_fields = ('created_at', 'updated_at')
+@admin.register(RegionalR1)
+class RegionalR1Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'is_sent',
+        'score',
+        'amount_of_money',
+        'participants_with_payment',
+        'foreign_participants',
+        'top_participants',
+        'top_must_pay',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR2)
@@ -440,18 +444,18 @@ r9_list_display = (
     'created_at',
     'updated_at'
 )
-# r9_list_filter = ('is_sent', 'event_happened', 'verified_by_chq', 'verified_by_dhq')
-# r9_search_fields = ('comment',)
-# r9_readonly_fields = ('created_at', 'updated_at')
+r9_list_filter = ('is_sent', 'event_happened', 'verified_by_chq', 'verified_by_dhq')
+r9_search_fields = ('comment',)
+r9_readonly_fields = ('created_at', 'updated_at')
 
-# r9_admin_factory = RAdminFactory(
-#     models=r9_models_factory.models,
-#     list_display=r9_list_display,
-#     list_filter=r9_list_filter,
-#     search_fields=r9_search_fields,
-#     readonly_fields=r9_readonly_fields
-# )
-# r9_admin_factory.create_admin_classes()
+r9_admin_factory = RAdminFactory(
+    models=r9_models_factory.models,
+    list_display=r9_list_display,
+    list_filter=r9_list_filter,
+    search_fields=r9_search_fields,
+    readonly_fields=r9_readonly_fields
+)
+r9_admin_factory.create_admin_classes()
 
 
 class RegionalR101LinkInline(admin.TabularInline):
@@ -537,27 +541,27 @@ class RegionalR11Admin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR12)
-# class RegionalR12Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'is_sent',
-#         'score',
-#         'amount_of_money',
-#         'verified_by_chq',
-#         'verified_by_dhq',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment', 'regional_headquarter__name')
-#     list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
-#     readonly_fields = ('created_at', 'updated_at')
+@admin.register(RegionalR12)
+class RegionalR12Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'is_sent',
+        'score',
+        'amount_of_money',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 # @admin.register(RegionalR13)
@@ -579,16 +583,16 @@ class RegionalR11Admin(admin.ModelAdmin):
 #     readonly_fields = ('created_at', 'updated_at')
 #     actions = ['get_ro_score',]
 
-#     @admin.action(description='Вычислить очки по показателю')
-#     def get_ro_score(self, request, queryset):
-#         calculate_r13_score()
+    # @admin.action(description='Вычислить очки по показателю')
+    # def get_ro_score(self, request, queryset):
+    #     calculate_r13_score()
 
-#     def get_queryset(self, request):
-#         return super().get_queryset(request).select_related('regional_headquarter')
+    # def get_queryset(self, request):
+    #     return super().get_queryset(request).select_related('regional_headquarter')
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+    # def get_id_regional_headquarter(self, obj):
+    #     return obj.regional_headquarter.id
+    # get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 # @admin.register(RegionalR14)
@@ -731,21 +735,39 @@ class RegionalR11Admin(admin.ModelAdmin):
 #     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR19)
-# class RegionalR19Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment', 'regional_headquarter__name')
-#     readonly_fields = ('created_at', 'updated_at')
+@admin.register(RegionalR19)
+class RegionalR19Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'employees_number',
+        'officially_employed',
+        'average_salary',
+        'get_id_regional_headquarter',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    readonly_fields = ('created_at', 'updated_at')
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
+
+
+@admin.register(RegionalR20)
+class RegionalR20Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'premises_available',
+        'equipped_workplaces',
+        'event_spaces',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(ExpertRole)

@@ -20,6 +20,7 @@ from headquarters.models import RegionalHeadquarter, RegionalHeadquarterEmail
 from openpyxl import Workbook
 from pdfrw import PageMerge, PdfReader, PdfWriter
 from regional_competitions.constants import MASS_REPORT_NUMBERS, MEDIA_PATH
+from regional_competitions_2025.constants import MEMBER_FEE
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -27,10 +28,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import (HRFlowable, PageBreak, Paragraph,
-                                SimpleDocTemplate, Spacer, Table, TableStyle)
+from reportlab.platypus import HRFlowable, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from rest_framework import serializers, status
-
 
 logger = logging.getLogger('regional_tasks')
 
@@ -141,24 +140,23 @@ def log_exception(func):
 def get_report_number_by_class_name(link):
     """
     Получает номер отчета для классов с названием,
-    соответствующего шаблону `RegionalReport<номер_отчета>`.
+    соответствующего шаблону `RegionalR<номер_отчета>` или `RegionalReport<номер_отчета>`.
     """
-
+    NUMBER_INDEX = 1
     class_name = link.__class__.__name__
+    pattern = r'Regional(?:Report)?(\d+)'
+    match_regional_report = re.search(pattern, class_name)
 
-    if class_name[17].isdigit():
-        report_number = class_name[14:18]
-    if class_name[16].isdigit():
-        report_number = class_name[14:17]
-    if class_name[15].isdigit():
-        report_number = class_name[14:16]
-    if class_name[14].isdigit():
-        report_number = class_name[14]
-    if class_name[9].isdigit():
-        report_number = class_name[9]
-    print(f'{class_name=}')
-    print(f'{report_number=}')
-    return report_number
+    if match_regional_report:
+        return match_regional_report.group(NUMBER_INDEX)
+
+    pattern2 = r'RegionalR(\d+)'
+    match_regional_r = re.search(pattern2, class_name)
+
+    if match_regional_r:
+        return match_regional_r.group(NUMBER_INDEX)
+
+    return None
 
 
 def get_emails(report_instance) -> list:
@@ -831,19 +829,19 @@ def add_verbose_names_and_values_to_pdf(
             elements.append(Spacer(1, 5))
 
 
-def get_fees(report, model):
-    """Возвращает сумму взносов из первого показателя."""
+def get_participants(report, model):
+    """Возвращает количество участников с уплаченными взносами из первого показателя."""
 
     ro_id = report.regional_headquarter.id
 
     try:
-        amount_of_money = model.objects.filter(
+        participants = model.objects.filter(
             verified_by_chq=True,
             regional_headquarter_id=ro_id
-        ).first().amount_of_money
+        ).first().score
     except AttributeError:
         return
-    return amount_of_money
+    return participants
 
 
 def return_comp_from_logs(regional_headquarter_id, r_number, r_max_subnumber, log_model):

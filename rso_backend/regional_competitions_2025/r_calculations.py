@@ -4,8 +4,8 @@ from datetime import datetime
 from headquarters.models import RegionalHeadquarter
 
 from regional_competitions_2025.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk, MEMBER_FEE
-from regional_competitions_2025.models import Ranking, RegionalR11, RegionalR4
-from regional_competitions_2025.utils import get_fees, log_exception
+from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR11, RegionalR4
+from regional_competitions_2025.utils import get_participants, log_exception
 
 logger = logging.getLogger('regional_tasks')
 
@@ -13,7 +13,10 @@ logger = logging.getLogger('regional_tasks')
 @log_exception
 def calculate_r1_score(report: RegionalR1):
     """Расчет очков для отчета 1 показателя."""
-    report.score = report.amount_of_money
+
+    report.score = report.participants_with_payment
+    if report.top_must_pay:
+        report.score -= report.top_participants
     report.save()
 
 
@@ -37,12 +40,12 @@ def calculate_r2_score(report):
     ro_region = report.regional_headquarter.region.id
 
     logger.info(f'Выполняется подсчет очков r2 для рег штаба {ro_id}')
-    amount_of_money = get_fees(report, RegionalR1)
-    if not amount_of_money:
-        logger.info(f'Не удалось получить сумму взносов в r2 из r1 для рег штаба {ro_id}')
+    participants = get_participants(report, RegionalR1)
+    if not participants:
+        logger.info(f'Не удалось получить кол-во участников с уплаченными взносами в r2 из r1 для рег штаба {ro_id}')
         return
     regional_coef = 2 if ro_region == MSK_ID else 1.5 if ro_region == SPB_ID else 1
-    ro_score = (amount_of_money / MEMBER_FEE) / (report.full_time_students / regional_coef)
+    ro_score = participants / (report.full_time_students / regional_coef)
     report.score = ro_score
     report.save()
     logger.info(f'Подсчитали очки 2-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
@@ -59,12 +62,12 @@ def calculate_r3_score(report):
     Расчёт вызывается через админку и 15 октября 2024 года.
     """
     logger.info(f'Выполняется подсчет очков r3 для РШ {report.regional_headquarter}')
-    amount_of_money = get_fees(report, RegionalR1)
-    if amount_of_money is None:
-        amount_of_money = 0
-        logger.warning(f'amount_of_money равен None. Значение переустановлено в 0')
+    participants = get_participants(report, RegionalR1)
+    if participants is None:
+        participants = 0
+        logger.warning(f'participants равен None. Значение переустановлено в 0')
 
-    x1 = amount_of_money / MEMBER_FEE
+    x1 = participants
     x2 = report.amount_of_membership_fees_2023
     if x2 is None:
         x2 = 0
@@ -267,7 +270,6 @@ def calculate_r11_score():
         updated_r11_reports.append(report)
 
     try:
-        # TODO: исправить эксепшн
         updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
     except Exception as e:
         logger.error(f'Расчет r11 показателя завершен с ошибкой: {e}')

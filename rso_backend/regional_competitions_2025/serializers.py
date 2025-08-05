@@ -2,22 +2,21 @@ import os
 from datetime import datetime
 
 from django.core.exceptions import MultipleObjectsReturned
-from django.db import models
+from django.db import models, transaction
 from django.forms import model_to_dict
 from django.http import QueryDict
-from rest_framework import serializers
-
-from django.db import transaction
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions_2025.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE, REPORT_SENT_MESSAGE,
-                                                 ROUND_2_SIGNS, STATISTICAL_REPORT_EXISTS_MESSAGE)
-# from regional_competitions_2025.factories import RSerializerFactory
+                                                  ROUND_2_SIGNS, STATISTICAL_REPORT_EXISTS_MESSAGE)
+from regional_competitions_2025.factories import RSerializerFactory
 from regional_competitions_2025.models import (CHqRejectingLog, Ranking, RegionalR2, RegionalR4, RegionalR4Event,
-                                               RegionalR4Link, RegionalR5, RegionalR5Event, RegionalR5Link,
-                                               RegionalR11, RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project, RegionalR16, RegionalR101, RegionalR101Link, RegionalR102, RegionalR17, RegionalR17Link, RegionalR17Project,
-                                               RegionalR102Link, RVerificationLog, RegionalR7, RegionalR8, RegionalR18)
+                                               RegionalR4Link, RegionalR5, RegionalR5Event, RegionalR5Link, RegionalR7,
+                                               RegionalR8, RegionalR11, RegionalR13,
+                                               RegionalR17, RegionalR17Link,
+                                               RegionalR17Project, RegionalR18, RegionalR101, RegionalR101Link,
+                                               RegionalR102, RegionalR102Link, RVerificationLog, r9_models_factory)
 from regional_competitions_2025.utils import get_report_number_by_class_name
-
+from rest_framework import serializers
 
 # class DumpStatisticalRegionalReportSerializer(serializers.ModelSerializer):
 #     regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
@@ -654,7 +653,7 @@ class RegionalR5Serializer(
         )
 
 
-class BaseRegionalR6Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
+class BaseRegionalReport6Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
     objects_name = 'links'
 
     class Meta:
@@ -669,7 +668,7 @@ class BaseRegionalR6Serializer(BaseRSerializer, CreateUpdateSerializerMixin):
 
 # r6_serializers_factory = RSerializerFactory(
 #     models=r6_models_factory.models,
-#     base_r_serializer=BaseRegionalR6Serializer
+#     base_r_serializer=BaseRegionalReport6Serializer
 # )
 # r6_serializers_factory.create_serializer_classes()
 
@@ -682,7 +681,7 @@ class RegionalReport7Serializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class RegionalR8Serializer(serializers.ModelSerializer):
+class RegionalReport8Serializer(serializers.ModelSerializer):
     """Сериализатор для выгрузки данных по 8-му показателю в эксель отчёты."""
 
     class Meta:
@@ -690,7 +689,7 @@ class RegionalR8Serializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
+class BaseRegionalReport9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
     objects_name = 'links'
 
     class Meta:
@@ -704,11 +703,11 @@ class BaseRegionalR9Serializer(BaseRSerializer, CreateUpdateSerializerMixin, Fil
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
-# r9_serializers_factory = RSerializerFactory(
-#     r9_models_factory.models,
-#     BaseRegionalR9Serializer
-# )
-# r9_serializers_factory.create_serializer_classes()
+r9_serializers_factory = RSerializerFactory(
+    r9_models_factory.models,
+    BaseRegionalReport9Serializer
+)
+r9_serializers_factory.create_serializer_classes()
 
 
 class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):
@@ -805,53 +804,53 @@ class RegionalReport13Serializer(serializers.ModelSerializer):
         )
 
 
-class RegionalReport14LinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RegionalR14Link
-        fields = (
-            'id',
-            'regional_r16_project',
-            'link'
-        )
-        read_only_fields = ('id', 'regional_r16_project',)
+# class RegionalReport14LinkSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = RegionalR14Link
+#         fields = (
+#             'id',
+#             'regional_r16_project',
+#             'link'
+#         )
+#         read_only_fields = ('id', 'regional_r16_project',)
 
 
-class RegionalReport14ProjectSerializer(FileScanSizeSerializerMixin):
-    links = RegionalReport14LinkSerializer(many=True, allow_null=True, required=False)
+# class RegionalReport14ProjectSerializer(FileScanSizeSerializerMixin):
+#     links = RegionalReport14LinkSerializer(many=True, allow_null=True, required=False)
 
-    class Meta:
-        model = RegionalR14Project
-        fields = (
-                     'id',
-                     'regional_r16',
-                     'name',
-                     'project_scale',
-                     'regulations',
-                     'links'
-                 ) + FileScanSizeSerializerMixin.Meta.fields
-        read_only_fields = ('id', 'regional_r16',)
+#     class Meta:
+#         model = RegionalR14Project
+#         fields = (
+#                      'id',
+#                      'regional_r16',
+#                      'name',
+#                      'project_scale',
+#                      'regulations',
+#                      'links'
+#                  ) + FileScanSizeSerializerMixin.Meta.fields
+#         read_only_fields = ('id', 'regional_r16',)
 
 
-class RegionalReport14Serializer(BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
-    projects = RegionalReport14ProjectSerializer(many=True, allow_null=True, required=False)
+# class RegionalReport14Serializer(BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
+#     projects = RegionalReport14ProjectSerializer(many=True, allow_null=True, required=False)
 
-    objects_name = 'projects'
-    nested_objects_name = 'links'
+#     objects_name = 'projects'
+#     nested_objects_name = 'links'
 
-    class Meta:
-        model = RegionalR14
-        fields = BaseRSerializer.Meta.fields + ('is_project', 'projects', 'comment')
-        read_only_fields = BaseRSerializer.Meta.read_only_fields
+#     class Meta:
+#         model = RegionalR14
+#         fields = BaseRSerializer.Meta.fields + ('is_project', 'projects', 'comment')
+#         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
-    def create_objects(self, created_objects, project_data):
-        return RegionalR14Project.objects.create(
-            regional_r16=created_objects, **project_data
-        )
+#     def create_objects(self, created_objects, project_data):
+#         return RegionalR14Project.objects.create(
+#             regional_r16=created_objects, **project_data
+#         )
 
-    def create_nested_objects(self, parent_obj, obj_data):
-        return RegionalR14Link.objects.create(
-            regional_r16_project=parent_obj, **obj_data
-        )
+#     def create_nested_objects(self, parent_obj, obj_data):
+#         return RegionalR14Link.objects.create(
+#             regional_r16_project=parent_obj, **obj_data
+#         )
 
 
 # class RegionalR15Serializer(serializers.ModelSerializer):
@@ -868,21 +867,21 @@ class RegionalReport14Serializer(BaseRSerializer, CreateUpdateSerializerMixin, N
 #         )
 
 
-class RegionalReport16Serializer(
-    EmptyAsNoneMixin, ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer
-):
-    class Meta:
-        model = RegionalR16
-        fields = (
-                     'id',
-                     'regional_headquarter',
-                     'scan_file',
-                     'comment',
-                 ) + FileScanSizeSerializerMixin.Meta.fields
-        read_only_fields = (
-            'id',
-            'regional_headquarter',
-        )
+# class RegionalReport16Serializer(
+#     EmptyAsNoneMixin, ReportExistsValidationMixin, FileScanSizeSerializerMixin, serializers.ModelSerializer
+# ):
+#     class Meta:
+#         model = RegionalR16
+#         fields = (
+#                      'id',
+#                      'regional_headquarter',
+#                      'scan_file',
+#                      'comment',
+#                  ) + FileScanSizeSerializerMixin.Meta.fields
+#         read_only_fields = (
+#             'id',
+#             'regional_headquarter',
+#         )
 
 
 class RegionalReport17LinkSerializer(serializers.ModelSerializer):

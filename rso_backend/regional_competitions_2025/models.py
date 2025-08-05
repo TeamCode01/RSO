@@ -4,10 +4,12 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.db.models.constraints import CheckConstraint
-from regional_competitions_2025.constants import R6_DATA, R9_EVENTS_NAMES, REPORT_EXISTS_MESSAGE
-# from regional_competitions_2025.factories import RModelFactory
-from regional_competitions_2025.utils import (current_year, get_last_rcompetition_id,
-                                              regional_comp_regulations_files_path)
+from regional_competitions_2025.constants import MEMBER_FEE, R6_DATA, R9_EVENTS_NAMES, REPORT_EXISTS_MESSAGE
+from regional_competitions_2025.factories import RModelFactory
+from regional_competitions_2025.utils import (
+    current_year, get_last_rcompetition_id,
+    regional_comp_regulations_files_path
+)
 
 
 class RCompetition(models.Model):
@@ -451,28 +453,59 @@ class CHqRejectingLog(models.Model):
         )
 
 
-# class RegionalR1(BaseEventProjectR):
-#     """
-#     Численность членов РО РСО.
-#     """
-#     amount_of_money = models.FloatField(
-#         validators=[MinValueValidator(0)],
-#         blank=True,
-#         null=True,
-#         verbose_name='Сумма уплаченных членских взносов')
-#     scan_file = models.FileField(
-#         upload_to=regional_comp_regulations_files_path,
-#         blank=True,
-#         null=True,
-#         verbose_name='Скан подтверждающего документа'
-#     )
+class RegionalR1(BaseEventProjectR):
+    """
+    Численность членов РО РСО.
+    """
+    amount_of_money = models.FloatField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Сумма уплаченных членских взносов')
+    participants_with_payment = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество членов РО РСО с уплаченными членскими взносами'
+    )
+    foreign_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Численность иностранных граждан'
+    )
+    top_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Численность участников из ТОП',
+        help_text=('Участники из ТОП - это участники из Трудовых Отрядов Подростков')
+    )
+    top_must_pay = models.BooleanField(
+        default=False,
+        verbose_name='ТОП освобождены от оплаты членских взносов в данном РО',
+        help_text=('Если выбрано, то участники из ТОП не будут учитываться при расчете количества участников'
+                   ' с уплаченными членскими взносами')
+    )
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
+        verbose_name='Скан подтверждающего документа'
+    )
 
-#     class Meta:
-#         verbose_name = '1 показатель, отчет РШ'
-#         verbose_name_plural = '1 показатель, отчеты РШ'
+    class Meta:
+        verbose_name = '1 показатель, отчет РШ'
+        verbose_name_plural = '1 показатель, отчеты РШ'
 
-#     def __str__(self):
-#         return f'Отчет по 1 показателю РШ {self.regional_headquarter}'
+    def save(self, *args, **kwargs):
+        """Автоматически рассчитываем количество участников с уплаченными взносами."""
+        if self.amount_of_money is not None:
+            self.participants_with_payment = round(self.amount_of_money / MEMBER_FEE, 0)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'Отчет по 1 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR2(BaseScore, models.Model):
@@ -668,41 +701,6 @@ class RegionalR5Link(BaseLink):
 # r6_models_factory.create_models()
 
 
-# class BaseRegionalR7(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
-#     PRIZE_PLACE_CHOICES = [
-#         ('1', '1'),
-#         ('2', '2'),
-#         ('3', '3'),
-#         ('Нет', 'Нет'),
-#     ]
-
-#     prize_place = models.CharField(
-#         max_length=3,
-#         choices=PRIZE_PLACE_CHOICES,
-#         default='Нет',
-#         verbose_name='Призовое место'
-#     )
-#     document = models.FileField(
-#         upload_to=regional_comp_regulations_files_path,
-#         verbose_name='Скан подтверждающего документа',
-#         blank=True,
-#         null=True
-#     )
-
-#     class Meta:
-#         abstract = True
-
-
-# r7_models_factory = RModelFactory(
-#     r_number=7,
-#     base_r_model=BaseRegionalR7,
-#     base_link_model=BaseLink,
-#     event_names={id: name for tup in R7_DATA for id, name in tup[0].items()},
-#     labour_projects={id: tup[3]['is_labour_project'] for tup in R7_DATA for id in tup[0].keys()}
-# )
-# r7_models_factory.create_models()
-
-
 class RegionalR7(models.Model):
     """Показатель 7 с данными, предоставленными Центральным штабом"""
     regional_headquarter = models.ForeignKey(
@@ -804,32 +802,32 @@ class RegionalR8(BaseScore):
         return f'Отчет по 8 показателю РШ {self.regional_headquarter}'
 
 
-# class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
-#     event_happened = models.BooleanField(
-#         verbose_name='Проведение акции',
-#         default=False,
-#     )
-#     document = models.FileField(
-#         upload_to=regional_comp_regulations_files_path,
-#         verbose_name='Скан документа, подтверждающего проведение мероприятия',
-#         blank=True,
-#         null=True
-#     )
+class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+    event_happened = models.BooleanField(
+        verbose_name='Проведение акции',
+        default=False,
+    )
+    document = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        verbose_name='Скан документа, подтверждающего проведение мероприятия',
+        blank=True,
+        null=True
+    )
 
-#     class Meta:
-#         abstract = True
+    class Meta:
+        abstract = True
 
-#     def __str__(self):
-#         return f'Отчет по 9 показателю РШ {self.regional_headquarter}'
+    def __str__(self):
+        return f'Отчет по 9 показателю РШ {self.regional_headquarter}'
 
 
-# r9_models_factory = RModelFactory(
-#     base_r_model=BaseRegionalR9,
-#     base_link_model=BaseLink,
-#     r_number=9,
-#     event_names=R9_EVENTS_NAMES
-# )
-# r9_models_factory.create_models()
+r9_models_factory = RModelFactory(
+    base_r_model=BaseRegionalR9,
+    base_link_model=BaseLink,
+    r_number=9,
+    event_names=R9_EVENTS_NAMES
+)
+r9_models_factory.create_models()
 
 
 class BaseRegionalR10(models.Model):
@@ -930,28 +928,33 @@ class RegionalR11(BaseEventProjectR):
         return f'Отчет по 11 показателю РШ {self.regional_headquarter}'
 
 
-# class RegionalR12(BaseEventProjectR):
-#     """
-#     Объем средств, собранных бойцами РО РСО во Всероссийском дне ударного труда.
-#     """
-#     amount_of_money = models.FloatField(
-#         validators=[MinValueValidator(0)],
-#         blank=True,
-#         null=True,
-#         verbose_name='Объем средств собранных бойцами РО РСО')
-#     scan_file = models.FileField(
-#         upload_to=regional_comp_regulations_files_path,
-#         blank=True,
-#         null=True,
-#         verbose_name='Скан подтверждающего документа'
-#     )
+class RegionalR12(BaseEventProjectR):
+    """
+    Показатель участия во Всероссийском дне ударного труда
+    """
+    amount_of_money = models.FloatField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Объем средств собранных бойцами РО РСО')
+    number_of_members = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество членов РО РСО, принявших участие'
+    )
+    scan_file = models.FileField(
+        upload_to=regional_comp_regulations_files_path,
+        blank=True,
+        null=True,
+        verbose_name='Скан подтверждающего документа'
+    )
 
-#     class Meta:
-#         verbose_name = '12 показатель, отчет РШ'
-#         verbose_name_plural = '12 показатель, отчеты РШ'
+    class Meta:
+        verbose_name = '12 показатель, отчет РШ'
+        verbose_name_plural = '12 показатель, отчеты РШ'
 
-#     def __str__(self):
-#         return f'Отчет по 12 показателю РШ {self.regional_headquarter}'
+    def __str__(self):
+        return f'Отчет по 12 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR13(models.Model):
@@ -993,76 +996,76 @@ class RegionalR13(models.Model):
         return f'Отчет по 13 показателю РШ {self.regional_headquarter}'
 
 
-class RegionalR14(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
-    is_project = models.BooleanField(
-        verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу',
-        default=False
-    )
+# class RegionalR14(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
+#     is_project = models.BooleanField(
+#         verbose_name='Наличие трудового проекта, в котором ЛО РСО одержал победу',
+#         default=False
+#     )
 
-    class Meta:
-        verbose_name = '14 показатель, отчет РШ'
-        verbose_name_plural = '14 показатель, отчеты РШ'
+#     class Meta:
+#         verbose_name = '14 показатель, отчет РШ'
+#         verbose_name_plural = '14 показатель, отчеты РШ'
 
-    def __str__(self):
-        return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
-
-
-class RegionalR14Project(models.Model):
-
-    class ProjectScale(models.TextChoices):
-        all_russian = 'Всероссийский', 'Всероссийский'
-        district = 'Окружной', 'Окружной'
-        interregional = 'Межрегиональный', 'Межрегиональный'
-
-    regional_r14 = models.ForeignKey(
-        'RegionalR16',
-        on_delete=models.CASCADE,
-        verbose_name='Отчет',
-        related_name='projects'
-    )
-    name = models.TextField(
-        verbose_name='Наименование проекта, в котором ЛСО РО одержал победу',
-        blank=True,
-        null=True
-    )
-    project_scale = models.CharField(
-        max_length=30,
-        choices=ProjectScale.choices,
-        verbose_name='Масштаб проекта',
-        blank=True,
-        null=True
-    )
-    regulations = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
-        verbose_name='Положение о проекте',
-        blank=True,
-        null=True
-    )
-
-    class Meta:
-        verbose_name = 'Проект по 14 показателю'
-        verbose_name_plural = 'Проекты по 14 показателю'
+#     def __str__(self):
+#         return f'Отчет по 14 показателю РШ {self.regional_headquarter}'
 
 
-class RegionalR14Link(models.Model):
-    regional_r14_project = models.ForeignKey(
-        'RegionalR16Project',
-        on_delete=models.CASCADE,
-        verbose_name='Проект',
-        related_name='links',
-    )
-    link = models.URLField(
-        verbose_name='Ссылка на группу проекта в социальных сетях',
-        blank=True,
-        null=True
-    )
+# class RegionalR14Project(models.Model):
 
-    class Meta:
-        verbose_name = 'Ссылка по 14 показателю'
-        verbose_name_plural = 'Ссылки по 14 показателю'
+#     class ProjectScale(models.TextChoices):
+#         all_russian = 'Всероссийский', 'Всероссийский'
+#         district = 'Окружной', 'Окружной'
+#         interregional = 'Межрегиональный', 'Межрегиональный'
 
-    def __str__(self):
-        return f'ID {self.id}'
+#     regional_r14 = models.ForeignKey(
+#         'RegionalR16',
+#         on_delete=models.CASCADE,
+#         verbose_name='Отчет',
+#         related_name='projects'
+#     )
+#     name = models.TextField(
+#         verbose_name='Наименование проекта, в котором ЛСО РО одержал победу',
+#         blank=True,
+#         null=True
+#     )
+#     project_scale = models.CharField(
+#         max_length=30,
+#         choices=ProjectScale.choices,
+#         verbose_name='Масштаб проекта',
+#         blank=True,
+#         null=True
+#     )
+#     regulations = models.FileField(
+#         upload_to=regional_comp_regulations_files_path,
+#         verbose_name='Положение о проекте',
+#         blank=True,
+#         null=True
+#     )
+
+#     class Meta:
+#         verbose_name = 'Проект по 14 показателю'
+#         verbose_name_plural = 'Проекты по 14 показателю'
+
+
+# class RegionalR14Link(models.Model):
+#     regional_r14_project = models.ForeignKey(
+#         'RegionalR16Project',
+#         on_delete=models.CASCADE,
+#         verbose_name='Проект',
+#         related_name='links',
+#     )
+#     link = models.URLField(
+#         verbose_name='Ссылка на группу проекта в социальных сетях',
+#         blank=True,
+#         null=True
+#     )
+
+#     class Meta:
+#         verbose_name = 'Ссылка по 14 показателю'
+#         verbose_name_plural = 'Ссылки по 14 показателю'
+
+#     def __str__(self):
+#         return f'ID {self.id}'
 
 
 # class RegionalR15(models.Model):
@@ -1106,43 +1109,43 @@ class RegionalR14Link(models.Model):
 #         return f'Отчет по 15 показателю РШ {self.regional_headquarter}'
 
 
-class RegionalR16(BaseComment, models.Model):
-    """Дислокация студенческих отрядов РО РСО"""
+# class RegionalR16(BaseComment, models.Model):
+#     """Дислокация студенческих отрядов РО РСО"""
 
-    regional_headquarter = models.ForeignKey(
-        'headquarters.RegionalHeadquarter',
-        on_delete=models.PROTECT,
-        verbose_name='Региональный штаб',
-        related_name='%(app_label)s_%(class)s'
-    )
-    r_competition = models.ForeignKey(
-        RCompetition,
-        verbose_name='Рейтинг РО',
-        on_delete=models.CASCADE,
-        default=get_last_rcompetition_id,
-        related_name='%(app_label)s_%(class)s'
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата последнего обновления'
-    )
-    scan_file = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
-        verbose_name='Документ',
-        blank=True,
-        null=True
-    )
+#     regional_headquarter = models.ForeignKey(
+#         'headquarters.RegionalHeadquarter',
+#         on_delete=models.PROTECT,
+#         verbose_name='Региональный штаб',
+#         related_name='%(app_label)s_%(class)s'
+#     )
+#     r_competition = models.ForeignKey(
+#         RCompetition,
+#         verbose_name='Рейтинг РО',
+#         on_delete=models.CASCADE,
+#         default=get_last_rcompetition_id,
+#         related_name='%(app_label)s_%(class)s'
+#     )
+#     created_at = models.DateTimeField(
+#         auto_now_add=True,
+#         verbose_name='Дата создания'
+#     )
+#     updated_at = models.DateTimeField(
+#         auto_now=True,
+#         verbose_name='Дата последнего обновления'
+#     )
+#     scan_file = models.FileField(
+#         upload_to=regional_comp_regulations_files_path,
+#         verbose_name='Документ',
+#         blank=True,
+#         null=True
+#     )
 
-    class Meta:
-        verbose_name = '16 показатель, отчет РШ'
-        verbose_name_plural = '16 показатель, отчеты РШ'
+#     class Meta:
+#         verbose_name = '16 показатель, отчет РШ'
+#         verbose_name_plural = '16 показатель, отчеты РШ'
 
-    def __str__(self):
-        return f'Отчет по 16 показателю РШ {self.regional_headquarter}'
+#     def __str__(self):
+#         return f'Отчет по 16 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR17(models.Model):
@@ -1206,7 +1209,7 @@ class RegionalR17Project(models.Model):
 
 class RegionalR17Link(models.Model):
     regional_r17_project = models.ForeignKey(
-        'RegionalR18Project',
+        'RegionalR17Project',
         on_delete=models.CASCADE,
         verbose_name='Проект',
         related_name='links',
@@ -1275,76 +1278,118 @@ class RegionalR18(BaseComment, models.Model):
         return f'Отчет по 18 показателю РШ {self.regional_headquarter}'
 
 
-# class RegionalR19(BaseComment, models.Model):
-#     """Трудоустройство."""
+class RegionalR19(BaseComment, models.Model):
+    """Количество и трудоустройство сотрудников РО РСО."""
 
-#     regional_headquarter = models.ForeignKey(
-#         'headquarters.RegionalHeadquarter',
-#         on_delete=models.PROTECT,
-#         verbose_name='Региональный штаб',
-#         related_name='%(app_label)s_%(class)s'
-#     )
-#     r_competition = models.ForeignKey(
-#         RCompetition,
-#         verbose_name='Рейтинг РО',
-#         on_delete=models.CASCADE,
-#         default=get_last_rcompetition_id,
-#         related_name='%(app_label)s_%(class)s'
-#     )
-#     created_at = models.DateTimeField(
-#         auto_now_add=True,
-#         verbose_name='Дата создания'
-#     )
-#     updated_at = models.DateTimeField(
-#         auto_now=True,
-#         verbose_name='Дата последнего обновления'
-#     )
-#     employed_student_start = models.PositiveIntegerField(
-#         blank=True,
-#         null=True,
-#         verbose_name=(
-#             'Фактическое количество трудоустроенных студентов '
-#             'в третий трудовой семестр'
-#         )
-#     )
-#     employed_student_end = models.PositiveIntegerField(
-#         blank=True,
-#         null=True,
-#         verbose_name=(
-#             'Фактическое количество трудоустроенных в штат '
-#             'принимающей организации по итогам третьего '
-#             'трудового семестра'
-#         )
-#     )
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.PROTECT,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s'
+    )
+    r_competition = models.ForeignKey(
+        RCompetition,
+        verbose_name='Рейтинг РО',
+        on_delete=models.CASCADE,
+        default=get_last_rcompetition_id,
+        related_name='%(app_label)s_%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+    employees_number = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Фактическое количество сотрудников РО РСО'
+    )
+    officially_employed = models.BooleanField(
+        verbose_name='Официальное трудоустройство сотрудников в РО РСО',
+        default=False,
+        help_text='Выбрано - трудоустроены официально, пусто - неофициально'
+    )
+    average_salary = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Средняя заработная плата сотрудников РО РСО, руб.'
+    )
 
-#     class Meta:
-#         verbose_name = '19 показатель, отчет РШ'
-#         verbose_name_plural = '19 показатель, отчеты РШ'
+    class Meta:
+        verbose_name = '19 показатель, отчет РШ'
+        verbose_name_plural = '19 показатель, отчеты РШ'
 
-#     def __str__(self):
-#         return f'Отчет по 19 показателю РШ {self.regional_headquarter}'
+    def __str__(self):
+        return f'Отчет по 19 показателю РШ {self.regional_headquarter}'
 
 
-# REPORTS_IS_SENT_MODELS = [
-#     RegionalR1,
-#     RegionalR4,
-#     RegionalR5,
-#     RegionalR101,
-#     RegionalR102,
-#     RegionalR11,
-#     RegionalR12,
-#     RegionalR13,
-#     RegionalR16,
-# ]
+class RegionalR20(BaseComment, models.Model):
+    """Количество и трудоустройство сотрудников РО РСО."""
+
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.PROTECT,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s'
+    )
+    r_competition = models.ForeignKey(
+        RCompetition,
+        verbose_name='Рейтинг РО',
+        on_delete=models.CASCADE,
+        default=get_last_rcompetition_id,
+        related_name='%(app_label)s_%(class)s'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+    premises_available = models.BooleanField(
+        verbose_name='Наличие помещения',
+        default=False,
+        help_text='Выбрано - есть, пусто - нет'
+    )
+    equipped_workplaces = models.BooleanField(
+        verbose_name='Наличие оборудованных рабочих мест',
+        default=False,
+        help_text='Выбрано - есть, пусто - нет'
+    )
+    event_spaces = models.BooleanField(
+        verbose_name='Наличие доступа к помещениям для совместной работы и проведения мероприятий различного уровня',
+        default=False,
+        help_text='Выбрано - есть, пусто - нет'
+    )
+
+    class Meta:
+        verbose_name = '20 показатель, отчет РШ'
+        verbose_name_plural = '20 показатель, отчеты РШ'
+
+    def __str__(self):
+        return f'Отчет по 20 показателю РШ {self.regional_headquarter}'
+
+
+REPORTS_IS_SENT_MODELS = [
+    RegionalR1,
+    RegionalR4,
+    RegionalR5,
+    RegionalR101,
+    RegionalR102,
+    RegionalR11,
+    RegionalR12,
+    RegionalR13,
+]
 # REPORTS_IS_SENT_MODELS.extend(
 #     [model_class for model_name, model_class in r6_models_factory.models.items() if not model_name.endswith('Link')]
 # )
-# # REPORTS_IS_SENT_MODELS.extend(
-# #     [model_class for model_name, model_class in r7_models_factory.models.items() if not model_name.endswith('Link')]
-# # )
-# REPORTS_IS_SENT_MODELS.extend(
-#     [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
-# )
+REPORTS_IS_SENT_MODELS.extend(
+    [model_class for model_name, model_class in r9_models_factory.models.items() if not model_name.endswith('Link')]
+)
 
 
 class ExpertRole(models.Model):
