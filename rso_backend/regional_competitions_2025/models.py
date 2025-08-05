@@ -936,7 +936,9 @@ class RegionalR12(BaseEventProjectR):
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
-        verbose_name='Объем средств собранных бойцами РО РСО')
+        verbose_name='Объем средств собранных бойцами РО РСО',
+        help_text='Очки в данном показателе это занятое место'
+    )
     number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,

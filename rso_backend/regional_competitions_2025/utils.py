@@ -74,7 +74,7 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
                 "Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'."
             )
 
-    return f'regional_comp/regulations/{instance.__class__.__name__}/{regional_hq_id}/{base_filename}.{file_extension}'
+    return f'regional_comp/regulations/{instance}/{regional_hq_id}/{base_filename}.{file_extension}'
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -146,6 +146,16 @@ def get_report_number_by_class_name(link):
     class_name = link.__class__.__name__
     pattern = r'Regional(?:Report)?(\d+)'
     match_regional_report = re.search(pattern, class_name)
+
+    if class_name == 'str':
+        link_length = len(link)
+        if link_length >= 13 and link[12].isdigit():
+            return link[9:13]
+        if link_length >= 12 and link[11].isdigit():
+            return link[9:12]
+        if link_length >= 11 and link[10].isdigit():
+            return link[9:11]
+        return link[9]
 
     if match_regional_report:
         return match_regional_report.group(NUMBER_INDEX)

@@ -4,8 +4,8 @@ from datetime import datetime
 from headquarters.models import RegionalHeadquarter
 
 from regional_competitions_2025.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk, MEMBER_FEE
-from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR11, RegionalR4
-from regional_competitions_2025.utils import get_participants, log_exception
+from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR11, RegionalR12, RegionalR13, RegionalR4
+from regional_competitions_2025.utils import get_participants, log_exception, current_year
 
 logger = logging.getLogger('regional_tasks')
 
@@ -24,9 +24,8 @@ def calculate_r1_score(report: RegionalR1):
 def calculate_r2_score(report):
     """Расчет очков по 2 показателю.
 
-    P=(x/50)/(y/z)
-    x - Уплаченные членские взносы из первого показателя;
-    50 - коэффициент для определения количества человек, уплативших взносы;
+    P=x/(y/z)
+    x - Члены РО;
     y - Численность студентов очной формы обучения субъекта РФ (константа, которую сбросит ЦШ);
     z - Коэффициент для региональной поправки. Для МСК равен 2, для СПБ равен 1,5, для остальных регионов равен 1.
 
@@ -278,10 +277,78 @@ def calculate_r11_score():
 
 
 @log_exception
-def calculate_r12_score(report: RegionalR12):
-    """Расчет очков по 12 показателю."""
-    report.score = report.amount_of_money
-    report.save()
+def calculate_r12_score():
+    """
+    Показатель 𝑃12 – это коэффициент, который рассчитывается путем среднего арифметического трех абсолютных значений. 
+
+    K1 – объем средств, собранных бойцами РО РСО на Всероссийском дне ударного труда. Предоставляет данные - РСО.
+    После получения значения K1 происходит сравнение всех значений между различными региональными отделениями РСО и
+    определяется место, которое заняло каждое конкретное РО.
+    Номер занятого места обозначим K’1 (1 место занимает РО, имеющее наибольшее значение).
+
+    K2 = x/y, где:
+    x – количество членов РО РСО, принявших участие во Всероссийском дне ударного труда.
+    y – численность членов РО РСО (берём подтвержденную цифру из 1-го показателя/50).
+    После получения значения K2 происходит сравнение всех данных значений между различными региональными отделениями РСО
+    и определяется место, которое заняло каждое конкретное РО. Номер занятого места обозначим K’2  (1 место занимает РО,
+    имеющее наименьшее значение).
+
+    K3 = K1 /x
+    После получения значения K3 происходит сравнение всех данных значений между различными региональными отделениями РСО
+    и определяется место, которое заняло каждое конкретное РО. Номер занятого места обозначим K’3 (1 место занимает РО,
+    имеющее наименьшее значение).
+
+    Финальный подсчет показателя происходит по следующей формуле:
+
+    𝑃12 = (K’1 + K’2 + K’3) / 3
+    В этой калькуляции разворачиваем места наоборот, т.е. 1 место - это наибольшее значение. Это нужно для того, чтобы
+    в итоговой функции расчета места, мы могли использовать тот же метод, что и для остальных показателей.
+    """
+    logger.info('Выполняется подсчет очков по r12 показателю')
+    sorted_ids_k1 = []
+    sorted_ids_k2 = []
+    sorted_ids_k3 = []
+    k2_dict = {}
+    k3_dict = {}
+    result_places = {}
+
+    reports_qs = RegionalR12.objects.filter(verified_by_chq=True, r_competition__year=current_year())
+    sorted_ids_k1 = list(
+        reports_qs.order_by('-amount_of_money').values_list('regional_headquarter_id', flat=True)
+    )
+    for report in reports_qs:
+        r1_report = RegionalR1.objects.filter(
+            regional_headquarter=report.regional_headquarter, verified_by_chq=True
+        ).first()
+        if r1_report:
+            all_ro_members = r1_report.score
+            if all_ro_members == 0:
+                continue
+            k2_dict[report.regional_headquarter_id] = round(report.amount_of_money / all_ro_members, 4)
+        else:
+            k2_dict[report.regional_headquarter_id] = 0
+        number_of_members = report.number_of_members
+        if number_of_members == 0:
+            continue
+        k3_dict[report.regional_headquarter_id] = round(report.amount_of_money / number_of_members, 4)
+
+    sorted_ids_k2 = sorted(k2_dict.keys(), key=lambda x: k2_dict[x], reverse=True)
+    sorted_ids_k3 = sorted(k3_dict.keys(), key=lambda x: k3_dict[x], reverse=True)
+
+    for id in reports_qs.values_list('regional_headquarter_id', flat=True):
+        k1_place = sorted_ids_k1.index(id) + 1 if id in sorted_ids_k1 else len(sorted_ids_k1) + 1
+        k2_place = sorted_ids_k2.index(id) + 1 if id in sorted_ids_k2 else len(sorted_ids_k2) + 1
+        k3_place = sorted_ids_k3.index(id) + 1 if id in sorted_ids_k3 else len(sorted_ids_k3) + 1
+        result_places[id] = (k1_place + k2_place + k3_place) / 3
+    sorted_result_ids = sorted(result_places.keys(), key=lambda x: result_places[x], reverse=True)
+
+    for report in reports_qs:
+        regional_hq_id = report.regional_headquarter_id
+        if regional_hq_id not in sorted_result_ids:
+            continue
+        report.score = sorted_result_ids.index(regional_hq_id)
+        report.save()
+    logger.info('Расчет r12 показателя завершен')
 
 
 @log_exception
@@ -382,31 +449,33 @@ def calculate_r14():
     logger.info(f'Завершен подсчет отчета по r14 показателю. Создано {len(new_reports)} отчетов')
 
 
-@log_exception
-def calculate_r16_score(report: RegionalR16):
-    """Расчет очков по 16 показателю.
+# @log_exception
+# def calculate_r16_score(report: RegionalR16):
+#     """Расчет очков по 16 показателю.
 
 
-    """
-    points = {'Всероссийский': 2, 'Окружной': 1.5, 'Межрегиональный': 1}
-    logger.info(
-        f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
-        f'по {report.__class__._meta.verbose_name} - id {report.id}. '
-    )
-    projects = report.projects.all()
-    report.score = 0
-    for project in projects:
-        try:
-            report.score += points[project.project_scale]
-        except KeyError:
-            continue
-        logger.info(
-           f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
-        )
-    report.save()
+#     """
+#     points = {'Всероссийский': 2, 'Окружной': 1.5, 'Межрегиональный': 1}
+#     logger.info(
+#         f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
+#         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
+#     )
+#     projects = report.projects.all()
+#     report.score = 0
+#     for project in projects:
+#         try:
+#             report.score += points[project.project_scale]
+#         except KeyError:
+#             continue
+#         logger.info(
+#            f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
+#         )
+#     report.save()
 
 
-def calc_r_ranking(report_models: list, ranking_field_name: str, score_field_name: str, reverse=True, no_verification=False):
+def calc_r_ranking(
+    report_models: list, ranking_field_name: str, score_field_name: str, reverse=True, no_verification=False
+):
     """
     Расчет места для региональных отчетов.
 

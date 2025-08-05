@@ -139,7 +139,7 @@ class RSerializerFactory:
     def _create_serializer_class(self, model_name):
         link_model_name = f'{model_name}Link'
         link_serializer_class = type(
-            f'{link_model_name}LinkSerializer',
+            f'{link_model_name}Serializer',
             (serializers.ModelSerializer,),
             {
                 'Meta': type('Meta', (), {

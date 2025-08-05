@@ -541,7 +541,6 @@ class RegionalReport2Serializer(serializers.ModelSerializer):
         fields = (
             'id',
             'regional_headquarter',
-            'r_competition_year',
             'created_at',
             'updated_at',
             'score',
@@ -550,7 +549,6 @@ class RegionalReport2Serializer(serializers.ModelSerializer):
         read_only_fields = (
             'id',
             'regional_headquarter',
-            'r_competition_year',
             'created_at',
             'updated_at',
             'score',
@@ -713,11 +711,11 @@ class BaseRegionalReport9Serializer(BaseRSerializer, CreateUpdateSerializerMixin
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
-# r9_serializers_factory = RSerializerFactory(
-#     r9_models_factory.models,
-#     BaseRegionalReport9Serializer
-# )
-# r9_serializers_factory.create_serializer_classes()
+r9_serializers_factory = RSerializerFactory(
+    r9_models_factory.models,
+    BaseRegionalReport9Serializer
+)
+r9_serializers_factory.create_serializer_classes()
 
 
 class BaseRegionalR10Serializer(BaseRSerializer, CreateUpdateSerializerMixin, FileScanSizeSerializerMixin):

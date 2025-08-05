@@ -13,7 +13,7 @@ from regional_competitions_2025.views import (RegionalR19MeViewSet, RegionalR19V
                                               RegionalR17MeViewSet,
                                               RegionalR17ViewSet,
                                               RegionalR18MeViewSet,
-                                              RegionalR18ViewSet)
+                                              RegionalR18ViewSet, r9_view_sets_factory)
 from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
@@ -61,7 +61,7 @@ router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 router.register(r'reports/7', RegionalR7AutoViewSet, basename='r7')
 router.register(r'reports/8', RegionalR8AutoViewSet, basename='r8')
-# register_factory_view_sets(router, 'reports/9', r9_view_sets_factory.view_set_names, r9_view_sets_factory.r_view_sets)
+register_factory_view_sets(router, 'reports/9', r9_view_sets_factory.view_set_names, r9_view_sets_factory.r_view_sets)
 router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 me_router.register(r'reports/12', RegionalR12MeViewSet, basename='r12_me')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')

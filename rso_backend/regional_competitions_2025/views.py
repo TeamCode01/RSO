@@ -36,7 +36,7 @@ from regional_competitions_2025.serializers import (  # RegionalReport14Serializ
     RegionalReport1Serializer, RegionalReport4Serializer,
     RegionalReport12Serializer, RegionalReport13Serializer,
     RegionalReport17Serializer, RegionalReport18Serializer,
-    RegionalReport19Serializer, RegionalReport20Serializer)
+    RegionalReport19Serializer, RegionalReport20Serializer, r9_serializers_factory)
 from regional_competitions_2025.tasks import (send_email_report_part_1,
                                               send_mail)
 from regional_competitions_2025.utils import (
@@ -490,14 +490,14 @@ class RegionalR8AutoViewSet(BaseRegionalRAutoViewSet):
     """Вьюсет для выгрузки автоматических отчетов по 8 показателю."""
 
 
-# r9_view_sets_factory = RViewSetFactory(
-#     models=r9_models_factory.models,
-#     serializers=r9_serializers_factory.serializers,
-#     base_r_view_set=BaseRegionalRViewSet,
-#     base_r_me_view_set=BaseRegionalRMeViewSet,
-#     additional_parental_class=FormDataNestedFileParser
-# )
-# r9_view_sets_factory.create_view_sets()
+r9_view_sets_factory = RViewSetFactory(
+    models=r9_models_factory.models,
+    serializers=r9_serializers_factory.serializers,
+    base_r_view_set=BaseRegionalRViewSet,
+    base_r_me_view_set=BaseRegionalRMeViewSet,
+    additional_parental_class=FormDataNestedFileParser
+)
+r9_view_sets_factory.create_view_sets()
 
 
 class RegionalR12ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
