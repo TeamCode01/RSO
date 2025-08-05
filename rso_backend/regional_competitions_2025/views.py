@@ -11,24 +11,39 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from headquarters.models import (CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter,
+from headquarters.models import (CentralHeadquarter, DistrictHeadquarter,
+                                 RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
+from regional_competitions.models import RegionalR1
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
-from regional_competitions_2025.mixins import (DownloadReportXlsxMixin, FormDataNestedFileParser,
-                                               ListRetrieveCreateMixin, RegionalRMeMixin, RegionalRMixin)
-from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RegionalR4, RegionalR13, RegionalR17,
-                                               RegionalR18, RVerificationLog)
-from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
-                                                    IsDistrictHeadquarterExpert, IsRegionalCommander,
-                                                    IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
-from regional_competitions_2025.serializers import (RegionalReport4Serializer, RegionalReport13Serializer,
-                                                    # RegionalReport14Serializer, RegionalReport16Serializer,
-                                                    RegionalReport17Serializer, RegionalReport18Serializer)
-from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
-from regional_competitions_2025.utils import (current_year, get_all_reports_from_competition, get_emails,
-                                              get_report_number_by_class_name, swagger_schema_for_central_review,
-                                              swagger_schema_for_create_and_update_methods,
-                                              swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+from regional_competitions_2025.factories import RViewSetFactory
+from regional_competitions_2025.mixins import (DownloadReportXlsxMixin,
+                                               FormDataNestedFileParser,
+                                               ListRetrieveCreateMixin,
+                                               RegionalRMeMixin,
+                                               RegionalRMixin)
+from regional_competitions_2025.models import (CHqRejectingLog, RCompetition,
+                                               RegionalR4, RegionalR12,
+                                               RegionalR13, RegionalR17,
+                                               RegionalR18, RegionalR19,
+                                               RegionalR20, RVerificationLog,
+                                               r9_models_factory)
+from regional_competitions_2025.permissions import (
+    IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
+    IsDistrictHeadquarterExpert, IsRegionalCommander,
+    IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
+from regional_competitions_2025.serializers import (  # RegionalReport14Serializer, RegionalReport16Serializer,
+    RegionalReport1Serializer, RegionalReport4Serializer,
+    RegionalReport12Serializer, RegionalReport13Serializer,
+    RegionalReport17Serializer, RegionalReport18Serializer,
+    RegionalReport19Serializer, RegionalReport20Serializer)
+from regional_competitions_2025.tasks import (send_email_report_part_1,
+                                              send_mail)
+from regional_competitions_2025.utils import (
+    current_year, get_all_reports_from_competition, get_emails,
+    get_report_number_by_class_name, swagger_schema_for_central_review,
+    swagger_schema_for_create_and_update_methods,
+    swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, parser_classes
 from rest_framework.filters import OrderingFilter
@@ -424,17 +439,21 @@ class BaseRegionalRAutoViewSet(DownloadReportXlsxMixin, GenericViewSet):
     """Базовый вьюсет для выгрузки автоматических отчетов."""
 
 
-# class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
-#     queryset = RegionalR1.objects.all()
-#     serializer_class = RegionalR1Serializer
-#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+class RegionalR1ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+    queryset = RegionalR1.objects.all()
+    serializer_class = RegionalReport1Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-# class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
-#     model = RegionalR1
-#     queryset = RegionalR1.objects.all()
-#     serializer_class = RegionalR1Serializer
-#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+class RegionalR1MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
+    model = RegionalR1
+    queryset = RegionalR1.objects.all()
+    serializer_class = RegionalReport1Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR2AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 2 показателю."""
 
 
 class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
@@ -465,6 +484,33 @@ class RegionalR4MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeVi
 
 class RegionalR7AutoViewSet(BaseRegionalRAutoViewSet):
     """Вьюсет для выгрузки автоматических отчетов по 7 показателю."""
+
+
+class RegionalR8AutoViewSet(BaseRegionalRAutoViewSet):
+    """Вьюсет для выгрузки автоматических отчетов по 8 показателю."""
+
+
+# r9_view_sets_factory = RViewSetFactory(
+#     models=r9_models_factory.models,
+#     serializers=r9_serializers_factory.serializers,
+#     base_r_view_set=BaseRegionalRViewSet,
+#     base_r_me_view_set=BaseRegionalRMeViewSet,
+#     additional_parental_class=FormDataNestedFileParser
+# )
+# r9_view_sets_factory.create_view_sets()
+
+
+class RegionalR12ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+    queryset = RegionalR12.objects.all()
+    serializer_class = RegionalReport12Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR12MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
+    model = RegionalR12
+    queryset = RegionalR12.objects.all()
+    serializer_class = RegionalReport12Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
 class RegionalR13ViewSet(DownloadReportXlsxMixin, RetrieveModelMixin, GenericViewSet,):
@@ -571,4 +617,30 @@ class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
     model = RegionalR18
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalReport18Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR19ViewSet(RegionalRNoVerifViewSet):
+    queryset = RegionalR19.objects.all()
+    serializer_class = RegionalReport19Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR19MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR19
+    queryset = RegionalR19.objects.all()
+    serializer_class = RegionalReport19Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR20ViewSet(RegionalRNoVerifViewSet):
+    queryset = RegionalR20.objects.all()
+    serializer_class = RegionalReport20Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR20MeViewSet(BaseRegionalRMeViewSet):
+    model = RegionalR19
+    queryset = RegionalR20.objects.all()
+    serializer_class = RegionalReport20Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
