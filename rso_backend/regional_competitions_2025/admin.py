@@ -1,7 +1,8 @@
 from django.contrib import admin
 from regional_competitions_2025.factories import RAdminFactory
 from regional_competitions_2025.forms import ExpertUserForm
-from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Ranking, RCompetition, RegionalR1, RegionalR12, RegionalR13, RegionalR19, RegionalR2, RegionalR20,
+from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Ranking, RCompetition, 
+                                               RegionalR1, RegionalR12, RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project, RegionalR16, RegionalR17, RegionalR18, RegionalR19, RegionalR2, RegionalR20, RegionalR17Link, RegionalR17Project,
                                                RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
                                                RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR101,
                                                RegionalR101Link, RegionalR102, RegionalR102Link, RVerificationLog,
@@ -564,52 +565,71 @@ class RegionalR12Admin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR13)
-# class RegionalR13Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'is_sent',
-#         'score',
-#         'number_of_members',
-#         'verified_by_chq',
-#         'verified_by_dhq',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment', 'regional_headquarter__name')
-#     list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq')
-#     readonly_fields = ('created_at', 'updated_at')
-#     actions = ['get_ro_score',]
+@admin.register(RegionalR13)
+class RegionalR15Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'xp',
+        'yp',
+        'x3',
+        'y3',
+        'p15'
+    )
+    search_fields = ('id', 'regional_headquarter__name')
 
-    # @admin.action(description='Вычислить очки по показателю')
-    # def get_ro_score(self, request, queryset):
-    #     calculate_r13_score()
-
-    # def get_queryset(self, request):
-    #     return super().get_queryset(request).select_related('regional_headquarter')
-
-    # def get_id_regional_headquarter(self, obj):
-    #     return obj.regional_headquarter.id
-    # get_id_regional_headquarter.short_description = 'ID РШ'
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR14)
-# class RegionalR14Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'report_12',
-#         'report_13',
-#         'score'
-#     )
-#     search_fields = ('id', 'report_12__regional_headquarter__name')
+class RegionalR14LinkInline(admin.TabularInline):
+    model = RegionalR14Link
+    extra = 0
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+
+class RegionalR14ProjectInline(admin.TabularInline):
+    model = RegionalR14Project
+    extra = 0
+
+
+@admin.register(RegionalR14Project)
+class RegionalR14ProjectAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_r14',
+        'name',
+        'project_scale',
+        'regulations'
+    )
+    search_fields = ('name',)
+    list_filter = ('project_scale',)
+    inlines = [RegionalR14LinkInline]
+
+
+@admin.register(RegionalR14)
+class RegionalR14Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'get_id_regional_headquarter',
+        'regional_headquarter',
+        'is_sent',
+        'is_project',
+        'score',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment',)
+    list_filter = ('is_sent', 'is_project', 'verified_by_chq', 'verified_by_dhq')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR14ProjectInline]
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 # @admin.register(RegionalR15)
@@ -631,108 +651,77 @@ class RegionalR12Admin(admin.ModelAdmin):
 #     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# class RegionalR16LinkInline(admin.TabularInline):
-#     model = RegionalR16Link
-#     extra = 0
+@admin.register(RegionalR16)
+class RegionalR16Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    readonly_fields = ('created_at', 'updated_at')
+
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# class RegionalR16ProjectInline(admin.TabularInline):
-#     model = RegionalR16Project
-#     extra = 0
+class RegionalR17LinkInline(admin.TabularInline):
+    model = RegionalR17Link
+    extra = 0
 
 
-# @admin.register(RegionalR16Project)
-# class RegionalR16ProjectAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_r16',
-#         'name',
-#         'project_scale',
-#         'regulations'
-#     )
-#     search_fields = ('name',)
-#     list_filter = ('project_scale',)
-#     inlines = [RegionalR16LinkInline]
+class RegionalR17ProjectInline(admin.TabularInline):
+    model = RegionalR17Project
+    extra = 0
 
 
-# @admin.register(RegionalR16)
-# class RegionalR16Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'get_id_regional_headquarter',
-#         'regional_headquarter',
-#         'is_sent',
-#         'is_project',
-#         'score',
-#         'verified_by_chq',
-#         'verified_by_dhq',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment',)
-#     list_filter = ('is_sent', 'is_project', 'verified_by_chq', 'verified_by_dhq')
-#     readonly_fields = ('created_at', 'updated_at')
-#     inlines = [RegionalR16ProjectInline]
-
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+@admin.register(RegionalR17Project)
+class RegionalR17ProjectAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_r17',
+        'file',
+    )
+    search_fields = ('name',)
+    inlines = [RegionalR17LinkInline]
 
 
-# @admin.register(RegionalR17)
-# class RegionalR17Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment', 'regional_headquarter__name')
-#     readonly_fields = ('created_at', 'updated_at')
+@admin.register(RegionalR17)
+class RegionalR17Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment',)
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR17ProjectInline]
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
-
-
-# class RegionalR18LinkInline(admin.TabularInline):
-#     model = RegionalR18Link
-#     extra = 0
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# class RegionalR18ProjectInline(admin.TabularInline):
-#     model = RegionalR18Project
-#     extra = 0
+@admin.register(RegionalR18)
+class RegionalR18Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'created_at',
+        'updated_at'
+    )
+    search_fields = ('comment', 'regional_headquarter__name')
+    readonly_fields = ('created_at', 'updated_at')
 
-
-# @admin.register(RegionalR18Project)
-# class RegionalR18ProjectAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_r18',
-#         'file',
-#     )
-#     search_fields = ('name',)
-#     inlines = [RegionalR18LinkInline]
-
-
-# @admin.register(RegionalR18)
-# class RegionalR18Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'created_at',
-#         'updated_at'
-#     )
-#     search_fields = ('comment',)
-#     readonly_fields = ('created_at', 'updated_at')
-#     inlines = [RegionalR18ProjectInline]
-
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR19)
