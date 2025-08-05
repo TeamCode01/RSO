@@ -10,10 +10,15 @@ from regional_competitions_2025.views import (RegionalR19MeViewSet, RegionalR19V
                                               RegionalR12MeViewSet,
                                               RegionalR12ViewSet,
                                               RegionalR13ViewSet,
+                                              RegionalR14ViewSet,
+                                              RegionalR14MeViewSet,
+                                              RegionalR16ViewSet,
+                                              RegionalR16MeViewSet,
                                               RegionalR17MeViewSet,
                                               RegionalR17ViewSet,
                                               RegionalR18MeViewSet,
-                                              RegionalR18ViewSet)
+                                              RegionalR18ViewSet,
+                                              )
 from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
                                     SimpleRouter)
 
@@ -65,10 +70,10 @@ router.register(r'reports/8', RegionalR8AutoViewSet, basename='r8')
 router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 me_router.register(r'reports/12', RegionalR12MeViewSet, basename='r12_me')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')
-# router.register(r'reports/14', RegionalR14ViewSet, basename='r14')
-# me_router.register(r'reports/14', RegionalR14MeViewSet, basename='r14_me')
-# router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
-# me_router.register(r'reports/16', RegionalR16MeViewSet, basename='r16_me')
+router.register(r'reports/14', RegionalR14ViewSet, basename='r14')
+me_router.register(r'reports/14', RegionalR14MeViewSet, basename='r14_me')
+router.register(r'reports/16', RegionalR16ViewSet, basename='r16')
+me_router.register(r'reports/16', RegionalR16MeViewSet, basename='r16_me')
 router.register(r'reports/17', RegionalR17ViewSet, basename='r17')
 me_router.register(r'reports/17', RegionalR17MeViewSet, basename='r17_me')
 router.register(r'reports/18', RegionalR18ViewSet, basename='r18')
