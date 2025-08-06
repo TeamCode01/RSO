@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
             name='RCompetition',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('year', models.PositiveSmallIntegerField(default=regional_competitions_2025.utils.current_year, verbose_name='Год проведения')),
+                ('year', models.PositiveSmallIntegerField(default=regional_competitions_2025.utils.get_current_year, verbose_name='Год проведения')),
             ],
             options={
                 'verbose_name': 'Рейтинг РО',

@@ -7,7 +7,7 @@ from django.db.models.constraints import CheckConstraint
 from regional_competitions_2025.constants import MEMBER_FEE, R6_DATA, R9_EVENTS_NAMES, REPORT_EXISTS_MESSAGE
 from regional_competitions_2025.factories import RModelFactory
 from regional_competitions_2025.utils import (
-    current_year, get_last_rcompetition_id,
+    get_current_year, get_last_rcompetition_id,
     regional_comp_regulations_files_path
 )
 
@@ -16,7 +16,7 @@ class RCompetition(models.Model):
     """Список конкурсов региональных штабов"""
     year = models.PositiveSmallIntegerField(
         verbose_name='Год проведения',
-        default=current_year
+        default=get_current_year
     )
 
     class Meta:

@@ -11,39 +11,27 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from headquarters.models import (CentralHeadquarter, DistrictHeadquarter,
-                                 RegionalHeadquarter,
+from headquarters.models import (CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions.models import RegionalR1
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions_2025.factories import RViewSetFactory
-from regional_competitions_2025.mixins import (DownloadReportXlsxMixin,
-                                               FormDataNestedFileParser,
-                                               ListRetrieveCreateMixin,
-                                               RegionalRMeMixin,
-                                               RegionalRMixin)
-from regional_competitions_2025.models import (CHqRejectingLog, RCompetition,
-                                               RegionalR4, RegionalR12,
-                                               RegionalR13, RegionalR17,
-                                               RegionalR18, RegionalR19,
-                                               RegionalR20, RVerificationLog,
-                                               r9_models_factory)
-from regional_competitions_2025.permissions import (
-    IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
-    IsDistrictHeadquarterExpert, IsRegionalCommander,
-    IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
+from regional_competitions_2025.mixins import (DownloadReportXlsxMixin, FormDataNestedFileParser,
+                                               ListRetrieveCreateMixin, RegionalRMeMixin, RegionalRMixin)
+from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RegionalR1, RegionalR4, RegionalR12,
+                                               RegionalR13, RegionalR17, RegionalR18, RegionalR19, RegionalR20,
+                                               RVerificationLog, r9_models_factory)
+from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
+                                                    IsDistrictHeadquarterExpert, IsRegionalCommander,
+                                                    IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions_2025.serializers import (  # RegionalReport14Serializer, RegionalReport16Serializer,
-    RegionalReport1Serializer, RegionalReport4Serializer,
-    RegionalReport12Serializer, RegionalReport13Serializer,
-    RegionalReport17Serializer, RegionalReport18Serializer,
-    RegionalReport19Serializer, RegionalReport20Serializer, r9_serializers_factory)
-from regional_competitions_2025.tasks import (send_email_report_part_1,
-                                              send_mail)
-from regional_competitions_2025.utils import (
-    current_year, get_all_reports_from_competition, get_emails,
-    get_report_number_by_class_name, swagger_schema_for_central_review,
-    swagger_schema_for_create_and_update_methods,
-    swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+    RegionalReport1Serializer, RegionalReport4Serializer, RegionalReport12Serializer, RegionalReport13Serializer,
+    RegionalReport17Serializer, RegionalReport18Serializer, RegionalReport19Serializer, RegionalReport20Serializer,
+    r9_serializers_factory)
+from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
+from regional_competitions_2025.utils import (get_all_reports_from_competition, get_current_year, get_emails,
+                                              get_report_number_by_class_name, swagger_schema_for_central_review,
+                                              swagger_schema_for_create_and_update_methods,
+                                              swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, parser_classes
 from rest_framework.filters import OrderingFilter
@@ -353,11 +341,11 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         if r_competition_year:
             r_competition = self.get_r_competition(r_competition_year)
         else:
-            r_competition = self.get_r_competition(current_year(), self.model)
+            r_competition = self.get_r_competition(get_current_year(), self.model)
 
         report = self.model.objects.filter(
             regional_headquarter=regional_headquarter,
-            r_competition=r_competition
+            r_competition_id=r_competition.id
         ).last()
 
         if report is None:
@@ -404,6 +392,8 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         r_competition_year = self.request.query_params.get('year')
         if r_competition_year:
             r_competition = self.get_r_competition(r_competition_year)
+        else:
+            r_competition = self.get_r_competition(get_current_year(), self.model)
 
         serializer.save(
             regional_headquarter=regional_hq,
@@ -422,6 +412,11 @@ class RegionalRNoVerifViewSet(RegionalRMixin):
     model = None
     serializer_class = None
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.DEBUG:
+            self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -592,22 +587,6 @@ class RegionalR17MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet):
 
 
 class RegionalR18ViewSet(RegionalRNoVerifViewSet):
-    """Трудоустройство.
-
-    employed_student_start - Фактическое количество трудоустроенных студентов в третий
-    трудовой семестр
-    employed_student_end - Фактическое количество трудоустроенных в штат принимающей
-    организации по итогам третьего трудового семестра.
-
-    ```json
-    {
-      "employed_student_start": 0,
-      "employed_student_end": 0,
-      "comment": "string"
-    }
-    ```
-    """
-
     queryset = RegionalR18.objects.all()
     serializer_class = RegionalReport18Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -621,6 +600,24 @@ class RegionalR18MeViewSet(BaseRegionalRMeViewSet):
 
 
 class RegionalR19ViewSet(RegionalRNoVerifViewSet):
+    """
+    Количество и трудоустройство сотрудников РО РСО
+
+    employees_number - Фактическое количество сотрудников РО РСО.
+    officially_employed - Официальное трудоустройство сотрудников в РО РСО. true - трудоустроены официально,
+    false - неофициально.
+    average_salary - Средняя заработная плата сотрудников РО РСО, руб.
+    comment - Комментарий.
+
+    ```json
+    {
+    "employees_number": 0,
+    "officially_employed": true,
+    "average_salary": 0,
+    "comment": "string"
+    }
+    ```
+    """
     queryset = RegionalR19.objects.all()
     serializer_class = RegionalReport19Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
@@ -640,7 +637,7 @@ class RegionalR20ViewSet(RegionalRNoVerifViewSet):
 
 
 class RegionalR20MeViewSet(BaseRegionalRMeViewSet):
-    model = RegionalR19
+    model = RegionalR20
     queryset = RegionalR20.objects.all()
     serializer_class = RegionalReport20Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)

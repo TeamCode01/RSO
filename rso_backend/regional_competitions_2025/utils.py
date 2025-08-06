@@ -20,7 +20,6 @@ from headquarters.models import RegionalHeadquarter, RegionalHeadquarterEmail
 from openpyxl import Workbook
 from pdfrw import PageMerge, PdfReader, PdfWriter
 from regional_competitions.constants import MASS_REPORT_NUMBERS, MEDIA_PATH
-from regional_competitions_2025.constants import MEMBER_FEE
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -34,7 +33,7 @@ from rest_framework import serializers, status
 logger = logging.getLogger('regional_tasks')
 
 
-def current_year():
+def get_current_year():
     return datetime.datetime.now().year
 
 
@@ -899,9 +898,9 @@ def get_r_competition_by_year(year, r_model):
         year = int(year)
         r_competition = r_model.objects.get(year=year)
     except (ValueError, r_model.DoesNotExist):
-        from regional_competitions_2025.utils import current_year
-        r_competition = r_model.objects.get(year=current_year())
+        from regional_competitions_2025.utils import get_current_year
+        r_competition = r_model.objects.get(year=get_current_year())
     else:
-        from regional_competitions_2025.utils import current_year
-        r_competition = r_model.objects.get(year=current_year())
+        from regional_competitions_2025.utils import get_current_year
+        r_competition = r_model.objects.get(year=get_current_year())
     return r_competition

@@ -133,8 +133,12 @@ class RSerializerFactory:
         for model_name in self.models:
             if not model_name.endswith('Link'):
                 serializer_class = self._create_serializer_class(model_name)
-                serializers_module = import_module('regional_competitions.serializers')
-                setattr(serializers_module, f'{model_name}Serializer', serializer_class)
+                serializers_module = import_module('regional_competitions_2025.serializers')
+                setattr(
+                    serializers_module,
+                    f'RegionalReport{get_report_number_by_class_name(model_name)}Serializer',
+                    serializer_class
+                )
 
     def _create_serializer_class(self, model_name):
         link_model_name = f'{model_name}Link'

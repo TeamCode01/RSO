@@ -9,11 +9,11 @@ from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions_2025.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE, REPORT_SENT_MESSAGE,
                                                   ROUND_2_SIGNS, STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions_2025.factories import RSerializerFactory
-from regional_competitions_2025.models import (CHqRejectingLog, Ranking, RegionalR1, RegionalR12, RegionalR19, RegionalR2, RegionalR20, RegionalR4, RegionalR4Event,
-                                               RegionalR4Link, RegionalR5, RegionalR5Event, RegionalR5Link, RegionalR7,
-                                               RegionalR8, RegionalR11, RegionalR13,
-                                               RegionalR17, RegionalR17Link,
-                                               RegionalR17Project, RegionalR18, RegionalR101, RegionalR101Link,
+from regional_competitions_2025.models import (CHqRejectingLog, Ranking, RegionalR1, RegionalR2, RegionalR4,
+                                               RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
+                                               RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR12,
+                                               RegionalR13, RegionalR17, RegionalR17Link, RegionalR17Project,
+                                               RegionalR18, RegionalR19, RegionalR20, RegionalR101, RegionalR101Link,
                                                RegionalR102, RegionalR102Link, RVerificationLog, r9_models_factory)
 from regional_competitions_2025.utils import get_report_number_by_class_name
 from rest_framework import serializers
@@ -498,8 +498,10 @@ class BaseEventSerializer(FileScanSizeSerializerMixin):
     def to_internal_value(self, data):
         print(f"Original data: {data}")
 
-        if 'is_interregional' in data:
+        if 'is_interregional' in data and type(data['is_interregional']) is str:
             data['is_interregional'] = True if data['is_interregional'].lower() == 'true' else False
+        # elif 'is_interregional' in data and type(data['is_interregional']) == bool:
+        #     data['is_interregional'] = data['is_interregional']
 
         for date_field in ['start_date', 'end_date']:
             if date_field in data:
@@ -989,8 +991,18 @@ class RegionalReport19Serializer(ReportExistsValidationMixin, serializers.ModelS
 class RegionalReport20Serializer(serializers.ModelSerializer):
     class Meta:
         model = RegionalR20
-        fields = '__all__'
-        read_only_fields = ('id', 'regional_headquarter',)
+        fields = (
+            'id',
+            'regional_headquarter',
+            'premises_available',
+            'equipped_workplaces',
+            'event_spaces',
+            'comment',
+        )
+        read_only_fields = (
+            'id',
+            'regional_headquarter',
+        )
 
 
 class EventNameSerializer(serializers.Serializer):

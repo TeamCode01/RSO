@@ -12,7 +12,7 @@ from django.conf import settings
 from rest_framework.response import Response
 
 from headquarters.models import RegionalHeadquarter
-from regional_competitions_2025.utils import get_all_reports_from_competition, get_r_competition_by_year, get_report_number_by_class_name
+from regional_competitions_2025.utils import get_current_year, get_all_reports_from_competition, get_r_competition_by_year, get_report_number_by_class_name
 from regional_competitions_2025.models import RCompetition
 
 
@@ -34,8 +34,8 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
             except ValueError:
                 return queryset.none()
         else:
-            from regional_competitions_2025.utils import current_year
-            queryset = queryset.filter(r_competition__year=current_year())
+            from regional_competitions_2025.utils import get_current_year
+            queryset = queryset.filter(r_competition__year=get_current_year())
 
         return queryset
 
@@ -43,6 +43,7 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         pk = self.kwargs.get('pk')
         objects = queryset.filter(regional_headquarter_id=pk)
+
         if objects.exists():
             latest_object = objects.order_by('-id')[0]
             return latest_object
@@ -57,6 +58,8 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
         r_competition_year = self.request.query_params.get('year')
         if r_competition_year:
             r_competition = self.get_r_competition(r_competition_year, RCompetition)
+        else:
+            r_competition = self.get_r_competition(get_current_year(), RCompetition)
 
         if 'verified_by_dhq' in serializer.Meta.fields:
             existing_reports = self.get_queryset().filter(regional_headquarter=regional_hq)
@@ -72,7 +75,7 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
                 r_competition=r_competition
             )
 
-    def perform_update(self, request, serializer):
+    def perform_update(self, serializer):
         serializer.save(regional_headquarter=RegionalHeadquarter.objects.get(commander=self.request.user))
 
 

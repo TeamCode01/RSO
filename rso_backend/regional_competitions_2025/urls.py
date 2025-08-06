@@ -1,21 +1,13 @@
 from django.urls import include, path
 from regional_competitions_2025.factories import register_factory_view_sets
-from regional_competitions_2025.views import (RegionalR19MeViewSet, RegionalR19ViewSet, RegionalR1MeViewSet,
-                                              RegionalR1ViewSet,
-                                              RegionalR2AutoViewSet,
-                                              RegionalR4MeViewSet,
-                                              RegionalR4ViewSet,
-                                              RegionalR7AutoViewSet,
-                                              RegionalR8AutoViewSet,
-                                              RegionalR12MeViewSet,
-                                              RegionalR12ViewSet,
-                                              RegionalR13ViewSet,
-                                              RegionalR17MeViewSet,
-                                              RegionalR17ViewSet,
-                                              RegionalR18MeViewSet,
-                                              RegionalR18ViewSet, r9_view_sets_factory)
-from rest_framework.routers import (DefaultRouter, DynamicRoute, Route,
-                                    SimpleRouter)
+from regional_competitions_2025.views import (RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
+                                              RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR7AutoViewSet,
+                                              RegionalR8AutoViewSet, RegionalR12MeViewSet, RegionalR12ViewSet,
+                                              RegionalR13ViewSet, RegionalR17MeViewSet, RegionalR17ViewSet,
+                                              RegionalR18MeViewSet, RegionalR18ViewSet, RegionalR19MeViewSet,
+                                              RegionalR19ViewSet, RegionalR20MeViewSet, RegionalR20ViewSet,
+                                              r9_view_sets_factory)
+from rest_framework.routers import DefaultRouter, DynamicRoute, Route, SimpleRouter
 
 
 class MeRouter(SimpleRouter):
@@ -75,6 +67,8 @@ router.register(r'reports/18', RegionalR18ViewSet, basename='r18')
 me_router.register(r'reports/18', RegionalR18MeViewSet, basename='r18_me')
 router.register(r'reports/19', RegionalR19ViewSet, basename='r19')
 me_router.register(r'reports/19', RegionalR19MeViewSet, basename='r19_me')
+router.register(r'reports/20', RegionalR20ViewSet, basename='r20')
+me_router.register(r'reports/20', RegionalR20MeViewSet, basename='r20_me')
 
 urlpatterns = [
     path('', include(router.urls)),

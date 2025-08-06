@@ -5,7 +5,7 @@ from headquarters.models import RegionalHeadquarter
 
 from regional_competitions_2025.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk, MEMBER_FEE
 from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR11, RegionalR12, RegionalR13, RegionalR4
-from regional_competitions_2025.utils import get_participants, log_exception, current_year
+from regional_competitions_2025.utils import get_participants, log_exception, get_current_year
 
 logger = logging.getLogger('regional_tasks')
 
@@ -312,7 +312,7 @@ def calculate_r12_score():
     k3_dict = {}
     result_places = {}
 
-    reports_qs = RegionalR12.objects.filter(verified_by_chq=True, r_competition__year=current_year())
+    reports_qs = RegionalR12.objects.filter(verified_by_chq=True, r_competition__year=get_current_year())
     sorted_ids_k1 = list(
         reports_qs.order_by('-amount_of_money').values_list('regional_headquarter_id', flat=True)
     )
