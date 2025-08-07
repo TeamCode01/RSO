@@ -20,7 +20,6 @@ from headquarters.models import RegionalHeadquarter, RegionalHeadquarterEmail
 from openpyxl import Workbook
 from pdfrw import PageMerge, PdfReader, PdfWriter
 from regional_competitions.constants import MASS_REPORT_NUMBERS, MEDIA_PATH
-from regional_competitions_2025.constants import MEMBER_FEE
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -34,7 +33,7 @@ from rest_framework import serializers, status
 logger = logging.getLogger('regional_tasks')
 
 
-def current_year():
+def get_current_year():
     return datetime.datetime.now().year
 
 
@@ -74,7 +73,7 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
                 "Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'."
             )
 
-    return f'regional_comp/regulations/{instance.__class__.__name__}/{regional_hq_id}/{base_filename}.{file_extension}'
+    return f'regional_comp/regulations/{instance}/{regional_hq_id}/{base_filename}.{file_extension}'
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
@@ -146,6 +145,16 @@ def get_report_number_by_class_name(link):
     class_name = link.__class__.__name__
     pattern = r'Regional(?:Report)?(\d+)'
     match_regional_report = re.search(pattern, class_name)
+
+    if class_name == 'str':
+        link_length = len(link)
+        if link_length >= 13 and link[12].isdigit():
+            return link[9:13]
+        if link_length >= 12 and link[11].isdigit():
+            return link[9:12]
+        if link_length >= 11 and link[10].isdigit():
+            return link[9:11]
+        return link[9]
 
     if match_regional_report:
         return match_regional_report.group(NUMBER_INDEX)
@@ -889,9 +898,9 @@ def get_r_competition_by_year(year, r_model):
         year = int(year)
         r_competition = r_model.objects.get(year=year)
     except (ValueError, r_model.DoesNotExist):
-        from regional_competitions_2025.utils import current_year
-        r_competition = r_model.objects.get(year=current_year())
+        from regional_competitions_2025.utils import get_current_year
+        r_competition = r_model.objects.get(year=get_current_year())
     else:
-        from regional_competitions_2025.utils import current_year
-        r_competition = r_model.objects.get(year=current_year())
+        from regional_competitions_2025.utils import get_current_year
+        r_competition = r_model.objects.get(year=get_current_year())
     return r_competition

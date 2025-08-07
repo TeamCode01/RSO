@@ -7,6 +7,7 @@ from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Rank
                                                RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR101,
                                                RegionalR101Link, RegionalR102, RegionalR102Link, RVerificationLog,
                                                r9_models_factory)
+from regional_competitions_2025.r_calculations import calculate_r12_score
 
 
 @admin.register(RCompetition)

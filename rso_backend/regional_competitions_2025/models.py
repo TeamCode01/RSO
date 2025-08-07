@@ -7,7 +7,7 @@ from django.db.models.constraints import CheckConstraint
 from regional_competitions_2025.constants import MEMBER_FEE, R6_DATA, R9_EVENTS_NAMES, REPORT_EXISTS_MESSAGE
 from regional_competitions_2025.factories import RModelFactory
 from regional_competitions_2025.utils import (
-    current_year, get_last_rcompetition_id,
+    get_current_year, get_last_rcompetition_id,
     regional_comp_regulations_files_path
 )
 
@@ -16,7 +16,7 @@ class RCompetition(models.Model):
     """Список конкурсов региональных штабов"""
     year = models.PositiveSmallIntegerField(
         verbose_name='Год проведения',
-        default=current_year
+        default=get_current_year
     )
 
     class Meta:
@@ -550,28 +550,38 @@ class RegionalR2(BaseScore, models.Model):
         return f'Отчет по 2 показателю РШ {self.regional_headquarter}'
 
 
-# class RegionalR3(BaseScore):
-#     """Отношение количества трудоустроенных членов РО РСО к общей численности членов РО РСО"""
-#     regional_headquarter = models.ForeignKey(
-#         'headquarters.RegionalHeadquarter',
-#         on_delete=models.CASCADE,
-#         verbose_name='Региональный штаб',
-#         related_name='%(app_label)s_%(class)s'
-#     )
-#     r_competition = models.ForeignKey(
-#         RCompetition,
-#         verbose_name='Рейтинг РО',
-#         on_delete=models.CASCADE,
-#         default=get_last_rcompetition_id,
-#         related_name='%(app_label)s_%(class)s'
-#     )
-#     amount_of_membership_fees_last_year = models.PositiveIntegerField(
-#         validators=[MinValueValidator(0)]
-#     )
+class RegionalR3(BaseScore):
+    """Отношение количества трудоустроенных членов РО РСО к общей численности членов РО РСО"""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.CASCADE,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s'
+    )
+    employed_members = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных членов РО РСО',
+        null=True,
+        blank=True
+    )
+    regional_r1 = models.ForeignKey(
+        'RegionalR1',
+        on_delete=models.PROTECT,
+        verbose_name='Региональный отчет №1',
+        null=True,
+        blank=True
+    )
+    r3_place = models.PositiveIntegerField(
+        verbose_name='Место в рейтинге P3',
+        null=True,
+        blank=True
+    )
 
-#     class Meta:
-#         verbose_name = '3 показатель, отчет РШ'
-#         verbose_name_plural = '3 показатель, отчеты РШ'
+    class Meta:
+        verbose_name = '3 показатель, отчет РШ'
+        verbose_name_plural = '3 показатель, отчеты РШ'
+
+    def __str__(self):
+        return f'Показатель 3 — {self.regional_headquarter}'
 
 
 class RegionalR4(BaseEventProjectR):
@@ -936,7 +946,9 @@ class RegionalR12(BaseEventProjectR):
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
-        verbose_name='Объем средств собранных бойцами РО РСО')
+        verbose_name='Объем средств собранных бойцами РО РСО',
+        help_text='Очки в данном показателе это занятое место'
+    )
     number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
