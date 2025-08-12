@@ -2,7 +2,7 @@ from django.urls import include, path
 from regional_competitions_2025.factories import register_factory_view_sets
 from regional_competitions_2025.views import (RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
                                               RegionalR3ViewSet, RegionalR3MeViewSet, RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR7AutoViewSet,
-                                              RegionalR8AutoViewSet, RegionalR101MeViewSet, RegionalR101ViewSet,RegionalR102MeViewSet, RegionalR102ViewSet, RegionalR12MeViewSet, RegionalR12ViewSet,
+                                              RegionalR8AutoViewSet, RegionalR101MeViewSet, RegionalR101ViewSet,RegionalR102MeViewSet, RegionalR102ViewSet, RegionalR11MeViewSet, RegionalR11ViewSet, RegionalR12MeViewSet, RegionalR12ViewSet,
                                               RegionalR13ViewSet, RegionalR14MeViewSet, RegionalR14ViewSet, RegionalR16MeViewSet, RegionalR16ViewSet, RegionalR17MeViewSet, RegionalR17ViewSet, RegionalR18MeViewSet, RegionalR18ViewSet, RegionalR19MeViewSet,RegionalR19ViewSet, RegionalR20MeViewSet, RegionalR20ViewSet,
                                               r9_view_sets_factory)
 from rest_framework.routers import DefaultRouter, DynamicRoute, Route, SimpleRouter
@@ -60,8 +60,8 @@ router.register(r'reports/10/1', RegionalR101ViewSet, basename='r10-1')
 router.register(r'reports/10/2', RegionalR102ViewSet, basename='r10-2')
 me_router.register(r'reports/10/1', RegionalR101MeViewSet, basename='r10-1_me')
 me_router.register(r'reports/10/2', RegionalR102MeViewSet, basename='r10-2_me')
-# router.register(r'reports/11', RegionalR11ViewSet, basename='r11')
-# me_router.register(r'reports/11', RegionalR11MeViewSet, basename='r11_me')
+router.register(r'reports/11', RegionalR11ViewSet, basename='r11')
+me_router.register(r'reports/11', RegionalR11MeViewSet, basename='r11_me')
 router.register(r'reports/12', RegionalR12ViewSet, basename='r12')
 me_router.register(r'reports/12', RegionalR12MeViewSet, basename='r12_me')
 router.register(r'reports/13', RegionalR13ViewSet, basename='r13')

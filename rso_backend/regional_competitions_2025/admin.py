@@ -5,9 +5,9 @@ from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Rank
                                                RegionalR1, RegionalR12, RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project, RegionalR16, RegionalR17, RegionalR18, RegionalR19, RegionalR2, RegionalR20, RegionalR17Link, RegionalR17Project,
                                                RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
                                                RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR101,
-                                               RegionalR101Link, RegionalR102, RegionalR102Link, RVerificationLog,
+                                               RegionalR101Link, RegionalR102, RegionalR102Link, RegionalR3, RVerificationLog,
                                                r9_models_factory)
-from regional_competitions_2025.r_calculations import calculate_r12_score
+from regional_competitions_2025.r_calculations import calculate_r12_score, calculate_r3_score
 
 
 @admin.register(RCompetition)
@@ -225,29 +225,27 @@ class RegionalR2Admin(admin.ModelAdmin):
     # get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR3)
-# class RegionalR3Admin(admin.ModelAdmin):
+@admin.register(RegionalR3)
+class RegionalR3Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'employed_members',
+        'score',
+        'r3_place',
+    )
+    search_fields = ('regional_headquarter__name',)
+    actions = ['calculate_scores']
 
-#     list_display = (
-#         'regional_headquarter',
-#         'id',
-#         'amount_of_membership_fees_2023',
-#         'score',
-#     )
-#     search_fields = ('regional_headquarter__name',)
-#     actions = ['get_ro_score',]
+    def get_ro_score(self, obj):
+        return obj.regional_headquarter.name
+    get_ro_score.short_description = 'Региональный штаб'
 
-#     def get_ro_score(self, request, queryset):
-#         for obj in queryset:
-#             calculate_r3_score(obj)
-
-#     get_ro_score.short_description = 'Вычислить очки по показателю'
-
-#     @admin.action(description='Вычислить очки')
-#     def calculate_scores(self, request, queryset):
-#         for report in queryset:
-#             calculate_r3_score(report)
-#         self.message_user(request, 'Очки успешно вычислены.')
+    @admin.action(description='Вычислить очки')
+    def calculate_scores(self, request, queryset):
+        for report in queryset:
+            calculate_r3_score(report)
+        self.message_user(request, 'Очки успешно вычислены.')
 
 
 class RegionalR4LinkInline(admin.TabularInline):
@@ -567,7 +565,7 @@ class RegionalR12Admin(admin.ModelAdmin):
 
 
 @admin.register(RegionalR13)
-class RegionalR15Admin(admin.ModelAdmin):
+class RegionalR13Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',

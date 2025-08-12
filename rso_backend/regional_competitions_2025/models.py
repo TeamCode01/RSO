@@ -563,13 +563,6 @@ class RegionalR3(BaseScore):
         null=True,
         blank=True
     )
-    regional_r1 = models.ForeignKey(
-        'RegionalR1',
-        on_delete=models.PROTECT,
-        verbose_name='Региональный отчет №1',
-        null=True,
-        blank=True
-    )
     r3_place = models.PositiveIntegerField(
         verbose_name='Место в рейтинге P3',
         null=True,
@@ -581,7 +574,7 @@ class RegionalR3(BaseScore):
         verbose_name_plural = '3 показатель, отчеты РШ'
 
     def __str__(self):
-        return f'Показатель 3 — {self.regional_headquarter}'
+        return f'Отчет по 3 показателю РШ — {self.regional_headquarter}'
 
 
 class RegionalR4(BaseEventProjectR):

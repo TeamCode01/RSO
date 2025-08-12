@@ -564,10 +564,10 @@ class RegionalReport3Serializer(serializers.ModelSerializer):
             'id',
             'regional_headquarter',
             'employed_members',
-            'regional_r1',
             'score',
+            'r3_place'
         )
-        read_only_fields = ('score',)
+        read_only_fields = ('score', 'r3_place')
 
 
 class RegionalReport4LinkSerializer(BaseLinkSerializer):

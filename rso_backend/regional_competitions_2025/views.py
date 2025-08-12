@@ -18,14 +18,14 @@ from regional_competitions_2025.factories import RViewSetFactory
 from regional_competitions_2025.mixins import (DownloadReportXlsxMixin, FormDataNestedFileParser,
                                                ListRetrieveCreateMixin, RegionalRMeMixin, RegionalRMixin)
 from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RegionalR1, RegionalR3, 
-                                               RegionalR4, RegionalR5, RegionalR101, RegionalR102, RegionalR12,
+                                               RegionalR4, RegionalR5, RegionalR101, RegionalR102, RegionalR11,RegionalR12,
                                                RegionalR13, RegionalR14, RegionalR16, RegionalR17, RegionalR18, RegionalR19, RegionalR20,
                                                RVerificationLog, r9_models_factory)
 from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
                                                     IsDistrictHeadquarterExpert, IsRegionalCommander,
                                                     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions_2025.serializers import (RegionalReport101Serializer, RegionalReport102Serializer, RegionalReport14Serializer, RegionalReport16Serializer,
-    RegionalReport1Serializer, RegionalReport3Serializer, RegionalReport4Serializer, RegionalReport12Serializer, RegionalReport13Serializer,
+    RegionalReport1Serializer, RegionalReport3Serializer, RegionalReport4Serializer, RegionalReport12Serializer, RegionalReport13Serializer, RegionalReport11Serializer,
     RegionalReport17Serializer, RegionalReport18Serializer, RegionalReport19Serializer, RegionalReport20Serializer,
     r9_serializers_factory)
 from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
@@ -588,17 +588,17 @@ class RegionalR102MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, Se
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-# class RegionalR11ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
-#     queryset = RegionalR11.objects.all()
-#     serializer_class = RegionalR11Serializer
-#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+class RegionalR11ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
+    queryset = RegionalR11.objects.all()
+    serializer_class = RegionalReport11Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-# class RegionalR11MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
-#     model = RegionalR11
-#     queryset = RegionalR11.objects.all()
-#     serializer_class = RegionalR11Serializer
-#     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+class RegionalR11MeViewSet(FormDataNestedFileParser, BaseRegionalRMeViewSet, SendMixin):
+    model = RegionalR11
+    queryset = RegionalR11.objects.all()
+    serializer_class = RegionalReport11Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
 class RegionalR12ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
