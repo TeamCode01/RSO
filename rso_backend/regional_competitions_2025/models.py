@@ -676,32 +676,41 @@ class RegionalR5Link(BaseLink):
     )
 
 
-# class BaseRegionalR6(BaseEventProjectR):
-#     """
-#     Участие бойцов студенческих отрядов РО РСО во всероссийских
-#     (международных) мероприятиях и проектах (в том числе и трудовых) «К».
-#     """
-#     is_project = models.BooleanField(
-#         verbose_name='Наличие',
-#         default=False
-#     )
-#     number_of_members = models.PositiveIntegerField(
-#         blank=True,
-#         null=True,
-#         verbose_name='Количество человек принявших участие'
-#     )
+class BaseRegionalR6(BaseEventProjectR):
+    """
+    Участие бойцов студенческих отрядов РО РСО во всероссийских
+    (международных) мероприятиях и проектах (в том числе и трудовых) «К».
+    """
+    is_project = models.BooleanField(
+        verbose_name='Наличие',
+        default=False
+    )
+    number_of_members = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество человек принявших участие'
+    )
+    is_hq_member = models.BooleanField(
+        verbose_name='Члены РО являлись членами Штаба всероссийского трудового проекта',
+        default=False
+    )
+    hq_members_count = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество членов Штаба всероссийского трудового проекта от РО'
+    )
 
-#     def __str__(self):
-#         return f'Отчет по 6 показателю РШ {self.regional_headquarter}'
+    def __str__(self):
+        return f'Отчет по 6 показателю РШ {self.regional_headquarter}'
 
 
-# r6_models_factory = RModelFactory(
-#     r_number=6,
-#     base_r_model=BaseRegionalR6,
-#     base_link_model=BaseLink,
-#     event_names={id: name for tup in R6_DATA for id, name in tup[0].items()},
-# )
-# r6_models_factory.create_models()
+r6_models_factory = RModelFactory(
+    r_number=6,
+    base_r_model=BaseRegionalR6,
+    base_link_model=BaseLink,
+    event_names={id: name for tup in R6_DATA for id, name in tup[0].items()},
+)
+r6_models_factory.create_models()
 
 
 class RegionalR7(models.Model):
@@ -1073,45 +1082,45 @@ class RegionalR14Link(models.Model):
         return f'ID {self.id}'
 
 
-# class RegionalR15(models.Model):
-#     """Отношение количества трудоустроенных и прошедших профобучение членов РО РСО по 
-#        соответствующему основному направлению ЛСО к общей запланированной квоте 
-#        профобучения на текущий период"""
-#     regional_headquarter = models.ForeignKey(
-#         'headquarters.RegionalHeadquarter',
-#         on_delete=models.PROTECT,
-#         verbose_name='Региональный штаб',
-#         related_name='%(app_label)s_%(class)s',
-#     )
-#     r_competition = models.ForeignKey(
-#         RCompetition,
-#         verbose_name='Рейтинг РО',
-#         on_delete=models.CASCADE,
-#         default=get_last_rcompetition_id,
-#         related_name='%(app_label)s_%(class)s'
-#     )
-#     xp = models.PositiveSmallIntegerField(
-#         verbose_name='Xп'
-#     )
-#     yp = models.PositiveSmallIntegerField(
-#         verbose_name='Yп'
-#     )
-#     x3 = models.PositiveSmallIntegerField(
-#         verbose_name='X3'
-#     )
-#     y3 = models.PositiveSmallIntegerField(
-#         verbose_name='Y3'
-#     )
-#     p15 = models.FloatField(
-#         verbose_name='P15'
-#     )
+class RegionalR15(models.Model):
+    """Отношение количества трудоустроенных и прошедших профобучение членов РО РСО по 
+       соответствующему основному направлению ЛСО к общей запланированной квоте 
+       профобучения на текущий период"""
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.PROTECT,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s',
+    )
+    r_competition = models.ForeignKey(
+        RCompetition,
+        verbose_name='Рейтинг РО',
+        on_delete=models.CASCADE,
+        default=get_last_rcompetition_id,
+        related_name='%(app_label)s_%(class)s'
+    )
+    trained_members = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных и прошедших профобучение членов РО',
+        blank=True,
+        null=True
+    )
+    training_quota = models.PositiveIntegerField(
+        verbose_name='Общая квота профобучения на 1 сентября 2025',
+        blank=True,
+        null=True
+    )
+    score = models.FloatField(
+        verbose_name='P15',
+        blank=True,
+        null=True
+    )
 
-#     class Meta:
-#         verbose_name = '15 показатель, отчет РШ'
-#         verbose_name_plural = '15 показатель, отчеты РШ'
+    class Meta:
+        verbose_name = '15 показатель, отчет РШ'
+        verbose_name_plural = '15 показатель, отчеты РШ'
 
-#     def __str__(self):
-#         return f'Отчет по 15 показателю РШ {self.regional_headquarter}'
+    def __str__(self):
+        return f'Отчет по 15 показателю РШ {self.regional_headquarter}'
 
 
 class RegionalR16(BaseComment, models.Model):

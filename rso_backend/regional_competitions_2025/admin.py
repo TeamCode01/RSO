@@ -5,7 +5,7 @@ from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Rank
                                                RegionalR1, RegionalR12, RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project, RegionalR16, RegionalR17, RegionalR18, RegionalR19, RegionalR2, RegionalR20, RegionalR17Link, RegionalR17Project,
                                                RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
                                                RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR101,
-                                               RegionalR101Link, RegionalR102, RegionalR102Link, RegionalR3, RVerificationLog,
+                                               RegionalR101Link, RegionalR102, RegionalR102Link, RegionalR3, RegionalR15, RVerificationLog,
                                                r9_models_factory)
 from regional_competitions_2025.r_calculations import calculate_r12_score, calculate_r3_score
 
@@ -631,23 +631,21 @@ class RegionalR14Admin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
-# @admin.register(RegionalR15)
-# class RegionalR15Admin(admin.ModelAdmin):
-#     list_display = (
-#         'id',
-#         'regional_headquarter',
-#         'get_id_regional_headquarter',
-#         'xp',
-#         'yp',
-#         'x3',
-#         'y3',
-#         'p15'
-#     )
-#     search_fields = ('id', 'regional_headquarter__name')
+@admin.register(RegionalR15)
+class RegionalR15Admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_headquarter',
+        'get_id_regional_headquarter',
+        'trained_members',
+        'training_quota',
+        'score'
+    )
+    search_fields = ('id', 'regional_headquarter__name')
 
-#     def get_id_regional_headquarter(self, obj):
-#         return obj.regional_headquarter.id
-#     get_id_regional_headquarter.short_description = 'ID РШ'
+    def get_id_regional_headquarter(self, obj):
+        return obj.regional_headquarter.id
+    get_id_regional_headquarter.short_description = 'ID РШ'
 
 
 @admin.register(RegionalR16)

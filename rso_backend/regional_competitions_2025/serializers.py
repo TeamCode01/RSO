@@ -11,10 +11,10 @@ from regional_competitions_2025.constants import (CONVERT_TO_MB, REPORT_EXISTS_M
 from regional_competitions_2025.factories import RSerializerFactory
 from regional_competitions_2025.models import (CHqRejectingLog, Ranking, RegionalR1, RegionalR2, RegionalR3, RegionalR4,
                                                RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
-                                               RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR12,
+                                               RegionalR5Link, BaseRegionalR6, RegionalR7, RegionalR8, RegionalR11, RegionalR12, RegionalR15,
                                                RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project,RegionalR16, RegionalR17, RegionalR17Link, RegionalR17Project,
                                                RegionalR18, RegionalR19, RegionalR20, RegionalR101, RegionalR101Link,
-                                               RegionalR102, RegionalR102Link, RVerificationLog, r9_models_factory)
+                                               RegionalR102, RegionalR102Link, RVerificationLog, r9_models_factory, r6_models_factory)
 from regional_competitions_2025.utils import get_report_number_by_class_name
 from rest_framework import serializers
 
@@ -675,17 +675,17 @@ class BaseRegionalReport6Serializer(BaseRSerializer, CreateUpdateSerializerMixin
         link_model = None
         model = None
         fields = (
-                BaseRSerializer.Meta.fields
-                + ('number_of_members', 'links', 'comment')
+            BaseRSerializer.Meta.fields
+            + ('is_project', 'number_of_members', 'is_hq_member', 'hq_members_count', 'links', 'comment')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
 
 
-# r6_serializers_factory = RSerializerFactory(
-#     models=r6_models_factory.models,
-#     base_r_serializer=BaseRegionalReport6Serializer
-# )
-# r6_serializers_factory.create_serializer_classes()
+r6_serializers_factory = RSerializerFactory(
+    models=r6_models_factory.models,
+    base_r_serializer=BaseRegionalReport6Serializer
+)
+r6_serializers_factory.create_serializer_classes()
 
 
 class RegionalReport7Serializer(serializers.ModelSerializer):
@@ -868,18 +868,16 @@ class RegionalReport14Serializer(BaseRSerializer, CreateUpdateSerializerMixin, N
         )
 
 
-# class RegionalR15Serializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = RegionalR15
-#         fields = (
-#             'id',
-#             'regional_headquarter',
-#             'xp',
-#             'yp',
-#             'x3',
-#             'y3',
-#             'p15'
-#         )
+class RegionalReport15Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegionalR15
+        fields = (
+            'id',
+            'regional_headquarter',
+            'trained_members',
+            'training_quota',
+            'score'
+        )
 
 
 class RegionalReport16Serializer(
