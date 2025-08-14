@@ -749,4 +749,5 @@ urlpatterns = [
                   path('jwt/vk-login/', VKLoginAPIView.as_view(), name='vk_login'),
                   path('', include(router.urls)),
                   path('regional_competitions/', include('regional_competitions.urls')),
+                  path('regional_competitions_2025/', include('regional_competitions_2025.urls')),
               ] + user_nested_urls

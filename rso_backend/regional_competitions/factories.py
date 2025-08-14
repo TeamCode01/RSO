@@ -13,13 +13,13 @@ class RModelFactory:
             base_link_model,
             r_number: int,
             event_names: Dict[int, str],
-            labour_projects: Dict[int, bool] = None
+            labour_projects: Dict[int, bool] = {}
     ):
         self.r_number = r_number
         self.base_r_model = base_r_model
         self.base_link_model = base_link_model
         self.event_names = event_names
-        self.labour_projects = labour_projects or {}
+        self.labour_projects = labour_projects
         self.models = {}
 
     def create_models(self):
@@ -34,8 +34,8 @@ class RModelFactory:
         model_attrs = {
             '__module__': __name__,
             'Meta': type('Meta', (), {
-                'verbose_name': f'Отчет по {self.r_number} показателю - "{event_name}"',
-                'verbose_name_plural': f'Отчеты по {self.r_number} показателю - "{event_name}"'
+                'verbose_name': f'{self.r_number} показатель, отчет РШ - "{event_name}"',
+                'verbose_name_plural': f'{self.r_number} показатель, отчеты РШ - "{event_name}"'
             })
         }
 
@@ -65,7 +65,6 @@ class RModelFactory:
                 })
             }
         )
-
 
 
 class RAdminFactory:
