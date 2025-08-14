@@ -27,7 +27,7 @@ services:
     networks:
       - internal_dev
   backend:
-    image: nem1zida/rso_backend:dev
+    image: teamcode01/rso_backend:dev
     env_file: .env
     restart: always
     depends_on:
@@ -43,7 +43,7 @@ services:
       - GUNICORN_WORKERS=1
       - GUNICORN_TIMEOUT=60
   celery_worker:
-    image: nem1zida/rso_backend:dev
+    image: teamcode01/rso_backend:dev
     restart: always
     env_file: .env
     command: celery -A rso_backend worker --loglevel=info
@@ -55,7 +55,7 @@ services:
     networks:
       - internal_dev
   celery_beat:
-    image: nem1zida/rso_backend:dev
+    image: teamcode01/rso_backend:dev
     restart: always
     env_file: .env
     command: celery -A rso_backend beat -l info
