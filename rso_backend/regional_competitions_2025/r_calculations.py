@@ -4,7 +4,7 @@ from datetime import datetime
 from headquarters.models import RegionalHeadquarter
 
 from regional_competitions_2025.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk, MEMBER_FEE
-from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR11, RegionalR12, RegionalR13, RegionalR4
+from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR3, BaseRegionalR6, RegionalR14, RegionalR11, RegionalR12, RegionalR13, RegionalR4
 from regional_competitions_2025.utils import get_participants, log_exception, get_current_year
 
 logger = logging.getLogger('regional_tasks')
@@ -50,35 +50,34 @@ def calculate_r2_score(report):
     logger.info(f'Подсчитали очки 2-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
 
 
-@log_exception
-def calculate_r3_score(report):
-    """Расчет очков по 3 показателю.
-
-    P3= ((X1-X2)/X2)*100%, где
-    X1- численность членов РО РСО за 2024 г., оплативших ЧВ (по данным ЦШ) (сумма из 1 показателя/50)
-    X2- Численность членов РО РСО за 2023 г., оплативших ЧВ (по данным ЦШ)
-
-    Расчёт вызывается через админку и 15 октября 2024 года.
+def calculate_r3_score(report: RegionalR3):
     """
-    logger.info(f'Выполняется подсчет очков r3 для РШ {report.regional_headquarter}')
-    participants = get_participants(report, RegionalR1)
-    if participants is None:
-        participants = 0
-        logger.warning(f'participants равен None. Значение переустановлено в 0')
+    Новый расчет очков по 3 показателю:
+    P3 = X1 / X2
 
-    x1 = participants
-    x2 = report.amount_of_membership_fees_2023
-    if x2 is None:
-        x2 = 0
-        logger.warning(f'x2 равен None. Значение переустановлено в 0.')
-
-    ro_score = (
-        (x1 - x2) /
-        (x2 if x2 > 0 else 1) * 100
-    )
-    report.score = ro_score
+    Где:
+    X1 — трудоустроенные члены РО РСО (employed_members)
+    X2 — общее количество членов РО РСО (из RegionalR1.score)
+    """
+    logger.info(f'Выполняется подсчет P3 для {report.regional_headquarter}')
+    x1 = report.employed_members or 0
+    regional_r1 = RegionalR1.objects.filter(
+        r_competition__year=2025,
+        regional_headquarter=report.regional_headquarter
+    ).first()
+    if not regional_r1:
+        logger.warning(f'Региональный отчет R1 за 2025 год для {report.regional_headquarter} не найден. P3 = 0')
+        report.score = 0
+        report.save()
+        return
+    x2 = regional_r1.score or 0
+    if x2 == 0:
+        logger.warning(f'x2 (общее количество членов) = 0 для {report.regional_headquarter}. Деление невозможно. P3 = 0')
+        report.score = 0
+    else:
+        report.score = round(x1 / x2, 4)
     report.save()
-    logger.info(f'Подсчитали очки 3-го показателя для РШ {report.regional_headquarter}: {ro_score}')
+    logger.info(f'Подсчитали P3 для РШ {report.regional_headquarter}: {report.score}')
 
 
 @log_exception
@@ -153,9 +152,16 @@ def calculate_r5_score(report):
 
 @log_exception
 def calculate_r6_score(report):
-    """Расчет очков по 6 показателю."""
-    report.score = report.number_of_members if report.number_of_members else 0
+    """
+    Расчет очков для 6-го показателя.
+    Итоговый показатель = number_of_members + 2 * hq_members_count (если is_hq_member=True).
+    """
+    logger.info(f'Выполняется подсчет P6 для {report.regional_headquarter}')
+    members = report.number_of_members or 0
+    hq_members = (report.hq_members_count or 0) if report.is_hq_member else 0
+    report.score = members + 2 * hq_members
     report.save()
+    logger.info(f'Подсчитали P6 для {report.regional_headquarter}: {report.score}')
 
 
 @log_exception
@@ -202,17 +208,13 @@ def calculate_r9_r10_score(report):
 def calculate_r11_score():
     """
     Расчет очков для 11-го показателя.
-
-    P=(x/k)+(x/2y)
-
-    x- количество человек, входящих в группу РСО в социальной сети «Вконтакте»
-    в результате проведенного опроса (анкетирования) - этот показатель ЦШ предоставляет нам централизованно.
-    y - количество человек, входящих в группу РО РСО в социальной сети «Вконтакте» (подтверждение - скриншот).
-    к - количество членов РО РСО в соответствии с объемом уплаченных членских взносов. (из первого показателя).
-    Подтвержденный 1 показатель. (цифра из первого показателя/50)
-
-    Примечание: Если К больше или равно 1500 и  Х > Y, то слагаемое № 2 приравнивается к 0.
-    Сравнение итогов между РО, самая большая цифра - 1 место.
+    Z = X/K
+    X - количество человек, входящих в группу РСО в социальной сети «Вконтакте» (http://vk.com/rso_official);
+    K - количество членов РО РСО. Данное значение берется из показателя №1.  
+    После получения коэффициента Z происходит сравнение данных коэффициентов между различными региональными отделениями РСО и определяется место, которое заняло каждое конкретное РО (при этом 1 место занимает РО с наименьшим значением коэффициента Z).
+    Обозначим номер занятого места место как Z’ и тогда:
+    𝑃11 = Z’+Y, где:
+    Y - показатель оценки региональной группы РО РСО в социальной сети «Вконтакте». Определяется на основании комплексного анализа технологической компании «VK» с распределением мест по каждому региональному отделению. 
     """
 
     r1_ro_ids = set(RegionalR1.objects.filter(
@@ -220,7 +222,9 @@ def calculate_r11_score():
         score__gt=0
     ).values_list('regional_headquarter_id', flat=True))
 
-    r11_ro_ids = set(RegionalR11.objects.filter(score=0).values_list('regional_headquarter_id', flat=True))
+    r11_ro_ids = set(RegionalR11.objects.filter(
+        verified_by_chq=True
+    ).values_list('regional_headquarter_id', flat=True))
     ro_ids = r1_ro_ids.intersection(r11_ro_ids)
 
     r1_reports = RegionalR1.objects.filter(
@@ -232,48 +236,49 @@ def calculate_r11_score():
     r11_reports = RegionalR11.objects.filter(
         regional_headquarter_id__in=ro_ids,
         verified_by_chq=True,
-        score=0
     )
 
     r1_scores = {report.regional_headquarter_id: report.score for report in r1_reports}
 
+    z_scores = []
     updated_r11_reports = []
     for report in r11_reports:
-        if type(report.participants_number) is not int:
-            report.participants_number = 0
+        ro_id = report.regional_headquarter_id
+        x = ro_members_in_rso_vk.get(ro_id, 0)
+        k = r1_scores.get(ro_id, 1)
+        y = report.participants_number or 0
 
-        ro_id = report.regional_headquarter.id
-        rso_vk_members = ro_members_in_rso_vk.get(ro_id, 0)
+        logger.info(f'Выполняется подсчет Z для рег штаба {ro_id}')
 
-        logger.info(f'Выполняется подсчет очков r11 для рег штаба {ro_id}')
-
-        members_with_fees = r1_scores.get(report.regional_headquarter_id, 1) / MEMBER_FEE
-
-        if members_with_fees >= 1500 and rso_vk_members > report.participants_number:
-            ro_score = (rso_vk_members / members_with_fees)
+        if k == 0:
+            logger.warning(f'K = 0 для рег штаба {ro_id}. Установлено Z = 0.')
+            z = 0
         else:
-            # Проверка на ноль для participants_number
-            if report.participants_number == 0:
-                second_term = 0
-                logger.warning(
-                    f'Количество участников равно нулю для рег штаба {ro_id}. '
-                    'Установлено значение второго слагаемого в 0.'
-                )
-            else:
-                second_term = (rso_vk_members / (2 * report.participants_number))
+            z = round(x / k, 2)
 
-            ro_score = (rso_vk_members / members_with_fees) + second_term
+        z_scores.append((report, z))
+        report_data = {'report': report, 'y': y}
+        updated_r11_reports.append(report_data)
 
-        report.score = round(ro_score, 2)
-        logger.info(f'Подсчитали очки 11-го показателя для рег штаба {ro_id}. Очки: {ro_score}')
-        updated_r11_reports.append(report)
+    z_scores.sort(key=lambda x: x[1])
+    for rank, (report, z) in enumerate(z_scores, 1):
+        for report_data in updated_r11_reports:
+            if report_data['report'] == report:
+                report_data['z_res'] = rank
+                logger.info(f'Рег штаб {report.regional_headquarter_id}: Z = {z}, Z\' = {rank}')
+
+    for report_data in updated_r11_reports:
+        report = report_data['report']
+        z_res = report_data['z_res']
+        y = report_data['y']
+        report.score = z_res + y
+        logger.info(f'Подсчитали P11 для рег штаба {report.regional_headquarter_id}: P11 = {z_res} + {y} = {report.score}')
 
     try:
-        updated_r11_reports = RegionalR11.objects.bulk_update(updated_r11_reports, ['score'])
+        updated_count = RegionalR11.objects.bulk_update([report_data['report'] for report_data in updated_r11_reports], ['score'])
+        logger.info(f'Расчет P11 завершен, обновлено {updated_count} отчетов')
     except Exception as e:
         logger.error(f'Расчет r11 показателя завершен с ошибкой: {e}')
-
-    logger.info(f'Расчет r11 показателя завершен, обновлено {updated_r11_reports} отчетов')
 
 
 @log_exception
@@ -391,86 +396,31 @@ def calculate_r13_score():
     logger.info(f'Расчет r13 показателя завершен, обновлено {updated_r13_reports} отчетов')
 
 
-def calculate_r14():
-    """Расчет очков по 14 показателю."""
-    logger.info('Выполняется подсчет отчета по r14 показателю')
-    reports_to_create = []  #Список для создания отчетов перенесла в начало функции
-    RegionalR14.objects.all().delete()
-
-    try:
-        # тащим id всех рег штабов, у которых уже есть отчет по 14 показателю
-        existing_ro_ids = RegionalR14.objects.values_list('report_12__regional_headquarter__id', flat=True)
-
-        # тащим id штабов, у которых есть верифицированные отчеты по 12 и 13 показателям
-        ro_ids_with_12_reports = RegionalR12.objects.filter(
-            verified_by_chq=True,
-        ).values_list('regional_headquarter__id', flat=True)
-
-        ro_ids_with_13_reports = RegionalR13.objects.filter(
-            verified_by_chq=True,
-        ).values_list('regional_headquarter__id', flat=True)
-
-        # находим id ро, у которых нет 14 отчета, но есть 12 и 13 отчеты
-        ro_ids_without_14_reports = set(ro_ids_with_12_reports) & set(ro_ids_with_13_reports) - set(existing_ro_ids)
-        if not ro_ids_without_14_reports:
-            logger.info('Нет региональных штабов, у которых нет отчета по r14 показателю')
-            return
-
-        # тащим всю необходимую инфу для формирования отчета
-        ro_reports = RegionalHeadquarter.objects.filter(
-            id__in=ro_ids_without_14_reports
-        ).values(
-            'id', 'regionalr12__id', 'regionalr13__id', 'regionalr12__amount_of_money', 'regionalr13__number_of_members'
+@log_exception
+def calculate_r14_score(report: RegionalR14):
+    """Расчет очков по 14 показателю.
+    P=l+m+n
+    l, m, n - победы линейного студенческого отряда на трудовом проекте по комиссарской деятельности.
+    За всероссийский трудовой проект отряду начисляется 2 балла.
+    За окружной трудовой проект отряду начисляется 1,5 балла.
+    За межрегиональный трудовой проект отряду начисляется 1 балл.
+    """
+    points = {'Всероссийский': 2, 'Окружной': 1.5, 'Межрегиональный': 1}
+    logger.info(
+        f'Рассчитываем 14 показатель для {report.regional_headquarter} отчет '
+        f'по {report.__class__._meta.verbose_name} - id {report.id}. '
+    )
+    projects = report.projects.all()
+    report.score = 0
+    for project in projects:
+        try:
+            report.score += points[project.project_scale]
+        except KeyError:
+            continue
+        logger.info(
+           f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
         )
-
-        for ro in ro_reports:
-            amount_of_money = ro['regionalr12__amount_of_money'] or 0
-            number_of_members = ro['regionalr13__number_of_members'] or 0
-            if number_of_members and amount_of_money:
-                score = round(amount_of_money / number_of_members, 2)
-            else:
-                score = 0  # Если одно из значений None или 0, устанавливаем score 0
-            reports_to_create.append(RegionalR14(
-                regional_headquarter_id=ro['id'],
-                report_12_id=ro['regionalr12__id'],
-                report_13_id=ro['regionalr13__id'],
-                score=score,
-            ))
-
-    except Exception as e:
-        logger.exception(f'Не удалось подсчитать отчет по r14 показателю: {e}')
-
-    logger.info(f'Создаем {len(reports_to_create)} отчетов по r14 показателю')
-    try:
-        new_reports = RegionalR14.objects.bulk_create(reports_to_create)
-    except Exception as e:
-        logger.exception(f'Не удалось создать отчеты по r14 показателю: {e}')
-
-    logger.info(f'Завершен подсчет отчета по r14 показателю. Создано {len(new_reports)} отчетов')
-
-
-# @log_exception
-# def calculate_r16_score(report: RegionalR16):
-#     """Расчет очков по 16 показателю.
-
-
-#     """
-#     points = {'Всероссийский': 2, 'Окружной': 1.5, 'Межрегиональный': 1}
-#     logger.info(
-#         f'Рассчитываем 16 показатель для {report.regional_headquarter} отчет '
-#         f'по {report.__class__._meta.verbose_name} - id {report.id}. '
-#     )
-#     projects = report.projects.all()
-#     report.score = 0
-#     for project in projects:
-#         try:
-#             report.score += points[project.project_scale]
-#         except KeyError:
-#             continue
-#         logger.info(
-#            f'Найден трудовой проект для id {report.id} - {project.name}. Масштаб проекта: {project.project_scale}'
-#         )
-#     report.save()
+    report.save()
 
 
 def calc_r_ranking(

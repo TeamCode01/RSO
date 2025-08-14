@@ -195,7 +195,7 @@ def calc_places_r2():
 def calc_places_r3():
     # показатель считается на основе верифицированного первого, без верификации
     logger.info('Выполняется подсчет rank3 показателя')
-    calc_r_ranking([RegionalR3], 'r3_place', 'r3_score', no_verification=True)
+    calc_r_ranking([RegionalR3], 'r3_place', 'score', no_verification=True)
 
 
 @shared_task

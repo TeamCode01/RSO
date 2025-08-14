@@ -362,37 +362,37 @@ class RegionalR5Admin(admin.ModelAdmin):
         self.message_user(request, 'Очки успешно вычислены.')
 
 
-# r6_list_display = (
-#     'regional_headquarter',
-#     'id',
-#     'is_project',
-#     'is_sent',
-#     'number_of_members',
-#     'verified_by_chq',
-#     'verified_by_dhq',
-#     'score',
-#     'created_at',
-#     'updated_at'
-# )
+r6_list_display = (
+    'regional_headquarter',
+    'id',
+    'is_project',
+    'is_sent',
+    'number_of_members',
+    'verified_by_chq',
+    'verified_by_dhq',
+    'score',
+    'created_at',
+    'updated_at'
+)
 
-# r6_list_filter = (
-#     'is_sent',
-#     'verified_by_chq',
-#     'verified_by_dhq'
-# )
+r6_list_filter = (
+    'is_sent',
+    'verified_by_chq',
+    'verified_by_dhq'
+)
 
-# r6_search_fields = ('comment', 'regional_headquarter__name')
+r6_search_fields = ('comment', 'regional_headquarter__name')
 
-# r6_readonly_fields = ('created_at', 'updated_at')
+r6_readonly_fields = ('created_at', 'updated_at')
 
-# r6_admin_factory = RAdminFactory(
-#     models=r6_models_factory.models,
-#     list_display=r6_list_display,
-#     list_filter=r6_list_filter,
-#     search_fields=r6_search_fields,
-#     readonly_fields=r6_readonly_fields
-# )
-# r6_admin_factory.create_admin_classes()
+r6_admin_factory = RAdminFactory(
+    models=r6_models_factory.models,
+    list_display=r6_list_display,
+    list_filter=r6_list_filter,
+    search_fields=r6_search_fields,
+    readonly_fields=r6_readonly_fields
+)
+r6_admin_factory.create_admin_classes()
 
 
 # r7_list_display = (
