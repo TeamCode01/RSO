@@ -1,13 +1,29 @@
 from django.contrib import admin
 from regional_competitions_2025.factories import RAdminFactory
 from regional_competitions_2025.forms import ExpertUserForm
-from regional_competitions_2025.models import (CHqRejectingLog, ExpertRole, Ranking, RCompetition, 
-                                               RegionalR1, RegionalR12, RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project, RegionalR16, RegionalR17, RegionalR18, RegionalR19, RegionalR2, RegionalR20, RegionalR17Link, RegionalR17Project,
-                                               RegionalR4, RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
-                                               RegionalR5Link, RegionalR7, RegionalR8, RegionalR11, RegionalR101,
-                                               RegionalR101Link, RegionalR102, RegionalR102Link, RegionalR3, RegionalR15, RVerificationLog,
+from regional_competitions_2025.models import (AdditionalStatistic,
+                                               CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole,
+                                               Ranking, RCompetition,
+                                               RegionalR1, RegionalR2,
+                                               RegionalR3, RegionalR4,
+                                               RegionalR4Event, RegionalR4Link,
+                                               RegionalR5, RegionalR5Event,
+                                               RegionalR5Link, RegionalR7,
+                                               RegionalR8, RegionalR11,
+                                               RegionalR12, RegionalR13,
+                                               RegionalR14, RegionalR14Link,
+                                               RegionalR14Project, RegionalR15,
+                                               RegionalR16, RegionalR17,
+                                               RegionalR17Link,
+                                               RegionalR17Project, RegionalR18,
+                                               RegionalR19, RegionalR20,
+                                               RegionalR101, RegionalR101Link,
+                                               RegionalR102, RegionalR102Link,
+                                               RVerificationLog,
+                                               StatisticalRegionalReport,
                                                r9_models_factory)
-from regional_competitions_2025.r_calculations import calculate_r12_score, calculate_r3_score
+from regional_competitions_2025.r_calculations import (calculate_r3_score,
+                                                       calculate_r12_score)
 
 
 @admin.register(RCompetition)
@@ -19,58 +35,58 @@ class RCompetitionAdmin(admin.ModelAdmin):
 
 
 
-# class AdditionalStatisticInline(admin.StackedInline):
-#     model = AdditionalStatistic
-#     extra = 0
+class AdditionalStatisticInline(admin.StackedInline):
+    model = AdditionalStatistic
+    extra = 0
 
 
-# @admin.register(StatisticalRegionalReport)
-# class StatisticalRegionalReportAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'regional_headquarter',
-#         'participants_number',
-#         'employed_sso',
-#         'employed_spo',
-#         'employed_sop',
-#         'employed_smo',
-#         'employed_sservo',
-#         'employed_ssho',
-#         'employed_specialized_detachments',
-#         'employed_production_detachments',
-#         'employed_top',
-#         'employed_so_poo',
-#         'employed_so_oovo',
-#         'employed_ro_rso'
-#     )
-#     search_fields = (
-#         'regional_headquarter__name',
-#         'regional_headquarter__id',
-#     )
-#     inlines = [AdditionalStatisticInline]
+@admin.register(StatisticalRegionalReport)
+class StatisticalRegionalReportAdmin(admin.ModelAdmin):
+    list_display = (
+        'regional_headquarter',
+        'participants_number',
+        'employed_sso',
+        'employed_spo',
+        'employed_sop',
+        'employed_smo',
+        'employed_sservo',
+        'employed_ssho',
+        'employed_specialized_detachments',
+        'employed_production_detachments',
+        'employed_top',
+        'employed_so_poo',
+        'employed_so_oovo',
+        'employed_ro_rso'
+    )
+    search_fields = (
+        'regional_headquarter__name',
+        'regional_headquarter__id',
+    )
+    inlines = [AdditionalStatisticInline]
 
 
-# @admin.register(DumpStatisticalRegionalReport)
-# class DumpStatisticalRegionalReportAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'regional_headquarter',
-#         'participants_number',
-#         'employed_sso',
-#         'employed_spo',
-#         'employed_sop',
-#         'employed_smo',
-#         'employed_sservo',
-#         'employed_ssho',
-#         'employed_specialized_detachments',
-#         'employed_production_detachments',
-#         'employed_top',
-#         'employed_so_poo',
-#         'employed_so_oovo',
-#         'employed_ro_rso'
-#     )
-#     search_fields = (
-#         'regional_headquarter__name',
-#         'regional_headquarter__id',
-#     )
+@admin.register(DumpStatisticalRegionalReport)
+class DumpStatisticalRegionalReportAdmin(admin.ModelAdmin):
+    list_display = (
+        'regional_headquarter',
+        'participants_number',
+        'employed_sso',
+        'employed_spo',
+        'employed_sop',
+        'employed_smo',
+        'employed_sservo',
+        'employed_ssho',
+        'employed_specialized_detachments',
+        'employed_production_detachments',
+        'employed_top',
+        'employed_so_poo',
+        'employed_so_oovo',
+        'employed_ro_rso'
+    )
+    search_fields = (
+        'regional_headquarter__name',
+        'regional_headquarter__id',
+    )
 
 
 @admin.register(RVerificationLog)

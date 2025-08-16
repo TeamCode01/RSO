@@ -1,10 +1,10 @@
 from django.urls import include, path
 from regional_competitions_2025.factories import register_factory_view_sets
-from regional_competitions_2025.views import (RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
+from regional_competitions_2025.views import (RankingViewSet, RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
                                               RegionalR3ViewSet, RegionalR3MeViewSet, RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR5ViewSet, RegionalR5MeViewSet,RegionalR7AutoViewSet,
                                               RegionalR8AutoViewSet, RegionalR101MeViewSet, RegionalR101ViewSet,RegionalR102MeViewSet, RegionalR102ViewSet, RegionalR11MeViewSet, RegionalR11ViewSet, RegionalR12MeViewSet, RegionalR12ViewSet,
-                                              RegionalR13ViewSet, RegionalR14MeViewSet, RegionalR14ViewSet, RegionalR16MeViewSet, RegionalR16ViewSet, RegionalR17MeViewSet, RegionalR17ViewSet, RegionalR18MeViewSet, RegionalR18ViewSet, RegionalR19MeViewSet,RegionalR19ViewSet, RegionalR20MeViewSet, RegionalR20ViewSet, RegionalR15ViewSet,
-                                              r9_view_sets_factory, r6_view_sets_factory)
+                                              RegionalR13ViewSet, RegionalR14MeViewSet, RegionalR14ViewSet, RegionalR16MeViewSet, RegionalR16ViewSet, RegionalR17MeViewSet, RegionalR17ViewSet, RegionalR18MeViewSet, RegionalR18ViewSet, RegionalR19MeViewSet,RegionalR19ViewSet, RegionalR20MeViewSet, RegionalR20ViewSet, RegionalR15ViewSet, StatisticalRegionalViewSet, download_mass_reports_xlsx, get_sent_reports,
+                                              r9_view_sets_factory, r6_view_sets_factory, upload_r8_data, user_info)
 from rest_framework.routers import DefaultRouter, DynamicRoute, Route, SimpleRouter
 
 
@@ -43,6 +43,9 @@ class MeRouter(SimpleRouter):
 
 me_router = MeRouter()
 router = DefaultRouter()
+
+router.register(r'ranking', RankingViewSet, basename='ranking')
+router.register(r'statistical_report', StatisticalRegionalViewSet, basename='statistical_report')
 
 router.register(r'reports/1', RegionalR1ViewSet, basename='r1')
 me_router.register(r'reports/1', RegionalR1MeViewSet, basename='r1_me')
@@ -88,4 +91,8 @@ me_router.register(r'reports/20', RegionalR20MeViewSet, basename='r20_me')
 urlpatterns = [
     path('', include(router.urls)),
     path('me/', include(me_router.urls)),
+    path('get_sent_reports/', get_sent_reports, name='get_sent_reports'),
+    path('upload_r8_data/', upload_r8_data, name='upload_r8_data'),
+    path('user_info/', user_info, name='user_info'),
+    path('<int:pk>/download_mass_reports_xlsx/', download_mass_reports_xlsx, name='download_mass_reports_xlsx'),
 ]

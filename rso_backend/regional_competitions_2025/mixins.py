@@ -1,19 +1,21 @@
-import re
 import os
-from urllib.parse import urlparse, unquote
+import re
+from urllib.parse import unquote, urlparse
 
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
+from headquarters.models import RegionalHeadquarter
+from regional_competitions_2025.models import RCompetition
+from regional_competitions_2025.utils import (get_all_reports_from_competition,
+                                              get_current_year,
+                                              get_r_competition_by_year,
+                                              get_report_number_by_class_name)
 from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin, UpdateModelMixin)
-from rest_framework.viewsets import GenericViewSet
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
 from rest_framework.response import Response
-
-from headquarters.models import RegionalHeadquarter
-from regional_competitions_2025.utils import get_current_year, get_all_reports_from_competition, get_r_competition_by_year, get_report_number_by_class_name
-from regional_competitions_2025.models import RCompetition
+from rest_framework.viewsets import GenericViewSet
 
 
 class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):

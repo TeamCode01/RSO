@@ -11,35 +11,174 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from headquarters.models import (CentralHeadquarter, DistrictHeadquarter, RegionalHeadquarter,
+from headquarters.models import (CentralHeadquarter, DistrictHeadquarter,
+                                 RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
 from regional_competitions_2025.factories import RViewSetFactory
-from regional_competitions_2025.mixins import (DownloadReportXlsxMixin, FormDataNestedFileParser,
-                                               ListRetrieveCreateMixin, RegionalRMeMixin, RegionalRMixin)
-from regional_competitions_2025.models import (CHqRejectingLog, RCompetition, RegionalR1, RegionalR3, 
-                                               RegionalR4, RegionalR5, RegionalR101, RegionalR102, RegionalR11,RegionalR12, RegionalR15,
-                                               RegionalR13, RegionalR14, RegionalR16, RegionalR17, RegionalR18, RegionalR19, RegionalR20,
-                                               RVerificationLog, r9_models_factory, r6_models_factory)
-from regional_competitions_2025.permissions import (IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
-                                                    IsDistrictHeadquarterExpert, IsRegionalCommander,
-                                                    IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
-from regional_competitions_2025.serializers import (RegionalReport101Serializer, RegionalReport102Serializer, RegionalReport14Serializer, RegionalReport16Serializer, RegionalReport5Serializer,
-    RegionalReport1Serializer, RegionalReport3Serializer, RegionalReport4Serializer, RegionalReport12Serializer, RegionalReport13Serializer, RegionalReport11Serializer, RegionalReport15Serializer,
-    RegionalReport17Serializer, RegionalReport18Serializer, RegionalReport19Serializer, RegionalReport20Serializer,
-    r9_serializers_factory, r6_serializers_factory)
-from regional_competitions_2025.tasks import send_email_report_part_1, send_mail
-from regional_competitions_2025.utils import (get_all_reports_from_competition, get_current_year, get_emails,
-                                              get_report_number_by_class_name, swagger_schema_for_central_review,
-                                              swagger_schema_for_create_and_update_methods,
-                                              swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
+from regional_competitions_2025.filters import StatisticalRegionalReportFilter
+from regional_competitions_2025.mixins import (DownloadReportXlsxMixin,
+                                               FormDataNestedFileParser,
+                                               ListRetrieveCreateMixin,
+                                               RegionalRMeMixin,
+                                               RegionalRMixin)
+from regional_competitions_2025.models import (REPORTS_IS_SENT_MODELS, CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RCompetition, Ranking,
+                                               RegionalR1, RegionalR3,
+                                               RegionalR4, RegionalR5,
+                                               RegionalR11, RegionalR12,
+                                               RegionalR13, RegionalR14,
+                                               RegionalR15, RegionalR16,
+                                               RegionalR17, RegionalR18,
+                                               RegionalR19, RegionalR20,
+                                               RegionalR101, RegionalR102,
+                                               RVerificationLog, RegionalR8, StatisticalRegionalReport,
+                                               r6_models_factory,
+                                               r9_models_factory)
+from regional_competitions_2025.permissions import (
+    IsCentralHeadquarterExpert, IsCentralOrDistrictHeadquarterExpert,
+    IsDistrictHeadquarterExpert, IsRegionalCommander,
+    IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
+from regional_competitions_2025.serializers import (
+    FileUploadRCompetitionSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
+    RegionalReport4Serializer, RegionalReport5Serializer,
+    RegionalReport11Serializer, RegionalReport12Serializer,
+    RegionalReport13Serializer, RegionalReport14Serializer,
+    RegionalReport15Serializer, RegionalReport16Serializer,
+    RegionalReport17Serializer, RegionalReport18Serializer,
+    RegionalReport19Serializer, RegionalReport20Serializer,
+    RegionalReport101Serializer, RegionalReport102Serializer, StatisticalRegionalReportSerializer,
+    r6_serializers_factory, r9_serializers_factory)
+from regional_competitions_2025.tasks import (send_email_report_part_1,
+                                              send_mail)
+from regional_competitions_2025.utils import (
+    get_all_reports_from_competition, get_current_year, get_emails,
+    get_report_number_by_class_name, get_reports_from_mass_competitions, swagger_schema_for_central_review,
+    swagger_schema_for_create_and_update_methods,
+    swagger_schema_for_district_review, swagger_schema_for_retrieve_method)
 from rest_framework import filters, permissions, status
-from rest_framework.decorators import action, api_view, parser_classes
+from rest_framework.decorators import action, api_view, parser_classes, permission_classes
 from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+
+
+class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
+    """Отчет 1 ч.
+
+    Фильтрация:
+        - district_id: поиск по id окружного штаба
+        - district_name: поиск по названию окружного штаба, полное совпадение
+        - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
+    Сортировка:
+        - доступные поля для сортировки:
+            - regional_headquarter_name: сортировка по названию регионального штаба
+          Можно сортировать в обратном порядке добавив признак '-' перед названием поля
+    """
+    queryset = StatisticalRegionalReport.objects.all().select_related(
+        'regional_headquarter'
+    ).prefetch_related('additional_statistics')
+    serializer_class = StatisticalRegionalReportSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = StatisticalRegionalReportFilter
+    ordering_fields = ('regional_headquarter__name',)
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
+        if self.action == 'list':
+            return (IsCentralHeadquarterExpert(),)
+        return permissions.IsAuthenticated(), IsRegionalCommander()
+
+    @action(
+        detail=False,
+        methods=['GET', 'PUT'],
+        url_path='me',
+    )
+    def my_statistical_report(self, request, pk=None):
+        """Эндпоинт для получения своего первого отчета во 2-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+
+        if request.method == "GET":
+            return Response(
+                data=self.get_serializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+
+        # если put и нет дампа, то сначала сохраняем текущую версию в модель дампа
+        if not DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            serializer = DumpStatisticalRegionalReportSerializer(
+                data=StatisticalRegionalReportSerializer(statistical_report).data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(regional_headquarter=regional_headquarter)
+
+        serializer = self.get_serializer(
+            statistical_report,
+            data=request.data,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='me_first',
+    )
+    def me_first(self, request, pk=None):
+        """Эндпоинт для получения своего первого отчета в 1-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path=r'old_first/(?P<pk>\d+)',
+        permission_classes=(IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),),
+    )
+    def old_first(self, request, pk):
+        """Эндпоинт для получения отчета 1-й части, версии до редактирования во 2-й части.
+
+        Параметр пути id - pk регионального штаба.
+        Доступ: автор отчета или эксперт ЦШ.
+        """
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, pk=pk)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        regional_headquarter = RegionalHeadquarter.objects.get(commander=user)
+
+        should_send = True
+        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            should_send = False
+
+        report = serializer.save(regional_headquarter=regional_headquarter)
+        if should_send:
+            send_email_report_part_1.delay(report.id)
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
@@ -762,3 +901,202 @@ class RegionalR20MeViewSet(BaseRegionalRMeViewSet):
     queryset = RegionalR20.objects.all()
     serializer_class = RegionalReport20Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RankingViewSet(ListModelMixin, GenericViewSet):
+    """
+    - Поддерживается сортировка по всем полям `overall_place`, `k_place`,
+      а также `rX_place` и `rX_score` для X от 1 до 16.
+    - Алфавитная сортировка по названию регионального штаба (`regional_headquarter__name`).
+
+    - **Параметры сортировки:**
+      - `ordering`: определяет порядок сортировки.
+        Примеры:
+          - `?ordering=overall_place` - сортировка по итоговому месту (возрастание).
+          - `?ordering=-overall_place` - сортировка по итоговому месту (убывание).
+          - `?ordering=r1_place` - сортировка по месту по 1-му показателю.
+          - `?ordering=-r1_score` - сортировка по очкам по 1-му показателю (убывание).
+          - `?ordering=regional_headquarter__name` - алфавитная сортировка по названию штаба.
+
+    - **Вывод по умолчанию:**
+      - Сортировка по названию регионального штаба (`regional_headquarter__name`).
+    """
+    queryset = Ranking.objects.all().select_related('regional_headquarter')
+    serializer_class = RankingRCompetitionSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ['overall_place', 'k_place'] + [
+        f'r{i}_place' for i in range(1, 17)
+    ] + [
+        f'r{i}_score' for i in range(1, 17)
+    ]
+    ordering = ['regional_headquarter__name']
+
+    def get_queryset(self):
+        """
+        Добавляет приоритетное значение для полей с `place`:
+        1. Все значения > 0 идут первыми.
+        2. Затем 0.
+        3. Затем None.
+        """
+        qs = super().get_queryset()
+        ordering = self.request.query_params.get('ordering', None)
+
+        if ordering:
+            field = ordering.lstrip('-')
+            if field.endswith('_place') and field in self.ordering_fields:
+                reverse = ordering.startswith('-')
+                qs = qs.annotate(
+                    sort_priority=Coalesce(field, Value(-1, output_field=IntegerField()))
+                ).order_by(
+                    f"{'-' if reverse else ''}sort_priority",
+                    ordering
+                )
+        return qs
+
+
+@api_view(['GET'])
+@permission_classes((IsCentralOrDistrictHeadquarterExpert,))
+def get_sent_reports(request):
+    """
+    Эндпоинт для получения списка рег штабов, которые отправили отчеты по 2 части.
+
+    Доступ - только экспертам окружных и центрального штабов.
+
+    Для экспертов окр штабов выводит список рег штабов, отчеты которых отправлены, но не верифицирован окр штабом.
+    Для экспертов центрального штаба выводит список рег штабов, которые верифицированы окр штабом,
+    но не верифицированы и не отклонены центральным штабом.
+
+    Для окружных штабов выводит заявки только подвластных им рег штабов.
+    """
+    is_central_expert = ExpertRole.objects.filter(
+        user=request.user, central_headquarter__isnull=False
+    ).exists()
+
+    def get_latest_regional_ids_from_model(model, filter_params):
+        if not model:
+            return set()
+
+        latest_entries = model.objects.filter(
+            regional_headquarter_id=OuterRef('regional_headquarter_id')
+        ).order_by('-updated_at')
+
+        return set(
+            model.objects.filter(
+                id=Subquery(latest_entries.values('id')[:1]),
+                **filter_params
+            ).values_list('regional_headquarter_id', flat=True)
+        )
+
+    if is_central_expert:
+        # Для ЦШ: если штаб удовлетворяет условиям хотя бы в одной модели
+        filter_params = {'verified_by_dhq': True, 'verified_by_chq': None}
+        reg_ids = set()
+        for model in REPORTS_IS_SENT_MODELS:
+            model_reg_ids = get_latest_regional_ids_from_model(model, filter_params)
+            reg_ids.update(model_reg_ids)
+    else:
+        # Для ОШ: если штаб удовлетворяет условиям хотя бы в одной модели
+        district_headquarter_id = ExpertRole.objects.get(user=request.user).district_headquarter_id
+        filter_params = {'is_sent': True, 'verified_by_dhq': False}
+        reg_ids = set()
+        for model in REPORTS_IS_SENT_MODELS:
+            model_reg_ids = get_latest_regional_ids_from_model(model, filter_params)
+            reg_ids.update(model_reg_ids)
+
+    qs = RegionalHeadquarter.objects.filter(id__in=reg_ids)
+    if not is_central_expert:
+        qs = qs.filter(district_headquarter_id=district_headquarter_id)
+
+    return Response(ShortRegionalHeadquarterSerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def user_info(request):
+    """Информация о пользователе.
+
+    Возвращает три ключа:
+    - is_central_expert - является ли пользователь экспертом центрального штаба или командиром центрального штаба.
+    - is_district_expert - является ли пользователь экспертом окружного штаба.
+    - is_reg_commander - является ли пользователь командиром регионального штаба.
+
+    Доступ: все аутентифицированные пользователи.
+    """
+    is_central_expert = ExpertRole.objects.filter(
+        user=request.user, central_headquarter__isnull=False
+    ).exists()
+    is_district_expert = ExpertRole.objects.filter(
+        user=request.user, district_headquarter__isnull=False
+    ).exists()
+    is_commander = RegionalHeadquarter.objects.filter(
+        commander=request.user
+    ).exists()
+    return Response({
+        'is_central_expert': is_central_expert,
+        'is_district_expert': is_district_expert,
+        'is_reg_commander': is_commander
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated,])
+def download_mass_reports_xlsx(_, pk):
+    """Скачивание заполненных массовых отчетов конкурса РО (6, 9, 10) в одном xlsx файле.
+
+    Доступно только авторизованному пользователю.
+    pk - первая цифра номера показателя(указываем только 6, 9 или 10).
+    """
+    return get_reports_from_mass_competitions(main_report_number=pk)
+
+
+@swagger_auto_schema(method='POST', request_body=FileUploadRCompetitionSerializer)
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+@parser_classes([MultiPartParser, FormParser])
+def upload_r8_data(request):
+    """
+    Метод для загрузки данных по 8 показателю.
+
+    Требуется, чтобы в файле были три колонки:
+        - 'Id' - ID рег штаба
+        - 'место' - место в рейтинге
+
+    Доступ: только администратор.
+
+    Удаляет все предыдущие записи в модели и загружает новые из файла.
+    """
+    serializer = FileUploadRCompetitionSerializer(data=request.data)
+    if serializer.is_valid():
+        file = serializer.validated_data['file']
+        hq_ids = set(RegionalHeadquarter.objects.values_list('id', flat=True))
+        try:
+            df = pd.read_excel(file)
+            reports_to_create = []
+            for index, row in df.iterrows():
+                if row['Id'] not in hq_ids:
+                    continue
+                reports_to_create.append(
+                    RegionalR8(
+                        regional_headquarter_id=row['Id'],
+                        score=row['место']
+                    )
+                )
+            try:
+                with transaction.atomic():
+                    RegionalR8.objects.all().delete()
+                    # не булком, т.к. в методе сейв модели создаются записи рейтинга.
+                    for report in reports_to_create:
+                        report.save()
+            except Exception as e:
+                return Response(
+                    {'error': f'Ошибка при обработке файлов. {str(e)}'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при чтении файла. {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
