@@ -1330,7 +1330,7 @@ class RegionalR19(BaseComment, models.Model):
         blank=True,
         null=True
     )
-    average_salary = models.PositiveSmallIntegerField(
+    average_salary = models.PositiveIntegerField(
         blank=True,
         null=True,
         verbose_name='Средняя заработная плата сотрудников РО РСО, руб.'
@@ -1371,7 +1371,9 @@ class RegionalR20(BaseComment, models.Model):
     premises_available = models.BooleanField(
         verbose_name='Наличие помещения',
         default=False,
-        help_text='Выбрано - есть, пусто - нет'
+        help_text='Выбрано - есть, пусто - нет',
+        blank=True,
+        null=True
     )
     equipped_workplaces = models.BooleanField(
         verbose_name='Наличие оборудованных рабочих мест',
