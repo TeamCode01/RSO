@@ -14,7 +14,7 @@ from drf_yasg.utils import swagger_auto_schema
 from headquarters.models import (CentralHeadquarter, DistrictHeadquarter,
                                  RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
+from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE, R6_DATA, R9_EVENTS_NAMES
 from regional_competitions_2025.factories import RViewSetFactory
 from regional_competitions_2025.filters import StatisticalRegionalReportFilter
 from regional_competitions_2025.mixins import (DownloadReportXlsxMixin,
@@ -39,7 +39,7 @@ from regional_competitions_2025.permissions import (
     IsDistrictHeadquarterExpert, IsRegionalCommander,
     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions_2025.serializers import (
-    FileUploadRCompetitionSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
+    EventNamesSerializer, FileUploadRCompetitionSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
     RegionalReport4Serializer, RegionalReport5Serializer,
     RegionalReport11Serializer, RegionalReport12Serializer,
     RegionalReport13Serializer, RegionalReport14Serializer,
@@ -1100,3 +1100,37 @@ def upload_r8_data(request):
                 status=status.HTTP_400_BAD_REQUEST)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RegionalEventNamesRViewSet(GenericViewSet):
+    """
+    Вьюсет для получения списка названий событий по показателям.
+
+    Доступ: все пользователи.
+    """
+    serializer_class = EventNamesSerializer
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r6-event-names',
+    )
+    def get_event_names_r6(self, request):
+        event_data = [
+            {
+                'id': list(tup[0].keys())[0],
+                'name': list(tup[0].values())[0],
+                'month': list(tup[1].values())[0],
+                'city': list(tup[2].values())[0]
+            } for tup in R6_DATA
+        ]
+        return Response(event_data)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r9-event-names',
+    )
+    def get_event_names_r9(self, request):
+        event_data = [{'id': id, 'name': name} for id, name in R9_EVENTS_NAMES.items()]
+        return Response(event_data)
