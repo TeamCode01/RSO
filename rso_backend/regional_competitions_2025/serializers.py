@@ -6,17 +6,35 @@ from django.db import models, transaction
 from django.forms import model_to_dict
 from django.http import QueryDict
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
-from regional_competitions_2025.constants import (CONVERT_TO_MB, REPORT_EXISTS_MESSAGE, REPORT_SENT_MESSAGE,
-                                                  ROUND_2_SIGNS, STATISTICAL_REPORT_EXISTS_MESSAGE)
+from regional_competitions_2025.constants import (
+    CONVERT_TO_MB, REPORT_EXISTS_MESSAGE, REPORT_SENT_MESSAGE, ROUND_2_SIGNS,
+    STATISTICAL_REPORT_EXISTS_MESSAGE)
 from regional_competitions_2025.factories import RSerializerFactory
-from regional_competitions_2025.models import (AdditionalStatistic, CHqRejectingLog, DumpStatisticalRegionalReport, Ranking, RegionalR1, RegionalR2, RegionalR3, RegionalR4,
-                                               RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
-                                               RegionalR5Link, BaseRegionalR6, RegionalR7, RegionalR8, RegionalR11, RegionalR12, RegionalR15,
-                                               RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project,RegionalR16, RegionalR17, RegionalR17Link, RegionalR17Project,
-                                               RegionalR18, RegionalR19, RegionalR20, RegionalR101, RegionalR101Link,
-                                               RegionalR102, RegionalR102Link, RVerificationLog, StatisticalRegionalReport, r9_models_factory, r6_models_factory)
+from regional_competitions_2025.models import (AdditionalStatistic,
+                                               BaseRegionalR6, CHqRejectingLog,
+                                               DumpStatisticalRegionalReport,
+                                               Ranking, RegionalR1, RegionalR2,
+                                               RegionalR3, RegionalR4,
+                                               RegionalR4Event, RegionalR4Link,
+                                               RegionalR5, RegionalR5Event,
+                                               RegionalR5Link, RegionalR7,
+                                               RegionalR8, RegionalR11,
+                                               RegionalR12, RegionalR13,
+                                               RegionalR14, RegionalR14Link,
+                                               RegionalR14Project, RegionalR15,
+                                               RegionalR16, RegionalR17,
+                                               RegionalR17Link,
+                                               RegionalR17Project, RegionalR18,
+                                               RegionalR19, RegionalR20,
+                                               RegionalR101, RegionalR101Link,
+                                               RegionalR102, RegionalR102Link,
+                                               RVerificationLog,
+                                               StatisticalRegionalReport,
+                                               r6_models_factory,
+                                               r9_models_factory)
 from regional_competitions_2025.utils import get_report_number_by_class_name
 from rest_framework import serializers
+
 
 class DumpStatisticalRegionalReportSerializer(serializers.ModelSerializer):
     regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
@@ -949,12 +967,12 @@ class RegionalReport17Serializer(
 
     def create_objects(self, created_objects, project_data):
         return RegionalR17Project.objects.create(
-            regional_r18=created_objects, **project_data  # 18?
+            regional_r17=created_objects, **project_data
         )
 
     def create_nested_objects(self, parent_obj, obj_data):
         return RegionalR17Link.objects.create(
-            regional_r18_project=parent_obj, **obj_data
+            regional_r17_project=parent_obj, **obj_data
         )
 
 
@@ -1013,7 +1031,7 @@ class EventNamesSerializer(serializers.Serializer):
     name = serializers.CharField(read_only=True)
 
 
-class MassSendSerializer(serializers.Serializer):
+class MassReportsSendSerializer(serializers.Serializer):
     detail = serializers.CharField(read_only=True)
 
 
