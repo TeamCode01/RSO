@@ -877,12 +877,12 @@ class RegionalReport14Serializer(BaseRSerializer, CreateUpdateSerializerMixin, N
 
     def create_objects(self, created_objects, project_data):
         return RegionalR14Project.objects.create(
-            regional_r16=created_objects, **project_data
+            regional_r14=created_objects, **project_data
         )
 
     def create_nested_objects(self, parent_obj, obj_data):
         return RegionalR14Link.objects.create(
-            regional_r16_project=parent_obj, **obj_data
+            regional_r14_project=parent_obj, **obj_data
         )
 
 
