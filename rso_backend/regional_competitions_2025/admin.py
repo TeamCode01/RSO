@@ -20,7 +20,7 @@ from regional_competitions_2025.models import (AdditionalStatistic,
                                                RegionalR101, RegionalR101Link,
                                                RegionalR102, RegionalR102Link,
                                                RVerificationLog,
-                                               StatisticalRegionalReport,
+                                               StatisticalRegionalReport, r6_models_factory,
                                                r9_models_factory)
 from regional_competitions_2025.r_calculations import (calculate_r3_score,
                                                        calculate_r12_score)
@@ -405,14 +405,14 @@ r6_search_fields = ('comment', 'regional_headquarter__name')
 
 r6_readonly_fields = ('created_at', 'updated_at')
 
-# r6_admin_factory = RAdminFactory(
-#     models=r6_models_factory.models,
-#     list_display=r6_list_display,
-#     list_filter=r6_list_filter,
-#     search_fields=r6_search_fields,
-#     readonly_fields=r6_readonly_fields
-# )
-# r6_admin_factory.create_admin_classes()
+r6_admin_factory = RAdminFactory(
+    models=r6_models_factory.models,
+    list_display=r6_list_display,
+    list_filter=r6_list_filter,
+    search_fields=r6_search_fields,
+    readonly_fields=r6_readonly_fields
+)
+r6_admin_factory.create_admin_classes()
 
 
 @admin.register(RegionalR7)
