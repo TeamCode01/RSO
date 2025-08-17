@@ -48,7 +48,7 @@ from regional_competitions.serializers import (
     RegionalR11Serializer, RegionalR12Serializer, RegionalR13Serializer,
     RegionalR16Serializer, RegionalR17Serializer, RegionalR19Serializer,
     RegionalR101Serializer, RegionalR102Serializer,
-    StatisticalRegionalReportSerializer, r6_serializers_factory,
+    StatisticalRegionalRSerializer, r6_serializers_factory,
     r9_serializers_factory)
 from regional_competitions.tasks import send_email_report_part_1, send_mail
 from regional_competitions.utils import (
@@ -72,7 +72,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
     queryset = StatisticalRegionalReport.objects.all().select_related(
         'regional_headquarter'
     ).prefetch_related('additional_statistics')
-    serializer_class = StatisticalRegionalReportSerializer
+    serializer_class = StatisticalRegionalRSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = StatisticalRegionalReportFilter
     ordering_fields = ('regional_headquarter__name',)
@@ -103,7 +103,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
         # если put и нет дампа, то сначала сохраняем текущую версию в модель дампа
         if not DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
             serializer = DumpStatisticalRegionalReportSerializer(
-                data=StatisticalRegionalReportSerializer(statistical_report).data)
+                data=StatisticalRegionalRSerializer(statistical_report).data)
             serializer.is_valid(raise_exception=True)
             serializer.save(regional_headquarter=regional_headquarter)
 
@@ -438,6 +438,7 @@ class BaseRegionalRViewSet(RegionalRMixin):
         """Скачивание данных отчета в формате XLSX."""
         return get_all_reports_from_competition(self.get_report_number())
 
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated,])
 def download_mass_reports_xlsx(_, pk):
@@ -674,6 +675,7 @@ class RegionalR2AutoViewSet(BaseRegionalRAutoViewSet):
 
 class RegionalR3AutoViewSet(BaseRegionalRAutoViewSet):
     """Вьюсет для выгрузки автоматических отчетов по 3 показателю."""
+
 
 class RegionalR4ViewSet(FormDataNestedFileParser, BaseRegionalRViewSet):
     queryset = RegionalR4.objects.all()

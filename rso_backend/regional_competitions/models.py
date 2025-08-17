@@ -345,7 +345,8 @@ class CHqRejectingLog(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        verbose_name='Отклонившее лицо'
+        verbose_name='Отклонившее лицо',
+        related_name='regional_competitions_chq_rejecting_logs'
     )
     regional_headquarter = models.ForeignKey(
         'headquarters.RegionalHeadquarter',

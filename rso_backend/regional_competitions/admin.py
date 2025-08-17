@@ -1,25 +1,21 @@
 from django.contrib import admin
-
 from regional_competitions.factories import RAdminFactory
 from regional_competitions.forms import ExpertUserForm
-from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, ExpertRole, Ranking, RegionalR1, RegionalR15,
-                                          RegionalR18,
-                                          RegionalR18Link, RegionalR18Project, RegionalR2,
-                                          RegionalR4, RegionalR4Event,
-                                          RegionalR4Link, RegionalR5,
-                                          RegionalR5Event, RegionalR5Link,
-                                          RegionalR11, RegionalR12,
-                                          RegionalR13, RegionalR14,
-                                          RegionalR16, RegionalR16Link,
-                                          RegionalR16Project, RegionalR17,
-                                          RegionalR19, RegionalR101,
-                                          RegionalR101Link, RegionalR102,
-                                          RegionalR102Link, RVerificationLog, RegionalR8,
-                                          StatisticalRegionalReport,
-                                          r6_models_factory, r9_models_factory, RegionalR3,
-                                          DumpStatisticalRegionalReport, RegionalR7)
-from regional_competitions.r_calculations import calculate_r11_score, calculate_r13_score, calculate_r14, calculate_r2_score, calculate_r3_score, calculate_r4_score, calculate_r5_score, calculate_r6_score, calculate_r9_r10_score, update_all_ranking_places
-from regional_competitions.tasks import calc_places_r1, calc_places_r10, calc_places_r11, calc_places_r12, calc_places_r13, calc_places_r14, calc_places_r16, calc_places_r2, calc_places_r3, calc_places_r4, calc_places_r5, calc_places_r6, calc_places_r9
+from regional_competitions.models import (AdditionalStatistic, CHqRejectingLog, DumpStatisticalRegionalReport,
+                                          ExpertRole, Ranking, RegionalR1, RegionalR2, RegionalR3, RegionalR4,
+                                          RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event, RegionalR5Link,
+                                          RegionalR7, RegionalR8, RegionalR11, RegionalR12, RegionalR13, RegionalR14,
+                                          RegionalR15, RegionalR16, RegionalR16Link, RegionalR16Project, RegionalR17,
+                                          RegionalR18, RegionalR18Link, RegionalR18Project, RegionalR19, RegionalR101,
+                                          RegionalR101Link, RegionalR102, RegionalR102Link, RVerificationLog,
+                                          StatisticalRegionalReport, r6_models_factory, r9_models_factory)
+from regional_competitions.r_calculations import (calculate_r2_score, calculate_r3_score, calculate_r4_score,
+                                                  calculate_r5_score, calculate_r6_score, calculate_r9_r10_score,
+                                                  calculate_r11_score, calculate_r13_score, calculate_r14,
+                                                  update_all_ranking_places)
+from regional_competitions.tasks import (calc_places_r1, calc_places_r2, calc_places_r3, calc_places_r4, calc_places_r5,
+                                         calc_places_r6, calc_places_r9, calc_places_r10, calc_places_r11,
+                                         calc_places_r12, calc_places_r13, calc_places_r14, calc_places_r16)
 
 
 class AdditionalStatisticInline(admin.StackedInline):
@@ -410,17 +406,17 @@ r6_admin_factory.create_admin_classes()
 #     'created_at',
 #     'updated_at'
 # )
-#
+
 # r7_list_filter = (
 #     'prize_place',
 #     'verified_by_chq',
 #     'verified_by_dhq'
 # )
-#
+
 # r7_search_fields = ('comment', 'regional_headquarter__name')
-#
+
 # r7_readonly_fields = ('created_at', 'updated_at')
-#
+
 # r7_admin_factory = RAdminFactory(
 #     models=r7_models_factory.models,
 #     list_display=r7_list_display,

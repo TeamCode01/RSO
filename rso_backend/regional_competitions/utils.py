@@ -114,7 +114,7 @@ def get_report_number_by_class_name(link):
 
 def regional_comp_regulations_files_path(instance, filename) -> str:
     """Функция для формирования пути сохранения файлов конкурса РШ.
-    
+
     Сначала проверяет наличие атрибута `regional_headquarter`. 
     Если атрибут отсутствует, ищет атрибут, начинающийся на `regional_r`, 
     и через него обращается к `regional_headquarter`.
@@ -132,7 +132,7 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     else:
         regional_r_attr = next(
             (getattr(instance, attr) for attr in dir(instance) if attr.startswith('regional_r') and 
-            hasattr(getattr(instance, attr), 'regional_headquarter')), 
+                hasattr(getattr(instance, attr), 'regional_headquarter')), 
             None
         )
         if regional_r_attr:

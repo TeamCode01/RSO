@@ -123,6 +123,7 @@ INSTALLED_APPS += [
     'questions.apps.QuestionsConfig',
     'regional_competitions.apps.RegionalCompetitionsConfig',
     'services.apps.ServicesConfig',
+    'regional_competitions_2025.apps.RegionalCompetitions2025Config',
 ]
 
 MIDDLEWARE = [
@@ -557,7 +558,9 @@ SWAGGER_SETTINGS = {
             'name': 'Authorization',
             'in': 'header'
         }
-    }
+    },
+    'DOC_EXPANSION': 'none',
+
 }
 
 REQUESTLOGS = {
