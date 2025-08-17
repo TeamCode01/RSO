@@ -1,7 +1,8 @@
 from django.urls import include, path
 from regional_competitions_2025.factories import register_factory_view_sets
-from regional_competitions_2025.views import (RankingViewSet, RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
-                                              RegionalR3ViewSet, RegionalR3MeViewSet, RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR5ViewSet, RegionalR5MeViewSet,RegionalR7AutoViewSet, RegionalR6ViewSet, RegionalR6MeViewSet,
+from regional_competitions_2025.views import (MassSendViewSet, RankingViewSet, RegionalEventNamesRViewSet, RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
+                                              RegionalR3ViewSet, RegionalR3MeViewSet, RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR5ViewSet, RegionalR5MeViewSet,
+                                              RegionalR6ViewSet, RegionalR6MeViewSet, RegionalR7AutoViewSet,
                                               RegionalR8AutoViewSet, RegionalR101MeViewSet, RegionalR101ViewSet,RegionalR102MeViewSet, RegionalR102ViewSet, RegionalR11MeViewSet, RegionalR11ViewSet, RegionalR12MeViewSet, RegionalR12ViewSet,
                                               RegionalR13ViewSet, RegionalR14MeViewSet, RegionalR14ViewSet, RegionalR16MeViewSet, RegionalR16ViewSet, RegionalR17MeViewSet, RegionalR17ViewSet, RegionalR18MeViewSet, RegionalR18ViewSet, RegionalR19MeViewSet,RegionalR19ViewSet, RegionalR20MeViewSet, RegionalR20ViewSet, RegionalR15ViewSet, StatisticalRegionalViewSet, download_mass_reports_xlsx, get_sent_reports,
                                               r9_view_sets_factory, r6_view_sets_factory, upload_r8_data, user_info)
@@ -89,6 +90,10 @@ router.register(r'reports/19', RegionalR19ViewSet, basename='r19')
 me_router.register(r'reports/19', RegionalR19MeViewSet, basename='r19_me')
 router.register(r'reports/20', RegionalR20ViewSet, basename='r20')
 me_router.register(r'reports/20', RegionalR20MeViewSet, basename='r20_me')
+
+
+router.register(r'reports/event_names', RegionalEventNamesRViewSet, basename='event_names')
+router.register(r'me/reports', MassSendViewSet, basename='mass_send_reports')
 
 urlpatterns = [
     path('', include(router.urls)),

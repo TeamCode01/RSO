@@ -14,7 +14,7 @@ from drf_yasg.utils import swagger_auto_schema
 from headquarters.models import (CentralHeadquarter, DistrictHeadquarter,
                                  RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
-from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE
+from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE, R6_DATA, R9_EVENTS_NAMES
 from regional_competitions_2025.factories import RViewSetFactory
 from regional_competitions_2025.filters import StatisticalRegionalReportFilter
 from regional_competitions_2025.mixins import (DownloadReportXlsxMixin,
@@ -41,7 +41,7 @@ from regional_competitions_2025.permissions import (
     IsDistrictHeadquarterExpert, IsRegionalCommander,
     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions_2025.serializers import (
-    FileUploadRCompetitionSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
+    EventNamesSerializer, FileUploadRCompetitionSerializer, MassReportsSendSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
     RegionalReport4Serializer, RegionalReport5Serializer,
     RegionalReport6Serializer,
     RegionalReport11Serializer, RegionalReport12Serializer,
@@ -1117,3 +1117,90 @@ def upload_r8_data(request):
                 status=status.HTTP_400_BAD_REQUEST)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RegionalEventNamesRViewSet(GenericViewSet):
+    """
+    Вьюсет для получения списка названий событий по показателям.
+
+    Доступ: все пользователи.
+    """
+    serializer_class = EventNamesSerializer
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r6-event-names',
+    )
+    def get_event_names_r6(self, request):
+        event_data = [
+            {
+                'id': list(tup[0].keys())[0],
+                'name': list(tup[0].values())[0],
+                'month': list(tup[1].values())[0],
+                'city': list(tup[2].values())[0]
+            } for tup in R6_DATA
+        ]
+        return Response(event_data)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='r9-event-names',
+    )
+    def get_event_names_r9(self, request):
+        event_data = [{'id': id, 'name': name} for id, name in R9_EVENTS_NAMES.items()]
+        return Response(event_data)
+
+
+class MassSendViewSet(GenericViewSet):
+    serializer_class = MassReportsSendSerializer
+
+    def send_reports(self, request, factory):
+        current_regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=request.user)
+        models = factory.models
+        events_to_update = []
+        for name, model in models.items():
+            if name[-4:] == 'Link':
+                continue
+            event_obj = model.objects.filter(
+                regional_headquarter=current_regional_headquarter, is_sent=False
+            ).last()
+            if event_obj:
+                events_to_update.append(event_obj)
+        if events_to_update:
+            try:
+                with transaction.atomic():
+                    for event_obj in events_to_update:
+                        event_obj.is_sent = True
+                        event_obj.save()
+            except Exception as e:
+                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+                {'detail': 'Данные отправлены на верификацию окружному штабу'},
+                status=status.HTTP_200_OK
+            )
+
+    @action(
+        detail=False,
+        methods=['POST'],
+        url_path='6/send',
+    )
+    def r6_mass_send_for_verification(self, request):
+        """Отправляет все отчеты по 6 показателю на верификацию.
+
+        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`
+        """
+        return self.send_reports(request, r6_models_factory)
+
+    @action(
+        detail=False,
+        methods=['POST'],
+        url_path='9/send',
+    )
+    def r9_mass_send_for_verification(self, request):
+        """Отправляет отчеты по 9 показателю на верификацию.
+
+        Метод идемпотентен. В случае успешной отправки возвращает `HTTP 200 OK`.
+        """
+        return self.send_reports(request, r9_models_factory)
