@@ -8,7 +8,9 @@ from regional_competitions_2025.models import (AdditionalStatistic,
                                                RegionalR3, RegionalR4,
                                                RegionalR4Event, RegionalR4Link,
                                                RegionalR5, RegionalR5Event,
-                                               RegionalR5Link, RegionalR7,
+                                               RegionalR5Link, RegionalR6Link,
+                                               RegionalR6Event,RegionalR6,
+                                               RegionalR7,
                                                RegionalR8, RegionalR11,
                                                RegionalR12, RegionalR13,
                                                RegionalR14, RegionalR14Link,
@@ -21,9 +23,10 @@ from regional_competitions_2025.models import (AdditionalStatistic,
                                                RegionalR102, RegionalR102Link,
                                                RVerificationLog,
                                                StatisticalRegionalReport,
-                                               r9_models_factory)
+                                               r9_models_factory, r6_models_factory)
 from regional_competitions_2025.r_calculations import (calculate_r3_score,
-                                                       calculate_r12_score)
+                                                       calculate_r12_score,
+                                                       calculate_r6_score)
 
 
 @admin.register(RCompetition)
@@ -382,6 +385,65 @@ class RegionalR5Admin(admin.ModelAdmin):
     #     self.message_user(request, 'Очки успешно вычислены.')
 
 
+class RegionalR6LinkInline(admin.TabularInline):
+    model = RegionalR6Link
+    extra = 0
+
+
+class RegionalR6EventAdminInline(admin.StackedInline):
+    model = RegionalR6Event
+    extra = 0
+    inlines = [RegionalR6LinkInline]
+
+
+@admin.register(RegionalR6Event)
+class RegionalR6EventAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'regional_r6',
+        'name',
+        'start_date',
+        'end_date'
+    )
+    search_fields = ('regional_r6__id', 'name')
+    list_filter = ('start_date', 'end_date', 'regional_r6')
+    inlines = [RegionalR6LinkInline]
+
+
+@admin.register(RegionalR6)
+class RegionalR6Admin(admin.ModelAdmin):
+    list_display = (
+        # 'get_id_regional_headquarter',
+        'regional_headquarter',
+        'r_competition',
+        'id',
+        'is_sent',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at',
+        'score',
+        'is_project',
+        'number_of_members',
+        'is_hq_member',
+        'hq_members_count'
+    )
+    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('regional_headquarter__name', 'comment')
+    list_filter = ('is_sent', 'verified_by_chq', 'verified_by_dhq', 'r_competition', 'is_project', 'is_hq_member')
+    inlines = [RegionalR6EventAdminInline]
+
+    # def get_id_regional_headquarter(self, obj):
+    #     return obj.regional_headquarter.id
+    # get_id_regional_headquarter.short_description = 'ID РШ'
+
+    # @admin.action(description='Вычислить очки')
+    # def calculate_scores(self, request, queryset):
+    #     for report in queryset:
+    #         calculate_r6_score(report)
+    #     self.message_user(request, 'Очки успешно вычислены.')
+
+
 r6_list_display = (
     'regional_headquarter',
     'id',
@@ -405,14 +467,14 @@ r6_search_fields = ('comment', 'regional_headquarter__name')
 
 r6_readonly_fields = ('created_at', 'updated_at')
 
-# r6_admin_factory = RAdminFactory(
-#     models=r6_models_factory.models,
-#     list_display=r6_list_display,
-#     list_filter=r6_list_filter,
-#     search_fields=r6_search_fields,
-#     readonly_fields=r6_readonly_fields
-# )
-# r6_admin_factory.create_admin_classes()
+r6_admin_factory = RAdminFactory(
+    models=r6_models_factory.models,
+    list_display=r6_list_display,
+    list_filter=r6_list_filter,
+    search_fields=r6_search_fields,
+    readonly_fields=r6_readonly_fields
+)
+r6_admin_factory.create_admin_classes()
 
 
 @admin.register(RegionalR7)

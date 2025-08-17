@@ -21,10 +21,12 @@ from regional_competitions_2025.mixins import (DownloadReportXlsxMixin,
                                                FormDataNestedFileParser,
                                                ListRetrieveCreateMixin,
                                                RegionalRMeMixin,
-                                               RegionalRMixin)
+                                               RegionalRMixin,
+                                               RegionalR6EventsMixin)
 from regional_competitions_2025.models import (REPORTS_IS_SENT_MODELS, CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole, RCompetition, Ranking,
                                                RegionalR1, RegionalR3,
                                                RegionalR4, RegionalR5,
+                                               RegionalR6,
                                                RegionalR11, RegionalR12,
                                                RegionalR13, RegionalR14,
                                                RegionalR15, RegionalR16,
@@ -41,12 +43,14 @@ from regional_competitions_2025.permissions import (
 from regional_competitions_2025.serializers import (
     FileUploadRCompetitionSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
     RegionalReport4Serializer, RegionalReport5Serializer,
+    RegionalReport6Serializer,
     RegionalReport11Serializer, RegionalReport12Serializer,
     RegionalReport13Serializer, RegionalReport14Serializer,
     RegionalReport15Serializer, RegionalReport16Serializer,
     RegionalReport17Serializer, RegionalReport18Serializer,
     RegionalReport19Serializer, RegionalReport20Serializer,
     RegionalReport101Serializer, RegionalReport102Serializer, StatisticalRegionalReportSerializer,
+    DumpStatisticalRegionalReportSerializer, ShortRegionalHeadquarterSerializer,
     r6_serializers_factory, r9_serializers_factory)
 from regional_competitions_2025.tasks import (send_email_report_part_1,
                                               send_mail)
@@ -670,6 +674,19 @@ class RegionalR5MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeVi
     model = RegionalR5
     queryset = RegionalR5.objects.all()
     serializer_class = RegionalReport5Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR6ViewSet(RegionalR6EventsMixin, FormDataNestedFileParser, BaseRegionalRViewSet):
+    queryset = RegionalR6.objects.all()
+    serializer_class = RegionalReport6Serializer
+    permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
+
+
+class RegionalR6MeViewSet(RegionalR6EventsMixin, FormDataNestedFileParser, SendMixin, BaseRegionalRMeViewSet):
+    model = RegionalR6
+    queryset = RegionalR6.objects.all()
+    serializer_class = RegionalReport6Serializer
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 

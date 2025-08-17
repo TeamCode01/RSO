@@ -11,7 +11,7 @@ from regional_competitions_2025.constants import (CONVERT_TO_MB, REPORT_EXISTS_M
 from regional_competitions_2025.factories import RSerializerFactory
 from regional_competitions_2025.models import (AdditionalStatistic, CHqRejectingLog, DumpStatisticalRegionalReport, Ranking, RegionalR1, RegionalR2, RegionalR3, RegionalR4,
                                                RegionalR4Event, RegionalR4Link, RegionalR5, RegionalR5Event,
-                                               RegionalR5Link, BaseRegionalR6, RegionalR7, RegionalR8, RegionalR11, RegionalR12, RegionalR15,
+                                               RegionalR5Link, RegionalR6, RegionalR6Event, RegionalR6Link,RegionalR7, RegionalR8, RegionalR11, RegionalR12, RegionalR15,
                                                RegionalR13, RegionalR14, RegionalR14Link, RegionalR14Project,RegionalR16, RegionalR17, RegionalR17Link, RegionalR17Project,
                                                RegionalR18, RegionalR19, RegionalR20, RegionalR101, RegionalR101Link,
                                                RegionalR102, RegionalR102Link, RVerificationLog, StatisticalRegionalReport, r9_models_factory, r6_models_factory)
@@ -679,6 +679,50 @@ class BaseRegionalReport6Serializer(BaseRSerializer, CreateUpdateSerializerMixin
             + ('is_project', 'number_of_members', 'is_hq_member', 'hq_members_count', 'links', 'comment')
         )
         read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+class RegionalReport6LinkSerializer(BaseLinkSerializer):
+    class Meta:
+        model = RegionalR6Link
+        fields = BaseLinkSerializer.Meta.fields + ('regional_r6_event',)
+        read_only_fields = BaseLinkSerializer.Meta.read_only_fields + ('regional_r6_event',)
+
+
+class RegionalReport6EventSerializer(BaseEventSerializer):
+    links = RegionalReport6LinkSerializer(many=True, required=False, allow_null=True)
+    class Meta:
+        model = RegionalR6Event
+        fields = BaseEventSerializer.Meta.fields + ('links', 'regional_r6')
+        read_only_fields = ('id', 'regional_r6')
+
+
+class RegionalReport6Serializer(BaseRSerializer, CreateUpdateSerializerMixin, NestedCreateUpdateMixin):
+    events = RegionalReport6EventSerializer(many=True, required=False, allow_null=True)
+    objects_name = 'events'
+    nested_objects_name = 'links'
+
+    class Meta:
+        model = RegionalR6
+        fields = BaseRSerializer.Meta.fields + (
+            'comment',
+            'events',
+            'is_project',
+            'number_of_members',
+            'is_hq_member',
+            'hq_members_count'
+        )
+        read_only_fields = BaseRSerializer.Meta.read_only_fields
+
+    def create_objects(self, created_objects, event_data):
+        return RegionalR6Event.objects.create(
+            regional_r6=created_objects,
+            **event_data
+        )
+
+    def create_nested_objects(self, parent_obj, obj_data):
+        return RegionalR6Link.objects.create(
+            regional_r6_event=parent_obj,
+            **obj_data
+        )
 
 
 r6_serializers_factory = RSerializerFactory(

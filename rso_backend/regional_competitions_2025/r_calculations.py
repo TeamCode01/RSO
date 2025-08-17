@@ -4,7 +4,7 @@ from datetime import datetime
 from headquarters.models import RegionalHeadquarter
 
 from regional_competitions_2025.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk, MEMBER_FEE
-from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR3, BaseRegionalR6, RegionalR14, RegionalR11, RegionalR12, RegionalR13, RegionalR4
+from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR3, RegionalR14, RegionalR11, RegionalR12, RegionalR13, RegionalR4
 from regional_competitions_2025.utils import get_participants, log_exception, get_current_year
 
 logger = logging.getLogger('regional_tasks')
@@ -156,12 +156,15 @@ def calculate_r6_score(report):
     Расчет очков для 6-го показателя.
     Итоговый показатель = number_of_members + 2 * hq_members_count (если is_hq_member=True).
     """
-    logger.info(f'Выполняется подсчет P6 для {report.regional_headquarter}')
+    logger.info(f'Выполняется подсчет P6 для рег штаба {report.regional_headquarter.id}')
+    ro_score = 0
     members = report.number_of_members or 0
-    hq_members = (report.hq_members_count or 0) if report.is_hq_member else 0
-    report.score = members + 2 * hq_members
+    is_hq_member = report.is_hq_member
+    hq_members = report.hq_members_count or 0 if is_hq_member else 0
+    ro_score = members + 2 * hq_members
+    report.score = ro_score
     report.save()
-    logger.info(f'Подсчитали P6 для {report.regional_headquarter}: {report.score}')
+    logger.info(f'Подсчитали P6 для рег штаба {report.regional_headquarter.id}: {ro_score}')
 
 
 @log_exception

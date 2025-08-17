@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from headquarters.models import RegionalHeadquarter
-from regional_competitions_2025.models import RCompetition
+from regional_competitions_2025.models import RCompetition, RegionalR6, RegionalR6Event
 from regional_competitions_2025.utils import (get_all_reports_from_competition,
                                               get_current_year,
                                               get_r_competition_by_year,
@@ -16,6 +16,8 @@ from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin, UpdateModelMixin)
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from regional_competitions_2025.constants import REGIONAL_R6_BLOCK_CONFIG
+from regional_competitions_2025.serializers import RegionalReport6EventSerializer
 
 
 class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
@@ -281,3 +283,37 @@ class DownloadReportXlsxMixin:
     def download_all_reports_data(self, request, pk=None):
         """Скачивание данных отчета в формате XLSX."""
         return get_all_reports_from_competition(self.get_report_number())
+
+
+class RegionalR6EventsMixin:
+    @action(detail=False, methods=['get'])
+    def available_events(self, request):
+        events = RegionalR6Event.objects.all()
+        serializer = RegionalReport6EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def added_events(self, request):
+        regional_headquarter_id = request.query_params.get('regional_headquarter_id')
+        if not regional_headquarter_id:
+            return Response({'error': 'regional_headquarter_id is required'}, status=400)
+
+        added_events = RegionalR6Event.objects.filter(
+            regional_r6__regional_headquarter_id=regional_headquarter_id
+        )
+        serializer = RegionalReport6EventSerializer(added_events, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def block_config(self, request):
+        return Response(REGIONAL_R6_BLOCK_CONFIG)
+
+    @action(detail=True, methods=['delete'])
+    def remove_block(self, request, pk=None):
+        try:
+            report = self.get_object()
+            event_ids = report.events.values_list('id', flat=True)
+            report.delete()
+            return Response({'status': 'success', 'event_ids': list(event_ids)})
+        except RegionalR6.DoesNotExist:
+            return Response({'error': 'Report not found'}, status=404)

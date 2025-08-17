@@ -679,10 +679,6 @@ class RegionalR5Link(BaseLink):
 
 
 class BaseRegionalR6(BaseEventProjectR):
-    """
-    Участие бойцов студенческих отрядов РО РСО во всероссийских
-    (международных) мероприятиях и проектах (в том числе и трудовых) «К».
-    """
     is_project = models.BooleanField(
         verbose_name='Наличие',
         default=False
@@ -690,7 +686,7 @@ class BaseRegionalR6(BaseEventProjectR):
     number_of_members = models.PositiveIntegerField(
         blank=True,
         null=True,
-        verbose_name='Количество человек принявших участие'
+        verbose_name='Количество человек, принявших участие'
     )
     is_hq_member = models.BooleanField(
         verbose_name='Члены РО являлись членами Штаба всероссийского трудового проекта',
@@ -701,9 +697,39 @@ class BaseRegionalR6(BaseEventProjectR):
         null=True,
         verbose_name='Количество членов Штаба всероссийского трудового проекта от РО'
     )
+    class Meta:
+        abstract = True
 
+
+class RegionalR6(BaseRegionalR6):
+    class Meta:
+        verbose_name = '6 показатель, отчет РШ'
+        verbose_name_plural = '6 показатель, отчеты РШ'
     def __str__(self):
         return f'Отчет по 6 показателю РШ {self.regional_headquarter}'
+
+
+class RegionalR6Event(BaseEventOrProject):
+    regional_r6 = models.ForeignKey(
+        'RegionalR6',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='events'
+    )
+    class Meta:
+        verbose_name = '6 показатель, проект РШ'
+        verbose_name_plural = '6 показатель, проекты РШ'
+    def __str__(self):
+        return f'ID {self.id}'
+
+
+class RegionalR6Link(BaseLink):
+    regional_r6_event = models.ForeignKey(
+        'RegionalR6Event',
+        on_delete=models.CASCADE,
+        verbose_name='Мероприятие',
+        related_name='links'
+    )
 
 
 r6_models_factory = RModelFactory(

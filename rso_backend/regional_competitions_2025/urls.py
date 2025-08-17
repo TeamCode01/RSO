@@ -1,7 +1,7 @@
 from django.urls import include, path
 from regional_competitions_2025.factories import register_factory_view_sets
 from regional_competitions_2025.views import (RankingViewSet, RegionalR1MeViewSet, RegionalR1ViewSet, RegionalR2AutoViewSet,
-                                              RegionalR3ViewSet, RegionalR3MeViewSet, RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR5ViewSet, RegionalR5MeViewSet,RegionalR7AutoViewSet,
+                                              RegionalR3ViewSet, RegionalR3MeViewSet, RegionalR4MeViewSet, RegionalR4ViewSet, RegionalR5ViewSet, RegionalR5MeViewSet,RegionalR7AutoViewSet, RegionalR6ViewSet, RegionalR6MeViewSet,
                                               RegionalR8AutoViewSet, RegionalR101MeViewSet, RegionalR101ViewSet,RegionalR102MeViewSet, RegionalR102ViewSet, RegionalR11MeViewSet, RegionalR11ViewSet, RegionalR12MeViewSet, RegionalR12ViewSet,
                                               RegionalR13ViewSet, RegionalR14MeViewSet, RegionalR14ViewSet, RegionalR16MeViewSet, RegionalR16ViewSet, RegionalR17MeViewSet, RegionalR17ViewSet, RegionalR18MeViewSet, RegionalR18ViewSet, RegionalR19MeViewSet,RegionalR19ViewSet, RegionalR20MeViewSet, RegionalR20ViewSet, RegionalR15ViewSet, StatisticalRegionalViewSet, download_mass_reports_xlsx, get_sent_reports,
                                               r9_view_sets_factory, r6_view_sets_factory, upload_r8_data, user_info)
@@ -56,6 +56,8 @@ router.register(r'reports/4', RegionalR4ViewSet, basename='r4')
 me_router.register(r'reports/4', RegionalR4MeViewSet, basename='r4_me')
 router.register(r'reports/5', RegionalR5ViewSet, basename='r5')
 me_router.register(r'reports/5', RegionalR5MeViewSet, basename='r5_me')
+router.register(r'reports/6', RegionalR6ViewSet, basename='r6')
+me_router.register(r'reports/6', RegionalR6MeViewSet, basename='r6_me')
 register_factory_view_sets(
     router, 'reports/6', r6_view_sets_factory.view_set_names, r6_view_sets_factory.r_view_sets
 )
