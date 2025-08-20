@@ -56,7 +56,21 @@ class DumpStatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'employed_top',
             'employed_so_poo',
             'employed_so_oovo',
-            'employed_ro_rso'
+            'employed_ro_rso',
+            'supporting_documents',
+            'learned_sso',
+            'learned_spo',
+            'learned_sop',
+            'learned_smo',
+            'learned_sservo',
+            'learned_ssho',
+            'learned_specialized_detachments',
+            'learned_production_detachments',
+            'learned_top',
+            'learned_so_poo',
+            'learned_so_oovo',
+            'learned_ro_rso',
+            'supporting_documents',
         )
 
 
@@ -92,6 +106,16 @@ class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'employed_so_oovo',
             'employed_ro_rso',
             'additional_statistics',
+            'learned_sso',
+            'learned_spo',
+            'learned_sop',
+            'learned_smo',
+            'learned_sservo',
+            'learned_ssho',
+            'learned_specialized_detachments',
+            'learned_production_detachments',
+            'learned_top',
+            'supporting_documents',
         )
         read_only_fields = ('id', 'regional_headquarter')
         extra_kwargs = {

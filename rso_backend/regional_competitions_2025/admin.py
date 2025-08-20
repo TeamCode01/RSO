@@ -56,7 +56,17 @@ class StatisticalRegionalReportAdmin(admin.ModelAdmin):
         'employed_top',
         'employed_so_poo',
         'employed_so_oovo',
-        'employed_ro_rso'
+        'employed_ro_rso',
+        'supporting_documents',
+        'learned_sso',
+        'learned_spo',
+        'learned_sop',
+        'learned_smo',
+        'learned_sservo',
+        'learned_ssho',
+        'learned_specialized_detachments',
+        'learned_production_detachments',
+        'learned_top',
     )
     search_fields = (
         'regional_headquarter__name',
@@ -81,7 +91,17 @@ class DumpStatisticalRegionalReportAdmin(admin.ModelAdmin):
         'employed_top',
         'employed_so_poo',
         'employed_so_oovo',
-        'employed_ro_rso'
+        'employed_ro_rso',
+        'supporting_documents',
+        'learned_sso',
+        'learned_spo',
+        'learned_sop',
+        'learned_smo',
+        'learned_sservo',
+        'learned_ssho',
+        'learned_specialized_detachments',
+        'learned_production_detachments',
+        'learned_top',
     )
     search_fields = (
         'regional_headquarter__name',
