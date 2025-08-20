@@ -8,7 +8,7 @@ from regional_competitions_2025.constants import MEMBER_FEE, R6_DATA, R9_EVENTS_
 from regional_competitions_2025.factories import RModelFactory
 from regional_competitions_2025.utils import (
     get_current_year, get_last_rcompetition_id,
-    regional_comp_regulations_files_path
+    regional_supporting_docs_files_path
 )
 
 
@@ -96,6 +96,57 @@ class DumpStatisticalRegionalReport(models.Model):
         blank=True,
         null=True
     )
+    learned_sso = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССО',
+        blank=True,
+        null=True
+    )
+    learned_spo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СПО',
+        blank=True,
+        null=True
+    )
+    learned_sop = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СОП',
+        blank=True,
+        null=True
+    )
+    learned_smo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СМО',
+        blank=True,
+        null=True
+    )
+    learned_sservo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССервО',
+        blank=True,
+        null=True
+    )
+    learned_ssho = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССхО',
+        blank=True,
+        null=True
+    )
+    learned_specialized_detachments = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, профильные отряды',
+        blank=True,
+        null=True
+    )
+    learned_production_detachments = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, производственные отряды',
+        blank=True,
+        null=True
+    )
+    learned_top = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, ТОП',
+        blank=True,
+        null=True
+    )
+    supporting_documents = models.FileField(
+        upload_to=regional_supporting_docs_files_path,
+        verbose_name='Документы, подтверждающие факт трудоустройства, по каждому направлению',
+        blank=True,
+        null=True
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания'
@@ -176,6 +227,57 @@ class StatisticalRegionalReport(models.Model):
     )
     employed_ro_rso = models.PositiveIntegerField(
         verbose_name='Количество работников штабов РО РСО',
+        blank=True,
+        null=True
+    )
+    learned_sso = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССО',
+        blank=True,
+        null=True
+    )
+    learned_spo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СПО',
+        blank=True,
+        null=True
+    )
+    learned_sop = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СОП',
+        blank=True,
+        null=True
+    )
+    learned_smo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СМО',
+        blank=True,
+        null=True
+    )
+    learned_sservo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССервО',
+        blank=True,
+        null=True
+    )
+    learned_ssho = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССхО',
+        blank=True,
+        null=True
+    )
+    learned_specialized_detachments = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, профильные отряды',
+        blank=True,
+        null=True
+    )
+    learned_production_detachments = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, производственные отряды',
+        blank=True,
+        null=True
+    )
+    learned_top = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, ТОП',
+        blank=True,
+        null=True
+    )
+    supporting_documents = models.FileField(
+        upload_to=regional_supporting_docs_files_path,
+        verbose_name='Документы, подтверждающие факт трудоустройства, по каждому направлению',
         blank=True,
         null=True
     )
@@ -337,7 +439,7 @@ class BaseEventOrProject(models.Model):
     )
     regulations = models.FileField(
         verbose_name='Положение о мероприятии',
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         blank=True,
         null=True
     )
@@ -490,7 +592,7 @@ class RegionalR1(BaseEventProjectR):
                    ' с уплаченными членскими взносами')
     )
     scan_file = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         blank=True,
         null=True,
         verbose_name='Скан подтверждающего документа'
@@ -822,7 +924,7 @@ class BaseRegionalR9(BaseRegionalR, BaseScore, BaseVerified, BaseComment):
         default=False,
     )
     document = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         verbose_name='Скан документа, подтверждающего проведение мероприятия',
         blank=True,
         null=True
@@ -849,7 +951,7 @@ class BaseRegionalR10(models.Model):
         verbose_name='Проведение акции',
     )
     document = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         verbose_name='Скан документа, подтверждающего проведение акции',
         blank=True,
         null=True
@@ -928,7 +1030,7 @@ class RegionalR11(BaseEventProjectR):
         null=True
     )
     scan_file = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         verbose_name='Скриншот численности группы РО РСО',
         blank=True,
         null=True
@@ -959,7 +1061,7 @@ class RegionalR12(BaseEventProjectR):
         verbose_name='Количество членов РО РСО, принявших участие'
     )
     scan_file = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         blank=True,
         null=True,
         verbose_name='Скан подтверждающего документа'
@@ -1052,7 +1154,7 @@ class RegionalR14Project(models.Model):
         null=True
     )
     regulations = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         verbose_name='Положение о проекте',
         blank=True,
         null=True
@@ -1150,7 +1252,7 @@ class RegionalR16(BaseComment, models.Model):
         verbose_name='Дата последнего обновления'
     )
     scan_file = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         verbose_name='Документ',
         blank=True,
         null=True
@@ -1209,7 +1311,7 @@ class RegionalR17Project(models.Model):
         related_name='projects'
     )
     file = models.FileField(
-        upload_to=regional_comp_regulations_files_path,
+        upload_to=regional_supporting_docs_files_path,
         verbose_name='Файл',
         blank=True,
         null=True

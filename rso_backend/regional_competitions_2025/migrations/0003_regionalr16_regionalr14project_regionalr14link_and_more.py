@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('comment', models.TextField(blank=True, null=True, verbose_name='Комментарий')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Дата последнего обновления')),
-                ('scan_file', models.FileField(blank=True, null=True, upload_to=regional_competitions_2025.utils.regional_comp_regulations_files_path, verbose_name='Документ')),
+                ('scan_file', models.FileField(blank=True, null=True, upload_to=regional_competitions_2025.utils.regional_supporting_docs_files_path, verbose_name='Документ')),
                 ('r_competition', models.ForeignKey(default=regional_competitions_2025.utils.get_last_rcompetition_id, on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s', to='regional_competitions_2025.rcompetition', verbose_name='Рейтинг РО')),
                 ('regional_headquarter', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(app_label)s_%(class)s', to='headquarters.regionalheadquarter', verbose_name='Региональный штаб')),
             ],
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.TextField(blank=True, null=True, verbose_name='Наименование проекта, в котором ЛСО РО одержал победу')),
                 ('project_scale', models.CharField(blank=True, choices=[('Всероссийский', 'Всероссийский'), ('Окружной', 'Окружной'), ('Межрегиональный', 'Межрегиональный')], max_length=30, null=True, verbose_name='Масштаб проекта')),
-                ('regulations', models.FileField(blank=True, null=True, upload_to=regional_competitions_2025.utils.regional_comp_regulations_files_path, verbose_name='Положение о проекте')),
+                ('regulations', models.FileField(blank=True, null=True, upload_to=regional_competitions_2025.utils.regional_supporting_docs_files_path, verbose_name='Положение о проекте')),
                 ('regional_r14', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='projects', to='regional_competitions_2025.regionalr16', verbose_name='Отчет')),
             ],
             options={

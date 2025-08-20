@@ -19,7 +19,7 @@ from drf_yasg.utils import swagger_auto_schema
 from headquarters.models import RegionalHeadquarter, RegionalHeadquarterEmail
 from openpyxl import Workbook
 from pdfrw import PageMerge, PdfReader, PdfWriter
-from regional_competitions.constants import MASS_REPORT_NUMBERS, MEDIA_PATH
+from regional_competitions_2025.constants import MASS_REPORT_NUMBERS, MEDIA_PATH
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -43,7 +43,7 @@ def get_last_rcompetition_id():
     return last_r_competition.id if last_r_competition else None
 
 
-def regional_comp_regulations_files_path(instance, filename) -> str:
+def regional_supporting_docs_files_path(instance, filename) -> str:
     """Функция для формирования пути сохранения файлов конкурса РШ.
 
     Сначала проверяет наличие атрибута `regional_headquarter`.
@@ -57,6 +57,7 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
     filename_parts = filename.rsplit('.', 1)
     base_filename = filename_parts[0][:25]
     file_extension = filename_parts[1] if len(filename_parts) > 1 else ''
+    subfolder = 'regulations'
 
     if hasattr(instance, 'regional_headquarter'):
         regional_hq_id = instance.regional_headquarter.id
@@ -72,8 +73,11 @@ def regional_comp_regulations_files_path(instance, filename) -> str:
             raise AttributeError(
                 "Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'."
             )
-
-    return f'regional_comp/regulations/{instance}/{regional_hq_id}/{base_filename}.{file_extension}'
+    meta = getattr(instance, '_meta', None)
+    model_name = getattr(meta, 'model_name', '')
+    if model_name == 'statisticalregionalreport':
+        subfolder = 'statistical_reports'
+    return f'regional_comp/{subfolder}/{instance}/{regional_hq_id}/{base_filename}.{file_extension}'
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):
