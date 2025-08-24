@@ -34,7 +34,6 @@ class RCompetitionAdmin(admin.ModelAdmin):
     list_filter = ('year',)
 
 
-
 class AdditionalStatisticInline(admin.StackedInline):
     model = AdditionalStatistic
     extra = 0
@@ -220,6 +219,26 @@ class RegionalR1Admin(admin.ModelAdmin):
         'foreign_participants',
         'top_participants',
         'top_must_pay',
+        'foreign_must_pay',
+        'detachment_number',
+        'sso_number',
+        'sso_participants',
+        'spo_number',
+        'spo_participants',
+        'sop_number',
+        'sop_participants',
+        'smo_number',
+        'smo_participants',
+        'sservo_number',
+        'sservo_participants',
+        'ssho_number',
+        'ssho_participants',
+        'specialized_detachment_number',
+        'specialized_detachment_participants',
+        'production_detachment_number',
+        'production_detachment_participants',
+        'top_detachment_number',
+        'top_detachment_participants',
         'verified_by_chq',
         'verified_by_dhq',
         'created_at',
@@ -763,7 +782,7 @@ class RegionalR19Admin(admin.ModelAdmin):
         'id',
         'regional_headquarter',
         'employees_number',
-        'officially_employed',
+        'officially_employed_number',
         'average_salary',
         'get_id_regional_headquarter',
         'created_at',

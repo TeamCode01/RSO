@@ -561,6 +561,7 @@ class RegionalR1(BaseEventProjectR):
     """
     Численность членов РО РСО.
     """
+
     amount_of_money = models.FloatField(
         validators=[MinValueValidator(0)],
         blank=True,
@@ -570,13 +571,26 @@ class RegionalR1(BaseEventProjectR):
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
-        verbose_name='Количество членов РО РСО с уплаченными членскими взносами'
+        verbose_name='Количество членов РО РСО с уплаченными членскими взносами',
+        help_text='Считается автоматически, если заполнено поле "Сумма уплаченных членских взносов"'
+    )
+    employed_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество трудоустроенных членов РО РСО'
     )
     foreign_participants = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(0)],
         blank=True,
         null=True,
         verbose_name='Численность иностранных граждан'
+    )
+    foreign_must_pay = models.BooleanField(
+        default=False,
+        verbose_name='Иностранные граждане освобождены от оплаты членских взносов в данном РО',
+        help_text=('Если выбрано, то иностранные граждане не будут учитываться при расчете количества участников'
+                   ' с уплаченными членскими взносами')
     )
     top_participants = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(0)],
@@ -596,6 +610,120 @@ class RegionalR1(BaseEventProjectR):
         blank=True,
         null=True,
         verbose_name='Скан подтверждающего документа'
+    )
+    detachment_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов'
+    )
+    sso_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов ССО'
+    )
+    sso_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников ССО'
+    )
+    spo_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов СПО'
+    )
+    spo_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников СПО'
+    )
+    sop_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов СОП'
+    )
+    sop_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников СОП'
+    )
+    smo_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов СМО'
+    )
+    smo_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников СМО'
+    )
+    sservo_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов ССервО'
+    )
+    sservo_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников ССервО'
+    )
+    ssho_number = models.PositiveSmallIntegerField( 
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов ССхО'
+    )
+    ssho_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников ССхО'
+    )
+    specialized_detachment_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество профильных отрядов'
+    )
+    specialized_detachment_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников профильных отрядов'
+    )
+    production_detachment_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество производственных отрядов'
+    )
+    production_detachment_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников производственных отрядов'
+    )
+    top_detachment_number = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество отрядов ТОП'
+    )
+    top_detachment_participants = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        verbose_name='Количество участников ТОП'
     )
 
     class Meta:
@@ -1425,10 +1553,15 @@ class RegionalR19(BaseComment, models.Model):
         null=True,
         verbose_name='Фактическое количество сотрудников РО РСО'
     )
+    officially_employed_number = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Количество сотрудников, официально трудоустроенных в РО РСО'
+    )
     officially_employed = models.BooleanField(
         verbose_name='Официальное трудоустройство сотрудников в РО РСО',
         default=False,
-        help_text='Выбрано - трудоустроены официально, пусто - неофициально',
+        help_text='Селект больше не используется.',
         blank=True,
         null=True
     )
