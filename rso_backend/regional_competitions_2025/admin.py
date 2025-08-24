@@ -4,7 +4,7 @@ from regional_competitions_2025.forms import ExpertUserForm
 from regional_competitions_2025.models import (AdditionalStatistic,
                                                CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole,
                                                Ranking, RCompetition,
-                                               RegionalR1, RegionalR2,
+                                               RegionalR1, RegionalR19Employee, RegionalR2,
                                                RegionalR3, RegionalR4,
                                                RegionalR4Event, RegionalR4Link,
                                                RegionalR5, RegionalR5Event,
@@ -776,6 +776,11 @@ class RegionalR18Admin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
+class RegionalR19EmployeeInline(admin.TabularInline):
+    model = RegionalR19Employee
+    extra = 0
+
+
 @admin.register(RegionalR19)
 class RegionalR19Admin(admin.ModelAdmin):
     list_display = (
@@ -788,8 +793,10 @@ class RegionalR19Admin(admin.ModelAdmin):
         'created_at',
         'updated_at'
     )
+    exclude = ('officially_employed',)
     search_fields = ('comment', 'regional_headquarter__name')
     readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR19EmployeeInline]
 
     def get_id_regional_headquarter(self, obj):
         return obj.regional_headquarter.id

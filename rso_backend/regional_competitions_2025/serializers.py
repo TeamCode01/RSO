@@ -13,7 +13,7 @@ from regional_competitions_2025.factories import RSerializerFactory
 from regional_competitions_2025.models import (AdditionalStatistic,
                                                BaseRegionalR6, CHqRejectingLog,
                                                DumpStatisticalRegionalReport,
-                                               Ranking, RegionalR1, RegionalR2,
+                                               Ranking, RegionalR1, RegionalR19Employee, RegionalR2,
                                                RegionalR3, RegionalR4,
                                                RegionalR4Event, RegionalR4Link,
                                                RegionalR5, RegionalR5Event,
@@ -1036,15 +1036,30 @@ class RegionalReport18Serializer(ReportExistsValidationMixin, serializers.ModelS
         )
 
 
-class RegionalReport19Serializer(ReportExistsValidationMixin, serializers.ModelSerializer):
+class RegionalReport19EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegionalR19Employee
+        fields = (
+            'job_title',
+            'salary',
+        )
+        read_only_fields = ('id', 'regional_r19',)
+
+
+class RegionalReport19Serializer(CreateUpdateSerializerMixin, NestedCreateUpdateMixin, serializers.ModelSerializer):
+    employees = RegionalReport19EmployeeSerializer(many=True, required=False, allow_null=True)
+
+    objects_name = 'employees'
+
     class Meta:
         model = RegionalR19
         fields = (
             'id',
             'regional_headquarter',
+            'r_competition',
             'employees_number',
-            'officially_employed',
             'average_salary',
+            'employees',
             'comment',
         )
         read_only_fields = (
@@ -1052,6 +1067,15 @@ class RegionalReport19Serializer(ReportExistsValidationMixin, serializers.ModelS
             'regional_headquarter',
         )
 
+    def create_objects(self, created_objects, event_data):
+        return RegionalR19Employee.objects.create(
+            regional_r19=created_objects, **event_data
+        )
+
+    def create_nested_objects(self, parent_obj, obj_data):
+        return RegionalR19Employee.objects.create(
+            regional_r19=parent_obj, **obj_data
+        )
 
 class RegionalReport20Serializer(serializers.ModelSerializer):
     class Meta:

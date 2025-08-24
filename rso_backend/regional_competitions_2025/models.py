@@ -1524,6 +1524,29 @@ class RegionalR18(BaseComment, models.Model):
         return f'Отчет по 18 показателю РШ {self.regional_headquarter}'
 
 
+class RegionalR19Employee(models.Model):
+    regional_r19 = models.ForeignKey(
+        'RegionalR19',
+        on_delete=models.CASCADE,
+        verbose_name='Отчет',
+        related_name='employees'
+    )
+    job_title = models.CharField(
+        max_length=255,
+        verbose_name='Должность'
+    )
+    salary = models.PositiveIntegerField(
+        verbose_name='Заработная плата'
+    )
+
+    class Meta:
+        verbose_name = 'Зарплата сотрудника РО РСО'
+        verbose_name_plural = 'Зарплаты сотрудников РО РСО'
+
+    def __str__(self):
+        return f'Зарплата сотрудника {self.job_title} в РО РСО {self.regional_r19.regional_headquarter}'
+
+
 class RegionalR19(BaseComment, models.Model):
     """Количество и трудоустройство сотрудников РО РСО."""
 
