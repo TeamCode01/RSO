@@ -323,13 +323,14 @@ def generate_pdf_report_part_1(report_id, excluded_fields: tuple = (), is_dump: 
 
     additional_data = []
 
-    for nested_dict in report.additional_statistics.all():
-        additional_data.append(
-            [
-                Paragraph(nested_dict.name, styles['Times_New_Roman']), 
-                Paragraph(str(nested_dict.value), styles['Times_New_Roman'])
-            ]
-        )
+    if hasattr(report, 'additional_statistics'):
+        for nested_dict in report.additional_statistics.all():
+            additional_data.append(
+                [
+                    Paragraph(nested_dict.name, styles['Times_New_Roman']),
+                    Paragraph(str(nested_dict.value), styles['Times_New_Roman'])
+                ]
+            )
 
     if additional_data:
         additional_table = Table(additional_data, colWidths=[5 * cm, 10 * cm])

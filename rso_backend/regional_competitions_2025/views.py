@@ -375,7 +375,7 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         if r_competition_year:
             r_competition = self.get_r_competition(r_competition_year)
         else:
-            r_competition = self.get_r_competition(get_current_year(), self.model)
+            r_competition = self.get_r_competition(get_current_year())
 
         report = self.model.objects.filter(
             regional_headquarter=regional_headquarter,
