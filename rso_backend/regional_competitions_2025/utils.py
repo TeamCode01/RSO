@@ -261,7 +261,7 @@ def generate_pdf_report_part_1(report_id) -> str:
     elements.append(Spacer(1, 90))
     elements.append(
         Paragraph(
-            f'Отчет о деятельности регионального отделения за 2024 год. Часть 1. {report.regional_headquarter}',
+            f'Отчет о деятельности регионального отделения за 2025 год. Часть 1. {report.regional_headquarter}',
             styles['CustomTitle']
         )
     )
@@ -714,7 +714,7 @@ def generate_pdf_report_part_2(regional_headquarter_id: int) -> str:
     elements.append(Spacer(1, 90))
     elements.append(
         Paragraph(
-            f'<b>Отчет о деятельности регионального отделения за 2024 год. Часть 2. {regional_hq}</b>',
+            f'<b>Отчет о деятельности регионального отделения за 2025 год. Часть 2. {regional_hq}</b>',
             doc_style['CustomTitle']
         )
     )
