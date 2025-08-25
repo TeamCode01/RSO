@@ -1059,7 +1059,7 @@ class RegionalReport19Serializer(CreateUpdateSerializerMixin, NestedCreateUpdate
             'regional_headquarter',
             'r_competition',
             'employees_number',
-            'average_salary',
+            'officially_employed_number',
             'employees',
             'comment',
         )

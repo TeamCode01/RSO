@@ -793,7 +793,6 @@ class RegionalR19Admin(admin.ModelAdmin):
         'regional_headquarter',
         'employees_number',
         'officially_employed_number',
-        'average_salary',
         'get_id_regional_headquarter',
         'created_at',
         'updated_at'
