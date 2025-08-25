@@ -7,13 +7,12 @@ from celery import shared_task
 from django_celery_beat.models import PeriodicTask
 
 from headquarters.models import RegionalHeadquarter
-from regional_competitions.models import DumpStatisticalRegionalReport
 from regional_competitions_2025.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
 from regional_competitions_2025.models import (
     RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
     StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
-    r9_models_factory
+    r9_models_factory, DumpStatisticalRegionalReport
 )
 from regional_competitions.r_calculations import calc_r_ranking, calculate_r11_score, calculate_r13_score, calculate_r14
 from regional_competitions_2025.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
