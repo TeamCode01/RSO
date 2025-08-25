@@ -31,7 +31,7 @@ def send_email_report_part_1_2025(report_id: int, is_dump: bool):
             'employed_so_oovo',
             'employed_ro_rso',
         ) if is_dump else ()
-        logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}')
+        logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}, модель {report_model}')
         report = report_model.objects.get(pk=report_id)
         logger.info(f'Нашли отчет с данным ID: {report}')
         pdf_file = generate_pdf_report_part_1(report_id, excluded_fields=excluded_fields, is_dump=is_dump)

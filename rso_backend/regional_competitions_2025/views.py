@@ -585,18 +585,14 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
             defaults=validated
         )
 
-        if created:
-            send_email_report_part_1_2025.delay(dump_obj.id, is_dump=True)
-
         if not created:
-            for attr, value in validated.items():
-                setattr(dump_obj, attr, value)
-            dump_obj.save()
-            status_code = status.HTTP_200_OK
-        else:
-            status_code = status.HTTP_201_CREATED
+            return Response(
+                {'detail': 'Отчет уже отправлен'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(DumpStatisticalRegionalReportSerializer(dump_obj).data, status=status_code)
+        send_email_report_part_1_2025.delay(dump_obj.id, is_dump=True)
+        return Response(DumpStatisticalRegionalReportSerializer(dump_obj).data, status.HTTP_201_CREATED)
 
     @action(
         detail=False,
