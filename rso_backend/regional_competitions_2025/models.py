@@ -1658,6 +1658,7 @@ class RegionalR20(BaseComment, models.Model):
 
 
 REPORTS_IS_SENT_MODELS = [
+    StatisticalRegionalReport,
     RegionalR1,
     RegionalR4,
     RegionalR5,
