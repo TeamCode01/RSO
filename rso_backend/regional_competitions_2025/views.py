@@ -48,7 +48,7 @@ from regional_competitions_2025.serializers import (
     RegionalReport19Serializer, RegionalReport20Serializer,
     RegionalReport101Serializer, RegionalReport102Serializer, StatisticalRegionalReportSerializer,
     r6_serializers_factory, r9_serializers_factory)
-from regional_competitions_2025.tasks import (send_email_report_part_1,
+from regional_competitions_2025.tasks import (send_email_report_part_1_2025,
                                               send_mail)
 from regional_competitions_2025.utils import (
     get_all_reports_from_competition, get_current_year, get_emails,
@@ -178,7 +178,7 @@ class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
 
         report = serializer.save(regional_headquarter=regional_headquarter)
         if should_send:
-            send_email_report_part_1.delay(report.id)
+            send_email_report_part_1_2025.delay(report.id)
 
 
 class BaseRegionalRViewSet(RegionalRMixin):
