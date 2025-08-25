@@ -7,29 +7,29 @@ from celery import shared_task
 from django_celery_beat.models import PeriodicTask
 
 from headquarters.models import RegionalHeadquarter
-from regional_competitions.constants import EMAIL_REPORT_PART_1_MESSAGE, \
+from regional_competitions_2025.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
-from regional_competitions.models import (
+from regional_competitions_2025.models import (
     RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
     StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
     r9_models_factory
 )
 from regional_competitions.r_calculations import calc_r_ranking, calculate_r11_score, calculate_r13_score, calculate_r14
-from regional_competitions.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
+from regional_competitions_2025.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
     generate_pdf_report_part_2
 
 logger = logging.getLogger('regional_tasks')
 
 
 @shared_task
-def send_email_report_part_1(report_id: int):
+def send_email_report_part_1_2025(report_id: int):
     try:
         logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}')
         report = StatisticalRegionalReport.objects.get(pk=report_id)
         logger.info(f'Нашли отчет с данным ID: {report}')
-        pdf_file = generate_pdf_report_part_1(report)
+        pdf_file = generate_pdf_report_part_1(report_id)
         send_email_with_attachment(
-            subject='Получен отчет о деятельности регионального отделения РСО за 2024 год - часть 1',
+            subject='Получен отчет о деятельности регионального отделения РСО за 2025 год - часть 1',
             message=EMAIL_REPORT_PART_1_MESSAGE,
             recipients=get_emails(report),
             file_path=pdf_file
@@ -41,7 +41,7 @@ def send_email_report_part_1(report_id: int):
 
 
 @shared_task
-def send_email_report_part_2(regional_headquarter_id: int):
+def send_email_report_part_2_2025(regional_headquarter_id: int):
     try:
         regional_headquarter = RegionalHeadquarter.objects.get(id=regional_headquarter_id)
     except RegionalHeadquarter.DoesNotExist:

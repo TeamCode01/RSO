@@ -199,7 +199,6 @@ def get_emails(report_instance) -> list:
         )
     addresses.append('rso.login@yandex.ru')
     addresses.append('delightxxls@gmail.com')
-    addresses.append('olegfreon@yandex.ru')
     return addresses
 
 
@@ -223,7 +222,7 @@ def send_email_with_attachment(
 
 
 def generate_pdf_report_part_1(report_id) -> str:
-    from regional_competitions.models import StatisticalRegionalReport
+    from regional_competitions_2025.models import StatisticalRegionalReport
 
     try:
         report = StatisticalRegionalReport.objects.get(pk=report_id)
