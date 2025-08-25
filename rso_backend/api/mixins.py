@@ -141,7 +141,7 @@ class SendMixin:
             f, created = PeriodicTask.objects.get_or_create(
                 interval=schedule,
                 name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
-                task='regional_competitions.tasks.send_email_report_part_2',
+                task='regional_competitions_2025.tasks.send_email_report_part_2_2025',
                 args=json.dumps([regional_r.regional_headquarter.id])
             )
 

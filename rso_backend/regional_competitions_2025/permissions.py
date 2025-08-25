@@ -1,7 +1,7 @@
 from headquarters.models import CentralHeadquarter, RegionalHeadquarter
 from rest_framework import permissions
 
-from regional_competitions.models import ExpertRole
+from regional_competitions_2025.models import ExpertRole
 
 
 class IsRegionalCommander(permissions.BasePermission):

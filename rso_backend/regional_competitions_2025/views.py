@@ -1,6 +1,12 @@
+import datetime
 import json
+from contextlib import suppress
 
 import pandas as pd
+from django.utils.timezone import now
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+import django.core.exceptions
+
 from api.mixins import SendMixin
 from api.utils import get_calculation
 from django.conf import settings
@@ -14,6 +20,7 @@ from drf_yasg.utils import swagger_auto_schema
 from headquarters.models import (CentralHeadquarter, DistrictHeadquarter,
                                  RegionalHeadquarter,
                                  UserDistrictHeadquarterPosition)
+from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions_2025.constants import EMAIL_REPORT_DECLINED_MESSAGE, R6_DATA, R9_EVENTS_NAMES
 from regional_competitions_2025.factories import RViewSetFactory
 from regional_competitions_2025.filters import StatisticalRegionalReportFilter
@@ -39,7 +46,8 @@ from regional_competitions_2025.permissions import (
     IsDistrictHeadquarterExpert, IsRegionalCommander,
     IsRegionalCommanderAuthorOrCentralHeadquarterExpert)
 from regional_competitions_2025.serializers import (
-    EventNamesSerializer, FileUploadRCompetitionSerializer, MassReportsSendSerializer, RankingRCompetitionSerializer, RegionalReport1Serializer, RegionalReport3Serializer,
+    EventNamesSerializer, FileUploadRCompetitionSerializer, MassReportsSendSerializer, RankingRCompetitionSerializer,
+    RegionalReport1Serializer, RegionalReport3Serializer,
     RegionalReport4Serializer, RegionalReport5Serializer,
     RegionalReport11Serializer, RegionalReport12Serializer,
     RegionalReport13Serializer, RegionalReport14Serializer,
@@ -47,7 +55,7 @@ from regional_competitions_2025.serializers import (
     RegionalReport17Serializer, RegionalReport18Serializer,
     RegionalReport19Serializer, RegionalReport20Serializer,
     RegionalReport101Serializer, RegionalReport102Serializer, StatisticalRegionalReportSerializer,
-    r6_serializers_factory, r9_serializers_factory)
+    r6_serializers_factory, r9_serializers_factory, DumpStatisticalRegionalReportSerializer)
 from regional_competitions_2025.tasks import (send_email_report_part_1_2025,
                                               send_mail)
 from regional_competitions_2025.utils import (
@@ -64,123 +72,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 
-class StatisticalRegionalViewSet(ListRetrieveCreateMixin):
-    """Отчет 1 ч.
-
-    Фильтрация:
-        - district_id: поиск по id окружного штаба
-        - district_name: поиск по названию окружного штаба, полное совпадение
-        - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
-    Сортировка:
-        - доступные поля для сортировки:
-            - regional_headquarter_name: сортировка по названию регионального штаба
-          Можно сортировать в обратном порядке добавив признак '-' перед названием поля
-    """
-    queryset = StatisticalRegionalReport.objects.all().select_related(
-        'regional_headquarter'
-    ).prefetch_related('additional_statistics')
-    serializer_class = StatisticalRegionalReportSerializer
-    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
-    filterset_class = StatisticalRegionalReportFilter
-    ordering_fields = ('regional_headquarter__name',)
-
-    def get_permissions(self):
-        if self.action == 'retrieve':
-            return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
-        if self.action == 'list':
-            return (IsCentralHeadquarterExpert(),)
-        return permissions.IsAuthenticated(), IsRegionalCommander()
-
-    @action(
-        detail=False,
-        methods=['GET', 'PUT'],
-        url_path='me',
-    )
-    def my_statistical_report(self, request, pk=None):
-        """Эндпоинт для получения своего первого отчета во 2-й части."""
-        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
-        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
-
-        if request.method == "GET":
-            return Response(
-                data=self.get_serializer(statistical_report).data,
-                status=status.HTTP_200_OK
-            )
-
-        # если put и нет дампа, то сначала сохраняем текущую версию в модель дампа
-        if not DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
-            serializer = DumpStatisticalRegionalReportSerializer(
-                data=StatisticalRegionalReportSerializer(statistical_report).data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save(regional_headquarter=regional_headquarter)
-
-        serializer = self.get_serializer(
-            statistical_report,
-            data=request.data,
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(
-        detail=False,
-        methods=['GET'],
-        url_path='me_first',
-    )
-    def me_first(self, request, pk=None):
-        """Эндпоинт для получения своего первого отчета в 1-й части."""
-        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
-        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
-            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
-            return Response(
-                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
-                status=status.HTTP_200_OK
-            )
-        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
-        return Response(
-            data=self.get_serializer(statistical_report).data,
-            status=status.HTTP_200_OK
-        )
-
-    @action(
-        detail=False,
-        methods=['GET'],
-        url_path=r'old_first/(?P<pk>\d+)',
-        permission_classes=(IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),),
-    )
-    def old_first(self, request, pk):
-        """Эндпоинт для получения отчета 1-й части, версии до редактирования во 2-й части.
-
-        Параметр пути id - pk регионального штаба.
-        Доступ: автор отчета или эксперт ЦШ.
-        """
-        regional_headquarter = get_object_or_404(RegionalHeadquarter, pk=pk)
-        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
-            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
-            return Response(
-                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
-                status=status.HTTP_200_OK
-            )
-        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
-        return Response(
-            data=self.get_serializer(statistical_report).data,
-            status=status.HTTP_200_OK
-        )
-
-    def perform_create(self, serializer):
-        user = self.request.user
-        regional_headquarter = RegionalHeadquarter.objects.get(commander=user)
-
-        should_send = True
-        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
-            should_send = False
-
-        report = serializer.save(regional_headquarter=regional_headquarter)
-        if should_send:
-            send_email_report_part_1_2025.delay(report.id)
-
-
 class BaseRegionalRViewSet(RegionalRMixin):
     """Базовый класс для вьюсетов шаблона RegionalR<int>ViewSet."""
     serializer_class = None
@@ -192,6 +83,9 @@ class BaseRegionalRViewSet(RegionalRMixin):
             self.district_review = swagger_schema_for_district_review(self.serializer_class)(self.district_review)
             self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
             self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
+
+    def get_report_number(self) -> int:
+        return 3030
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -533,7 +427,7 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
         if r_competition_year:
             r_competition = self.get_r_competition(r_competition_year)
         else:
-            r_competition = self.get_r_competition(get_current_year(), self.model)
+            r_competition = self.get_r_competition(get_current_year())
 
         serializer.save(
             regional_headquarter=regional_hq,
@@ -542,6 +436,208 @@ class BaseRegionalRMeViewSet(RegionalRMeMixin):
 
     def get_report_number(self):
         return get_report_number_by_class_name(self)
+
+
+class StatisticalRegionalViewSet(BaseRegionalRViewSet):
+    """Отчет 1 ч.
+
+    Фильтрация:
+        - district_id: поиск по id окружного штаба
+        - district_name: поиск по названию окружного штаба, полное совпадение
+        - regional_headquarter_name: поиск по названию регионального штаба, частичное совпадение
+    Сортировка:
+        - доступные поля для сортировки:
+            - regional_headquarter_name: сортировка по названию регионального штаба
+          Можно сортировать в обратном порядке добавив признак '-' перед названием поля
+    """
+    queryset = StatisticalRegionalReport.objects.all().select_related(
+        'regional_headquarter'
+    ).prefetch_related('additional_statistics')
+    serializer_class = StatisticalRegionalReportSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = StatisticalRegionalReportFilter
+    ordering_fields = ('regional_headquarter__name',)
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
+        if self.action == 'list':
+            return (IsCentralHeadquarterExpert(),)
+        return permissions.IsAuthenticated(), IsRegionalCommander()
+
+    @action(
+        detail=False,
+        methods=['GET', 'PUT'],
+        url_path='me',
+    )
+    def my_statistical_report(self, request, pk=None):
+        """Получение/редактирование своего первого отчета во 2-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=request.user)
+
+        r_competition_year = request.query_params.get('year')
+        if r_competition_year:
+            r_competition = self.get_r_competition(r_competition_year)
+        else:
+            r_competition = self.get_r_competition(get_current_year())
+
+        statistical_report = StatisticalRegionalReport.objects.filter(
+            regional_headquarter=regional_headquarter,
+            r_competition=r_competition
+        ).last()
+
+        if request.method == "GET":
+            if not statistical_report:
+                raise Http404('Отчет по данному показателю не найден')
+            return Response(self.get_serializer(statistical_report).data, status=status.HTTP_200_OK)
+
+        serializer_cls = self.get_serializer_class()
+
+        if statistical_report is None:
+            context = {
+                **self.get_serializer_context(),
+                'action': 'create',
+                'regional_hq': regional_headquarter,
+            }
+            create_serializer = serializer_cls(data=request.data, context=context)
+            create_serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+                report = create_serializer.save(
+                    regional_headquarter=regional_headquarter,
+                    r_competition=r_competition
+                )
+            return Response(serializer_cls(report, context=self.get_serializer_context()).data, status=status.HTTP_200_OK)
+
+        context = {
+            **self.get_serializer_context(),
+            'action': 'update',
+            'regional_hq': regional_headquarter,
+        }
+        update_serializer = serializer_cls(statistical_report, data=request.data, context=context)
+        update_serializer.is_valid(raise_exception=True)
+        update_serializer.save()
+        return Response(update_serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='me_first',
+    )
+    def me_first(self, request, pk=None):
+        """Эндпоинт для получения своего первого отчета в 1-й части."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path=r'old_first/(?P<pk>\d+)',
+        permission_classes=(IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),),
+    )
+    def old_first(self, request, pk):
+        """Эндпоинт для получения отчета 1-й части, версии до редактирования во 2-й части.
+
+        Параметр пути id - pk регионального штаба.
+        Доступ: автор отчета или эксперт ЦШ.
+        """
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, pk=pk)
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            statistical_report = DumpStatisticalRegionalReport.objects.get(regional_headquarter=regional_headquarter)
+            return Response(
+                data=DumpStatisticalRegionalReportSerializer(statistical_report).data,
+                status=status.HTTP_200_OK
+            )
+        statistical_report = get_object_or_404(StatisticalRegionalReport, regional_headquarter=regional_headquarter)
+        return Response(
+            data=self.get_serializer(statistical_report).data,
+            status=status.HTTP_200_OK
+        )
+
+    def create(self, request, *args, **kwargs):
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=request.user)
+
+        r_competition_year = request.query_params.get('year')
+        if r_competition_year:
+            r_competition = self.get_r_competition(r_competition_year)
+        else:
+            r_competition = self.get_r_competition(get_current_year())
+
+        data = request.data.copy()
+        data.pop('additional_statistics', None)
+
+        dump_serializer = DumpStatisticalRegionalReportSerializer(data=data)
+        dump_serializer.is_valid(raise_exception=True)
+
+        validated = dump_serializer.validated_data
+        dump_obj, created = DumpStatisticalRegionalReport.objects.get_or_create(
+            r_competition=r_competition,
+            regional_headquarter=regional_headquarter,
+            defaults=validated
+        )
+
+        if created:
+            send_email_report_part_1_2025.delay(dump_obj.id, is_dump=True)
+
+        if not created:
+            for attr, value in validated.items():
+                setattr(dump_obj, attr, value)
+            dump_obj.save()
+            status_code = status.HTTP_200_OK
+        else:
+            status_code = status.HTTP_201_CREATED
+
+        return Response(DumpStatisticalRegionalReportSerializer(dump_obj).data, status=status_code)
+
+    @action(
+        detail=False,
+        methods=['POST'],
+        url_path='me/send',
+    )
+    def send_for_verification(self, request, pk=None):
+        """Отправляет свой отчет на верификацию."""
+        regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=self.request.user)
+        self.kwargs['pk'] = regional_headquarter.id
+        regional_r = self.get_object()
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=35,
+            period=IntervalSchedule.MINUTES,
+        )
+        with suppress(django.core.exceptions.ValidationError):
+            f, created = PeriodicTask.objects.get_or_create(
+                interval=schedule,
+                name=f'Send Email to reg hq id {regional_r.regional_headquarter.id}',
+                task='regional_competitions_2025.tasks.send_email_report_part_2_2025',
+                args=json.dumps([regional_r.regional_headquarter.id])
+            )
+
+
+            if not f.expires or f.expires < now():
+                print('Таска истекла или нет времени истечения. Устанавливаем актуальное время истечения...')
+            elif created:
+                f.expires = now() + datetime.timedelta(seconds=3600)
+                f.save()
+                print(f'Новая таска создана. Expiration time: {f.expires}')
+            else:
+                print(f'Таска уже существует и еще не истекла. Expiration time: {f.expires}')
+        if hasattr(regional_r, 'is_sent'):
+            regional_r.is_sent = True
+            regional_r.save()
+            return Response(
+                {'detail': 'Данные отправлены на верификацию окружному штабу'},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class RegionalRNoVerifViewSet(RegionalRMixin):
