@@ -283,7 +283,8 @@ def generate_pdf_report_part_1(report_id, excluded_fields: tuple = (), is_dump: 
             'regional_version',
             'district_version',
             'central_version',
-            'rejecting_reasons'
+            'rejecting_reasons',
+            'is_sent',
         ) + excluded_fields:
             continue
         field_name = field.verbose_name
