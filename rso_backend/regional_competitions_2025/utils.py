@@ -221,11 +221,13 @@ def send_email_with_attachment(
     mail.send()
 
 
-def generate_pdf_report_part_1(report_id, excluded_fields: tuple = ()) -> str:
-    from regional_competitions_2025.models import StatisticalRegionalReport
+def generate_pdf_report_part_1(report_id, excluded_fields: tuple = (), is_dump: bool = False) -> str:
+    from regional_competitions_2025.models import StatisticalRegionalReport, DumpStatisticalRegionalReport
+
+    report_model = DumpStatisticalRegionalReport if is_dump else StatisticalRegionalReport
 
     try:
-        report = StatisticalRegionalReport.objects.get(pk=report_id)
+        report = report_model.objects.get(pk=report_id)
     except:
         raise Exception(f'В generate_pdf_report_part_1 передан некорректный id первого отчета: {report_id}')
 
