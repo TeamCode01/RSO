@@ -4,7 +4,7 @@ from regional_competitions_2025.forms import ExpertUserForm
 from regional_competitions_2025.models import (AdditionalStatistic,
                                                CHqRejectingLog, DumpStatisticalRegionalReport, ExpertRole,
                                                Ranking, RCompetition,
-                                               RegionalR1, RegionalR2,
+                                               RegionalR1, RegionalR19Employee, RegionalR2,
                                                RegionalR3, RegionalR4,
                                                RegionalR4Event, RegionalR4Link,
                                                RegionalR5, RegionalR5Event,
@@ -32,7 +32,6 @@ class RCompetitionAdmin(admin.ModelAdmin):
     ordering = ('-year',)
     search_fields = ('year',)
     list_filter = ('year',)
-
 
 
 class AdditionalStatisticInline(admin.StackedInline):
@@ -220,6 +219,26 @@ class RegionalR1Admin(admin.ModelAdmin):
         'foreign_participants',
         'top_participants',
         'top_must_pay',
+        'foreign_must_pay',
+        'detachment_number',
+        'sso_number',
+        'sso_participants',
+        'spo_number',
+        'spo_participants',
+        'sop_number',
+        'sop_participants',
+        'smo_number',
+        'smo_participants',
+        'sservo_number',
+        'sservo_participants',
+        'ssho_number',
+        'ssho_participants',
+        'specialized_detachment_number',
+        'specialized_detachment_participants',
+        'production_detachment_number',
+        'production_detachment_participants',
+        'top_detachment_number',
+        'top_detachment_participants',
         'verified_by_chq',
         'verified_by_dhq',
         'created_at',
@@ -757,20 +776,27 @@ class RegionalR18Admin(admin.ModelAdmin):
     get_id_regional_headquarter.short_description = 'ID РШ'
 
 
+class RegionalR19EmployeeInline(admin.TabularInline):
+    model = RegionalR19Employee
+    extra = 0
+
+
 @admin.register(RegionalR19)
 class RegionalR19Admin(admin.ModelAdmin):
     list_display = (
         'id',
         'regional_headquarter',
         'employees_number',
-        'officially_employed',
+        'officially_employed_number',
         'average_salary',
         'get_id_regional_headquarter',
         'created_at',
         'updated_at'
     )
+    exclude = ('officially_employed',)
     search_fields = ('comment', 'regional_headquarter__name')
     readonly_fields = ('created_at', 'updated_at')
+    inlines = [RegionalR19EmployeeInline]
 
     def get_id_regional_headquarter(self, obj):
         return obj.regional_headquarter.id

@@ -2,10 +2,15 @@ import logging
 from datetime import datetime
 
 from headquarters.models import RegionalHeadquarter
-
-from regional_competitions_2025.constants import MSK_ID, SPB_ID, ro_members_in_rso_vk, MEMBER_FEE
-from regional_competitions_2025.models import Ranking, RegionalR1, RegionalR3, BaseRegionalR6, RegionalR14, RegionalR11, RegionalR12, RegionalR13, RegionalR4
-from regional_competitions_2025.utils import get_participants, log_exception, get_current_year
+from regional_competitions_2025.constants import (MEMBER_FEE, MSK_ID, SPB_ID,
+                                                  ro_members_in_rso_vk)
+from regional_competitions_2025.models import (BaseRegionalR6, Ranking,
+                                               RegionalR1, RegionalR3,
+                                               RegionalR4, RegionalR11,
+                                               RegionalR12, RegionalR13,
+                                               RegionalR14)
+from regional_competitions_2025.utils import (get_current_year,
+                                              get_participants, log_exception)
 
 logger = logging.getLogger('regional_tasks')
 
@@ -17,6 +22,8 @@ def calculate_r1_score(report: RegionalR1):
     report.score = report.participants_with_payment
     if report.top_must_pay:
         report.score -= report.top_participants
+    if report.foreign_must_pay:
+        report.score -= report.foreign_participants
     report.save()
 
 
