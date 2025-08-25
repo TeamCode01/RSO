@@ -67,9 +67,6 @@ class DumpStatisticalRegionalReportSerializer(serializers.ModelSerializer):
             'learned_specialized_detachments',
             'learned_production_detachments',
             'learned_top',
-            'learned_so_poo',
-            'learned_so_oovo',
-            'learned_ro_rso',
             'supporting_documents',
         )
 
@@ -79,89 +76,6 @@ class AdditionalStatisticReportSerializer(serializers.ModelSerializer):
         model = AdditionalStatistic
         fields = ('name', 'value',)
         read_only_fields = ('id', 'statistical_report')
-
-
-class StatisticalRegionalReportSerializer(serializers.ModelSerializer):
-    edited = serializers.SerializerMethodField()
-    additional_statistics = AdditionalStatisticReportSerializer(required=False, allow_null=True, many=True)
-    regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
-
-    class Meta:
-        model = StatisticalRegionalReport
-        fields = (
-            'id',
-            'participants_number',
-            'regional_headquarter',
-            'edited',
-            'employed_sso',
-            'employed_spo',
-            'employed_sop',
-            'employed_smo',
-            'employed_sservo',
-            'employed_ssho',
-            'employed_specialized_detachments',
-            'employed_production_detachments',
-            'employed_top',
-            'employed_so_poo',
-            'employed_so_oovo',
-            'employed_ro_rso',
-            'additional_statistics',
-            'learned_sso',
-            'learned_spo',
-            'learned_sop',
-            'learned_smo',
-            'learned_sservo',
-            'learned_ssho',
-            'learned_specialized_detachments',
-            'learned_production_detachments',
-            'learned_top',
-            'supporting_documents',
-        )
-        read_only_fields = ('id', 'regional_headquarter')
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'regional_headquarter': {
-                'help_text': 'ID регионального штаба для которого создается или запрашивается отчет.'
-            },
-        }
-
-    def create(self, validated_data):
-        regional_headquarter = validated_data.get('regional_headquarter')
-
-        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
-            raise serializers.ValidationError({'non_field_errors': STATISTICAL_REPORT_EXISTS_MESSAGE})
-
-        additional_statistics_data = validated_data.pop('additional_statistics', None)
-
-        with transaction.atomic():
-            report = StatisticalRegionalReport.objects.create(**validated_data)
-
-            if additional_statistics_data:
-                for statistic_data in additional_statistics_data:
-                    AdditionalStatistic.objects.create(statistical_report=report, **statistic_data)
-
-        return report
-
-    def update(self, instance, validated_data):
-        additional_statistics_data = validated_data.pop('additional_statistics', None)
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
-        instance.save()
-
-        if additional_statistics_data is not None:
-            instance.additional_statistics.all().delete()
-
-            for statistic_data in additional_statistics_data:
-                AdditionalStatistic.objects.create(statistical_report=instance, **statistic_data)
-
-        return instance
-
-    def get_edited(self, obj):
-        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=obj.regional_headquarter).exists():
-            return True
-        return False
 
 
 class FileScanSizeSerializerMixin(serializers.ModelSerializer):
@@ -513,6 +427,93 @@ class BaseRSerializer(EmptyAsNoneMixin, serializers.ModelSerializer):
 
     def get_r_competition_year(self, obj):
         return obj.r_competition.year
+
+
+class StatisticalRegionalReportSerializer(BaseRSerializer):
+    edited = serializers.SerializerMethodField()
+    additional_statistics = AdditionalStatisticReportSerializer(required=False, allow_null=True, many=True)
+    regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
+
+    class Meta:
+        model = StatisticalRegionalReport
+        fields = (
+            'id',
+            'participants_number',
+            'regional_headquarter',
+            'edited',
+            'employed_sso',
+            'employed_spo',
+            'employed_sop',
+            'employed_smo',
+            'employed_sservo',
+            'employed_ssho',
+            'employed_specialized_detachments',
+            'employed_production_detachments',
+            'employed_top',
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso',
+            'additional_statistics',
+            'learned_sso',
+            'learned_spo',
+            'learned_sop',
+            'learned_smo',
+            'learned_sservo',
+            'learned_ssho',
+            'learned_specialized_detachments',
+            'learned_production_detachments',
+            'learned_top',
+            'supporting_documents',
+        ) + BaseRSerializer.Meta.fields
+        read_only_fields = ('id', 'regional_headquarter') + BaseRSerializer.Meta.read_only_fields
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'regional_headquarter': {
+                'help_text': 'ID регионального штаба для которого создается или запрашивается отчет.'
+            },
+        }
+
+    def get_report_number(self) -> int:
+        return 3030
+
+    def create(self, validated_data):
+        regional_headquarter = validated_data.get('regional_headquarter')
+
+        if StatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            raise serializers.ValidationError({'non_field_errors': STATISTICAL_REPORT_EXISTS_MESSAGE})
+
+        additional_statistics_data = validated_data.pop('additional_statistics', None)
+
+        with transaction.atomic():
+            report = StatisticalRegionalReport.objects.create(**validated_data)
+
+            if additional_statistics_data:
+                for statistic_data in additional_statistics_data:
+                    AdditionalStatistic.objects.create(statistical_report=report, **statistic_data)
+
+        return report
+
+    def update(self, instance, validated_data):
+        additional_statistics_data = validated_data.pop('additional_statistics', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        with transaction.atomic():
+            instance.save()
+
+            if additional_statistics_data is not None:
+                instance.additional_statistics.all().delete()
+
+                for statistic_data in additional_statistics_data:
+                    AdditionalStatistic.objects.create(statistical_report=instance, **statistic_data)
+
+        return instance
+
+    def get_edited(self, obj):
+        if DumpStatisticalRegionalReport.objects.filter(regional_headquarter=obj.regional_headquarter).exists():
+            return True
+        return False
 
 
 class BaseLinkSerializer(serializers.ModelSerializer):

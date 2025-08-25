@@ -221,7 +221,7 @@ def send_email_with_attachment(
     mail.send()
 
 
-def generate_pdf_report_part_1(report_id) -> str:
+def generate_pdf_report_part_1(report_id, excluded_fields: tuple = ()) -> str:
     from regional_competitions_2025.models import StatisticalRegionalReport
 
     try:
@@ -269,7 +269,20 @@ def generate_pdf_report_part_1(report_id) -> str:
     data = []
 
     for field in report._meta.fields:
-        if field.name == 'id':
+        if field.name in (
+            'id',
+            'regional_headquarter',
+            'regional_r',
+            'verified_by_chq',
+            'verified_by_dhq',
+            'score',
+            'created_at',
+            'updated_at',
+            'regional_version',
+            'district_version',
+            'central_version',
+            'rejecting_reasons'
+        ) + excluded_fields:
             continue
         field_name = field.verbose_name
         field_value = getattr(report, field.name, '')

@@ -66,12 +66,17 @@ class StatisticalRegionalReportAdmin(admin.ModelAdmin):
         'learned_specialized_detachments',
         'learned_production_detachments',
         'learned_top',
+        'verified_by_chq',
+        'verified_by_dhq',
+        'created_at',
+        'updated_at',
+        'score'
     )
     search_fields = (
         'regional_headquarter__name',
         'regional_headquarter__id',
     )
-    inlines = [AdditionalStatisticInline]
+    list_filter = ('verified_by_chq', 'verified_by_dhq')
 
 
 @admin.register(DumpStatisticalRegionalReport)

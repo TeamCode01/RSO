@@ -6,6 +6,8 @@ REPORT_SENT_MESSAGE = 'Нельзя редактировать отправле�
 DISTRICT_EXPERT_POSITION = 'Эксперт ОШ'
 CENTRAL_EXPERT_POSITION = 'Эксперт ЦШ'
 
+STATISTICAL_REPORT_NUMBER = 3030
+
 R6_DATA = [
     ({1: "Мероприятие 1"}, {"month": None}, {"city": None}),
     ({2: "Мероприятие 2"}, {"month": None}, {"city": None}),

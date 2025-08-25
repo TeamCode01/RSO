@@ -7,6 +7,7 @@ from celery import shared_task
 from django_celery_beat.models import PeriodicTask
 
 from headquarters.models import RegionalHeadquarter
+from regional_competitions.models import DumpStatisticalRegionalReport
 from regional_competitions_2025.constants import EMAIL_REPORT_PART_1_MESSAGE, \
     EMAIL_REPORT_PART_2_MESSAGE
 from regional_competitions_2025.models import (
@@ -22,12 +23,18 @@ logger = logging.getLogger('regional_tasks')
 
 
 @shared_task
-def send_email_report_part_1_2025(report_id: int):
+def send_email_report_part_1_2025(report_id: int, is_dump: bool):
     try:
+        report_model = DumpStatisticalRegionalReport if is_dump else StatisticalRegionalReport
+        excluded_fields = (
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso',
+        ) if is_dump else ()
         logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}')
-        report = StatisticalRegionalReport.objects.get(pk=report_id)
+        report = report_model.objects.get(pk=report_id)
         logger.info(f'Нашли отчет с данным ID: {report}')
-        pdf_file = generate_pdf_report_part_1(report_id)
+        pdf_file = generate_pdf_report_part_1(report_id, excluded_fields=excluded_fields)
         send_email_with_attachment(
             subject='Получен отчет о деятельности регионального отделения РСО за 2025 год - часть 1',
             message=EMAIL_REPORT_PART_1_MESSAGE,
