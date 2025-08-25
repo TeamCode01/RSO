@@ -21,7 +21,7 @@ from rest_framework.viewsets import GenericViewSet
 class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
 
     @classmethod
-    def get_r_competition(cls, year, r_model):
+    def get_r_competition(cls, year):
         return get_r_competition_by_year(year=year, r_model=RCompetition)
 
     def get_queryset(self):
@@ -84,7 +84,7 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
 class RegionalRMeMixin(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
     @classmethod
-    def get_r_competition(cls, year, r_model):
+    def get_r_competition(cls, year):
         return get_r_competition_by_year(year=year, r_model=RCompetition)
 
 

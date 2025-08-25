@@ -12,7 +12,7 @@ from regional_competitions_2025.constants import EMAIL_REPORT_PART_1_MESSAGE, \
 from regional_competitions_2025.models import (
     RegionalR1, RegionalR101, RegionalR102, RegionalR11, RegionalR12, RegionalR14, RegionalR2, RegionalR3, RegionalR4, RegionalR5,
     StatisticalRegionalReport, REPORTS_IS_SENT_MODELS, r6_models_factory,
-    r9_models_factory
+    r9_models_factory, DumpStatisticalRegionalReport
 )
 from regional_competitions.r_calculations import calc_r_ranking, calculate_r11_score, calculate_r13_score, calculate_r14
 from regional_competitions_2025.utils import generate_pdf_report_part_1, send_email_with_attachment, get_emails, \
@@ -22,12 +22,18 @@ logger = logging.getLogger('regional_tasks')
 
 
 @shared_task
-def send_email_report_part_1_2025(report_id: int):
+def send_email_report_part_1_2025(report_id: int, is_dump: bool):
     try:
-        logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}')
-        report = StatisticalRegionalReport.objects.get(pk=report_id)
+        report_model = DumpStatisticalRegionalReport if is_dump else StatisticalRegionalReport
+        excluded_fields = (
+            'employed_so_poo',
+            'employed_so_oovo',
+            'employed_ro_rso',
+        ) if is_dump else ()
+        logger.info(f'Подготавливаем PDF-файл с отправкой на email для report id {report_id}, модель {report_model}')
+        report = report_model.objects.get(pk=report_id)
         logger.info(f'Нашли отчет с данным ID: {report}')
-        pdf_file = generate_pdf_report_part_1(report_id)
+        pdf_file = generate_pdf_report_part_1(report_id, excluded_fields=excluded_fields, is_dump=is_dump)
         send_email_with_attachment(
             subject='Получен отчет о деятельности регионального отделения РСО за 2025 год - часть 1',
             message=EMAIL_REPORT_PART_1_MESSAGE,

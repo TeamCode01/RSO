@@ -169,138 +169,6 @@ class DumpStatisticalRegionalReport(models.Model):
         return f'Дамп статистического отчет отряда {self.regional_headquarter.name}'
 
 
-class StatisticalRegionalReport(models.Model):
-    """Статистический отчет РШ, 1-я часть отчёта РО."""
-
-    r_competition = models.ForeignKey(
-        RCompetition,
-        verbose_name='Рейтинг РО',
-        on_delete=models.CASCADE,
-        default=get_last_rcompetition_id,
-        related_name='%(app_label)s_%(class)s'
-    )
-    regional_headquarter = models.ForeignKey(
-        'headquarters.RegionalHeadquarter',
-        on_delete=models.PROTECT,
-        verbose_name='Региональный штаб',
-        related_name='%(app_label)s_%(class)s'
-    )
-    participants_number = models.PositiveIntegerField(
-        verbose_name='Количество членов регионального отделения'
-    )
-    employed_sso = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных ССО'
-    )
-    employed_spo = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных СПО'
-    )
-    employed_sop = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных СОП'
-    )
-    employed_smo = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных СМО'
-    )
-    employed_sservo = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных ССервО'
-    )
-    employed_ssho = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных ССхО'
-    )
-    employed_specialized_detachments = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных, профильные отряды'
-    )
-    employed_production_detachments = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных, производственные отряды'
-    )
-    employed_top = models.PositiveIntegerField(
-        verbose_name='Количество трудоустроенных, ТОП'
-    )
-    employed_so_poo = models.PositiveIntegerField(
-        verbose_name='Количество работников штабов СО ПОО',
-        blank=True,
-        null=True
-    )
-    employed_so_oovo = models.PositiveIntegerField(
-        verbose_name='Количество работников штабов СО ООВО',
-        blank=True,
-        null=True
-    )
-    employed_ro_rso = models.PositiveIntegerField(
-        verbose_name='Количество работников штабов РО РСО',
-        blank=True,
-        null=True
-    )
-    learned_sso = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССО',
-        blank=True,
-        null=True
-    )
-    learned_spo = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СПО',
-        blank=True,
-        null=True
-    )
-    learned_sop = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СОП',
-        blank=True,
-        null=True
-    )
-    learned_smo = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СМО',
-        blank=True,
-        null=True
-    )
-    learned_sservo = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССервО',
-        blank=True,
-        null=True
-    )
-    learned_ssho = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССхО',
-        blank=True,
-        null=True
-    )
-    learned_specialized_detachments = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, профильные отряды',
-        blank=True,
-        null=True
-    )
-    learned_production_detachments = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, производственные отряды',
-        blank=True,
-        null=True
-    )
-    learned_top = models.PositiveIntegerField(
-        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, ТОП',
-        blank=True,
-        null=True
-    )
-    supporting_documents = models.FileField(
-        upload_to=regional_supporting_docs_files_path,
-        verbose_name='Документы, подтверждающие факт трудоустройства, по каждому направлению',
-        blank=True,
-        null=True
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата последнего обновления'
-    )
-
-    class Meta:
-        verbose_name_plural = 'Статистические отчеты РШ'
-        verbose_name = 'Статистический отчет РШ'
-        constraints = [
-            models.UniqueConstraint(fields=['r_competition', 'regional_headquarter'], name='unique_rcompetition_rhq')
-        ]
-
-    def __str__(self):
-        return f'Отчет отряда {self.regional_headquarter.name}'
-
-
 class AdditionalStatistic(models.Model):
     statistical_report = models.ForeignKey(
         'StatisticalRegionalReport',
@@ -446,6 +314,139 @@ class BaseEventOrProject(models.Model):
 
     class Meta:
         abstract = True
+
+
+class StatisticalRegionalReport(BaseRegionalR, BaseVerified, BaseComment, BaseScore):
+    """Статистический отчет РШ, 1-я часть отчёта РО."""
+
+    r_competition = models.ForeignKey(
+        RCompetition,
+        verbose_name='Рейтинг РО',
+        on_delete=models.CASCADE,
+        default=get_last_rcompetition_id,
+        related_name='%(app_label)s_%(class)s'
+    )
+    regional_headquarter = models.ForeignKey(
+        'headquarters.RegionalHeadquarter',
+        on_delete=models.PROTECT,
+        verbose_name='Региональный штаб',
+        related_name='%(app_label)s_%(class)s'
+    )
+    participants_number = models.PositiveIntegerField(
+        verbose_name='Количество членов регионального отделения'
+    )
+    employed_sso = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССО'
+    )
+    employed_spo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СПО'
+    )
+    employed_sop = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СОП'
+    )
+    employed_smo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных СМО'
+    )
+    employed_sservo = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССервО'
+    )
+    employed_ssho = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных ССхО'
+    )
+    employed_specialized_detachments = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, профильные отряды'
+    )
+    employed_production_detachments = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, производственные отряды'
+    )
+    employed_top = models.PositiveIntegerField(
+        verbose_name='Количество трудоустроенных, ТОП'
+    )
+    employed_so_poo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ПОО',
+        blank=True,
+        null=True
+    )
+    employed_so_oovo = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов СО ООВО',
+        blank=True,
+        null=True
+    )
+    employed_ro_rso = models.PositiveIntegerField(
+        verbose_name='Количество работников штабов РО РСО',
+        blank=True,
+        null=True
+    )
+    learned_sso = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССО',
+        blank=True,
+        null=True
+    )
+    learned_spo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СПО',
+        blank=True,
+        null=True
+    )
+    learned_sop = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СОП',
+        blank=True,
+        null=True
+    )
+    learned_smo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные СМО',
+        blank=True,
+        null=True
+    )
+    learned_sservo = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССервО',
+        blank=True,
+        null=True
+    )
+    learned_ssho = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные ССхО',
+        blank=True,
+        null=True
+    )
+    learned_specialized_detachments = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, профильные отряды',
+        blank=True,
+        null=True
+    )
+    learned_production_detachments = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, производственные отряды',
+        blank=True,
+        null=True
+    )
+    learned_top = models.PositiveIntegerField(
+        verbose_name='Прошедшие обучение ЦШ и трудоустроенные, ТОП',
+        blank=True,
+        null=True
+    )
+    supporting_documents = models.FileField(
+        upload_to=regional_supporting_docs_files_path,
+        verbose_name='Документы, подтверждающие факт трудоустройства, по каждому направлению',
+        blank=True,
+        null=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата последнего обновления'
+    )
+
+    class Meta:
+        verbose_name_plural = 'Статистические отчеты РШ'
+        verbose_name = 'Статистический отчет РШ'
+        constraints = [
+            models.UniqueConstraint(fields=['r_competition', 'regional_headquarter'], name='unique_rcompetition_rhq')
+        ]
+
+    def __str__(self):
+        return f'Отчет отряда {self.regional_headquarter.name}'
+
 
 
 class RVerificationLog(models.Model):
@@ -1657,6 +1658,7 @@ class RegionalR20(BaseComment, models.Model):
 
 
 REPORTS_IS_SENT_MODELS = [
+    StatisticalRegionalReport,
     RegionalR1,
     RegionalR4,
     RegionalR5,
