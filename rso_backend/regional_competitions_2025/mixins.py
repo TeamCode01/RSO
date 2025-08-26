@@ -59,9 +59,9 @@ class RegionalRMixin(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
 
         r_competition_year = self.request.query_params.get('year')
         if r_competition_year:
-            r_competition = self.get_r_competition(r_competition_year, RCompetition)
+            r_competition = self.get_r_competition(r_competition_year)
         else:
-            r_competition = self.get_r_competition(get_current_year(), RCompetition)
+            r_competition = self.get_r_competition(get_current_year())
 
         if 'verified_by_dhq' in serializer.Meta.fields:
             existing_reports = self.get_queryset().filter(regional_headquarter=regional_hq)
