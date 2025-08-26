@@ -84,9 +84,6 @@ class BaseRegionalRViewSet(RegionalRMixin):
             self.central_review = swagger_schema_for_central_review(self.serializer_class)(self.central_review)
             self.create = swagger_schema_for_create_and_update_methods(self.serializer_class)(self.create)
 
-    def get_report_number(self) -> int:
-        return 3030
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'action': self.action})
@@ -458,6 +455,9 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
     filterset_class = StatisticalRegionalReportFilter
     ordering_fields = ('regional_headquarter__name',)
 
+    def get_report_number(self):
+        return 3030
+
     def get_permissions(self):
         if self.action == 'retrieve':
             return (IsRegionalCommanderAuthorOrCentralHeadquarterExpert(),)
@@ -567,13 +567,15 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
         regional_headquarter = get_object_or_404(RegionalHeadquarter, commander=request.user)
 
         r_competition_year = request.query_params.get('year')
-        if r_competition_year:
-            r_competition = self.get_r_competition(r_competition_year)
-        else:
-            r_competition = self.get_r_competition(get_current_year())
+        r_competition = self.get_r_competition(r_competition_year) if r_competition_year else self.get_r_competition(
+            get_current_year())
 
-        data = request.data.copy()
+        data = request.POST.dict()
         data.pop('additional_statistics', None)
+
+        file_obj = request.FILES.get('supporting_documents')
+        if file_obj:
+            data['supporting_documents'] = file_obj
 
         dump_serializer = DumpStatisticalRegionalReportSerializer(data=data)
         dump_serializer.is_valid(raise_exception=True)
@@ -582,14 +584,10 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
         dump_obj, created = DumpStatisticalRegionalReport.objects.get_or_create(
             r_competition=r_competition,
             regional_headquarter=regional_headquarter,
-            defaults=validated
+            defaults=validated,
         )
-
         if not created:
-            return Response(
-                {'detail': 'Отчет уже отправлен'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'detail': 'Отчет уже отправлен'}, status=status.HTTP_400_BAD_REQUEST)
 
         send_email_report_part_1_2025.delay(dump_obj.id, is_dump=True)
         return Response(DumpStatisticalRegionalReportSerializer(dump_obj).data, status.HTTP_201_CREATED)
