@@ -1534,10 +1534,14 @@ class RegionalR19Employee(models.Model):
     )
     job_title = models.CharField(
         max_length=255,
-        verbose_name='Должность'
+        verbose_name='Должность',
+        blank=True,
+        null=True
     )
     salary = models.PositiveIntegerField(
-        verbose_name='Заработная плата'
+        verbose_name='Заработная плата',
+        blank=True,
+        null=True
     )
 
     class Meta:
