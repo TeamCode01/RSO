@@ -492,6 +492,13 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
 
         serializer_cls = self.get_serializer_class()
 
+        if not DumpStatisticalRegionalReport.objects.filter(regional_headquarter=regional_headquarter).exists():
+            return Response(
+                {'detail': 'Сначала нужно отправить 1 часть отчета, прежде чем отправлять 2-ю часть отчета'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
         if statistical_report is None:
             context = {
                 **self.get_serializer_context(),
