@@ -492,6 +492,12 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
 
         serializer_cls = self.get_serializer_class()
 
+        if not request.FILES.get('supporting_documents'):
+            return Response(
+                {'supporting_documents': ['Файл обязателен для отправки отчёта.']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if statistical_report is None:
             context = {
                 **self.get_serializer_context(),
@@ -570,12 +576,16 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
         r_competition = self.get_r_competition(r_competition_year) if r_competition_year else self.get_r_competition(
             get_current_year())
 
+        file_obj = request.FILES.get('supporting_documents')
+        if not file_obj:
+            return Response(
+                {'supporting_documents': ['Файл обязателен для отправки отчёта.']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         data = request.POST.dict()
         data.pop('additional_statistics', None)
-
-        file_obj = request.FILES.get('supporting_documents')
-        if file_obj:
-            data['supporting_documents'] = file_obj
+        data['supporting_documents'] = file_obj
 
         dump_serializer = DumpStatisticalRegionalReportSerializer(data=data)
         dump_serializer.is_valid(raise_exception=True)
