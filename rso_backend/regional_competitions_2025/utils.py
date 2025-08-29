@@ -7,6 +7,10 @@ import traceback
 from functools import wraps
 from importlib import import_module
 from io import BytesIO
+from django.utils.text import slugify
+from pathlib import Path
+from django.http import QueryDict
+from django.core.files.uploadedfile import UploadedFile
 
 from django.apps import apps
 from django.conf import settings
@@ -43,41 +47,51 @@ def get_last_rcompetition_id():
     return last_r_competition.id if last_r_competition else None
 
 
+def _get_regional_hq(instance):
+    if hasattr(instance, 'regional_headquarter') and instance.regional_headquarter:
+        return instance.regional_headquarter
+    for attr in dir(instance):
+        if attr.startswith('regional_r'):
+            obj = getattr(instance, attr, None)
+            if obj is not None and hasattr(obj, 'regional_headquarter') and obj.regional_headquarter:
+                return obj.regional_headquarter
+    raise AttributeError("Не удалось найти региональный штаб в instance.")
+
+
 def regional_supporting_docs_files_path(instance, filename) -> str:
-    """Функция для формирования пути сохранения файлов конкурса РШ.
+    MAX_PATH = 255
+    SAFETY_MARGIN = 16
 
-    Сначала проверяет наличие атрибута `regional_headquarter`.
-    Если атрибут отсутствует, ищет атрибут, начинающийся на `regional_r`,
-    и через него обращается к `regional_headquarter`.
+    model_name = getattr(getattr(instance, '_meta', None), 'model_name', '')
+    subfolder = 'statistical_reports' if model_name == 'statisticalregionalreport' else 'regulations'
 
-    :param instance: Экземпляр модели.
-    :param filename: Имя файла. Добавляем к имени текущую дату и время.
-    :return: Путь к изображению.
-    """
-    filename_parts = filename.rsplit('.', 1)
-    base_filename = filename_parts[0][:25]
-    file_extension = filename_parts[1] if len(filename_parts) > 1 else ''
-    subfolder = 'regulations'
+    hq = _get_regional_hq(instance)
+    hq_id = getattr(hq, 'id', 'hq')
+    hq_slug = slugify(getattr(hq, 'name', '') or str(hq_id), allow_unicode=False)[:32]
 
-    if hasattr(instance, 'regional_headquarter'):
-        regional_hq_id = instance.regional_headquarter.id
-    else:
-        regional_r_attr = next(
-            (getattr(instance, attr) for attr in dir(instance) if attr.startswith('regional_r') and
-                hasattr(getattr(instance, attr), 'regional_headquarter')),
-            None
-        )
-        if regional_r_attr:
-            regional_hq_id = regional_r_attr.regional_headquarter.id
-        else:
-            raise AttributeError(
-                "Не удалось найти атрибут regional_headquarter или атрибут, начинающийся с 'regional_r'."
-            )
-    meta = getattr(instance, '_meta', None)
-    model_name = getattr(meta, 'model_name', '')
-    if model_name == 'statisticalregionalreport':
-        subfolder = 'statistical_reports'
-    return f'regional_comp/{subfolder}/{instance}/{regional_hq_id}/{base_filename}.{file_extension}'
+    p = Path(filename)
+    ext = (p.suffix or '').lower()
+    base = slugify(p.stem or 'file', allow_unicode=False) or 'file'
+
+    ts = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+
+    prefix = f"regional_comp/{subfolder}/{hq_slug}/{hq_id}/"
+
+    remain = MAX_PATH - len(prefix) - len(ext) - len(ts) - 1 - SAFETY_MARGIN  # -1 за дефис
+    if remain < 8:
+        remain = 8
+
+    base = base[:remain]
+    name = f"{ts}-{base}{ext}"
+    path = f"{prefix}{name}"
+
+    if len(path) > MAX_PATH:
+        overflow = len(path) - MAX_PATH
+        base = base[:-overflow] if overflow < len(base) else base[:8]
+        name = f"{ts}-{base}{ext}"
+        path = f"{prefix}{name}"
+
+    return path
 
 
 def swagger_schema_for_retrieve_method(serializer_cls):

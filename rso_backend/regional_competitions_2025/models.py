@@ -145,7 +145,8 @@ class DumpStatisticalRegionalReport(models.Model):
         upload_to=regional_supporting_docs_files_path,
         verbose_name='Документы, подтверждающие факт трудоустройства, по каждому направлению',
         blank=True,
-        null=True
+        null=True,
+        max_length=255,
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -426,7 +427,8 @@ class StatisticalRegionalReport(BaseRegionalR, BaseVerified, BaseComment, BaseSc
         upload_to=regional_supporting_docs_files_path,
         verbose_name='Документы, подтверждающие факт трудоустройства, по каждому направлению',
         blank=True,
-        null=True
+        null=True,
+        max_length=255,
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
