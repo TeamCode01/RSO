@@ -4,6 +4,7 @@ from datetime import datetime
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import models, transaction
 from django.forms import model_to_dict
+from django.core.files.uploadedfile import UploadedFile
 from django.http import QueryDict
 from headquarters.serializers import ShortRegionalHeadquarterSerializer
 from regional_competitions_2025.constants import (
@@ -433,6 +434,7 @@ class StatisticalRegionalReportSerializer(BaseRSerializer):
     edited = serializers.SerializerMethodField()
     additional_statistics = AdditionalStatisticReportSerializer(required=False, allow_null=True, many=True)
     regional_headquarter = ShortRegionalHeadquarterSerializer(read_only=True)
+    supporting_documents = serializers.FileField(required=True, allow_empty_file=False)
 
     class Meta:
         model = StatisticalRegionalReport
@@ -472,6 +474,24 @@ class StatisticalRegionalReportSerializer(BaseRSerializer):
                 'help_text': 'ID регионального штаба для которого создается или запрашивается отчет.'
             },
         }
+
+    def treat_empty_string_as_none(self, data):
+        if isinstance(data, QueryDict):
+            qd = QueryDict('', mutable=True)
+            for key, values in data.lists():
+                new_values = []
+                for v in values:
+                    if isinstance(v, UploadedFile):
+                        new_values.append(v)
+                    else:
+                        new_values.append(None if v == '' else v)
+                qd.setlist(key, new_values)
+            return qd
+
+        if isinstance(data, dict):
+            return {k: (None if v == '' else v) for k, v in data.items()}
+
+        return data
 
     def get_report_number(self) -> int:
         return 3030

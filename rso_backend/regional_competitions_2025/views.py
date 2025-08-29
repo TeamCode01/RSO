@@ -492,12 +492,6 @@ class StatisticalRegionalViewSet(BaseRegionalRViewSet):
 
         serializer_cls = self.get_serializer_class()
 
-        if not request.FILES.get('supporting_documents'):
-            return Response(
-                {'supporting_documents': ['Файл обязателен для отправки отчёта.']},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         if statistical_report is None:
             context = {
                 **self.get_serializer_context(),
