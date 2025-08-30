@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.contrib import admin
 
-from services.models import FrontError
+from services.models import Blocklist, FrontError
+
 
 @admin.register(FrontError)
 class FrontErrorAdmin(admin.ModelAdmin):
@@ -19,3 +21,13 @@ class FrontErrorAdmin(admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         """Запрещаем добавление записи через админку."""
         return False
+
+
+@admin.register(Blocklist)
+class BlocklistAdmin(admin.ModelAdmin):
+    list_display = ('ip_addr', 'created_at')
+    search_fields = ('ip_addr',)
+
+    def has_add_permission(self, request, obj=None):
+        """Запрещаем добавление записи через админку на продакшене."""
+        return settings.DEBUG

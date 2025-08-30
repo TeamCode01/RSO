@@ -37,3 +37,22 @@ class FrontError(models.Model):
 
     def __str__(self):
         return f'{self.method} {self.url} - ошибка "{self.error_description}"'
+
+
+class Blocklist(models.Model):
+    ip_addr = models.GenericIPAddressField(
+        db_index=True,
+        unique=True,
+        verbose_name='IP'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Время блокировки'
+    )
+
+    class Meta:
+        verbose_name = 'Заблокированный IP'
+        verbose_name_plural = 'Заблокированные IP'
+
+    def __str__(self):
+        return self.ip_addr

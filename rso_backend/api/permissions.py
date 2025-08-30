@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from api.utils import (check_commander_or_not, check_roles_for_edit,
                        check_trusted_for_centralhead,
@@ -19,6 +20,7 @@ from api.utils import (check_commander_or_not, check_roles_for_edit,
                        is_competition_participant, is_regional_commander,
                        is_regional_commissioner, is_safe_method,
                        is_stuff_or_central_commander)
+from services.models import Blocklist
 from competitions.models import (CompetitionParticipants, Q5DetachmentReport,
                                  Q13DetachmentReport, Q14DetachmentReport,
                                  Q15DetachmentReport, Q17DetachmentReport)
@@ -1250,6 +1252,7 @@ class IsDistrictCommanderRegistry(permissions.BasePermission):
             hasattr(request.user, 'districtheadquarter_commander')
         )
 
+
 class IsRegionalCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
@@ -1278,8 +1281,8 @@ class IsEducationalCommanderRegistry(permissions.BasePermission):
             hasattr(request.user, 'localheadquarter_commander') or
             hasattr(request.user, 'educationalheadquarter_commander')
         )
-        
-        
+
+
 class IsDetachmentCommanderRegistry(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
@@ -1289,5 +1292,25 @@ class IsDetachmentCommanderRegistry(permissions.BasePermission):
             hasattr(request.user, 'localheadquarter_commander') or
             hasattr(request.user, 'educationalheadquarter_commander') or
             hasattr(request.user, 'detachment_commander')
-        )        
-    
+        )
+
+
+class BlocklistPermission(permissions.BasePermission):
+    """Проверяет заблокирован ли ip-адрес-пользователя."""
+
+    def has_permission(self, request, view):
+        xff = request.META.get('HTTP_X_FORWARDED_FOR')
+        remote_addr = request.META.get('REMOTE_ADDR')
+        # у нас пока один прокси - nginx, нужно поменять при изменении ситуации
+        num_proxies = api_settings.NUM_PROXIES
+
+        if num_proxies is not None:
+            if num_proxies == 0 or xff is None:
+                return remote_addr
+            addrs = xff.split(',')
+            client_addr = addrs[-min(num_proxies, len(addrs))]
+            return client_addr.strip()
+
+        ip_addr = ''.join(xff.split()) if xff else remote_addr
+        blocked = Blocklist.objects.filter(ip_addr=ip_addr).exists()
+        return not blocked
