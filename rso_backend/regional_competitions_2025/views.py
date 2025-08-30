@@ -66,7 +66,7 @@ from regional_competitions_2025.utils import (
 from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view, parser_classes, permission_classes
 from rest_framework.filters import OrderingFilter
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -873,7 +873,7 @@ class RegionalR14MeViewSet(FormDataNestedFileParser, SendMixin, BaseRegionalRMeV
     permission_classes = (permissions.IsAuthenticated, IsRegionalCommander)
 
 
-class RegionalR15ViewSet(DownloadReportXlsxMixin, RetrieveModelMixin, GenericViewSet):
+class RegionalR15ViewSet(DownloadReportXlsxMixin, RetrieveModelMixin, GenericViewSet, UpdateModelMixin):
     queryset = RegionalR15.objects.all()
     serializer_class = RegionalReport15Serializer
     permission_classes = (permissions.IsAuthenticated,)

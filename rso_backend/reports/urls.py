@@ -21,7 +21,7 @@ from reports.views import (AttributesOfUniformDataView, CommanderSchoolView, Det
                            ExportQ19DataView, ExportCentralDataView, ExportDistrictDataView,
                            ExportRegionalDataView, ExportLocalDataView, ExportEducationDataView,
                            ExportDetachmentDataView, ExportDirectionDataView, ExportUsersDataView, 
-                           ExportRegionalRankingResults)
+                           ExportRegionalRankingResults, ExportTemplateRegionalCompetition)
 
 
 urlpatterns = [
@@ -207,5 +207,9 @@ urlpatterns = [
         name='export_direction_data'),
     path('get_users_registry_data/export/',
         ExportUsersDataView.as_view(),
-        name='export_users_data')
+        name='export_users_data'),
+    path('get_template_data/export/',
+        ExportTemplateRegionalCompetition.as_view(),
+        name='template_data'
+        )
 ]
