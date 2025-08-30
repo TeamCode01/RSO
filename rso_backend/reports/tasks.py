@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from urllib.parse import unquote
-from openpyxl.styles import Alignment
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data, get_detachment_q_results, get_membership_fee_data, get_regional_ranking_results,
@@ -17,7 +16,7 @@ from reports.utils import (
     get_q5_data, get_q6_data, get_q7_data, get_q8_data, get_q9_data, get_q10_data, get_q11_data, get_q12_data, get_q13_data, get_q14_data,
     get_q15_data, get_q16_data, get_q17_data,get_q18_data, get_q19_data, get_district_hq_data,
     get_regional_hq_data, get_detachment_data, get_educational_hq_data, get_local_hq_data, get_central_hq_data,
-    get_direction_data, get_users_registry_data, get_template_data
+    get_direction_data, get_users_registry_data
 )
 
 
@@ -30,26 +29,6 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
     worksheet = workbook.active
     worksheet.title = worksheet_title
     worksheet.append(headers)
-    
-    if fields and 'section_headers' in fields:
-        print(f"Processing section_headers: {fields['section_headers']}")
-        for section in fields['section_headers']:
-            text = section['text']
-            merge_cells = section['merge_cells']
-            worksheet.cell(row=merge_cells[0], column=merge_cells[1]).value = text
-            worksheet.merge_cells(
-                start_row=merge_cells[0],
-                start_column=merge_cells[1],
-                end_row=merge_cells[2],
-                end_column=merge_cells[3]
-            )
-            worksheet.cell(row=merge_cells[0], column=merge_cells[1]).alignment = Alignment(horizontal='center')
-
-    headers_row = fields.get('headers_row', 1) if fields else 1
-    
-    print(f"Headers: {headers}")
-    for col_idx, header in enumerate(headers, 1):
-        worksheet.cell(row=headers_row, column=col_idx).value = header
 
     def default_process_row(index, row):
         return [index] + list(row)
@@ -125,8 +104,6 @@ def generate_excel_file(headers, worksheet_title, filename, data_func, fields=No
         case 'get_regional_ranking':
             print('смэтчились')
             data = get_regional_ranking_results()
-        case 'get_template_data':
-            data = get_template_data()
         case _:
             logger.error(f"Неизвестное значение data_func: {data_func}")
             return
