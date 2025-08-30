@@ -26,7 +26,7 @@ from reports.constants import (ATTRIBUTION_DATA_HEADERS,
                                Q13_DATA_HEADERS, Q14_DATA_HEADERS,
                                Q19_DATA_HEADERS, DISTRICT_HQ_HEADERS, REGIONAL_HQ_HEADERS,
                                LOCAL_HQ_HEADERS, EDUCATION_HQ_HEADERS, DETACHMENT_HEADERS, CENTRAL_HQ_HEADERS,
-                               DIRECTIONS_HEADERS, USERS_HEADERS, REGIONAL_COMPETITIONS_HEADERS)
+                               DIRECTIONS_HEADERS, USERS_HEADERS,)
 
 from reports.utils import (
     get_attributes_of_uniform_data, get_commander_school_data,
@@ -1134,34 +1134,3 @@ class ExportRegionalRankingResults(BaseExcelExportView):
 
     def get_data_func(self):
         return 'get_regional_ranking'
-
-
-class ExportTemplateRegionalCompetition(BaseExcelExportView):
-    def get_worksheet_title(self):
-        return 'Дислокация студотрядов'
-
-    def get_headers(self):
-        return REGIONAL_COMPETITIONS_HEADERS
-
-    def get_filename(self):
-        return f'Шаблон_Дислокация_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-
-    def get_data_func(self):
-        return 'get_template_data'
-    
-    def get_fields(self):
-        return {
-            'section_headers': [
-                {
-                    'text': 'Дислокация выездных отрядов (выезжающих за пределы региона формирования)',
-                    'merge_cells': (1, 1, 1, 5)
-                },
-                {
-                    'text': 'Дислокация въездных отрядов (отряды из других регионов, работающие на территории РО РСО)',
-                    'merge_cells': (1, 6, 1, 10)
-                }
-            ],
-            'headers_row': 2,
-            'data_start_row': 3,
-            'process_row': False
-        }
